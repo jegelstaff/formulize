@@ -2994,7 +2994,7 @@ function checkForLinks($frid, $fids, $fid, $entries=null, $unified_display=false
             $otherElement = $element_handler->get($one_fid['keyother']);
             if (is_object($selfElement)) {
                 $selfEleValue = $selfElement->getVar('ele_value');
-                if (strstr($selfEleValue[2], "#*=:*")) {
+                if ($selfElement->isLinked) {
                     foreach($entries[$fid] as $thisTargetEntry) {
                         // self is the linked selectbox, other is the source of the values
                         if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$thisTargetEntry][$selfElement->getVar('ele_handle')])) {
@@ -4405,6 +4405,9 @@ function createFieldList($val, $textbox=false, $limitToForm=0, $name="", $firstV
 
     $formlist = "SELECT id_form, form_title FROM " . $xoopsDB->prefix("formulize_id") . " $limitToForm ORDER BY form_title";
 
+    // a linked list source names its element by id, or by handle if it was saved before ids were used, and the parts say which element either way
+    $valSource = (is_string($val) AND strstr($val, "#*=:*")) ? formulize_linkedSourceParts($val) : array();
+
     $resformlist = $xoopsDB->query($formlist);
     if ($resformlist) {
         // loop through each form
@@ -4420,9 +4423,7 @@ function createFieldList($val, $textbox=false, $limitToForm=0, $name="", $firstV
 
                 // if this is the selected entry
                 if ($val == $totalvaluelist[$captionlistindex] OR
-                    $val == $rowformlist[0] . "#*=:*" . $rowfieldnames[2] OR
-                    $val == formulize_linkedSourceString($rowformlist[0], $rowfieldnames[1]) OR
-                    (is_numeric($val) AND $val == $rowfieldnames[1])
+                    ($valSource AND $valSource[0] == $rowformlist[0] AND $valSource[1] === $rowfieldnames[2])
                     ) {
                     $defaultlinkselection = $captionlistindex;
                 }
@@ -4923,9 +4924,9 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
         // linking based on a shared value.  in the case of one to one forms assumption is that the shared value does not appear more than once in either form's field (otherwise this will be a defacto one to many link)
         // else we're looking at a classic "shared value" which is really a linked selectbox
         $startEleValue = $startElement->getVar('ele_value');
-				$startEleValueParts = (is_string($startEleValue[2]) AND strstr($startEleValue[2], "#*=:*")) ? formulize_linkedSourceParts($startEleValue[2]) : array();
+				$startSource = getSourceFormAndElementForLinkedElement($startElement);
         // option 2, start form is the linked selectbox that points to the form in question
-        if (count((array) $startEleValueParts)>0 AND $startEleValueParts[0] == $targetForm['fid']) {
+        if ($startSource AND $startSource[0] == $targetForm['fid']) {
             // so look in the startEntry for the values in its linked field and return them.  They will be a comma separated list of entry ids in the target form.
             $data_handler_start = new formulizeDataHandler($startForm);
             $foundValue = $data_handler_start->getElementValueInEntry($startEntry, $targetForm['keyother'], $all_users, $all_groups);
@@ -5614,9 +5615,7 @@ function compileNotUsers($uids_conditions, $thiscon, $uid, $member_handler, $rei
             // need to get the form that 'not_cons_linkcreator' is linked to
             $element_handler =& xoops_getmodulehandler('elements', 'formulize');
             $elementObject = $element_handler->get(intval($thiscon['not_cons_linkcreator']));
-            // key 0 will be the form id that is the source for the values in this linked selectbox
-            $linkProperties = formulize_linkedSourceParts($elementObject->getVar('ele_value'));
-            $data_handler2 = new formulizeDataHandler($linkProperties[0]);
+            $data_handler2 = new formulizeDataHandler(getSourceFormIdForLinkedElement($elementObject));
             $uids_temp = $data_handler2->getAllUsersForEntries($entry_ids);
             if (count((array) $uids_temp) > 0) {
                 // no need for type hint (array) in this case because getAllUsersForEntries always returns an array, even if its empty
@@ -5984,7 +5983,7 @@ function writeElementValue($formframe, $elementIdentifier, $entry, $value, $appe
 
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
 
-    if (is_string($ele_value[2]) AND $foundit = strstr($ele_value[2], "#*=:*") AND !$lvoverride AND !$ele_value['snapshot']) {
+    if ($element->isLinked AND !$lvoverride AND !$ele_value['snapshot']) {
         // completely rejig things for a linked selectbox
         $boxproperties = formulize_linkedSourceParts($ele_value[2]);
         // NOTE:
@@ -6012,8 +6011,8 @@ function writeElementValue($formframe, $elementIdentifier, $entry, $value, $appe
         $linkedTargetHintInQuery = "";
         if (is_object($sourceElement)) {
             $sourceEleValue = $sourceElement->getVar('ele_value');
-            if (strstr($sourceEleValue[2], "#*=:*") AND !$sourceEleValue['snapshot']) {
-                $sourceParts = formulize_linkedSourceParts($sourceEleValue[2]);
+            if ($sourceElement->isLinked AND !$sourceEleValue['snapshot']) {
+                $sourceParts = getSourceFormAndElementForLinkedElement($sourceElement);
                 $sourceFormObject = $form_handler->get($sourceParts[0]);
                 $linkQueryResult = q("SELECT `entry_id` FROM " . $xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle')) . " WHERE `".$sourceParts[1]."` = '".implode("' OR `".$sourceParts[1]."` = '", $searchForValues) . "'");
                 unset($searchForValues);
@@ -9873,9 +9872,8 @@ function formulize_makeOneToOneLinks($frid, $fid) {
                     // figure out which one is on which side of the linked selectbox
                     $element_handler = xoops_getmodulehandler('elements', 'formulize');
                     $linkedElement1 = $element_handler->get($key1);
-                    $linkedElement1EleValue = $linkedElement1->getVar('ele_value');
-                    $linkedElement1EleValueParts = strstr($linkedElement1EleValue[2], "#*=:*") ? formulize_linkedSourceParts($linkedElement1EleValue[2]) : array();
-                    if(count((array) $linkedElement1EleValueParts)>0 AND $linkedElement1EleValueParts[0] == $form2) {
+                    $linkedElement1Source = getSourceFormAndElementForLinkedElement($linkedElement1);
+                    if($linkedElement1Source AND $linkedElement1Source[0] == $form2) {
 												// element 1 is the linked selectbox, so get the value of entry id for what we just created in form 2, and put it in element 1
 												$linkedValueToWrite = isset($GLOBALS['formulize_newEntryIds'][$form2][0]) ? $GLOBALS['formulize_newEntryIds'][$form2][0] : "";
 												$linkedValueToWrite = (!$linkedValueToWrite AND isset($GLOBALS['formulize_allSubmittedEntryIds'][$form2][0])) ? $GLOBALS['formulize_allSubmittedEntryIds'][$form2][0] : $linkedValueToWrite; // or get the first entry ID that we wrote to the form, if no new entries were written to the form
@@ -12780,14 +12778,9 @@ function sourceHandleForElement($elementIdentifier) {
 	$sourceHandle = false;
 	if($element = _getElementObject($elementIdentifier)) {
     $ele_value = $element->getVar('ele_value');
-		if(is_array($ele_value)
-			AND isset($ele_value[2])
-			AND is_string($ele_value[2])
-			AND strstr($ele_value[2], "#*=:*")
-			AND (!isset($ele_value['snapshot']) OR !$ele_value['snapshot'])) {
-        $boxproperties = formulize_linkedSourceParts($ele_value[2]);
+		if($element->isLinked AND empty($ele_value['snapshot'])) {
         $element_handler = xoops_getmodulehandler('elements','formulize');
-        if($sourceElement = $element_handler->get($boxproperties[1])) {
+        if($sourceElement = $element_handler->get(getSourceElementHandleForLinkedElement($element))) {
         	$sourceHandle = $sourceElement->getVar('ele_handle');
 				}
     }

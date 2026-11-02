@@ -454,9 +454,8 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 
 		// if options are linked...
 		$element_ele_value = $element->getVar('ele_value');
-		$isLinked = false;
-		if(!is_array($element_ele_value[2]) AND strstr($element_ele_value[2], "#*=:*")) {
-			$isLinked = true;
+		$isLinked = $element->isLinked;
+		if($isLinked) {
 			$boxproperties = formulize_linkedSourceParts($ele_value[2]);
 			$sourceFid = $boxproperties[0];
 			$sourceHandle = $boxproperties[1];
@@ -685,7 +684,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 
 			$ele_value = $element->getVar('ele_value');
 
-			if(!is_array($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) {
+			if($element->isLinked) {
 					$filteredValues = array();
 					foreach($value as $whatwasselected) {
 			if(!is_numeric($whatwasselected)) { continue; }

@@ -3379,7 +3379,7 @@ function convertRawValuesToRealValues($value, $handle, $returnFlat=false) {
 	$isNamesList = false;
 	if(is_array($ele_value)) {
 		if(isset($ele_value[2])) {
-			if(is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) {
+			if($thisElement->isLinked) {
 				$isLinkedSelectBox = true;
 				$linkedMetaData = formulize_isLinkedElement($thisElement->getVar('ele_id'));
 			} elseif(isset($ele_value[2]["{FULLNAMES}"]) OR isset($ele_value[2]["{USERNAMES}"]))  {

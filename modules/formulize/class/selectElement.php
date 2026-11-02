@@ -704,8 +704,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 
 		$ele_value = $element->getVar('ele_value');
 
-		// NOTE: unique delimiter used to identify LINKED select boxes, so they can be handled differently: #*=:*
-		if(isset($ele_value[ELE_VALUE_SELECT_OPTIONS]) AND is_string($ele_value[ELE_VALUE_SELECT_OPTIONS]) AND strstr($ele_value[ELE_VALUE_SELECT_OPTIONS], "#*=:*")) {
+		if($element->isLinked) {
 			$ele_value[ELE_VALUE_SELECT_OPTIONS] .= "#*=:*".$value; // append the selected entry ids to the form and handle info in the element definition
 
 		// not a linked element
@@ -799,7 +798,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		$id_form = $element->getVar('fid');
 		$formObject = $form_handler->get($id_form);
 
-		if(is_string($ele_value[ELE_VALUE_SELECT_OPTIONS]) and strstr($ele_value[ELE_VALUE_SELECT_OPTIONS], "#*=:*")) { // if we've got a link on our hands... -- jwe 7/29/04
+		if($element->isLinked) { // if we've got a link on our hands... -- jwe 7/29/04
 
 			// new process for handling links...May 10 2008...new datastructure for formulize 3.0
 			$boxproperties = formulize_linkedSourceParts($ele_value[ELE_VALUE_SELECT_OPTIONS]);
@@ -1676,7 +1675,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			$value = strstr($value, "*=+*:") ? "*=+*:".$value : $value; // stick the multiple value indicator on the beginning if there are multiple values. Otherwise, take the value as is.
 
 		// if we've got a formlink, then handle it here
-		} elseif (!$ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT] AND is_string($ele_value[ELE_VALUE_SELECT_OPTIONS]) and strstr($ele_value[ELE_VALUE_SELECT_OPTIONS], "#*=:*")) {
+		} elseif (!$ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT] AND $element->isLinked) {
 			if (is_array($value)) {
 				$startWhatWasSelected = true;
 				$newValue = "";
@@ -1889,7 +1888,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		$displayText = printSmart(trans($value), $textWidth); // $value already escaped; truncate the visible text
 
 		// --- link into the source form of a linked selectbox ---
-		if(is_string($ele_value[ELE_VALUE_SELECT_OPTIONS]) AND strstr($ele_value[ELE_VALUE_SELECT_OPTIONS], "#*=:*")) {
+		if($element->isLinked) {
 			$boxproperties = formulize_linkedSourceParts($ele_value[ELE_VALUE_SELECT_OPTIONS]);
 			$target_fid = intval($boxproperties[0]);
 			if(!security_check($target_fid)) {

@@ -27,16 +27,34 @@ if (!defined('XOOPS_ROOT_PATH')) {
 /**
  * Split a linked element's source into its parts, with the source element as its handle.
  *
- * Returns what explode("#*=:*", $source) would - the form id, then the element, then anything after - except
- * that the element is always the handle, whether the source stores its id or, from before, its handle. Some
- * code adds a third part while it works, the entry ids chosen in the element, and that comes back as it is.
- * A string that is not a linked source comes back as a single part, as explode() would give it.
+ * Given the source itself, returns what explode("#*=:*", $source) would - the form id, then the element, then
+ * anything after - except that the element is always the handle, whether the source stores its id or, from
+ * before, its handle. Some code adds a third part while it works, the entry ids chosen in the element, and that
+ * comes back as it is.
  *
- * @param string $source The source, as it is kept in ele_value[2].
+ * Given the linked element instead - the object, its id or its handle - returns the form id and handle of the
+ * source stored in it, through getSourceFormAndElementForLinkedElement(). That is the stored source, so it never
+ * has a third part: code holding an ele_value with entry ids added must pass that string, not the element.
+ *
+ * Nothing to split - an element that is not linked, or an empty value - comes back as array(''), which is what
+ * explode() gives for an empty string.
+ *
+ * @param int|string|object $source The source, as it is kept in ele_value[2], or the linked element, as an object, an id or a handle.
  * @return array The parts. [0] the form id, [1] the source element's handle, [2] onwards anything after.
+ * @throws Exception If $source names an element that does not exist, or is an object that is not an element.
  */
 function formulize_linkedSourceParts($source) {
-	$parts = explode("#*=:*", (string) $source);
+	if(!is_string($source) OR !strstr($source, "#*=:*")) {
+		// not the source itself, so it is the element, or nothing
+		if($source === null OR $source === false OR $source === '' OR is_array($source)) {
+			return array('');
+		}
+		if(!$elementObject = _getElementObject($source)) {
+			throw new Exception("formulize_linkedSourceParts() cannot find the element ".(is_object($source) ? "it was given, which is a ".get_class($source) : "with id or handle '".htmlspecialchars((string) $source)."'").".");
+		}
+		return getSourceFormAndElementForLinkedElement($elementObject) ?: array('');
+	}
+	$parts = explode("#*=:*", $source);
 	if (count($parts) >= 2 AND is_numeric(trim($parts[1]))) {
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		if ($elementObject = $element_handler->get(intval(trim($parts[1])))) {

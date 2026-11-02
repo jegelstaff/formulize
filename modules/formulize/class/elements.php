@@ -2155,6 +2155,5 @@ function getSourceElementHandleForLinkedElement($elementObject) {
 }
 
 // Loaded here rather than at the top of the file because the classes in it extend formulizeElementsHandler,
-// which is declared above and - since it composes a trait - is not hoisted to the top of this file. See the
-// note beside the other requires at the top.
+// which is declared above. See the note beside the other requires at the top.
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/userAccountElement.php";
