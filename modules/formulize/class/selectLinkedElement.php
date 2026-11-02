@@ -28,13 +28,15 @@
 
 // There is a corresponding admin template for this element type in the templates/admin folder
 
-if(class_exists("formulizeSelectLinkedElement")) {
-	return;
-}
-
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectElement.php";
+
+// after the requires, not before: when the parent classes are already loaded, PHP declares the classes below as this
+// file compiles, so the guard is true on the first include too - it may only skip the declarations, never the requires
+if(class_exists("formulizeSelectLinkedElement")) {
+	return;
+}
 
 class formulizeSelectLinkedElement extends formulizeSelectElement {
 
