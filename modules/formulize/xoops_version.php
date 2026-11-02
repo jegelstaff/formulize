@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 25,
+	'dbversion' => 26,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -242,17 +242,6 @@ $modversion['formulize_element_references'] = array(
 				'describe' => 'in the conditions that decide whether a page is shown'),
 			'elementdefaults' => array('shape' => 'keys', 'holds' => 'either', 'on_delete' => 'remove',
 				'describe' => 'given a default value by the screen'),
-		),
-	),
-
-	'formulize_screen_template' => array(
-		'key' => 'templateid',
-		'section' => '_AM_ELE_USAGE_SECTION_FORM_SCREENS',
-		'label' => '{title} (screen {sid})',
-		'joins' => array(array('table' => 'formulize_screen', 'on' => array('sid' => 'sid'), 'columns' => array('title' => 'title'))),
-		'columns' => array(
-			'custom_code' => array('shape' => 'code'),
-			'template' => array('shape' => 'code'),
 		),
 	),
 

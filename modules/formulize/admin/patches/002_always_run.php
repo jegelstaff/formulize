@@ -73,6 +73,7 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 	formulize_repair_custom_openlisttemplate_functions();
 
 	// The PHP the site runs on can change between updates, so check for the optional image support every time
+	formulize_warn_about_missing_tokenizer();
 	formulize_warn_about_missing_image_support();
 
 	// The web server config can change between updates too, so check every time that the uploads folder,
@@ -209,6 +210,23 @@ function formulize_warn_about_missing_image_support() {
 		echo '<h3>Image support missing from PHP on this server:</h3>';
 		echo '<p>Formulize will keep working, but images uploaded to forms will not display as well as they could, because the PHP installation on this server is missing:</p><ul>' . implode('', $missing) . '</ul>';
 		echo '<p>To fix this, ask your hosting provider or server administrator to enable the items above for the version of PHP that runs this website. Then run the Formulize update again, and this message will no longer appear.</p>';
+	}
+}
+
+/**
+ * Warn if PHP on this server has no tokenizer extension. Formulize reads the code people write in it with
+ * token_get_all() - to fill in the {handle} references in code (see formulize_bindCurlyReferencesInPHPCode) and to
+ * update code when an element's handle changes (see formulizeElementHandleCode) - and without the extension those
+ * stop with a fatal error. PHP includes it unless it was built without it, but some Linux distributions package it
+ * separately.
+ *
+ * @return void
+ */
+function formulize_warn_about_missing_tokenizer() {
+	if(!extension_loaded('tokenizer')) {
+		echo '<h3>Required PHP extension missing on this server: tokenizer</h3>';
+		echo '<p><b>Some parts of Formulize will stop with an error until it is installed:</b> forms with elements whose code refers to other elements, and changing an element&#039;s handle.</p>';
+		echo '<p>To fix this, ask your hosting provider or server administrator to enable the tokenizer extension for the version of PHP that runs this website (on some systems it is a separate package, such as php-tokenizer). Then run the Formulize update again, and this message will no longer appear.</p>';
 	}
 }
 
@@ -726,13 +744,15 @@ function formulize_migrate_hyphenated_handles() {
         }
         print "<p>Renamed: <code>" . htmlspecialchars($rename['old']) . "</code> &rarr; <code>" . htmlspecialchars($newHandle) . "</code> (form_id=" . $rename['fid'] . ")</p>\n";
         $oldHandles[] = $rename['old'];
-        $element_handler->renameElementResources($element, $rename['old']);
+        foreach ($element_handler->renameElementResources($element, $rename['old']) as $leftByTheRename) {
+            $renameLeftovers[] = $leftByTheRename . " still has \"" . $rename['old'] . "\" in it, written in a way that may or may not mean the element";
+        }
     }
 
     // Alert for userland code that cannot be auto-updated.
     // Scan on_before_save / on_after_save / on_delete and advanced calculations
     // for any surviving occurrences of the old handle strings.
-    $alertLines = array();
+    $alertLines = isset($renameLeftovers) ? $renameLeftovers : array();
 
     $formProcRes = $xoopsDB->queryF(
         "SELECT id_form, on_before_save, on_after_save, on_delete FROM " . $xoopsDB->prefix('formulize_id')

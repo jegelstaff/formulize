@@ -20,7 +20,7 @@ if (!defined('XOOPS_ROOT_PATH')) {
 // Stage 2 below matches the handle strings written in the old code files against the handles in the DB,
 // so those handles must still be hyphenated at this point. A handle that is still "my-handle" here is
 // emitted as $my-handle, which is not valid PHP on its own - 002_always_run rewrites it to $my_handle
-// immediately afterwards, via formulizeElementsHandler::renameHandleInCodeFiles(). Renaming the handles
+// immediately afterwards, via formulizeElementsHandler::renameElementResources(). Renaming the handles
 // first instead would leave every hyphenated reference here unmatched and silently unconverted.
 //
 // If a run times out partway through (the HTTP request can die while the PHP process keeps executing
