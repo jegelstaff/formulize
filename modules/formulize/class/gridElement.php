@@ -82,6 +82,9 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 	 * element it takes its initial values from, blanked to 'none', the value the editor writes for nothing chosen.
 	 */
 	public static $eleValueReferences = array(
+		// the row and column captions, which can carry {handle} tokens - see displayGrid()
+		1 => array('shape' => 'tokens'),
+		2 => array('shape' => 'tokens'),
 		4 => array('shape' => 'value', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => 'none',
 			'describe' => 'the element it takes its initial values from'),
 	);

@@ -134,7 +134,7 @@ class formulizeElementReferences {
 				$working = $row; // later columns see what earlier ones changed - parallel lists, coupled resets
 				$updates = array();
 				$phrases = array();
-				foreach($tableSpec['columns'] as $column => $spec) {
+				foreach($this->columnSpecs($tableSpec) as list($column, $spec)) {
 					if(!array_key_exists($column, $working) OR !$this->appliesToRow($spec, $row)) {
 						continue;
 					}
@@ -191,7 +191,7 @@ class formulizeElementReferences {
 				if($this->isTheElementItself($tableSpec, $row)) {
 					continue;
 				}
-				foreach($tableSpec['columns'] as $column => $spec) {
+				foreach($this->columnSpecs($tableSpec) as list($column, $spec)) {
 					if(array_key_exists($column, $row) AND $this->walkColumn($spec, $row[$column], 'mention', null, $row)['found']) {
 						$mentions[] = array(
 							'table' => $table,
@@ -250,15 +250,21 @@ class formulizeElementReferences {
 		}
 		foreach(self::declaration() as $table => $tableSpec) {
 			foreach($this->candidateRows($table, $tableSpec) as $row) {
-				$sets = array();
-				foreach($tableSpec['columns'] as $column => $spec) {
-					if(!array_key_exists($column, $row)) {
+				$working = $row; // a column with several declarations is walked by each in turn
+				$changedColumns = array();
+				foreach($this->columnSpecs($tableSpec) as list($column, $spec)) {
+					if(!array_key_exists($column, $working)) {
 						continue;
 					}
-					$result = $this->walkColumn($spec, $row[$column], $mode, $newHandle, $row);
+					$result = $this->walkColumn($spec, $working[$column], $mode, $newHandle, $row);
 					if($result['changed']) {
-						$sets[] = "`$column` = ".$this->db->quoteString((string) $result['stored']);
+						$working[$column] = $result['stored'];
+						$changedColumns[$column] = true;
 					}
+				}
+				$sets = array();
+				foreach(array_keys($changedColumns) as $column) {
+					$sets[] = "`$column` = ".$this->db->quoteString((string) $working[$column]);
 				}
 				if($sets) {
 					// queryF, because a rename can be made from a GET request - an update patch run from a link
@@ -311,13 +317,16 @@ class formulizeElementReferences {
 
 	/**
 	 * The columns a table has, read once per request. None, if the table does not exist on this site.
+	 * Asked as a SELECT, because the usage report is drawn on a GET request, and then the database refuses
+	 * anything else - SHOW COLUMNS included - which would make every table look as if it had no columns.
 	 * @param string $table The unprefixed table name.
 	 * @return array
 	 */
 	private function tableColumns($table) {
 		if(!isset(self::$tableColumns[$table])) {
 			self::$tableColumns[$table] = array();
-			if($result = $this->db->query("SHOW COLUMNS FROM `".$this->db->prefix($table)."`")) {
+			if($result = $this->db->query("SELECT COLUMN_NAME AS Field FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = "
+				.$this->db->quoteString($this->db->prefix($table))." ORDER BY ORDINAL_POSITION")) {
 				while($row = $this->db->fetchArray($result)) {
 					self::$tableColumns[$table][] = $row['Field'];
 				}
@@ -342,6 +351,24 @@ class formulizeElementReferences {
 	 */
 	private function isTheElementItself($tableSpec, $row) {
 		return $this->option($tableSpec, 'own_row', false) AND intval($row[$tableSpec['key']]) === $this->elementId;
+	}
+
+	/**
+	 * Every declaration of every column of a table, in order, as (column, declaration) pairs. A column is
+	 * usually declared once, but one setting can hold more than one kind of reference - a list screen's
+	 * column rows name the element at one position and can carry a {handle} token in the search term at
+	 * another - and then its declaration is a list of declarations, each walked in turn.
+	 * @param array $tableSpec The table's declaration.
+	 * @return array
+	 */
+	private function columnSpecs($tableSpec) {
+		$pairs = array();
+		foreach($tableSpec['columns'] as $column => $specs) {
+			foreach(isset($specs['shape']) ? array($specs) : $specs as $spec) {
+				$pairs[] = array($column, $spec);
+			}
+		}
+		return $pairs;
 	}
 
 	/**
@@ -747,8 +774,10 @@ class formulizeElementReferences {
 	 * The reference is at a path inside nested arrays: segments separated by dots, where * is any key, # is
 	 * any numeric key, and the last segment can name several keys with |. A deletion can remove the array the
 	 * reference sits in rather than the reference alone ('remove_parent'), as a custom button's effect goes as
-	 * a whole. With 'braces', the stored value can be the handle wrapped in {}, to tell it apart from a
-	 * literal value that looks like one.
+	 * a whole. With 'of', the value at the path is not a reference itself but is
+	 * walked by that declaration instead - the search term of a list screen column, held as tokens, or the
+	 * code of a custom page. With 'where', the value at the last segment is only looked at when the array it
+	 * sits in has the given values at the given keys - a custom page is PHP only when its key 0 says so.
 	 */
 	private function walkPath($spec, $value, $mode, $newHandle) {
 		$result = $this->walkPathLevel($spec, $value, explode('.', $spec['path']), $mode, $newHandle);
@@ -761,8 +790,14 @@ class formulizeElementReferences {
 			return $outcome;
 		}
 		$segment = array_shift($segments);
+		if(!$segments) {
+			foreach($this->option($spec, 'where', array()) as $whereKey => $whereValue) {
+				if(!array_key_exists($whereKey, $node) OR $node[$whereKey] !== $whereValue) {
+					return $outcome;
+				}
+			}
+		}
 		$holds = $this->option($spec, 'holds', 'either');
-		$braces = $this->option($spec, 'braces', false);
 		foreach($node as $key => $child) {
 			if($segment === '#' AND !is_numeric($key)) {
 				continue;
@@ -782,16 +817,16 @@ class formulizeElementReferences {
 				}
 				continue;
 			}
-			$bare = $child;
-			$itemHolds = $holds;
-			if($braces) {
-				// a handle only counts in braces, which is what tells it apart from a literal value that looks like
-				// one. Outside them only an id does.
-				$isBraced = (is_string($child) AND substr($child, 0, 1) == '{' AND substr($child, -1) == '}');
-				$bare = $isBraced ? substr($child, 1, -1) : $child;
-				$itemHolds = $isBraced ? 'handle' : 'id';
+			if(isset($spec['of'])) {
+				$result = $this->walk($spec['of'], $child, $mode, $newHandle, array());
+				$outcome['found'] = $outcome['found'] || $result['found'];
+				if($result['changed']) {
+					$node[$key] = $result['value'];
+					$outcome['changed'] = true;
+				}
+				continue;
 			}
-			if($mode == 'remove' AND $this->matches($bare, $itemHolds)) {
+			if($mode == 'remove' AND $this->matches($child, $holds)) {
 				$outcome['found'] = true;
 				if($this->option($spec, 'on_delete', 'remove') == 'remove_parent') {
 					$outcome['remove_me'] = true; // the array this sits in goes, one level up
@@ -799,10 +834,7 @@ class formulizeElementReferences {
 				}
 				$node[$key] = $this->option($spec, 'set_to', '');
 				$outcome['changed'] = true;
-			} elseif($braces AND $itemHolds == 'handle' AND $this->replacement($bare, 'either', $mode, $newHandle) !== null) {
-				$node[$key] = $this->elementId; // what a save writes now, in place of the braced handle
-				$outcome['found'] = $outcome['changed'] = true;
-			} elseif(!$braces AND ($replacement = $this->replacement($bare, $itemHolds, $mode, $newHandle)) !== null) {
+			} elseif(($replacement = $this->replacement($child, $holds, $mode, $newHandle)) !== null) {
 				$node[$key] = $replacement;
 				$outcome['found'] = $outcome['changed'] = true;
 			}
@@ -827,7 +859,7 @@ class formulizeElementReferences {
 		$property = $spec['property'];
 		$found = false;
 		foreach($value as $object) {
-			$reference = $object->getVar($property);
+			$reference = $object->getVar($property, 'n'); // what is stored, not the handle an id is read back as
 			if($mode == 'remove' AND $this->matches($reference, $holds)) {
 				$object->setVar($property, $this->option($spec, 'set_to', ''));
 				$found = true;
@@ -907,16 +939,27 @@ class formulizeElementReferences {
 		return self::unchanged($value);
 	}
 
-	private static function notificationTags($handle) {
+	/**
+	 * The tags a notification can name an element by, in its subject or in its mail template.
+	 * @param string $handle The element's handle.
+	 * @return array
+	 */
+	public static function notificationTags($handle) {
 		$upper = strtoupper($handle);
 		return array('{REVISION_ELEMENT_'.$upper.'}', '{ELEMENT_'.$upper.'}', '{ELEMENT'.$upper.'}');
 	}
 
 	/**
-	 * Code a person wrote and keeps in the database. Only ever mentioned, never changed.
+	 * Code a person wrote and keeps in the database. Only ever mentioned, never changed: nothing Formulize
+	 * puts in scope for this code is named after a handle, so a name matching one is not known to be a
+	 * reference to it. Mentioned wherever the handle appears as a name - see
+	 * formulizeElementsHandler::handleMentionPattern() - which can say yes about code that does not use the
+	 * element, but only to a person who then goes and looks. With 'sql', the code is a query, where a column
+	 * is named by the bare handle.
 	 */
 	private function walkCode($spec, $value, $mode) {
-		$found = ($mode == 'mention' AND is_string($value) AND preg_match(formulizeElementsHandler::handleReferencePattern($this->handle), $value));
+		$found = ($mode == 'mention' AND is_string($value)
+			AND preg_match(formulizeElementsHandler::handleMentionPattern($this->handle, $this->option($spec, 'sql', false)), $value));
 		return array('found' => (bool) $found, 'changed' => false, 'value' => $value);
 	}
 

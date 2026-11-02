@@ -112,12 +112,12 @@ class formulizeSavedViewsHandler {
 	}
 
 	/**
-	 * The settings of a view that name elements: the columns, and the column it is sorted by. They are
-	 * stored as element ids, so that renaming an element cannot leave a view pointing at a handle that no
-	 * longer exists, and handed out as handles, which is what the list works in. A view saved before they
-	 * were stored as ids holds handles, which pass through either way.
+	 * The settings of a view that name elements: the columns, the columns it is sorted by, and the columns
+	 * whose search boxes it offers. They are stored as element ids, so that renaming an element cannot leave a
+	 * view pointing at a handle that no longer exists, and handed out as handles, which is what the list works
+	 * in. A view saved before they were stored as ids holds handles, which pass through either way.
 	 */
-	const ELEMENT_SETTINGS = array('sv_oldcols', 'sv_sort');
+	const ELEMENT_SETTINGS = array('sv_oldcols', 'sv_sort', 'sv_pubfilters');
 
 	/**
 	 * Turn the elements named in a comma separated list of columns into ids or into handles. Entries that are

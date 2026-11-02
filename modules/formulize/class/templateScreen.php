@@ -70,6 +70,63 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     const FORMULIZE_CSS_FILE = "/modules/formulize/templates/css/formulize.css";
     const FORMULIZE_JS_FILE = "/modules/formulize/libraries/formulize.js";
 
+    // Names an element's handle never becomes a variable under in a template screen's code, because the code
+    // that runs the template still needs them after the handles are made into variables - see
+    // run_template_php_code(). An element with one of these handles has no variable of its own there.
+    const RESERVED_TEMPLATE_VARIABLES = array(
+        'code_filename',                                          // include target below (the LFI guard)
+        'templateScreenData', 'form_handler',                    // read after the loop / next outer pass
+        'elementTypes', 'internalRecordIds', 'i', 'thisHandle',  // loop-carried, read after the assignment
+        'preparedForTemplate', 'preparedWasFormatted', 'entry_id', // consumed by the purify pass below
+        'formulize_reservedTemplateVars',                        // so a handle cannot disable this guard
+    );
+
+    /**
+     * The forms whose elements a template screen's code gets a $handle variable for: the screen's form, or every
+     * form of its relationship when the screen has one that includes its form.
+     * @param object $screen The template screen.
+     * @return array The form ids.
+     */
+    public static function formsWithHandleVariables($screen) {
+        $formIds = array();
+        if($screen->getVar('frid')) {
+            $form_relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
+            if($formRelationship = $form_relationship_handler->get($screen->getVar('frid'))) {
+                $formIds = (array) $formRelationship->getVar('fids');
+            }
+        }
+        if(!$screen->getVar('frid') OR !in_array($screen->getVar('fid'), $formIds)) {
+            $formIds = array($screen->getVar('fid'));
+        }
+        return $formIds;
+    }
+
+    /**
+     * Rewrite the copies of a screen's code and template that are kept in the database, as they are stored. The
+     * files in templates/screens are what runs, but a theme without them gets them written out again from these
+     * copies - see getCustomCode() and getTemplateHtml() - so a change made to the files has to be made here too.
+     * @param int $sid The screen.
+     * @param callable $rewrite Given the stored text of one, returns it as it should now be.
+     * @return void
+     */
+    function rewriteStoredTemplates($sid, $rewrite) {
+        $sid = intval($sid);
+        $table = $this->db->prefix('formulize_screen_template');
+        if(!$result = $this->db->query("SELECT custom_code, template FROM $table WHERE sid = $sid") OR !$row = $this->db->fetchArray($result)) {
+            return;
+        }
+        $sets = array();
+        foreach(array('custom_code', 'template') as $column) {
+            if(($rewritten = $rewrite((string) $row[$column])) !== (string) $row[$column]) {
+                $sets[] = "`$column` = ".$this->db->quoteString($rewritten);
+            }
+        }
+        if($sets) {
+            // queryF, because a rename can be made from a GET request - an update patch run from a link
+            $this->db->queryF("UPDATE $table SET ".implode(', ', $sets)." WHERE sid = $sid");
+        }
+    }
+
     function __construct(&$db) {
         $this->db =& $db;
     }
@@ -299,28 +356,14 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         //    of another local after the point the handle loop could overwrite it.
         //  - separately, the element-handler lookup is guarded with is_object() so a handle colliding with
         //    a "<type>Element" variable cannot turn a later method call into a fatal.
-        $formulize_reservedTemplateVars = array(
-            'code_filename',                                          // include target below (the LFI guard)
-            'templateScreenData', 'form_handler',                    // read after the loop / next outer pass
-            'elementTypes', 'internalRecordIds', 'i', 'thisHandle',  // loop-carried, read after the assignment
-            'preparedForTemplate', 'preparedWasFormatted', 'entry_id', // consumed by the purify pass below
-            'formulize_reservedTemplateVars',                        // so a handle cannot disable this guard
-        );
+        $formulize_reservedTemplateVars = self::RESERVED_TEMPLATE_VARIABLES;
         $preparedForTemplate = array();  // handle => value we prepared (to detect code changes afterwards)
         $preparedWasFormatted = array(); // handle => true if formatDataForList already made it safe
 
         // make this a configuration option on the Templates tab!!!
         if (!empty($entry_id)) {
             $templateScreenData = gatherDataset($screen->getVar('fid'), filter: $entry_id, frid: $screen->getVar('frid'));
-						$formIds = array();
-						if($screen->getVar('frid')) {
-							$form_relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
-							$formRelationship = $form_relationship_handler->get($screen->getVar('frid'));
-							$formIds = $formRelationship->getVar('fids');
-						}
-						if(!$screen->getVar('frid') OR !in_array($screen->getVar('fid'), $formIds)) {
-							$formIds = array($screen->getVar('fid'));
-						}
+						$formIds = self::formsWithHandleVariables($screen);
 						$form_handler = xoops_getmodulehandler('forms', 'formulize');
 						foreach($formIds as $thisFid) {
             	$formObject = $form_handler->get($thisFid);

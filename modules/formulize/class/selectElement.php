@@ -163,9 +163,10 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 	public static $eleValueReferences = array(
 		ELE_VALUE_SELECT_OPTIONS => array('shape' => 'linked_source', 'holds' => 'either', 'on_delete' => 'report',
 			'describe' => 'the element its options come from, which it cannot work without - it needs a new source or it needs deleting'),
-		ELE_VALUE_SELECT_LINK_SORT => array('shape' => 'value', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => 'none',
+		// ids only: what reads them looks the id up, and passes over anything else
+		ELE_VALUE_SELECT_LINK_SORT => array('shape' => 'value', 'holds' => 'id', 'on_delete' => 'set', 'set_to' => 'none',
 			'describe' => 'the element its options are sorted by'),
-		ELE_VALUE_SELECT_LINK_LIMITBYELEMENT => array('shape' => 'value', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => 'none',
+		ELE_VALUE_SELECT_LINK_LIMITBYELEMENT => array('shape' => 'value', 'holds' => 'id', 'on_delete' => 'set', 'set_to' => 'none',
 			'describe' => 'the element its options are limited by'),
 		ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS => array('shape' => 'list', 'holds' => 'either', 'on_delete' => 'remove',
 			'describe' => 'one of the elements shown in place of its options in lists'),
@@ -177,10 +178,13 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			'describe' => 'in the conditions that decide which options it offers'),
 		ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER => array('shape' => 'conditions', 'holds' => 'either', 'on_delete' => 'remove',
 			'describe' => 'in the conditions that pick the entry its options are limited by'),
-		// a mapping can hold the handle wrapped in {}, to tell a reference apart from a literal value that looks like one
-		ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS => array('shape' => 'path', 'path' => '*.thisForm|sourceForm', 'braces' => true,
-			'holds' => 'either', 'on_delete' => 'report',
-			'describe' => 'one half of a source mapping, which is left in place for you to sort out'),
+		// Each mapping pairs an element of this form with one of the source form, by id. Where this form's side is
+		// not a number it is a value the person typed, written as it is (a {handle} only appears in config as code
+		// files, and is resolved to the id on import). Deleting either element takes the whole pair with it: a
+		// mapping left with a missing element stops the entry being created at all.
+		ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS => array('shape' => 'path', 'path' => '*.thisForm|sourceForm',
+			'holds' => 'id', 'on_delete' => 'remove_parent',
+			'describe' => 'a source mapping, which is removed'),
 	);
 
 	var $db;
