@@ -135,7 +135,116 @@ class formulizeScreen extends FormulizeObject {
     }
 
     public function setVar($key, $value, $not_gpc = false) {
-        parent::setVar($key, self::normalize_values($key, $value), $not_gpc);
+        $value = self::normalize_values($key, $value);
+        $settings = $this->elementColumnSettings();
+        if(isset($settings[$key])) {
+            $value = $this->elementReferencesAsIds($settings[$key], $value);
+        }
+        parent::setVar($key, $value, $not_gpc);
+    }
+
+    /**
+     * The settings of this screen type that name elements, which are STORED as element ids.
+     *
+     * Storing ids is what keeps them out of the handle-rename maintenance: an id does not change when an
+     * element is renamed, so there is nothing to keep in step. Lists and rows of columns are READ as handles,
+     * though, because everything that consumes them - list and map rendering, saved views, the tools - speaks
+     * handles, so the translation happens in setVar() and getVar() rather than at each of those places. A
+     * setting that names one element is read as the id, which is what the admin page selects it by and what
+     * _getElementObject() resolves.
+     *
+     * Overridden by each screen type that has such settings.
+     *
+     * @return array setting name => 'list' for a flat list, 'rows' for rows with the element in position 0,
+     *   'value' for a single element
+     */
+    protected function elementColumnSettings() {
+        return array();
+    }
+
+    /**
+     * Read a setting, with any list or rows of columns it holds as handles, whatever is stored. Values from
+     * before a setting became id-based are already handles and pass straight through, since the conversion
+     * leaves anything that is not an element id alone - which also covers the metadata field names
+     * (creation_uid, mod_datetime, etc) that are valid columns everywhere an element handle is.
+     * Pass the 'n' format to get what is actually stored; insert() uses that to write ids back.
+     */
+    public function getVar($key, $format = 's') {
+        $value = parent::getVar($key, $format);
+        $settings = $this->elementColumnSettings();
+        if(!isset($settings[$key]) OR $settings[$key] == 'value' OR $format == 'n' OR !is_array($value)) {
+            return $value;
+        }
+        foreach($value as $index => $column) {
+            if($settings[$key] == 'list') {
+                $value[$index] = $this->columnReferenceAsHandle($column);
+            } elseif(is_array($column) AND isset($column[0])) {
+                $value[$index][0] = $this->columnReferenceAsHandle($column[0]);
+            }
+        }
+        return $value;
+    }
+
+    /**
+     * Turn the elements a setting names into element ids, for storing. Accepts the value as an array or as an
+     * already-serialized string, because the admin save handlers pass one and the upsert apparatus the other.
+     * @param string $kind 'list', 'rows' or 'value' - see elementColumnSettings()
+     * @param mixed $value The setting.
+     * @return mixed The setting, in the shape it came in.
+     */
+    private function elementReferencesAsIds($kind, $value) {
+        if($kind == 'value') {
+            if(is_string($value) AND $value !== '' AND !is_numeric($value)) {
+                $converted = convertElementHandlesToElementIds(array($value));
+                $value = (string) $converted[0];
+            }
+            return $value;
+        }
+        $wasSerialized = is_string($value);
+        $columns = $wasSerialized ? @unserialize($value) : $value;
+        if(!is_array($columns)) {
+            return $value;
+        }
+        if($kind == 'list') {
+            $columns = convertElementHandlesToElementIds($columns);
+        } else {
+            foreach($columns as $index => $column) {
+                if(is_array($column) AND isset($column[0])) {
+                    $converted = convertElementHandlesToElementIds(array($column[0]));
+                    $columns[$index][0] = $converted[0];
+                }
+            }
+        }
+        return $wasSerialized ? serialize($columns) : $columns;
+    }
+
+    /**
+     * Turn one stored column reference into a handle.
+     *
+     * Deliberately not convertElementIdsToElementHandles(): that one works out a single form id from the
+     * first entry and converts the whole set within it, which is wrong here on two counts. A screen's columns
+     * can come from several forms when a relationship is in effect, and the first column is often a metadata
+     * field, which it cannot resolve a form from - it throws in that case.
+     *
+     * An id that no longer resolves is returned as it is rather than raising. This runs while a screen is
+     * being rendered, so one column left over from a deleted element must not take the whole screen down; it
+     * simply will not match a column and is ignored downstream.
+     *
+     * @param mixed $reference An element id, an element handle, or a metadata field name.
+     * @return mixed The handle, or the reference unchanged.
+     */
+    protected function columnReferenceAsHandle($reference) {
+        if(!is_numeric($reference)) {
+            return $reference; // already a handle, or a metadata field name
+        }
+        static $handles = array();
+        $reference = intval($reference);
+        if(!isset($handles[$reference])) {
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            $elementObject = $element_handler->get($reference);
+            $handles[$reference] = $elementObject ? $elementObject->getVar('ele_handle') : $reference;
+        }
+        return $handles[$reference];
     }
 
     public function form_id() {

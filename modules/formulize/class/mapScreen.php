@@ -60,6 +60,16 @@ class formulizeMapScreen extends formulizeScreen {
         $this->initVar("tileset_key", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
         $this->initVar("tileset_attribution", XOBJ_DTYPE_TXTBOX, NULL, false, 1000);
     }
+
+    /**
+     * The elements the pins are placed and labelled by, and the columns people can search the map by - see
+     * formulizeScreen::elementColumnSettings(). The columns are rows like a list screen's advanceview, with
+     * the element in position 0.
+     */
+    protected function elementColumnSettings() {
+        return array('lat_element' => 'value', 'lng_element' => 'value', 'label_element' => 'value',
+            'description_element' => 'value', 'columns' => 'rows');
+    }
 }
 
 #[AllowDynamicProperties]
@@ -98,7 +108,7 @@ class formulizeMapScreenHandler extends formulizeScreenHandler {
                 $this->db->quoteString($screen->getVar('description_element')),
                 $this->db->quoteString($screen->getVar('viewentryscreen')),
                 intval($screen->getVar('show_view_entry_link', 'n')),
-                $this->db->quoteString(serialize($screen->getVar('columns'))),
+                $this->db->quoteString(serialize($screen->getVar('columns', 'n'))), // the element ids stored, not the handles read
                 $this->db->quoteString(serialize($screen->getVar('fundamental_filters'))),
                 $this->db->quoteString($screen->getVar('filter_button_text')),
                 $this->db->quoteString($screen->getVar('tileset', 'n')),
@@ -115,7 +125,7 @@ class formulizeMapScreenHandler extends formulizeScreenHandler {
                 $this->db->quoteString($screen->getVar('description_element')),
                 $this->db->quoteString($screen->getVar('viewentryscreen')),
                 intval($screen->getVar('show_view_entry_link', 'n')),
-                $this->db->quoteString(serialize($screen->getVar('columns'))),
+                $this->db->quoteString(serialize($screen->getVar('columns', 'n'))), // the element ids stored, not the handles read
                 $this->db->quoteString(serialize($screen->getVar('fundamental_filters'))),
                 $this->db->quoteString($screen->getVar('filter_button_text')),
                 $this->db->quoteString($screen->getVar('tileset', 'n')),

@@ -100,7 +100,50 @@ class formulizeSavedViewsHandler {
 			throw new Exception("Could not load the specified saved view: '".strip_tags(htmlspecialchars($idOrName))."'");
 		}
 		$row = $this->db->fetchArray($result);
-		return $row ? $row : false;
+		if(!$row) {
+			return false;
+		}
+		foreach(self::ELEMENT_SETTINGS as $column) {
+			if(isset($row[$column])) {
+				$row[$column] = $this->columnsAs($row[$column], 'handle');
+			}
+		}
+		return $row;
+	}
+
+	/**
+	 * The settings of a view that name elements: the columns, and the column it is sorted by. They are
+	 * stored as element ids, so that renaming an element cannot leave a view pointing at a handle that no
+	 * longer exists, and handed out as handles, which is what the list works in. A view saved before they
+	 * were stored as ids holds handles, which pass through either way.
+	 */
+	const ELEMENT_SETTINGS = array('sv_oldcols', 'sv_sort');
+
+	/**
+	 * Turn the elements named in a comma separated list of columns into ids or into handles. Entries that are
+	 * not elements - the metadata columns such as creation_uid, or an element that no longer exists - are
+	 * left as they are, and so is the hidden column prefix.
+	 * @param string $columns The columns.
+	 * @param string $as 'id' or 'handle'.
+	 * @return string
+	 */
+	private function columnsAs($columns, $as) {
+		if((string) $columns === '') {
+			return $columns;
+		}
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$entries = explode(',', (string) $columns);
+		foreach($entries as $index => $entry) {
+			$prefix = strpos($entry, self::HIDDEN_COLUMN_PREFIX) === 0 ? self::HIDDEN_COLUMN_PREFIX : '';
+			$reference = substr($entry, strlen($prefix));
+			if($reference === '' OR ($as == 'id') == is_numeric($reference)) {
+				continue; // already in the form asked for
+			}
+			if($elementObject = $element_handler->get($reference)) {
+				$entries[$index] = $prefix.($as == 'id' ? $elementObject->getVar('ele_id') : $elementObject->getVar('ele_handle'));
+			}
+		}
+		return implode(',', $entries);
 	}
 
 	/**
@@ -117,6 +160,11 @@ class formulizeSavedViewsHandler {
 	public function save($values, $svId = 0) {
 		if(!is_array($values) OR !$values) {
 			return false;
+		}
+		foreach(self::ELEMENT_SETTINGS as $column) {
+			if(isset($values[$column])) {
+				$values[$column] = $this->columnsAs($values[$column], 'id');
+			}
 		}
 		$sets = array();
 		foreach($values as $column => $value) {
