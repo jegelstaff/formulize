@@ -81,11 +81,12 @@ if (!$element_handler) {
     exit(2);
 }
 
-// findReferencesToElement() is private: the report and the cleanup are its only callers by design. The test
-// reaches in because what it needs to check is the change that would be written, which neither of those
-// two exposes - the report describes it in words, and the cleanup applies it and moves on.
-$scan = new ReflectionMethod('formulizeElementsHandler', 'findReferencesToElement');
-$scan->setAccessible(true);
+// The references themselves, as the report and the cleanup both read them, because what this needs to check is
+// the change that would be written, which neither of those two exposes - the report describes it in words, and
+// the cleanup applies it and moves on.
+$referencesTo = function ($elementObject) {
+    return formulizeElementReferences::forElement($elementObject)->references();
+};
 
 $GLOBALS['__pass'] = 0;
 $GLOBALS['__fail'] = 0;
@@ -219,7 +220,7 @@ foreach ($elementIds as $elementId) {
         ok("element $elementId: section has entries", !empty($section['items']) && is_array($section['items']));
     }
 
-    $references = $scan->invoke($element_handler, $elementObject);
+    $references = $referencesTo($elementObject);
     if ($references) {
         $elementsWithReferences++;
     }

@@ -13,6 +13,11 @@ behaviour. CI runs them *before* the e2e suite, since they have nothing to wait 
 * `normalize_then_escape_test.php`
 * `date_search_test.php`
 * `empty_set_search_test.php`
+* `element_references_test.php` - where an element is referred to, as `formulizeElementReferences` works it
+  out from the declaration in `xoops_version.php` and each element type's `$eleValueReferences`, against an
+  in-memory stand-in for the database. Covers the usage report and the clean up after a deletion, a rename
+  changing only the positions declared to hold a reference (never a condition's term or a search value),
+  old handles becoming ids, and tokens and notification tags being renamed.
 * `blocked_extensions_sync_test.php` - the list of never-executable script extensions, written out in
   `BLOCKED_EXTENSIONS`, `uploads/.htaccess`, the fallback copy in `uploads_execution_probe.php` and the copy
   in `docs/uploads_not_executable.md`, is the same set everywhere. Fails if any copy drifts from the constant.
