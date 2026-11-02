@@ -1894,6 +1894,10 @@ class formulizeFormsHandler {
 		if (!$skipMetadataCheck && isMetaDataField($handle)){
 			return false; // don't allow reserved words that will be used in the main data extraction queries
 		}
+		xoops_getmodulehandler('elements', 'formulize'); // so its class is there to ask
+		if (!$skipMetadataCheck && in_array($handle, formulizeElementsHandler::reservedHandleNames(), true)) {
+			return false; // nor the names Formulize keeps for its own variables in the code that gets one for each handle
+		}
 		// validate element id, convert to element id if it was a handle or object
 		if($elementIdentifier) {
 			$elementObject = _getElementObject($elementIdentifier);

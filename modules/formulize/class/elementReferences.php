@@ -191,16 +191,21 @@ class formulizeElementReferences {
 				if($this->isTheElementItself($tableSpec, $row)) {
 					continue;
 				}
+				$found = false;
+				$this->codeLeftByARename = false;
 				foreach($this->columnSpecs($tableSpec) as list($column, $spec)) {
 					if(array_key_exists($column, $row) AND $this->walkColumn($spec, $row[$column], 'mention', null, $row)['found']) {
-						$mentions[] = array(
-							'table' => $table,
-							'key_value' => intval($row[$tableSpec['key']]),
-							'description' => $this->label($tableSpec, $row).' refers to this element by name in its settings',
-							'row' => $row
-						);
-						break; // once per row is enough for a person to go and look
+						$found = true;
 					}
+				}
+				if($found) { // once per row is enough for a person to go and look
+					$mentions[] = array(
+						'table' => $table,
+						'key_value' => intval($row[$tableSpec['key']]),
+						'description' => $this->label($tableSpec, $row).' refers to this element by name in its settings'
+							.($this->codeLeftByARename ? formulizeElementHandleCode::LEFT_BY_A_RENAME : ''),
+						'row' => $row
+					);
 				}
 			}
 		}
@@ -214,18 +219,18 @@ class formulizeElementReferences {
 	 * either - settings Formulize now saves as element ids, which can still hold a handle written before that -
 	 * the element's id is written instead, so the setting ends up the way a save would leave it today and never
 	 * needs renaming again. {handle} tokens and notification tags take the new handle. Ids are left as they
-	 * are, because a rename does not change an id, and code is left as it is, because it is a person's to
-	 * change - see mentions().
+	 * are, because a rename does not change an id. In code kept in the database, only what can only be the element
+	 * is rewritten - see formulizeElementHandleCode::renameStrings() - and the rest is a person's to change.
 	 *
 	 * @param string $newHandle The handle as it is now.
-	 * @return void
+	 * @return array Each place whose code still names the old handle, for a person to update - see mentions().
 	 */
 	public function rename($newHandle) {
 		$newHandle = (string) $newHandle;
 		if($newHandle === '' OR $newHandle === $this->handle) {
-			return;
+			return array();
 		}
-		$this->rewrite('rename', $newHandle);
+		return $this->rewrite('rename', $newHandle);
 	}
 
 	/**
@@ -243,15 +248,18 @@ class formulizeElementReferences {
 	 * Read every row that could refer to the element and write back the columns that change.
 	 * @param string $mode 'rename' or 'to_ids'.
 	 * @param string|null $newHandle For a rename.
+	 * @return array The places whose code still names the old handle - see rename().
 	 */
 	private function rewrite($mode, $newHandle) {
+		$leftByTheRename = array();
 		if(!$this->identified()) {
-			return;
+			return $leftByTheRename;
 		}
 		foreach(self::declaration() as $table => $tableSpec) {
 			foreach($this->candidateRows($table, $tableSpec) as $row) {
 				$working = $row; // a column with several declarations is walked by each in turn
 				$changedColumns = array();
+				$this->codeLeftByARename = false;
 				foreach($this->columnSpecs($tableSpec) as list($column, $spec)) {
 					if(!array_key_exists($column, $working)) {
 						continue;
@@ -271,8 +279,12 @@ class formulizeElementReferences {
 					$this->db->queryF("UPDATE ".$this->db->prefix($table)." SET ".implode(', ', $sets)
 						." WHERE `".$tableSpec['key']."` = ".intval($row[$tableSpec['key']]));
 				}
+				if($this->codeLeftByARename) {
+					$leftByTheRename[] = $this->label($tableSpec, $row);
+				}
 			}
 		}
+		return $leftByTheRename;
 	}
 
 	/**
@@ -445,7 +457,7 @@ class formulizeElementReferences {
 			case 'linked_source': $result = $this->walkLinkedSource($spec, $value, $mode, $newHandle); break;
 			case 'tokens': $result = $this->walkTokens($spec, $value, $mode, $newHandle); break;
 			case 'tags': $result = $this->walkTags($spec, $value, $mode, $newHandle); break;
-			case 'code': $result = $this->walkCode($spec, $value, $mode); break;
+			case 'code': $result = $this->walkCode($spec, $value, $mode, $newHandle); break;
 			case 'per_type': $result = $this->walkPerType($spec, $value, $mode, $newHandle, $row); break;
 			default: $result = self::unchanged($value);
 		}
@@ -950,18 +962,37 @@ class formulizeElementReferences {
 	}
 
 	/**
-	 * Code a person wrote and keeps in the database. Only ever mentioned, never changed: nothing Formulize
-	 * puts in scope for this code is named after a handle, so a name matching one is not known to be a
-	 * reference to it. Mentioned wherever the handle appears as a name - see
-	 * formulizeElementsHandler::handleMentionPattern() - which can say yes about code that does not use the
-	 * element, but only to a person who then goes and looks. With 'sql', the code is a query, where a column
-	 * is named by the bare handle.
+	 * Code a person wrote and keeps in the database. Nothing Formulize puts in scope for this code is named after a
+	 * handle, so a variable matching one is not known to be a reference to it. A rename rewrites only what can only
+	 * be the element - the handle given to a display function, or starting a filter - see
+	 * formulizeElementHandleCode::renameStrings(). A query is not PHP, so nothing in it is rewritten.
+	 *
+	 * Mentioned wherever the handle appears as a name - see formulizeElementHandleCode::mentionPattern() - which can
+	 * say yes about code that does not use the element, but only to a person who then goes and looks. With 'sql',
+	 * the code is a query, where a column is named by the bare handle. Whether a rename would leave some of it for a
+	 * person is noted in codeLeftByARename, for the row the code is in.
 	 */
-	private function walkCode($spec, $value, $mode) {
-		$found = ($mode == 'mention' AND is_string($value)
-			AND preg_match(formulizeElementsHandler::handleMentionPattern($this->handle, $this->option($spec, 'sql', false)), $value));
-		return array('found' => (bool) $found, 'changed' => false, 'value' => $value);
+	private function walkCode($spec, $value, $mode, $newHandle) {
+		if(!is_string($value) OR !in_array($mode, array('mention', 'rename'), true)) {
+			return self::unchanged($value);
+		}
+		$sql = $this->option($spec, 'sql', false);
+		$renamed = $sql ? $value : formulizeElementHandleCode::renameStrings($value, $this->handle,
+			$mode == 'rename' ? $newHandle : formulizeElementHandleCode::RENAME_CHECK_HANDLE);
+		if(formulizeElementHandleCode::stillNamed($renamed, $this->handle, $sql)) {
+			$this->codeLeftByARename = true;
+		}
+		if($mode == 'mention') {
+			return array('found' => formulizeElementHandleCode::stillNamed($value, $this->handle, $sql), 'changed' => false, 'value' => $value);
+		}
+		return $renamed !== $value ? self::changedTo($renamed) : self::unchanged($value);
 	}
+
+	/**
+	 * Whether the code in the row being walked still names the handle in a way a rename leaves - see walkCode().
+	 * @var bool
+	 */
+	private $codeLeftByARename = false;
 
 	/**
 	 * An element's ele_value, which means whatever the element's own type says it means - see

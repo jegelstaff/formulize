@@ -157,10 +157,19 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 
     function insert($screen, $force=false) {
         $update = !$screen->getVar('sid') ? false : true;
+        // the handle the screen has now, since its custom buttons' files are named for it - see carryCustomButtonFiles()
+        $storedHandle = '';
+        if ($update AND $result = $this->db->query("SELECT screen_handle FROM ".$this->db->prefix('formulize_screen')." WHERE sid = ".intval($screen->getVar('sid')))) {
+            $row = $this->db->fetchArray($result);
+            $storedHandle = $row ? (string) $row['screen_handle'] : '';
+        }
         if (!$sid = parent::insert($screen, $force)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
             return false;
         }
         $screen->assignVar('sid', $sid);
+        if ($storedHandle !== '' AND $storedHandle !== $screen->getVar('screen_handle', 'n')) {
+            $this->carryCustomButtonFiles($screen->getVar('customactions'), $storedHandle, $screen->getVar('screen_handle', 'n'), true);
+        }
         if (!$update) {
             $sql = sprintf("INSERT INTO %s (sid,
                 useworkingmsg,
@@ -378,6 +387,64 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 
         if (!$result) {
             return false;
+        }
+
+        $this->copyCustomButtonFiles($sid, $newsid);
+    }
+
+    /**
+     * Give a cloned list copies of the code and HTML its custom buttons keep in files, since the clone has a handle
+     * of its own - see carryCustomButtonFiles().
+     * @param int $sid The list being cloned.
+     * @param int $newsid The clone.
+     * @return void
+     */
+    function copyCustomButtonFiles($sid, $newsid) {
+        $handles = array();
+        $result = $this->db->query("SELECT sid, screen_handle FROM ".$this->db->prefix('formulize_screen')." WHERE sid IN (".intval($sid).", ".intval($newsid).")");
+        while($result AND $row = $this->db->fetchArray($result)) {
+            $handles[intval($row['sid'])] = $row['screen_handle'];
+        }
+        $result = $this->db->query("SELECT customactions FROM ".$this->db->prefix('formulize_screen_listofentries')." WHERE sid = ".intval($sid));
+        $row = $result ? $this->db->fetchArray($result) : false;
+        if($row AND isset($handles[intval($sid)]) AND isset($handles[intval($newsid)])) {
+            $this->carryCustomButtonFiles(unserialize((string) $row['customactions']), $handles[intval($sid)], $handles[intval($newsid)], false);
+        }
+    }
+
+    /**
+     * Carry the files a list's custom buttons keep their code and HTML in over to another screen handle. They are
+     * named for the screen's handle - custom_code_<effect>_<button>_<screen handle>.php and custom_html_... - so a
+     * list whose handle changes needs them moved, and a clone of it needs copies. A file already under the other
+     * handle is left as it is.
+     * @param array $buttons The list's custom buttons, as stored.
+     * @param string $fromHandle The handle the files are named for.
+     * @param string $toHandle The handle they are to be named for.
+     * @param bool $move Whether to move the files, rather than copy them.
+     * @return void
+     */
+    function carryCustomButtonFiles($buttons, $fromHandle, $toHandle, $move) {
+        $buttons = is_string($buttons) ? unserialize($buttons) : $buttons;
+        if(!is_array($buttons) OR $fromHandle === $toHandle) {
+            return;
+        }
+        $codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+        foreach($buttons as $button) {
+            if(!is_array($button) OR !isset($button['handle'])) {
+                continue;
+            }
+            foreach(array_keys($button) as $effectId) {
+                if(!is_numeric($effectId)) {
+                    continue; // effects have numeric keys
+                }
+                foreach(array('custom_code_', 'custom_html_') as $prefix) {
+                    $from = $codeDir.$prefix.$effectId.'_'.$button['handle'].'_'.$fromHandle.'.php';
+                    $to = $codeDir.$prefix.$effectId.'_'.$button['handle'].'_'.$toHandle.'.php';
+                    if(file_exists($from) AND !file_exists($to)) {
+                        $move ? rename($from, $to) : copy($from, $to);
+                    }
+                }
+            }
         }
     }
 

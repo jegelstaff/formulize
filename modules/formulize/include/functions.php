@@ -14371,7 +14371,7 @@ function formulize_noPermissionMessage($message = '', $loginUrl = '') {
  * type means adding it to formulizeHandler::listScreenSearchTypes() and building it in packageSearches(), nowhere else.
  *
  * Here rather than in entriesdisplay.php, beside the list it serves, because renaming an element rewrites those template
- * variables too - see formulizeElementsHandler::renameHandleInScreenTemplates().
+ * variables too - see formulizeElementsHandler::handleRewritesInFiles().
  *
  * @return array storedValue => array('key' => quickSearches key, 'prefixes' => array(short, long) template variable prefixes)
  */

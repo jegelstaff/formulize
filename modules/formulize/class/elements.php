@@ -36,6 +36,7 @@
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 require_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementReferences.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementHandleCode.php";
 // NB userAccountElement.php is required at the BOTTOM of this file, not here. It declares classes that
 // extend formulizeElementsHandler, so it is loaded once that class has been declared below. Nothing in this
 // file needs those classes at declaration time; the two methods that call them do so at runtime.
@@ -1079,30 +1080,30 @@ class formulizeElementsHandler {
 	 *   When it did, setVar has already written or deleted the element's code file under the new handle, and
 	 *   the file under the old handle is a spent copy that is removed rather than renamed over it. Only the
 	 *   caller knows this - see renameElementCodeFiles() for why it cannot be worked out from the content.
-	 * @return void
+	 * @return array The places that still name the old handle after the rename, in a way that may or may not be the
+	 *   element and so was left for a person to update - see formulizeElementHandleCode. Also kept in
+	 *   $this->renameWarnings, for callers that reach the rename through another function.
 	 */
 	function renameElementResources($elementObject, $original_handle, $eleValueWasSavedWithThisChange = false) {
+		$this->renameWarnings = array();
 		if($original_handle) {
 			if(!$elementObject = _getElementObject($elementObject)) {
 				throw new Exception("Invalid element object passed to renameElementResources");
 			}
 			$ele_handle = $elementObject->getVar('ele_handle');
 			if($ele_handle !== (string) $original_handle) {
-				// rewrite handle references inside the code files that genuinely hold them - $handle in derived
-				// values and the three save/delete procedures, {handle} in static content and default values.
-				// Files where a matching name is not a reference to this element are left alone; see
-				// codeFilesThatReferenceHandles().
-				$this->renameHandleInCodeFiles($original_handle, $ele_handle);
-				// the variables Formulize names after handles in screens' own template files, and the tags in the
-				// notification mail templates - see screenTemplateReferencePattern() for why only those
-				$this->renameHandleInScreenTemplates($original_handle, $ele_handle, $elementObject->getVar('fid'));
-				$this->renameHandleInMailTemplates($original_handle, $ele_handle);
-				// the element's own code files, and the cached derived value formulas named after it
+				// the element's own code files, and the cached derived value formulas named after it, before what is
+				// in the code files is rewritten, so that a warning names the file as it is now called
 				$this->renameElementCodeFiles($elementObject, $original_handle, $eleValueWasSavedWithThisChange);
+				// what names the handle in the code files and every screen's own template files, where it can only be
+				// the element, and the tags in the notification mail templates
+				$this->renameWarnings = $this->renameHandleInFiles($original_handle, $ele_handle, $elementObject->getVar('fid'));
+				$this->renameHandleInMailTemplates($original_handle, $ele_handle);
 				// every setting that names this element by its old handle, at the positions declared to hold one,
-				// and {handle} tokens and notification tags - see formulizeElementReferences
+				// {handle} tokens and notification tags, and the code kept in the database - see
+				// formulizeElementReferences
 				$references = new formulizeElementReferences($elementObject->getVar('ele_id'), $original_handle, $elementObject->getVar('fid'));
-				$references->rename($ele_handle);
+				$this->renameWarnings = array_merge($this->renameWarnings, $references->rename($ele_handle));
 				// Everything above rewrote element rows with SQL that went around the element objects: ele_value
 				// in every element that links to this one or embeds a {handle} token, and ele_caption and ele_desc
 				// wherever that token appears. Any of those already in the cache still holds the old text, and
@@ -1112,7 +1113,14 @@ class formulizeElementsHandler {
 				$this->clearElementCache();
 			}
 		}
+		return $this->renameWarnings;
 	}
+
+	/**
+	 * What the last rename left for a person to update - see renameElementResources().
+	 * @var array
+	 */
+	public $renameWarnings = array();
 
 	/**
 	 * Rename the code files an element keeps under its own name - <type>_<handle>.php in the code folder, for the
@@ -1187,60 +1195,6 @@ class formulizeElementsHandler {
 	}
 
 	/**
-	 * The regular expression that matches a reference to an element handle in code.
-	 *
-	 * One definition, because there are two callers with opposite appetites and they had already drifted: the
-	 * rename rewrites what it matches, and the usage report only reports it. The part that must not differ is
-	 * what counts as a character continuing a name, which is PHP's own variable-name grammar,
-	 * [a-zA-Z0-9_\x80-\xff]. The high bytes matter: they are what let a variable name hold accented and other
-	 * non-ASCII characters, and leaving them out means $artifacts_year matches inside $artifacts_yeare-acute
-	 * and a rename silently corrupts it. No /u modifier - that grammar is defined in bytes, and a multibyte
-	 * character is a sequence of bytes all inside the excluded range anyway.
-	 *
-	 * @param string $handle The element handle.
-	 * @param string $form Which reference syntax to match: 'variable' for $handle, 'token' for {handle},
-	 *        or 'either' for both.
-	 * @return string The regular expression.
-	 */
-	public static function handleReferencePattern($handle, $form = 'either') {
-		$quoted = preg_quote($handle, '/');
-		$continuesAName = '(?![A-Za-z0-9_\x80-\xff])';
-		$variable = '\$'.$quoted.$continuesAName;
-		$token = '\{'.$quoted.'\}';
-		switch($form) {
-			case 'variable': return '/'.$variable.'/';
-			case 'token': return '/'.$token.'/';
-			default: return '/('.$variable.'|'.$token.')/';
-		}
-	}
-
-	/**
-	 * The regular expression that finds code mentioning an element handle, for the usage report. Wider than
-	 * handleReferencePattern(), which decides what a rename rewrites: as well as $handle and {handle}, the
-	 * handle written as a string on its own - display($entry, 'handle'), getValue(..., "handle") - and, in a
-	 * query, the bare handle as a column name. Those cannot be rewritten safely, since a string or a word that
-	 * matches a handle is not always one, but a person reading the report can tell, so it errs on the side of
-	 * saying so.
-	 *
-	 * @param string $handle The element handle.
-	 * @param bool $sql Whether the code is a query, where a column is named by the bare handle.
-	 * @return string The regular expression.
-	 */
-	public static function handleMentionPattern($handle, $sql = false) {
-		$quoted = preg_quote($handle, '/');
-		$nameCharacter = 'A-Za-z0-9_\x80-\xff';
-		$patterns = array(
-			'\$'.$quoted.'(?!['.$nameCharacter.'])',
-			'\{'.$quoted.'\}',
-			'([\'"])'.$quoted.'\1',
-		);
-		if($sql) {
-			$patterns[] = '(?<!['.$nameCharacter.'$])'.$quoted.'(?!['.$nameCharacter.'])';
-		}
-		return '/(?:'.implode('|', $patterns).')/'; // non-capturing, so the quote is group 1 for the \1 above
-	}
-
-	/**
 	 * The element types that can keep code in a file of their own, named <type>_<handle>.php in the code folder,
 	 * which is renamed along with the element's handle.
 	 * @return array The type names, as they begin the file names.
@@ -1250,13 +1204,13 @@ class formulizeElementsHandler {
 	}
 
 	/**
-	 * Which code files reference an element handle in which syntax, and therefore which files a rename may
-	 * rewrite. The prefix decides, and it is not a formality: only the three save/delete procedures have the
-	 * entry's values exploded into variables named after the handles (see the generated wrappers in
-	 * forms.php), so only there is $handle a reference to this element. In custom_edit_check, application code
-	 * and custom button code nothing is injected, so a variable of that name is somebody's own and renaming it
-	 * would be editing unrelated logic - and could collide with a variable already called by the new name,
-	 * which the global uniqueness of handles does nothing to prevent.
+	 * Which code files name element handles in a syntax of their own, beyond the strings every kind of code can
+	 * pass to the display functions - see formulizeElementHandleCode::renameStrings(). The prefix decides, and it is
+	 * not a formality: only derived value formulas and the three save/delete procedures have the entry's values
+	 * made into variables named after the handles (see the generated wrappers in forms.php and extract.php), so
+	 * only there is $handle a reference to this element. In custom_edit_check, application code and custom button
+	 * code nothing is named after a handle, so a variable of that name is somebody's own and renaming it would be
+	 * editing unrelated logic.
 	 *
 	 * The content and default-value files are the mirror image: their references are {handle} tokens that
 	 * Formulize substitutes, and their $value / $default variables are outputs rather than element references.
@@ -1277,46 +1231,34 @@ class formulizeElementsHandler {
 	}
 
 	/**
-	 * Rewrite references to an element handle inside the code files that genuinely contain them, when the
-	 * handle changes. See codeFilesThatReferenceHandles() for which files those are and why the rest are
-	 * deliberately left alone.
-	 * @param string $originalHandle The handle as it was.
-	 * @param string $newHandle The handle as it now is.
-	 * @return void
+	 * The names no element handle can be, because Formulize keeps them for its own variables in the code that gets a
+	 * variable for each handle - see formulizeElementHandleCode::reservedNames().
+	 * @return array
 	 */
-	public function renameHandleInCodeFiles($originalHandle, $newHandle) {
-		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
-		$prefixes = self::codeFilesThatReferenceHandles();
-		foreach((array) scandir($codeDir) as $file) {
-			if(substr($file, -4) != '.php') {
-				continue;
-			}
-			$syntax = false;
-			foreach($prefixes as $prefix => $prefixSyntax) {
-				if(strpos($file, $prefix) === 0) {
-					$syntax = $prefixSyntax;
-					break;
-				}
-			}
-			if(!$syntax) {
-				continue; // a kind of file where a name matching the handle is not a reference to it
-			}
-			$code = file_get_contents($codeDir.$file);
-			if($code === false) {
-				continue;
-			}
-			$replacement = ($syntax == 'variable') ? '\$'.$newHandle : '{'.$newHandle.'}';
-			$newCode = preg_replace(self::handleReferencePattern($originalHandle, $syntax), $replacement, $code);
-			if($newCode !== null AND $newCode != $code) {
-				formulize_writeCodeToFile($file, $newCode);
-			}
-		}
+	public static function reservedHandleNames() {
+		xoops_getmodulehandler('templateScreen', 'formulize');
+		return formulizeElementHandleCode::reservedNames(formulizeTemplateScreenHandler::RESERVED_TEMPLATE_VARIABLES);
 	}
 
 	/**
-	 * The screens whose own templates can name an element of a form: list screens and template screens on that
-	 * form, or on a relationship that includes it. Only there does Formulize give a template variables named after
-	 * the form's handles; in any other screen a variable of the same name is the author's own.
+	 * Every element's handle, which a variable moved out of a renamed handle's way must not take, since it is or
+	 * could be a variable named after that element.
+	 * @return array
+	 */
+	private function allHandles() {
+		$handles = array();
+		if($result = $this->db->query("SELECT ele_handle FROM ".formulize_TABLE)) {
+			while($row = $this->db->fetchArray($result)) {
+				$handles[] = $row['ele_handle'];
+			}
+		}
+		return $handles;
+	}
+
+	/**
+	 * The screens whose own templates get variables named after the handles of a form's elements: list screens and
+	 * template screens on that form, or on a relationship that includes it. In any other screen a variable of the
+	 * same name is the author's own.
 	 * @param int $formId The element's form.
 	 * @return array sid => the screen.
 	 */
@@ -1343,33 +1285,75 @@ class formulizeElementsHandler {
 	}
 
 	/**
-	 * The template files of the screens that can name an element of a form - templates/screens/<theme>/<sid>/,
-	 * which are the templates themselves - with the type of screen each belongs to. The default templates every
-	 * screen falls back on are left out: they are part of Formulize, and name no element.
-	 * @param int|null $formId The element's form, for the rewrite, or null for every screen's templates.
-	 * @return array path => screen type
+	 * The variables Formulize names after a handle in a screen's templates, as what comes before the handle in the
+	 * variable's name, for the screens that get them - see screensSeeingForm():
+	 * - a template screen's code and template get a $handle variable for every element of the forms it shows -
+	 *   see formulizeTemplateScreenHandler::formsWithHandleVariables() - the same as the procedures in
+	 *   codeFilesThatReferenceHandles().
+	 * - a list screen's templates get a variable for each search box, named for the kind of box and the handle -
+	 *   $quickSearchhandle, $quickDateRangehandle and the rest - see formulize_quickSearchTypeNames().
+	 * @param string $screenType
+	 * @return array The prefixes, '' for a variable that is the handle alone, or none.
 	 */
-	private static function screenTemplateFiles($formId = null) {
+	private static function templateVariablePrefixes($screenType) {
+		$prefixes = array();
+		if($screenType == 'template') {
+			$prefixes[] = '';
+		} elseif($screenType == 'listOfEntries') {
+			foreach(formulize_quickSearchTypeNames() as $typeNames) {
+				$prefixes = array_merge($prefixes, $typeNames['prefixes']);
+			}
+		}
+		return $prefixes;
+	}
+
+	/**
+	 * Every code file, and every screen's own template files - templates/screens/<theme>/<sid>/, which are the
+	 * templates themselves - with what kind of code each is. The default templates every screen falls back on are
+	 * left out: they are part of Formulize, and name no element.
+	 * @param int $formId The element's form, which decides which screens get variables named after its handles.
+	 * @return array path => label (where it is, for a person), group (the files sharing one set of variables: a
+	 *   screen's templates, or one code file), prefixes (the variables named after a handle that Formulize gives it -
+	 *   see formulizeElementHandleCode::variablePattern()), tokens (whether it holds {handle} tokens) and isCode
+	 *   (whether it is PHP throughout, rather than text with PHP in it).
+	 */
+	private static function codeAndTemplateFiles($formId) {
 		$files = array();
-		if($formId === null) {
-			// every screen's own templates, for the usage report: any of them can reach an element through
-			// display() or getData(), and the report only asks a person to look
-			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
-			foreach((array) glob(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/*/*', GLOB_ONLYDIR) as $screenDir) {
-				if(is_numeric(basename($screenDir)) AND $screen = $screen_handler->get(intval(basename($screenDir)))) {
-					foreach((array) glob($screenDir.'/*') as $file) {
-						if(is_file($file)) {
-							$files[$file] = $screen->getVar('type');
-						}
-					}
+		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		foreach((array) glob($codeDir.'*.php') as $path) {
+			$syntax = false;
+			foreach(self::codeFilesThatReferenceHandles() as $prefix => $prefixSyntax) {
+				if(strpos(basename($path), $prefix) === 0) {
+					$syntax = $prefixSyntax;
+					break;
 				}
 			}
-			return $files;
+			$files[$path] = array(
+				'label' => "custom code file '".basename($path)."'",
+				'group' => $path,
+				'prefixes' => $syntax == 'variable' ? array('') : array(),
+				'tokens' => $syntax == 'token',
+				'isCode' => true,
+			);
 		}
-		foreach(self::screensSeeingForm($formId) as $sid => $screen) {
-			foreach((array) glob(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/*/'.$sid.'/*') as $file) {
-				if(is_file($file)) {
-					$files[$file] = $screen->getVar('type');
+		$templatesDir = XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/';
+		$screensSeeingForm = self::screensSeeingForm($formId);
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		foreach((array) glob($templatesDir.'*/*', GLOB_ONLYDIR) as $screenDir) {
+			$sid = basename($screenDir);
+			if(!is_numeric($sid) OR !$screen = $screen_handler->get(intval($sid))) {
+				continue;
+			}
+			$prefixes = isset($screensSeeingForm[intval($sid)]) ? self::templateVariablePrefixes($screen->getVar('type')) : array();
+			foreach((array) glob($screenDir.'/*') as $path) {
+				if(is_file($path)) {
+					$files[$path] = array(
+						'label' => "screen template file '".substr($path, strlen($templatesDir))."'",
+						'group' => 'screen '.intval($sid), // in every theme, so all its copies move a variable the same way
+						'prefixes' => $prefixes,
+						'tokens' => false,
+						'isCode' => substr($path, -4) == '.php',
+					);
 				}
 			}
 		}
@@ -1377,82 +1361,89 @@ class formulizeElementsHandler {
 	}
 
 	/**
-	 * What a rename rewrites in a screen's template files, by type of screen. Only the variables Formulize itself
-	 * names after a handle, so that a variable of that name can only be the element, and only in the screens that
-	 * get them - see screensSeeingForm():
-	 * - a template screen's code and template get a $handle variable for every element of the forms it shows -
-	 *   see formulizeTemplateScreenHandler::formsWithHandleVariables() - the same reasoning as for the procedures in
-	 *   codeFilesThatReferenceHandles(). Except a handle the screen keeps for itself, which never becomes a variable
-	 *   - see formulizeTemplateScreenHandler::RESERVED_TEMPLATE_VARIABLES - so $i, say, is always the code's own.
-	 * - a list screen's templates get a variable for each search box, named for the kind of box and the handle -
-	 *   $quickSearchhandle, $quickDateRangehandle and the rest - see formulize_quickSearchTypeNames().
-	 * Nothing else is rewritten. A handle written as a string - display($entry, 'handle') - or anywhere else in a
-	 * template may or may not be the element, so it is reported instead - see codeReferencesToElement().
-	 * @param string $handle The handle as it was.
-	 * @param string $screenType The type of screen the template belongs to.
-	 * @return string|false The regular expression, whose first group is any prefix to keep, or false for none.
+	 * What renaming a handle makes of the code files and screen templates that name it - see codeAndTemplateFiles()
+	 * for which files, and formulizeElementHandleCode for what in each is rewritten: the variables Formulize names
+	 * after the handle where it gives them, {handle} tokens, and the strings that can only be the element. Writes
+	 * nothing, so the usage report can ask what a rename would leave behind as well.
+	 *
+	 * A variable of the handle's name is only renamed where Formulize makes one, so never for a handle that is one of
+	 * the names it keeps for itself - an element called 'value' from before those were refused, say, whose $value in
+	 * a formula is the formula's result.
+	 *
+	 * @param string $originalHandle The handle as it was.
+	 * @param string $newHandle The handle as it is to be.
+	 * @param int $formId The element's form.
+	 * @return array path => label, original and rewritten, for every file in a group that names the handle.
 	 */
-	public static function screenTemplateReferencePattern($handle, $screenType) {
-		$continuesAName = '(?![A-Za-z0-9_\x80-\xff])';
-		switch($screenType) {
-			case 'template':
-				xoops_getmodulehandler('templateScreen', 'formulize');
-				if(in_array($handle, formulizeTemplateScreenHandler::RESERVED_TEMPLATE_VARIABLES, true)) {
-					return false;
-				}
-				return '/\$()'.preg_quote($handle, '/').$continuesAName.'/';
-			case 'listOfEntries':
-				$prefixes = array();
-				foreach(formulize_quickSearchTypeNames() as $typeNames) {
-					foreach($typeNames['prefixes'] as $prefix) {
-						$prefixes[] = preg_quote($prefix, '/');
-					}
-				}
-				return '/\$('.implode('|', $prefixes).')'.preg_quote($handle, '/').$continuesAName.'/';
+	private function handleRewritesInFiles($originalHandle, $newHandle, $formId) {
+		$groups = array();
+		foreach(self::codeAndTemplateFiles($formId) as $path => $file) {
+			if(($contents = file_get_contents($path)) !== false) {
+				$groups[$file['group']][$path] = $file + array('original' => $contents);
+			}
 		}
-		return false;
+		$reserved = self::reservedHandleNames();
+		$unavailable = null;
+		$rewrites = array();
+		foreach($groups as $files) {
+			$namesHandle = false;
+			foreach($files as $file) {
+				$namesHandle = $namesHandle || strpos($file['original'], $originalHandle) !== false;
+			}
+			if(!$namesHandle) {
+				continue;
+			}
+			$texts = array();
+			foreach($files as $path => $file) {
+				$texts[$path] = $file['original'];
+			}
+			$prefixes = reset($files)['prefixes'];
+			if(in_array($originalHandle, $reserved, true)) {
+				$prefixes = array_values(array_diff($prefixes, array('')));
+			}
+			if($prefixes) {
+				$unavailable = $unavailable ?? array_merge($this->allHandles(), $reserved);
+				$texts = formulizeElementHandleCode::renameVariables($texts, $originalHandle, $newHandle, $prefixes, $unavailable);
+			}
+			foreach($files as $path => $file) {
+				$text = $texts[$path];
+				if($file['tokens']) {
+					$text = formulizeElementHandleCode::renameTokens($text, $originalHandle, $newHandle);
+				}
+				$rewrites[$path] = array(
+					'label' => $file['label'],
+					'original' => $file['original'],
+					'rewritten' => formulizeElementHandleCode::renameStrings($text, $originalHandle, $newHandle, $file['isCode']),
+				);
+			}
+		}
+		return $rewrites;
 	}
 
 	/**
-	 * Rewrite the variables named after an element's handle in the templates of the screens that can name it, when
-	 * the handle changes: their files, and for a template screen the copy of its code and template kept in the
-	 * database, which a theme without the files gets them written out from. See screenTemplateReferencePattern() for
-	 * which variables, and why nothing else is touched.
+	 * Rewrite what names an element's handle in the code files and screen templates, when the handle changes - see
+	 * handleRewritesInFiles() for what is rewritten - and say which of them still name the old handle afterwards, in
+	 * a way that may or may not be the element and so is left for a person.
 	 * @param string $originalHandle The handle as it was.
 	 * @param string $newHandle The handle as it now is.
 	 * @param int $formId The element's form.
-	 * @return void
+	 * @return array Where each file left naming the old handle is, for a person.
 	 */
-	public function renameHandleInScreenTemplates($originalHandle, $newHandle, $formId) {
-		// A new handle a template screen keeps for itself never becomes a variable there, so renaming $status to $i
-		// would have the code read the screen's own loop counter instead. That code is left for a person to change,
-		// and the usage report names it.
-		xoops_getmodulehandler('templateScreen', 'formulize');
-		$newHandleIsReserved = in_array($newHandle, formulizeTemplateScreenHandler::RESERVED_TEMPLATE_VARIABLES, true);
-		$rewrite = function($text, $screenType) use ($originalHandle, $newHandle, $newHandleIsReserved) {
-			if(($screenType == 'template' AND $newHandleIsReserved) OR !$pattern = self::screenTemplateReferencePattern($originalHandle, $screenType)) {
-				return $text;
+	public function renameHandleInFiles($originalHandle, $newHandle, $formId) {
+		$leftByTheRename = array();
+		foreach($this->handleRewritesInFiles($originalHandle, $newHandle, $formId) as $path => $rewrite) {
+			if($rewrite['rewritten'] !== $rewrite['original']) {
+				if(strpos($path, XOOPS_ROOT_PATH.'/modules/formulize/code/') === 0) {
+					formulize_writeCodeToFile(basename($path), $rewrite['rewritten']);
+				} else {
+					file_put_contents($path, $rewrite['rewritten']);
+				}
 			}
-			$rewritten = preg_replace_callback($pattern, function($match) use ($newHandle) {
-				return '$'.$match[1].$newHandle;
-			}, $text);
-			return $rewritten === null ? $text : $rewritten;
-		};
-		foreach(self::screenTemplateFiles($formId) as $file => $screenType) {
-			$contents = file_get_contents($file);
-			if($contents !== false AND ($newContents = $rewrite($contents, $screenType)) !== $contents) {
-				file_put_contents($file, $newContents);
+			if(formulizeElementHandleCode::stillNamed($rewrite['rewritten'], $originalHandle)) {
+				$leftByTheRename[] = $rewrite['label'];
 			}
 		}
-		$templateScreenHandler = xoops_getmodulehandler('templateScreen', 'formulize');
-		foreach(self::screensSeeingForm($formId) as $sid => $screen) {
-			if($screen->getVar('type') == 'template') {
-				// stored with its special characters encoded, which leaves $ and a handle as they are
-				$templateScreenHandler->rewriteStoredTemplates($sid, function($text) use ($rewrite) {
-					return $rewrite($text, 'template');
-				});
-			}
-		}
+		return $leftByTheRename;
 	}
 
 	/**
@@ -1582,7 +1573,7 @@ class formulizeElementsHandler {
 		// references that cannot be cleaned up automatically, because they are code rather than configuration
 		if($broken = $this->codeReferencesToElement($elementId, $handle, $formId)) {
 			$impact['references_in_code_that_you_will_need_to_fix'] = $broken;
-			$impact['about_those_references'] = "Deleting an element clears it out of every setting that stores it as configuration - form screen pages and defaults, list screen columns and filters, map and calendar screen settings, custom button effects, display and read only conditions on other elements, dynamic default values, group visibility filters, entries-are-users settings, saved views, and any screen identifying entries by it in the address bar. The references above are different: they are places a person wrote this element's name into code or text - a formula on another element, a custom code file, a screen's template, a custom page or button, a notification's message. Removing a term from someone's code is not a change that can be made safely without knowing what the code is for, so these are left alone and are yours to fix.";
+			$impact['about_those_references'] = "Deleting an element clears it out of every setting that stores it as configuration - form screen pages and defaults, list screen columns and filters, map and calendar screen settings, custom button effects, display and read only conditions on other elements, dynamic default values, group visibility filters, entries-are-users settings, saved views, and any screen identifying entries by it in the address bar. The references above are different: they are places a person wrote this element's name into code or text - a formula on another element, a custom code file, a screen's template, a custom page or button, a notification's message. Removing a term from someone's code is not a change that can be made safely without knowing what the code is for, so these are left alone and are yours to fix. Renaming the element is different again: a rename updates the variables Formulize names after the handle, {handle} tokens, notification tags, and the handle given to a display function or starting a filter, and the references marked above as left for you are the ones it cannot.";
 		}
 
 		return $impact;
@@ -1594,9 +1585,9 @@ class formulizeElementsHandler {
 	 * In the database, these are found by formulizeElementReferences::mentions(): {some_handle} tokens in
 	 * captions, help text, default values, static content and the terms of conditions, a notification's
 	 * {ELEMENT_SOME_HANDLE} tags, and code kept in the database. Every file in the code folder and every screen's
-	 * own template files are read for the handle written as code can name it - see handleMentionPattern(), and
-	 * handleReferencePattern() for why $artifacts_year does not match $artifacts_year_era - and the notification
-	 * mail templates for its tags.
+	 * own template files are read for the handle written as code can name it - see
+	 * formulizeElementHandleCode::mentionPattern() - and the notification mail templates for its tags. Each one a
+	 * rename would not entirely update is marked as such - see formulizeElementHandleCode::LEFT_BY_A_RENAME.
 	 *
 	 * @param int $elementId The element's id.
 	 * @param string $handle The element's handle.
@@ -1605,8 +1596,6 @@ class formulizeElementsHandler {
 	 */
 	private function codeReferencesToElement($elementId, $handle, $formId) {
 		$broken = [];
-		$referencePattern = self::handleMentionPattern($handle);
-
 		// text and code in the database naming this element - {handle} tokens, notification tags, code - at the
 		// places formulizeElementReferences knows they can be
 		$elementCodeFilesAlreadyReported = array();
@@ -1621,29 +1610,17 @@ class formulizeElementsHandler {
 			}
 		}
 
-		// custom code files that name the handle, including the code files written for derived value and
-		// static content elements, which live in the same folder
-		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
-		if(is_dir($codeDir)) {
-			foreach((array) glob($codeDir.'*.php') as $codeFile) {
-				if(isset($elementCodeFilesAlreadyReported[basename($codeFile)])) { continue; }
-				$contents = file_get_contents($codeFile);
-				if($contents !== false AND preg_match($referencePattern, $contents)) {
-					$broken[] = "custom code file '".basename($codeFile)."' refers to this element by name";
-				}
+		// every code file and every screen's own template files that name the handle, including the code files
+		// written for derived value and static content elements, which live in the same folder. Found the way a person
+		// can tell - see formulizeElementHandleCode::mentionPattern() - which is broader than what a rename rewrites, and
+		// for each one whether a rename would leave some of it for a person, asked of the rename itself.
+		foreach($this->handleRewritesInFiles($handle, formulizeElementHandleCode::RENAME_CHECK_HANDLE, $formId) as $path => $rewrite) {
+			if(isset($elementCodeFilesAlreadyReported[basename($path)])
+				OR (!formulizeElementHandleCode::stillNamed($rewrite['original'], $handle) AND $rewrite['rewritten'] === $rewrite['original'])) {
+				continue;
 			}
-		}
-
-		// every screen's own template files, which can name it in the variables Formulize gives them as well as any
-		// other way code can - see screenTemplateReferencePattern(). Broader than what a rename rewrites, because
-		// this only asks a person to look.
-		$templatesDir = XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/';
-		foreach(self::screenTemplateFiles() as $templateFile => $screenType) {
-			$contents = file_get_contents($templateFile);
-			$variablePattern = self::screenTemplateReferencePattern($handle, $screenType);
-			if($contents !== false AND (preg_match($referencePattern, $contents) OR ($variablePattern AND preg_match($variablePattern, $contents)))) {
-				$broken[] = "screen template file '".substr($templateFile, strlen($templatesDir))."' refers to this element by name";
-			}
+			$broken[] = $rewrite['label'].' refers to this element by name'
+				.(formulizeElementHandleCode::stillNamed($rewrite['rewritten'], $handle) ? formulizeElementHandleCode::LEFT_BY_A_RENAME : '');
 		}
 
 		// notification mail templates, which name it by the tags a notification's subject uses

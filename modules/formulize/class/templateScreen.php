@@ -54,11 +54,9 @@ class formulizeTemplateScreen extends formulizeScreen {
 
     function __construct() {
         parent::__construct();
-        $this->initVar("custom_code", XOBJ_DTYPE_TXTAREA);
         $this->initVar("savebuttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
         $this->initVar("donebuttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
         $this->initVar("donedest", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
-        $this->initVar("template", XOBJ_DTYPE_TXTAREA);
         $this->initVar("viewentryscreen", XOBJ_DTYPE_TXTBOX, NULL, false, 10);
     }
 }
@@ -101,32 +99,6 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         return $formIds;
     }
 
-    /**
-     * Rewrite the copies of a screen's code and template that are kept in the database, as they are stored. The
-     * files in templates/screens are what runs, but a theme without them gets them written out again from these
-     * copies - see getCustomCode() and getTemplateHtml() - so a change made to the files has to be made here too.
-     * @param int $sid The screen.
-     * @param callable $rewrite Given the stored text of one, returns it as it should now be.
-     * @return void
-     */
-    function rewriteStoredTemplates($sid, $rewrite) {
-        $sid = intval($sid);
-        $table = $this->db->prefix('formulize_screen_template');
-        if(!$result = $this->db->query("SELECT custom_code, template FROM $table WHERE sid = $sid") OR !$row = $this->db->fetchArray($result)) {
-            return;
-        }
-        $sets = array();
-        foreach(array('custom_code', 'template') as $column) {
-            if(($rewritten = $rewrite((string) $row[$column])) !== (string) $row[$column]) {
-                $sets[] = "`$column` = ".$this->db->quoteString($rewritten);
-            }
-        }
-        if($sets) {
-            // queryF, because a rename can be made from a GET request - an update patch run from a link
-            $this->db->queryF("UPDATE $table SET ".implode(', ', $sets)." WHERE sid = $sid");
-        }
-    }
-
     function __construct(&$db) {
         $this->db =& $db;
     }
@@ -153,11 +125,11 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         $screen->assignVar('sid', $sid);
 
         if (!$update) {
-            $sql = sprintf("INSERT INTO %s (sid, custom_code, template, donedest, savebuttontext, donebuttontext, viewentryscreen) VALUES (%u, %s, %s, %s, %s, %s, %s)", $this->db->prefix('formulize_screen_template'),
-                $screen->getVar('sid'), $this->db->quoteString($screen->getVar('custom_code')), $this->db->quoteString($screen->getVar('template')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('donebuttontext')), $this->db->quoteString($screen->getVar('viewentryscreen')));
+            $sql = sprintf("INSERT INTO %s (sid, donedest, savebuttontext, donebuttontext, viewentryscreen) VALUES (%u, %s, %s, %s, %s)", $this->db->prefix('formulize_screen_template'),
+                $screen->getVar('sid'), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('donebuttontext')), $this->db->quoteString($screen->getVar('viewentryscreen')));
         } else {
-            $sql = sprintf("UPDATE %s SET custom_code = %s, template = %s, donedest = %s, savebuttontext = %s, donebuttontext = %s, viewentryscreen = %s WHERE sid = %u", $this->db->prefix('formulize_screen_template'),
-                $this->db->quoteString($screen->getVar('custom_code')), $this->db->quoteString($screen->getVar('template')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('donebuttontext')), $this->db->quoteString($screen->getVar('viewentryscreen')), $sid);
+            $sql = sprintf("UPDATE %s SET donedest = %s, savebuttontext = %s, donebuttontext = %s, viewentryscreen = %s WHERE sid = %u", $this->db->prefix('formulize_screen_template'),
+                $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('donebuttontext')), $this->db->quoteString($screen->getVar('viewentryscreen')), $sid);
         }
         $result = $this->db->query($sql);
         if (!$result) {
@@ -446,38 +418,22 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         return $this->cache_folder_name($screen, $theme) ."template.html";
     }
 
-    // returns code.php file
+    // returns the code.php file, which is the screen's code itself - there is no other copy
     function getCustomCode($screen, $theme="") {
         static $templates = array();
         if (!isset($templates['custom_code'])) {
             $pathname = $this->custom_code_filename($screen, $theme);
-            if (file_exists($pathname)) {
-                $templates['custom_code'] = file_get_contents($pathname);
-            } else {
-                $templates['custom_code'] = $screen->getVar('custom_code');
-                if (strlen($templates['custom_code']) > 0) {
-                    $this->write_custom_code_to_file(htmlspecialchars_decode($templates['custom_code'], ENT_QUOTES), $screen, $theme);
-                }
-            }
+            $templates['custom_code'] = file_exists($pathname) ? file_get_contents($pathname) : '';
         }
         return $templates['custom_code'];
-
     }
 
-    // returns template.html file
+    // returns the template.html file, which is the screen's template itself - there is no other copy
     function getTemplateHtml($screen, $theme="") {
         static $templates = array();
         if (!isset($templates['template'])) {
-            // there is no template saved in memory, read it from the file;
             $pathname = $this->template_filename($screen, $theme);
-            if (file_exists($pathname)) {
-                $templates['template'] = file_get_contents($pathname);
-            } else {
-                $templates['template'] = $screen->getVar('template');
-                if (strlen($templates['template']) > 0) {
-                    $this->write_template_to_file(htmlspecialchars_decode($templates['template'], ENT_QUOTES), $screen, $theme);
-                }
-            }
+            $templates['template'] = file_exists($pathname) ? file_get_contents($pathname) : '';
         }
         return $templates['template'];
     }

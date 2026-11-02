@@ -667,6 +667,9 @@ class formulizeScreenHandler {
     // CLONE AND INSERT CLONED FORM INTO FORMULIZE_SCREEN TABLE
     // Takes the screen id of the screen being cloned
     // Returns the id of the newly cloned screen inserted into table
+    // The clone gets a handle of its own, made from its new title, since a handle names one screen. It gets no
+    // address, since the address the original has is the original's - two screens on one address would leave
+    // which one it opens to chance.
     function insertCloneIntoScreenTable($sid, $newtitle) {
         $getrow = q("SELECT * FROM " . $this->db->prefix("formulize_screen") . " WHERE sid = $sid");
         $insert_sql = "INSERT INTO " . $this->db->prefix("formulize_screen") . " (";
@@ -683,6 +686,8 @@ class formulizeScreenHandler {
         foreach($getrow[0] as $field=>$value) {
             if($field == "sid") { continue; }
             if($field == "title") { $value = $newtitle; }
+            if($field == "screen_handle") { $value = $this->makeHandleUnique($newtitle); }
+            if($field == "rewriteruleAddress") { $value = ""; }
             if(!$start) { $insert_sql .= ", "; }
             $start = 0;
             $insert_sql .= "'".formulize_db_escape($value)."'";
@@ -725,7 +730,31 @@ class formulizeScreenHandler {
         if(!$result = $this->db->query($insert_sql)) {
             throw new Exception("Could not clone screen '$newtitle' into $tablename. SQL: $insert_sql. ".$this->db->error());
         }
+        $this->copyTemplateFiles($sid, $newsid);
         return $result;
+    }
+
+    /**
+     * Give a cloned screen copies of the original's own template files, in every theme that has them -
+     * templates/screens/<theme>/<sid>/ - since they are the templates themselves, and are kept nowhere else.
+     * @param int $sid The screen being cloned.
+     * @param int $newsid The clone.
+     * @return void
+     */
+    function copyTemplateFiles($sid, $newsid) {
+        $screensDir = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/";
+        foreach((array) glob($screensDir."*/".intval($sid), GLOB_ONLYDIR) as $sourceDir) {
+            $targetDir = dirname($sourceDir)."/".intval($newsid);
+            if(!is_dir($targetDir) AND !mkdir($targetDir, 0777, true)) {
+                error_log("ERROR: Could not make the folder for the templates of cloned screen $newsid: $targetDir");
+                continue;
+            }
+            foreach((array) glob($sourceDir."/*") as $sourceFile) {
+                if(is_file($sourceFile) AND !copy($sourceFile, $targetDir."/".basename($sourceFile))) {
+                    error_log("ERROR: Could not copy template file $sourceFile for cloned screen $newsid");
+                }
+            }
+        }
     }
 
 }

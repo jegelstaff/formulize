@@ -98,7 +98,7 @@ abstract class formulizeStaticContentElementHandler extends formulizeElementsHan
 
 	/**
 	 * The content, which can carry {handle} tokens - see formulizeElementReferences. Content that is PHP lives
-	 * in a code file instead, which renameHandleInCodeFiles() deals with.
+	 * in a code file instead, which a rename deals with - see formulizeElementsHandler::handleRewritesInFiles().
 	 */
 	public static $eleValueReferences = array(
 		ELE_VALUE_STATICCONTENT_CONTENT => array('shape' => 'tokens'),

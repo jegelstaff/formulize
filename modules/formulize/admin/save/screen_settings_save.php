@@ -86,8 +86,6 @@ if($isNew) {
       $screen->setVar('alldonebuttontext', _formulize_DONE);
   } else if ($screens['type'] == 'template') {
       $screen->setVar('frid', -1);
-      $screen->setVar('custom_code', "");
-      $screen->setVar('template', "");
       $screen->setVar('savebuttontext', _formulize_SAVE);
       $screen->setVar('donebuttontext', _formulize_SAVE_AND_LEAVE);
       $screen->setVar('donedest', "");

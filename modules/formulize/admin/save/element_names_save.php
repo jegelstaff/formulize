@@ -102,7 +102,20 @@ if($element->isSystemElement == false AND $finalHandle != $processedValues['elem
 }
 
 // if the handle changed, we need to rename references to it in other elements, code files
-$element_handler->renameElementResources($element, $original_handle);
+$renameWarnings = $element_handler->renameElementResources($element, $original_handle);
+
+// what to tell the person about the handle: one they asked for that Formulize keeps for itself, and the places the
+// rename left naming the old handle, because they may or may not mean this element
+$handleNotices = array();
+$requestedHandle = formulizeElement::sanitize_handle_name($processedValues['elements']['ele_handle']);
+if($element->isSystemElement == false AND $requestedHandle !== '' AND $requestedHandle != $finalHandle
+	AND in_array($requestedHandle, formulizeElementsHandler::reservedHandleNames(), true)) {
+	$handleNotices[] = '<p>'.sprintf(_AM_ELE_HANDLE_RESERVED, '<b>'.htmlspecialchars($requestedHandle).'</b>', '<b>'.htmlspecialchars($finalHandle).'</b>').'</p>';
+}
+if($renameWarnings) {
+	$handleNotices[] = '<p>'.sprintf(_AM_ELE_RENAME_LEFT_INTRO, '<b>'.htmlspecialchars($original_handle).'</b>', '<b>'.htmlspecialchars($finalHandle).'</b>').'</p>'
+		.'<ul class="formulize-rename-left"><li>'.implode('</li><li>', array_map('htmlspecialchars', $renameWarnings)).'</li></ul>';
+}
 
 // handle principal identifier
 if($_POST['principalidentifier']) {
@@ -113,6 +126,14 @@ if($_POST['principalidentifier']) {
 	$form_handler->insert($formObject);
 }
 
+// a dialog telling a person about their element's new handle, for the admin save to run, which runs $whenClosed after
+$handleNoticeDialog = function($whenClosed) use ($handleNotices) {
+  $okButton = json_encode(_AM_ELE_RENAME_NOTICE_OK);
+  return "$('<div id=\"elementHandleNotice\"></div>').html(".json_encode(implode('', $handleNotices)).").dialog({modal: true, width: 600, title: "
+    .json_encode(_AM_ELE_RENAME_NOTICE_TITLE).", buttons: (function() { var b = {}; b[$okButton] = function() { $(this).dialog('close'); }; return b; })(),"
+    ." close: function() { $(this).dialog('destroy').remove(); $whenClosed }});";
+};
+
 if($_POST['reload_names_page'] OR $isNew) {
   $url = "";
   $ele_id_to_send = 0;
@@ -120,5 +141,13 @@ if($_POST['reload_names_page'] OR $isNew) {
     $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=element&fid=$fid&aid=".intval($_POST['aid'])."&ele_id=$ele_id";
     $ele_id_to_send = $ele_id;
   }
-  print "/* evalnow */ ele_id = $ele_id_to_send; redirect = \"reloadWithScrollPosition('$url');\";";
+  $reload = "reloadWithScrollPosition('$url');";
+  if($handleNotices) {
+    // the page reloads once the notice is closed, rather than out from under it
+    print "/* evalnow */ ele_id = $ele_id_to_send; redirect = ''; ".$handleNoticeDialog($reload);
+  } else {
+    print "/* evalnow */ ele_id = $ele_id_to_send; redirect = \"$reload\";";
+  }
+} elseif($handleNotices) {
+  print "/* evalnow */ ".$handleNoticeDialog('');
 }
