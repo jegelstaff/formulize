@@ -71,6 +71,35 @@ class formulizeCalendarScreenDataset extends xoopsObject {
         $this->initVar("datehandle", XOBJ_DTYPE_TXTBOX, NULL, false, 100);
     }
 
+    /**
+     * The element the entries are placed on is stored as its id, so renaming it cannot leave the calendar
+     * pointing at a handle that no longer exists - the same arrangement as formulizeScreen::elementColumnSettings().
+     */
+    public function setVar($key, $value, $not_gpc = false) {
+        if($key == 'datehandle' AND is_string($value) AND $value !== '' AND !is_numeric($value)) {
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            if($elementObject = $element_handler->get($value)) {
+                $value = (string) $elementObject->getVar('ele_id');
+            }
+        }
+        parent::setVar($key, $value, $not_gpc);
+    }
+
+    /**
+     * Handed out as the handle, which is what the calendar and the admin page work in. A dataset saved before
+     * it was stored as an id holds the handle, which passes through. Pass the 'n' format for what is stored.
+     */
+    public function getVar($key, $format = 's') {
+        $value = parent::getVar($key, $format);
+        if($key == 'datehandle' AND $format != 'n' AND is_numeric($value)) {
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            if($elementObject = $element_handler->get($value)) {
+                $value = $elementObject->getVar('ele_handle');
+            }
+        }
+        return $value;
+    }
+
 }
 
 #[AllowDynamicProperties]
