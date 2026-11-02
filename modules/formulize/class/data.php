@@ -1517,37 +1517,25 @@ class formulizeDataHandler {
 		if(!$element = _getElementObject($elementHandle)) {
 			return false;
 		}
-		// 1. rename to the current field
+		// 1. rename the current field out of the way, in the data table and the revisions table both - updateField renames it wherever it is
 		// 2. create a new field to put this data in
 		// 3. run the encrypt/decrypt SQL to populate the new field
 		// 4. drop the old field
+		// Steps 2 to 4 happen in the revisions table too, when the form has one. Otherwise it is left with only the renamed
+		// field, and saving a revision fails, since that copies every field of the data table into it by name.
+		$field = formulizeElement::sanitize_handle_name($elementHandle); // as updateField names fields
+		$temporaryField = $field."qaz";
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		if(!$form_handler->updateField($element, $elementHandle, false, $elementHandle."qaz")) { // false is no datatype change, last param is the new name
+		if(!$form_handler->updateField($element, $elementHandle, false, $temporaryField)) { // false is no datatype change, last param is the new name
 			return false;
 		}
-		if($currentEncryptionStatus) {
-			$dataType = 'text';
-			$aesFunction = 'AES_DECRYPT';
-		} else {
-			$dataType = 'blob';
-			$aesFunction = 'AES_ENCRYPT';
-		}
-		global $xoopsDB;
 		$formObject = $form_handler->get($element->getVar('id_form'));
-		$type_with_default = ("text" == $dataType ? "text" : "$dataType NULL default NULL");
-		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `$elementHandle` $type_with_default";
-		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
-			return false;
-		}
-		$toggleSQL = "UPDATE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " SET `$elementHandle` = ".$aesFunction."(".$elementHandle."qaz, '".getAESPassword()."')";
-		if(!$toggleSQLRes = $xoopsDB->queryF($toggleSQL)) {
-			return false;
+		foreach($form_handler->entryTables($formObject) as $table) {
+			if(!$form_handler->moveFieldValuesThroughEncryption($table, $temporaryField, $field, !$currentEncryptionStatus)) {
+				return false;
+			}
 		}
 		self::recordDataChange($element->getVar('id_form'));
-		$dropSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " DROP ".$elementHandle."qaz";
-		if(!$dropSQLRes = $xoopsDB->queryF($dropSQL)) {
-			return false;
-		}
 		return true;
 	}
 

@@ -661,6 +661,14 @@ class FormulizeConfigSync
 		// check that the element is valid for upsert
 		// if not then sanitize handle and we will be using the direct DB writing
 		if(formulizeHandler::validateElementType($change['data']['ele_type'], return: true) === false) {
+			// KNOWN PROBLEM, not fixed yet - revisit when config as code is developed further:
+			// isElementHandleUnique() refuses the names Formulize keeps for its own variables in code (entry, value, uid... -
+			// see formulizeElementsHandler::reservedHandleNames()) before it considers which element is asking. So for an
+			// existing element that already has one of those handles, enforceUniqueElementHandles() returns a suffixed handle
+			// and this throws, although the element is only being updated. Elements of types that do use the upsert have the
+			// same problem when they are created: validateElementHandle() gives a new element with a reserved handle a
+			// suffixed one, so the element ends up with a different handle on this site than in the config, and the next
+			// sync cannot match the two.
 			$elementIdentifier = $change['operation'] == 'create' ? null : $change['data']['ele_handle'];
 			$enforcedEleHandle = formulizeHandler::enforceUniqueElementHandles($change['data']['ele_handle'], $elementIdentifier, $formId);
 			if($enforcedEleHandle != $change['data']['ele_handle']) {

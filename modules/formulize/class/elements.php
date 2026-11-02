@@ -1045,10 +1045,9 @@ class formulizeElementsHandler {
 		// An existing element whose handle is the one already stored has nothing to validate. The stored
 		// element is read bypassing the cache, because the cached object may be this very object, already
 		// carrying the handle we are checking.
-		if($ele_handle
-			AND $elementId = intval($element->getVar('ele_id'))
-			AND $storedElement = $this->get($elementId, bypassCache: true)
-			AND $storedElement->getVar('ele_handle') === $ele_handle) {
+		$elementId = intval($element->getVar('ele_id'));
+		$storedElement = $elementId ? $this->get($elementId, bypassCache: true) : false;
+		if($ele_handle AND $storedElement AND $storedElement->getVar('ele_handle') === $ele_handle) {
 			return $ele_handle;
 		}
 		if(!$ele_handle) {
@@ -1063,6 +1062,11 @@ class formulizeElementsHandler {
 		}
 		$ele_handle = substr($ele_handle, 0, 59); // enforce max length of 64 characters... leave space for _f### or _x### if unique enforcement needs it
 		$ele_handle = formulizeHandler::enforceUniqueElementHandles($ele_handle, $element->getVar('ele_id'), $element->getVar('fid'));
+		// an existing element's handle is changing, which its field has to be able to follow - checked now, before the
+		// handle is saved and every reference to it is rewritten, rather than when the field is renamed afterwards
+		if($storedElement AND $storedElement->getVar('ele_handle') !== $ele_handle) {
+			xoops_getmodulehandler('forms', 'formulize')->confirmFieldCanFollowHandle($storedElement, $storedElement->getVar('ele_handle'), $ele_handle);
+		}
 		$element->setVar('ele_handle', $ele_handle);
 		return $ele_handle;
 	}
@@ -1437,6 +1441,10 @@ class formulizeElementsHandler {
 					formulize_writeCodeToFile(basename($path), $rewrite['rewritten']);
 				} else {
 					file_put_contents($path, $rewrite['rewritten']);
+					if(substr($path, -5) == '.html') {
+						// a template screen's template, which Smarty compiles - see formulizeTemplateScreenHandler::recompileTemplate()
+						formulizeTemplateScreenHandler::recompileTemplate($path);
+					}
 				}
 			}
 			if(formulizeElementHandleCode::stillNamed($rewrite['rewritten'], $originalHandle)) {

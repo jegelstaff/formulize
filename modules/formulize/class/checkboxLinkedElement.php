@@ -70,9 +70,10 @@ class formulizeCheckboxLinkedElement extends formulizeCheckboxElement {
 class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHandler {
 
 	/**
-	 * Where linked checkboxes' ele_value refers to other elements - see formulizeElementReferences. The same
-	 * keys a linked list uses, all reported rather than cleaned up when the element they name is deleted,
-	 * since nothing here has ever rewritten them. A rename still reaches them.
+	 * Where linked checkboxes' ele_value refers to other elements - see formulizeElementReferences. They work as a
+	 * linked list's do, under keys of their own for the filters and the sort. The source of the options is reported
+	 * rather than cleaned up when the element it names is deleted, since there is no such thing as linked checkboxes
+	 * with no source; the rest are cleaned up. A rename reaches them all.
 	 */
 	public static $eleValueReferences = array(
 		ELE_VALUE_SELECT_OPTIONS => array('shape' => 'linked_source', 'holds' => 'either', 'on_delete' => 'report',

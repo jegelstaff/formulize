@@ -55,6 +55,8 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 	// Sites updated between 2026-07-03 and 2026-09-09 had their handles converted without their data table
 	// columns, which the migration above cannot see any more because the handles no longer have hyphens.
 	formulize_repair_hyphenated_data_columns();
+	// Turning encryption on or off used to rename an element's field in the revisions table without putting it back
+	formulize_repair_revisions_fields_left_by_encryption();
 
 	// Add to the Primary Relationship any connection between forms that is missing from it.
 	// Runs on every update, because a Primary Relationship can be left incomplete by an earlier
@@ -880,6 +882,110 @@ function formulize_rename_hyphenated_data_column($fid, $oldHandle, $newHandle) {
     }
 
     return '';
+}
+
+/**
+ * Restore the revisions table fields that turning encryption on or off left under a temporary name.
+ *
+ * formulizeDataHandler::toggleEncryption() renames an element's field to <handle>qaz, puts a new <handle> field in
+ * its place and drops the renamed one. Until 2026-11, the rename reached the revisions table but the rest did not,
+ * so the revisions table was left with <handle>qaz and no <handle>. Saving a revision then fails, because that copies
+ * every field of the data table into the revisions table by name, and so does changing the element's handle.
+ *
+ * The field is renamed back, and its history encrypted or decrypted to match the field in the data table, which is
+ * what toggleEncryption() does to it now. Idempotent: once restored, there is no <handle>qaz left to find.
+ */
+function formulize_repair_revisions_fields_left_by_encryption() {
+    global $xoopsDB;
+
+    // Every revisions table field ending in qaz, in one query. LIKE wildcards are only a coarse filter here; the
+    // exact names are checked below.
+    $colRes = $xoopsDB->queryF(
+        "SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE '%revisions' AND COLUMN_NAME LIKE '%qaz'"
+    );
+    if (!$colRes) {
+        print "<p>Error: could not look for revisions table fields left behind by turning encryption on or off: " . htmlspecialchars($xoopsDB->error()) . " Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>";
+        return;
+    }
+    $leftovers = array(); // revisions table name => the fields ending in qaz
+    while ($row = $xoopsDB->fetchArray($colRes)) {
+        if (substr($row['TABLE_NAME'], -strlen('_revisions')) == '_revisions' AND substr($row['COLUMN_NAME'], -3) == 'qaz') {
+            $leftovers[$row['TABLE_NAME']][] = $row['COLUMN_NAME'];
+        }
+    }
+    if (!$leftovers) {
+        return;
+    }
+
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $headingShown = false;
+    $formRes = $xoopsDB->queryF("SELECT id_form, form_handle FROM " . $xoopsDB->prefix('formulize_id') . " WHERE form_handle != ''");
+    while ($formRes AND $formRow = $xoopsDB->fetchArray($formRes)) {
+        $dataTable = $xoopsDB->prefix('formulize_' . $formRow['form_handle']);
+        $revisionsTable = $dataTable . '_revisions';
+        // every element, including those that are not displayed, since any of them can have a field - and read fresh,
+        // since earlier steps of the update can have changed the form's elements after it was cached
+        if (!isset($leftovers[$revisionsTable]) OR !$formObject = $form_handler->get(intval($formRow['id_form']), true, true)) {
+            continue;
+        }
+        $dataColumns = formulize_patch_table_columns($dataTable);
+        $revisionsColumns = formulize_patch_table_columns($revisionsTable);
+        if ($dataColumns === false OR $revisionsColumns === false) {
+            print "<p>Error: could not read the fields of $dataTable or $revisionsTable: " . htmlspecialchars($xoopsDB->error()) . "</p>";
+            continue;
+        }
+        $elementHandles = $formObject->getVar('elementHandles');
+        foreach ($leftovers[$revisionsTable] as $leftover) {
+            $field = substr($leftover, 0, -3);
+            // Only what toggleEncryption() leaves: an element of this form whose field the data table has and the
+            // revisions table does not, where the revisions table has the field's temporary name instead. A field whose
+            // name is itself the handle of one of the form's elements, or a field of the data table, is that element's
+            // own field and not a leftover, whatever its name ends in.
+            if (in_array($leftover, $elementHandles, true) OR isset($dataColumns[$leftover])
+                OR !in_array($field, $elementHandles, true) OR !isset($dataColumns[$field]) OR isset($revisionsColumns[$field])) {
+                continue;
+            }
+            if (!$headingShown) {
+                print "<h3>Restoring revisions table fields that turning encryption on or off had renamed:</h3>\n";
+                $headingShown = true;
+            }
+            // The history is in the state the field was in before encryption was first turned on or off for it -
+            // encrypted when it is a blob - and is brought into the state the field is in now
+            $historyIsEncrypted = stripos($revisionsColumns[$leftover]['Type'], 'blob') !== false;
+            $fieldIsEncrypted = stripos($dataColumns[$field]['Type'], 'blob') !== false;
+            if ($historyIsEncrypted === $fieldIsEncrypted) {
+                $definition = $revisionsColumns[$leftover]['Type'] . (($revisionsColumns[$leftover]['Null'] == 'YES') ? ' NULL' : ' NOT NULL');
+                if ($revisionsColumns[$leftover]['Default'] !== null) {
+                    $definition .= ' DEFAULT ' . $xoopsDB->quoteString($revisionsColumns[$leftover]['Default']);
+                }
+                $restored = $xoopsDB->queryF("ALTER TABLE `$revisionsTable` CHANGE `$leftover` `$field` $definition");
+            } else {
+                $restored = $form_handler->moveFieldValuesThroughEncryption($revisionsTable, $leftover, $field, $fieldIsEncrypted);
+            }
+            if ($restored) {
+                print "<p>Restored the field <code>" . htmlspecialchars($field) . "</code> in $revisionsTable. result: OK</p>\n";
+            } else {
+                print "<p>Error: could not restore the field <code>" . htmlspecialchars($field) . "</code> in $revisionsTable, which is currently called <code>" . htmlspecialchars($leftover) . "</code>: " . htmlspecialchars($xoopsDB->error()) . " Revisions of entries in this form cannot be saved until it is restored. Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>\n";
+            }
+        }
+    }
+}
+
+/**
+ * The fields of a table, as SHOW COLUMNS describes them, keyed by their exact names - or false if they cannot be read.
+ * @param string $table The prefixed table name
+ * @return array|false
+ */
+function formulize_patch_table_columns($table) {
+    global $xoopsDB;
+    if (!$res = $xoopsDB->queryF("SHOW COLUMNS FROM `$table`")) {
+        return false;
+    }
+    $columns = array();
+    while ($row = $xoopsDB->fetchArray($res)) {
+        $columns[$row['Field']] = $row;
+    }
+    return $columns;
 }
 
 /**

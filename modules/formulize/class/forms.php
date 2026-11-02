@@ -2293,22 +2293,12 @@ class formulizeFormsHandler {
 
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($element->getVar('id_form'));
-		$dataTable = $this->db->prefix("formulize_" . $formObject->getVar('form_handle'));
-		$tables = array($dataTable);
-		// The revisions table is checked for directly rather than through revisionsTableExists(), because that creates
-		// the table when revisions are on for every form. A rename should not create a table as a side effect, and one
-		// created now would have nothing to rename, while a failure to create it would stop the rename.
-		$revisionsTable = $this->db->prefix("formulize_" . $formObject->getVar('form_handle') . "_revisions");
-		$revisionsRes = $this->db->queryF("SHOW TABLES LIKE " . $this->db->quoteString($revisionsTable));
-		if($revisionsRes AND $this->db->getRowsNum($revisionsRes) > 0) {
-			$tables[] = $revisionsTable;
-		}
 
 		// Every table is checked before any is changed, so a field missing from one of them stops the update with both
 		// left as they were. A revisions table without the field is already broken - saving a revision copies every
 		// field of the data table by name - and that is for a person to look into, not for an update to cover over.
 		$fields = array(); // table => the field as it is there now
-		foreach($tables as $table) {
+		foreach($this->entryTables($formObject) as $table) {
 			if(!$fields[$table] = $this->findDataTableColumn($this->dataTableColumns($table), $oldName, $table)) {
 				throw new Exception("Could not find the field $oldName in $table");
 			}
@@ -2326,6 +2316,77 @@ class formulizeFormsHandler {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * The tables that hold a form's entries: its data table, and its revisions table when it has one.
+	 * The revisions table is checked for directly rather than through revisionsTableExists(), because that creates the
+	 * table when revisions are on for every form. Working on the fields of the tables that are there should not create
+	 * one as a side effect: one created now would have nothing to work on, and a failure to create it would stop the work.
+	 * @param object $formObject The form
+	 * @return array The prefixed table names, the data table first
+	 */
+	public function entryTables($formObject) {
+		$tables = array($this->db->prefix("formulize_" . $formObject->getVar('form_handle')));
+		$revisionsTable = $this->db->prefix("formulize_" . $formObject->getVar('form_handle') . "_revisions");
+		$revisionsRes = $this->db->queryF("SHOW TABLES LIKE " . $this->db->quoteString($revisionsTable));
+		if($revisionsRes AND $this->db->getRowsNum($revisionsRes) > 0) {
+			$tables[] = $revisionsTable;
+		}
+		return $tables;
+	}
+
+	/**
+	 * Make sure an element's field is there to follow its handle, before the handle is changed.
+	 *
+	 * The handle is saved, and everything that names it rewritten, before updateField() renames the field: the admin
+	 * saves the element's names in one request and its field in another, and the MCP tools rename references first.
+	 * So a field updateField() cannot find has to be caught here, or the element ends up named for a field that is still
+	 * called by its old handle, and its values disappear everywhere. The field can be under either name, since an update
+	 * patch may move the field before it changes the handle.
+	 *
+	 * @param object $element The element, as it is stored now.
+	 * @param string $oldName The handle it has now.
+	 * @param string $newName The handle it is to have.
+	 * @return void
+	 * @throws Exception If the data table or the revisions table has no field for the element, so that the handle is not changed.
+	 */
+	public function confirmFieldCanFollowHandle($element, $oldName, $newName) {
+		if(!$element->hasData) {
+			return; // nothing in the data table belongs to this element
+		}
+		if(!$formObject = $this->get($element->getVar('id_form')) OR $formObject->getVar('tableform')) {
+			return; // a table form's elements are fields of a table Formulize does not manage
+		}
+		foreach($this->entryTables($formObject) as $table) {
+			$columns = $this->dataTableColumns($table);
+			if(!$this->findDataTableColumn($columns, $oldName, $table) AND !$this->findDataTableColumn($columns, $newName, $table)) {
+				throw new Exception("The handle '$oldName' was not changed to '$newName', because $table has no field for that element. Every element that stores data needs a field in its form's data table, and in the form's revisions table too when it has one. The table needs to be repaired before the handle can be changed. Please contact info@formulize.org for assistance.");
+			}
+		}
+	}
+
+	/**
+	 * Put a field's values into a new field, encrypting or decrypting them on the way, and drop the old field.
+	 * Used by formulizeDataHandler::toggleEncryption() on every table that holds the form's entries, so the revisions
+	 * table keeps the same fields as the data table - saving a revision copies every field of the data table into it by
+	 * name - and the history of a field is encrypted along with its current values.
+	 * @param string $table The prefixed table name
+	 * @param string $fromField The field the values are in now
+	 * @param string $toField The field to put them in, which must not exist yet
+	 * @param bool $encrypt True to encrypt the values, into a blob field. False to decrypt them, into a text field.
+	 * @return bool Whether every step worked
+	 */
+	public function moveFieldValuesThroughEncryption($table, $fromField, $toField, $encrypt) {
+		$typeWithDefault = $encrypt ? "blob NULL default NULL" : "text";
+		$aesFunction = $encrypt ? "AES_ENCRYPT" : "AES_DECRYPT";
+		if(!$this->db->queryF("ALTER TABLE `$table` ADD `$toField` $typeWithDefault")) {
+			return false;
+		}
+		if(!$this->db->queryF("UPDATE `$table` SET `$toField` = $aesFunction(`$fromField`, " . $this->db->quoteString(getAESPassword()) . ")")) {
+			return false;
+		}
+		return $this->db->queryF("ALTER TABLE `$table` DROP `$fromField`") ? true : false;
 	}
 
 	/**

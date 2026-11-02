@@ -446,12 +446,34 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     // Writes a template.html file in /modules/formulize/templates/screens/default/$sid/template.html
     function write_template_to_file($content, $screen, $theme="") {
 			if($result = $this->write_to_file($content, $screen, "/template.html", $theme)) {
-				// update cached copy
-				include XOOPS_ROOT_PATH.'/header.php';
-				global $xoopsTpl;
-				$result = $xoopsTpl->touch("file:".$this->template_filename($screen, $theme));
+				$result = self::recompileTemplate($this->template_filename($screen, $theme));
 			}
 			return $result;
+    }
+
+    /**
+     * Make Smarty compile a template screen's template again after its file has changed - when the admin page saves
+     * it, and when renaming an element rewrites the handles in it. Smarty only notices a changed file by itself when
+     * theme_fromfile is on, so otherwise the screen keeps showing the compiled copy of what the file used to say.
+     *
+     * Every compiled copy of the file is removed, not only the one touch() replaces: the copies are kept per theme set,
+     * and when the admin theme differs from the site theme, webmasters and everyone else are shown different ones. A
+     * copy that is gone is compiled again the next time the screen is shown. A new template engine does the touch,
+     * rather than the page's own, so this works where no page is being drawn - a save, an MCP request, an update.
+     *
+     * @param string $filename The template's path.
+     * @return bool Whether the template compiled.
+     */
+    public static function recompileTemplate($filename) {
+        $tpl = new icms_view_Tpl();
+        $resource = "file:".$filename;
+        if(!$tpl->use_sub_dirs) {
+            // compiled copies are named <compile id>^<the name Smarty gives the file>.php, one per compile id
+            foreach((array) glob($tpl->compile_dir."/*".basename($tpl->_get_auto_filename($tpl->compile_dir, $resource)).".php") as $compiledCopy) {
+                @unlink($compiledCopy);
+            }
+        }
+        return $tpl->touch($resource) ? true : false;
     }
 
     function write_to_file($content, $screen, $name, $theme="") {
