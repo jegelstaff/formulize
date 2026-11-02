@@ -698,6 +698,7 @@ define("_AM_ELE_USAGE_SECTION_GROUP_FILTERS","Used in what these groups are allo
 define("_AM_ELE_USAGE_SECTION_SAVED_VIEWS","In these saved views");
 define("_AM_ELE_USAGE_SECTION_FORM_SETTINGS","In these form settings");
 define("_AM_ELE_USAGE_SECTION_RELATIONSHIPS","Connects these forms together");
+define("_AM_ELE_USAGE_SECTION_NOTIFICATIONS","In these notifications");
 define("_AM_ELE_USAGE_CODE","Named in code, which you would need to fix yourself");
 define("_AM_ELE_USAGE_CODE_INTRO","Deleting the element clears it out of every setting above. It cannot change code somebody wrote, so these are left as they are:");
 define("_AM_ELE_USAGE_CLOSE","Close");

@@ -35,13 +35,10 @@
 
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 require_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
-require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementReferenceScanTrait.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementReferences.php";
 // NB userAccountElement.php is required at the BOTTOM of this file, not here. It declares classes that
-// extend formulizeElementsHandler, and formulizeElementsHandler is no longer available part way through
-// this file: PHP early binds - hoists - a class declaration only when it does not compose traits, and this
-// handler now uses formulizeElementReferenceScanTrait. So the class does not exist until execution reaches
-// its declaration below, and anything extending it has to be loaded after that point. Nothing in this file
-// needs those classes at declaration time; the two methods that call them do so at runtime.
+// extend formulizeElementsHandler, so it is loaded once that class has been declared below. Nothing in this
+// file needs those classes at declaration time; the two methods that call them do so at runtime.
 
 global $xoopsDB;
 define('formulize_TABLE', $xoopsDB->prefix("formulize"));
@@ -278,10 +275,6 @@ class formulizeElement extends FormulizeObject {
 
 #[AllowDynamicProperties]
 class formulizeElementsHandler {
-
-	// the shared vocabulary for working out what refers to an element. This handler is the one that asks
-	// the question - see findReferencesToElement() - and also answers it for its own table's columns.
-	use formulizeElementReferenceScanTrait;
 
 	var $db;
 	// The four properties below are set by an element type's formatDataForList() and enforced by the
@@ -528,8 +521,7 @@ class formulizeElementsHandler {
 
 	/**
 	 * Get the elements that the passed in element depends on
-	 * TODO: this returns an array of handles, but no metadata about where/what the dependencies are, it could be smarter about that and return more metadata, but the callers would have to be able to handle it
-	 * TODO: when this is smarter, a lot of the removeElementFromEleValue methods could collapse into the same flow, because those methods exist purely because a more complete set of metadata needs to exist for the usage report and deletion report. The same metadata would also let convertEleValueDependenciesForImport/Export stop repeating the per-type key lists a third and fourth time.
+	 * TODO: this returns an array of handles, but no metadata about where/what the dependencies are. That metadata now exists, for the usage report, deletion and rename: the declaration in $modversion['formulize_element_references'] and each type's static $eleValueReferences, read by formulizeElementReferences. This and getEleValueDependencies()/convertEleValueDependenciesForImport/Export could be built from it too, and stop repeating the per-type key lists.
 	 * The elementData ought to be an array coming from config-as-code, which has had all numeric references to elements converted to element handles!
 	 * @param array $elementData The element data to check for dependencies, conforms to the structure of the properties of an element object
 	 * @param boolean $keyWithIds If true, the returned array is keyed by the element ids of the dependent elements. Must only be used when the passed in elementData is based on current database data, where the ids can be determined from the handles!
@@ -1095,10 +1087,7 @@ class formulizeElementsHandler {
 				throw new Exception("Invalid element object passed to renameElementResources");
 			}
 			$ele_handle = $elementObject->getVar('ele_handle');
-			$fid = $elementObject->getVar('fid');
 			if($ele_handle !== (string) $original_handle) {
-				// the source of every linked list that takes its options from this element
-				$this->renameLinkedListSources($fid, $original_handle, $ele_handle);
 				// rewrite handle references inside the code files that genuinely hold them - $handle in derived
 				// values and the three save/delete procedures, {handle} in static content and default values.
 				// Files where a matching name is not a reference to this element are left alone; see
@@ -1106,19 +1095,15 @@ class formulizeElementsHandler {
 				$this->renameHandleInCodeFiles($original_handle, $ele_handle);
 				// the element's own code files, and the cached derived value formulas named after it
 				$this->renameElementCodeFiles($elementObject, $original_handle, $eleValueWasSavedWithThisChange);
-				// settings that name this element by its handle - screens, saved views, conditions, filters,
-				// custom buttons - found by the same scan that cleans up after a deletion
-				$this->renameElementInSettings($elementObject, $original_handle);
-				// {handle} tokens wherever a person can write one: captions, help text, default values, static
-				// content held in the database, the values of conditions, screen text
-				$this->renameHandleTokens($original_handle, $ele_handle);
-				// Everything above rewrote element rows with SQL that went around the element
-				// objects: ele_value in every element that links to this one or embeds a {handle}
-				// token, and ele_caption and ele_desc wherever that token appears. Any of those
-				// already in the cache still holds the old text, and the passes are written as
-				// LIKE searches rather than as a list of ids, so there is no way to name the ones
-				// that changed. The whole cache goes instead. A handle rename is rare, and a cold
-				// cache costs a re-read; a stale one costs a linked element pointing at a handle
+				// every setting that names this element by its old handle, at the positions declared to hold one,
+				// and {handle} tokens and notification tags - see formulizeElementReferences
+				$references = new formulizeElementReferences($elementObject->getVar('ele_id'), $original_handle, $elementObject->getVar('fid'));
+				$references->rename($ele_handle);
+				// Everything above rewrote element rows with SQL that went around the element objects: ele_value
+				// in every element that links to this one or embeds a {handle} token, and ele_caption and ele_desc
+				// wherever that token appears. Any of those already in the cache still holds the old text, and
+				// there is no list of which ones changed, so the whole cache goes instead. A handle rename is
+				// rare, and a cold cache costs a re-read; a stale one costs a linked element pointing at a handle
 				// that no longer exists.
 				$this->clearElementCache();
 			}
@@ -1310,279 +1295,6 @@ class formulizeElementsHandler {
 	}
 
 	/**
-	 * Rewrite the settings that name an element by its handle, after the handle has changed.
-	 *
-	 * The places are found by findReferencesToElement(), the same scan the usage report and
-	 * removeElementReferences() read, so a rename reaches every setting a deletion would clean up, and a setting
-	 * added to that scan later is renamed as well as cleaned up without anyone coming back here.
-	 *
-	 * The scan is only used to find the rows. What is written is the stored value with the old handle swapped for
-	 * the new one and nothing else changed - a rename does not change the shape of anything, so there is no need
-	 * for each owner to know how to rename as well as how to remove. Wherever a setting stores an id instead,
-	 * the row is found and left as it is, since a rename cannot invalidate an id.
-	 *
-	 * The swap is made on whole values: a string that is the old handle, an entry in a comma separated list that
-	 * is, and the same with the hiddencolumn_ prefix saved views put on some columns. It is not made inside
-	 * other text, so a handle mentioned in prose or code is left alone here. Because it is a swap of whole values
-	 * rather than of the positions each owner knows about, a value in one of those rows that is exactly the old
-	 * handle but means something else - a condition comparing against the literal text of the handle, say - is
-	 * changed as well. Handles are long and distinctive enough for that to be vanishingly rare.
-	 *
-	 * Handles that are numbers are legacy handles that equal their element's id. They are not swapped generally,
-	 * because that would turn references by id into references by handle, in settings that may only hold ids.
-	 * Those settings go on working after the rename anyway, because they resolve what they hold through the
-	 * element handler, where the number is the element's id. Saved views do not - see
-	 * renameNumericHandleInSavedViews().
-	 *
-	 * @param object $elementObject The element, with its new handle already set.
-	 * @param string $originalHandle The handle before the rename, as it is written in the database.
-	 * @return void
-	 */
-	protected function renameElementInSettings($elementObject, $originalHandle) {
-		include_once XOOPS_ROOT_PATH.'/modules/formulize/class/savedViews.php'; // for renameHandleInSettingText()
-		$newHandle = $elementObject->getVar('ele_handle');
-		if(is_numeric($originalHandle)) {
-			$this->renameNumericHandleInSavedViews($originalHandle, $newHandle);
-			return;
-		}
-		// The scan looks for the element by its handle, and the settings still say the old one, so it is asked
-		// about a copy of the element under that name. The old handle is written straight into the copy, because
-		// assignVar() and setVar() would sanitize it, and an old handle with capitals or a character sanitizing
-		// removes would then be looked for under a name its references do not have. A whole new array goes in,
-		// so nothing is shared with the original element.
-		$elementAsItWas = clone $elementObject;
-		$elementAsItWas->vars['ele_handle'] = array_merge($elementObject->vars['ele_handle'], array('value' => (string) $originalHandle));
-		foreach($this->findReferencesToElement($elementAsItWas) as $reference) {
-			// the columns that hold the reference, which are not only the ones a deletion would change - see
-			// elementReference()
-			if(!$reference['table'] OR !$reference['columns']) {
-				continue; // reported only, because it is cleaned up somewhere else - see the scan that found it
-			}
-			$this->rewriteStoredSettings($reference['table'], $reference['key_column'], $reference['key_value'], $reference['columns'],
-				fn($text) => self::renameHandleInSettingText($text, $originalHandle, $newHandle));
-		}
-	}
-
-	/**
-	 * Rename a numeric handle in saved views. Their columns and the column they sort by are compared with the
-	 * current handles as text, rather than resolved through the element handler, so a view still naming the
-	 * number after the element is given a readable handle would quietly lose that column. Only those two
-	 * settings, and only where an entry is exactly the number - a number is far too common to swap anywhere
-	 * else, such as in a saved search.
-	 * @param string $originalHandle The numeric handle.
-	 * @param string $newHandle The handle as it is now.
-	 * @return void
-	 */
-	protected function renameNumericHandleInSavedViews($originalHandle, $newHandle) {
-		$sql = "SELECT sv_id FROM ".$this->db->prefix('formulize_saved_views')."
-			WHERE sv_oldcols LIKE ".$this->db->quoteString('%'.$originalHandle.'%')."
-			OR sv_sort = ".$this->db->quoteString($originalHandle);
-		if(!$result = $this->db->query($sql)) {
-			return;
-		}
-		while($row = $this->db->fetchArray($result)) {
-			$this->rewriteStoredSettings('formulize_saved_views', 'sv_id', $row['sv_id'], array('sv_oldcols', 'sv_sort'),
-				fn($text) => self::renameHandleInSettingText($text, $originalHandle, $newHandle));
-		}
-	}
-
-	/**
-	 * Point linked lists that take their options from an element at its new handle. The source is stored in
-	 * the linked list's ele_value as "fid#*=:*handle", which no other setting looks like, so every string of
-	 * that shape in every element's ele_value is checked.
-	 * @param int $fid The form the renamed element belongs to.
-	 * @param string $originalHandle The handle as it was.
-	 * @param string $newHandle The handle as it is now.
-	 * @return void
-	 */
-	protected function renameLinkedListSources($fid, $originalHandle, $newHandle) {
-		$fid = intval($fid);
-		$rewrite = function($text) use ($fid, $originalHandle, $newHandle) {
-			if(preg_match('/^'.$fid.'#\*=:\*(.*)$/s', $text, $source) AND trim($source[1]) === (string) $originalHandle) {
-				return $fid.'#*=:*'.$newHandle;
-			}
-			return $text;
-		};
-		// a coarse filter only - which strings really are this element's source is decided in PHP
-		$sql = "SELECT ele_id FROM ".$this->db->prefix('formulize')." WHERE ele_value LIKE ".$this->db->quoteString('%'.$fid.'#*=:*%');
-		if(!$result = $this->db->query($sql)) {
-			return;
-		}
-		while($row = $this->db->fetchArray($result)) {
-			$this->rewriteStoredSettings('formulize', 'ele_id', $row['ele_id'], array('ele_value'), $rewrite);
-		}
-	}
-
-	/**
-	 * Swap a handle for another in a stored setting's text, where the text is the handle, or is a comma separated
-	 * list with the handle as one of its entries.
-	 * @param string $text The text, which is one string out of a stored value if the value is serialized.
-	 * @param string $originalHandle The handle as it was.
-	 * @param string $newHandle The handle as it is now.
-	 * @return string
-	 */
-	protected static function renameHandleInSettingText($text, $originalHandle, $newHandle) {
-		$hiddenColumnPrefix = formulizeSavedViewsHandler::HIDDEN_COLUMN_PREFIX;
-		$entries = explode(',', $text);
-		foreach($entries as $i => $entry) {
-			$prefix = strpos($entry, $hiddenColumnPrefix) === 0 ? $hiddenColumnPrefix : '';
-			$bare = substr($entry, strlen($prefix));
-			if($bare === (string) $originalHandle) {
-				$entries[$i] = $prefix.$newHandle;
-			}
-		}
-		return implode(',', $entries);
-	}
-
-	/**
-	 * Rewrite {handle} tokens after a handle has changed, wherever a person can write one: captions, help text,
-	 * default values, static content held in the database, the values conditions compare against, screen text.
-	 *
-	 * Rather than keep a list of those places, every text column of every table Formulize declares is searched
-	 * (see configurationTables()). The token syntax is distinctive enough that nothing else looks like one, and
-	 * the declared tables are only Formulize's own configuration, never the data tables behind the forms.
-	 *
-	 * Code that lives in files rather than in the database is renameHandleInCodeFiles()'s job.
-	 *
-	 * @param string $originalHandle The handle as it was.
-	 * @param string $newHandle The handle as it is now.
-	 * @return void
-	 */
-	protected function renameHandleTokens($originalHandle, $newHandle) {
-		$rewrite = fn($text) => str_replace('{'.$originalHandle.'}', '{'.$newHandle.'}', $text);
-		// A coarse filter only, to read just the rows that may hold the token: the collation ignores case, and the
-		// underscores in a handle are single character wildcards, so it can catch more rows than it needs to. The
-		// swap itself is exact.
-		$likeToken = $this->db->quoteString('%{'.$originalHandle.'}%');
-		foreach(self::configurationTables() as $table) {
-			list($keyColumn, $textColumns) = $this->tableKeyAndTextColumns($table);
-			if(!$keyColumn OR !$textColumns) {
-				continue;
-			}
-			$where = implode(' OR ', array_map(fn($column) => "`$column` LIKE $likeToken", $textColumns));
-			if(!$result = $this->db->query("SELECT `$keyColumn` FROM ".$this->db->prefix($table)." WHERE $where")) {
-				continue;
-			}
-			while($row = $this->db->fetchArray($result)) {
-				$this->rewriteStoredSettings($table, $keyColumn, $row[$keyColumn], $textColumns, $rewrite);
-			}
-		}
-	}
-
-	/**
-	 * Read some columns of one row, rewrite every string in them, and save the columns that changed.
-	 * @param string $table The unprefixed table name.
-	 * @param string $keyColumn The table's primary key column, which holds an integer.
-	 * @param int $keyValue The row's primary key.
-	 * @param array $columns The columns to rewrite.
-	 * @param callable $rewrite Given one string, returns it rewritten - see rewriteStringsInStoredValue().
-	 * @return void
-	 */
-	protected function rewriteStoredSettings($table, $keyColumn, $keyValue, $columns, $rewrite) {
-		$columnList = implode(', ', array_map(fn($column) => "`$column`", $columns));
-		$where = " WHERE `$keyColumn` = ".intval($keyValue);
-		if(!$result = $this->db->query("SELECT $columnList FROM ".$this->db->prefix($table).$where)
-			OR !$row = $this->db->fetchArray($result)) {
-			return;
-		}
-		$sets = array();
-		foreach($columns as $column) {
-			$rewritten = self::rewriteStringsInStoredValue($row[$column], $rewrite);
-			if($rewritten !== $row[$column]) {
-				$sets[] = "`$column` = ".$this->db->quoteString($rewritten);
-			}
-		}
-		if($sets) {
-			// queryF, the same as the rename has always used, because a rename can be made from a GET request (an
-			// update patch run from a link), which query() refuses to write from
-			$this->db->queryF("UPDATE ".$this->db->prefix($table)." SET ".implode(', ', $sets).$where);
-		}
-	}
-
-	/**
-	 * Apply a change to every string in a stored value, whether the value is plain text or serialized.
-	 *
-	 * A serialized value is changed in place, string by string, with each string's length recomputed - rather
-	 * than unserialized, changed and serialized again. That way a value holding objects, as calendar datasets do,
-	 * can be changed without its classes being loaded, and everything that is not a string comes back exactly as
-	 * it was. If the result would not unserialize, the value is left as it was.
-	 *
-	 * @param mixed $value The stored value. Anything other than a non-empty string is returned as it is.
-	 * @param callable $rewrite Given one string, returns it rewritten.
-	 * @return mixed
-	 */
-	protected static function rewriteStringsInStoredValue($value, $rewrite) {
-		if(!is_string($value) OR $value === '') {
-			return $value;
-		}
-		if(!preg_match('/^(a|O|s):\d+:/', $value) OR @unserialize($value, array('allowed_classes' => false)) === false) {
-			return $rewrite($value);
-		}
-		$rewritten = '';
-		$position = 0;
-		// Each string is s:<length in bytes>:"<that many bytes>"; and is read by its length, so a quote or a
-		// semicolon inside one is never taken for the end of it, and searching resumes after the whole string.
-		while(preg_match('/s:(\d+):"/', $value, $match, PREG_OFFSET_CAPTURE, $position)) {
-			$tokenStart = $match[0][1];
-			$contentStart = $tokenStart + strlen($match[0][0]);
-			$content = substr($value, $contentStart, intval($match[1][0]));
-			// a string can itself be a serialized value, whose own lengths need the same care
-			$newContent = self::rewriteStringsInStoredValue($content, $rewrite);
-			$rewritten .= substr($value, $position, $tokenStart - $position).'s:'.strlen($newContent).':"'.$newContent;
-			$position = $contentStart + strlen($content);
-		}
-		$rewritten .= substr($value, $position);
-		return @unserialize($rewritten, array('allowed_classes' => false)) === false ? $value : $rewritten;
-	}
-
-	/**
-	 * The tables that hold Formulize's configuration: every table the module declares in xoops_version.php,
-	 * except the ones that hold records rather than settings. The data tables behind each form are not
-	 * declared, so they are never among these.
-	 * @return array Unprefixed table names.
-	 */
-	protected static function configurationTables() {
-		static $tables = null;
-		if($tables === null) {
-			$module_handler = xoops_gethandler('module');
-			$formulizeModule = $module_handler->getByDirname('formulize');
-			$declared = $formulizeModule ? (array) $formulizeModule->getInfo('tables') : array();
-			// what happened and to whom, who holds which key or code, who owns which entry, and what people typed
-			// as their "Other" answer. A handle written into one of these is a record or an answer, not a
-			// setting that refers to an element.
-			$records = array('formulize_entry_owner_groups', 'formulize_other', 'formulize_valid_imports', 'formulize_procedure_logs',
-				'formulize_procedure_logs_params', 'formulize_deletion_logs', 'formulize_apikeys', 'formulize_tokens',
-				'formulize_digest_data', 'formulize_passcodes', 'tfa_codes');
-			$tables = array_values(array_diff($declared, $records));
-		}
-		return $tables;
-	}
-
-	/**
-	 * A table's primary key, if it is a single integer column, and its text columns.
-	 * @param string $table The unprefixed table name.
-	 * @return array array(key column or false, list of text columns)
-	 */
-	protected function tableKeyAndTextColumns($table) {
-		static $cache = array();
-		if(!isset($cache[$table])) {
-			$keyColumns = array();
-			$textColumns = array();
-			if($res = $this->db->query("SHOW COLUMNS FROM `".$this->db->prefix($table)."`")) {
-				while($row = $this->db->fetchArray($res)) {
-					if($row['Key'] == 'PRI') {
-						$keyColumns[] = preg_match('/int/i', $row['Type']) ? $row['Field'] : false;
-					} elseif(preg_match('/char|text/i', $row['Type'])) {
-						$textColumns[] = $row['Field'];
-					}
-				}
-			}
-			$cache[$table] = array(count($keyColumns) === 1 ? $keyColumns[0] : false, $textColumns);
-		}
-		return $cache[$table];
-	}
-
-	/**
 	 * Remove every stored reference to an element from the settings that hold one, so that deleting an element
 	 * does not leave configuration pointing at something that no longer exists.
 	 *
@@ -1616,301 +1328,27 @@ class formulizeElementsHandler {
 	}
 
 	/**
-	 * Every stored reference to an element, gathered by asking whoever owns the setting.
+	 * Every stored reference to an element, from formulizeElementReferences, which works them out from the
+	 * declaration of where references can be in xoops_version.php.
 	 *
 	 * This exists so that the usage report and the cleanup cannot disagree. A report that promises to tidy
 	 * something up and a cleanup that misses it is worse than either problem alone, and the only way to be
 	 * sure they match is for both to be the same piece of work: the report groups these by section and prints
 	 * the descriptions, and removeElementReferences() runs the updates.
 	 *
-	 * The work itself is not done here. Each class that stores a reference answers for its own storage - a
-	 * list screen knows how it keeps its columns, a calendar knows its datasets are serialized objects, a
-	 * saved view knows its searches run parallel to its columns. That is the same arrangement the
-	 * configuration-as-code system uses, where convertDependenciesForExport() handles what every element has
-	 * and hands ele_value to the element's own type handler. The point of it is that when one of those
-	 * changes how it stores something, the code that has to change with it is in the same file.
-	 *
 	 * Not covered here, deliberately:
-	 * - the element's own column in the form's data table, and the form's principal identifier, which delete()
-	 *   handles directly and the report accounts for on its own
-	 * - anything a person wrote in code, which cannot be rewritten safely - see codeReferencesToElement()
+	 * - the element's own column in the form's data table, and the pages of multipage screens, which delete()
+	 *   handles directly
+	 * - anything a person wrote in text or code, which cannot be rewritten safely - see codeReferencesToElement()
 	 *
 	 * @param object $elementObject The element being asked about.
 	 * @return array The references, in report order.
 	 */
 	private function findReferencesToElement($elementObject) {
-		$elementId = intval($elementObject->getVar('ele_id'));
-		if(!$elementId OR !strlen($elementObject->getVar('ele_handle'))) {
+		if(!intval($elementObject->getVar('ele_id')) OR !strlen($elementObject->getVar('ele_handle'))) {
 			return array();
 		}
-
-		include_once XOOPS_ROOT_PATH.'/modules/formulize/class/savedViews.php';
-		include_once XOOPS_ROOT_PATH.'/modules/formulize/class/frameworks.php';
-		$references = array();
-
-		// Each screen type, asked about its own table. Optional: a type that stores no element references
-		// simply does not implement it, which is how template screens get skipped without being listed here.
-		foreach($this->screenTypeHandlers() as $typeHandler) {
-			if(method_exists($typeHandler, 'scanForElementReferences')) {
-				$references = array_merge($references, $typeHandler->scanForElementReferences($elementObject));
-			}
-		}
-
-		// The columns every screen has whatever its type, asked once of the base handler, under a different
-		// name on purpose: every type handler extends it, so a shared name would be inherited by all of them
-		// and its one row reported once per type.
-		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
-		$references = array_merge($references, $screen_handler->scanScreenTableForElementReferences($elementObject));
-
-		// Everyone else who owns somewhere an element can be referenced from, in the order their answers
-		// should be reported - the usage report groups its sections by the order they first appear, so this
-		// is what a person ends up reading top to bottom. $this is in the list because this handler owns the
-		// elements table like any other owner owns its own.
-		foreach(array(
-			$this,
-			xoops_getmodulehandler('savedViews', 'formulize'),
-			xoops_getmodulehandler('forms', 'formulize'),
-			xoops_getmodulehandler('frameworks', 'formulize')
-		) as $owner) {
-			$references = array_merge($references, $owner->scanForElementReferences($elementObject));
-		}
-
-		return $references;
-	}
-
-	/**
-	 * Every screen type there is, read off the class folder rather than from a list kept here.
-	 *
-	 * A screen type is a class file called <type>Screen.php, and its handler is formulize<Type>ScreenHandler
-	 * - the same convention initialize.php dispatches on when it renders one, and the same one
-	 * xoops_getmodulehandler() resolves. Reading the folder means a screen type added later is asked about
-	 * because it exists, not because somebody remembered to come here: the list in admin/application.php has
-	 * never heard of calendar or template screens, which is exactly the rot this avoids.
-	 *
-	 * Asked for optionally, so a file whose handler is named off convention is skipped rather than being a
-	 * fatal error - xoops_getmodulehandler() raises E_USER_ERROR otherwise, and this now asks about files
-	 * nobody has vetted. Sorted so the report reads the same way twice running.
-	 *
-	 * The caller checks method_exists() before asking any of them anything, so a type that stores no element
-	 * references - template screens today - needs no entry anywhere and no code of its own.
-	 *
-	 * @return array The handlers.
-	 */
-	private function screenTypeHandlers() {
-		$handlers = array();
-		$screenFiles = (array) glob(XOOPS_ROOT_PATH.'/modules/formulize/class/*Screen.php');
-		sort($screenFiles);
-		foreach($screenFiles as $screenFile) {
-			$type = substr(basename($screenFile), 0, -strlen('Screen.php'));
-			// screen.php holds the base class rather than a type. It does not match the pattern above on a
-			// case sensitive filesystem, but it costs nothing to be sure, and a stray file called Screen.php
-			// would otherwise be asked for as a handler with no name at all.
-			if($type === '' OR strtolower($type) === 'screen') {
-				continue;
-			}
-			if($typeHandler = xoops_getmodulehandler($type.'Screen', 'formulize', true)) {
-				$handlers[] = $typeHandler;
-			}
-		}
-		return $handlers;
-	}
-
-	/**
-	 * Where does one element refer to another, and what do those settings look like once it is gone? Whether
-	 * an element is shown, whether it is read only, where its dynamic default value is read from, and
-	 * whatever its own type keeps in ele_value.
-	 *
-	 * This handler answers for the elements table the same way a list screen handler answers for its own -
-	 * the columns read here are the ones initVar() declares in formulizeElement at the top of this file. It
-	 * happens to also be the class that asks everybody else the question, in findReferencesToElement(), but
-	 * that is a separate job that this one knows nothing about.
-	 *
-	 * @param object $elementObject The element being asked about.
-	 * @return array The references found.
-	 */
-	public function scanForElementReferences($elementObject) {
-		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
-		$references = array();
-		$sql = "SELECT ele_id, ele_handle, ele_type, id_form, ele_value, ele_filtersettings, ele_disabledconditions,
-			ele_dynamicdefault_source, ele_dynamicdefault_conditions
-			FROM ".formulize_TABLE." WHERE ele_id != ".intval($elementId);
-		if(!$result = $this->db->query($sql)) {
-			return $references;
-		}
-		while($row = $this->db->fetchArray($result)) {
-			$updates = array();
-			$usedAs = array();
-
-			// Does this element refer to the one being deleted at all? Asked of getElementDependencies(),
-			// which is the system's existing answer to that question - the configuration-as-code export uses
-			// it to work out what an element needs before it can be created, and it already knows every
-			// property an element can hold a reference in, including handing ele_value to the element's own
-			// type. Asking it rather than working it out again means there is one definition of what counts
-			// as a reference, and a property added to it later is picked up here without anyone remembering
-			// to. It is given only the settings this method can actually rewrite: a handle written into a
-			// caption or a description is a reference too, but it is prose, and it is reported by
-			// codeReferencesToElement() as something a person has to deal with rather than cleaned up here.
-			if(!in_array($handle, $this->elementDependencyHandles($row))) {
-				continue;
-			}
-
-			foreach(array(
-				'ele_filtersettings' => 'in the conditions that decide whether it is shown',
-				'ele_disabledconditions' => 'in the conditions that decide whether it is read only',
-				'ele_dynamicdefault_conditions' => 'in the conditions on its dynamic default value'
-			) as $column => $description) {
-				$newConditions = $this->removeElementFromConditions(@unserialize((string) $row[$column]), $elementId, $handle);
-				if($newConditions !== false) {
-					$updates[$column] = serialize($newConditions);
-					$usedAs[] = $description;
-				}
-			}
-
-			// a dynamic default reads its value out of another element, so once that element is gone there is
-			// nothing left to read. The conditions that went with it go too, which is what the element editor
-			// does when the source is set back to none.
-			if(intval($row['ele_dynamicdefault_source']) === intval($elementId)) {
-				$updates['ele_dynamicdefault_source'] = 0;
-				$updates['ele_dynamicdefault_conditions'] = serialize(array());
-				$usedAs[] = 'as the source of its dynamic default value';
-			}
-
-			// ele_value holds whatever the element's own type wants it to, so the type is the only thing that
-			// can rewrite it - a linked list keeps element ids in seven different keys, a subform in six, a
-			// grid in one, each with its own idea of what the setting looks like once the reference is gone.
-			// Discovered with method_exists(), the same arrangement getEleValueDependencies() uses for the
-			// configuration-as-code system. A type that cannot rewrite itself simply does not implement it,
-			// and its reference is reported by the fallback below instead of being cleaned up.
-			$eleValueResult = $this->removeElementFromEleValueForType($row, $elementId, $handle);
-			if($eleValueResult !== false) {
-				if($eleValueResult['ele_value'] !== null) {
-					$updates['ele_value'] = serialize($eleValueResult['ele_value']);
-				}
-				$usedAs = array_merge($usedAs, $eleValueResult['used_as']);
-			}
-
-			// getElementDependencies() said this element refers to the one going, so it is reported whether or
-			// not anything above worked out what to change. The two are not the same question - finding a
-			// reference needs only to spot it, removing one needs to know which setting it sits in and what
-			// that setting is allowed to look like without it - and where only the first has an answer, a
-			// person is told rather than left to find out.
-			if(!$usedAs) {
-				$usedAs[] = 'somewhere in its settings, which you will need to look at yourself';
-			}
-
-			if($usedAs) {
-				// where the reference sits is asked separately from what a deletion changes, because a type that
-				// cannot rewrite its own ele_value still holds the reference there, and a rename has to reach it
-				$references[] = $this->elementReference(
-					_AM_ELE_USAGE_SECTION_OTHER_ELEMENTS,
-					"the ".$row['ele_type']." element '".$row['ele_handle']."' (form ".intval($row['id_form']).") - ".implode(', ', $usedAs),
-					'formulize', 'ele_id', $row['ele_id'], $updates,
-					array_merge(array_keys($updates), $this->elementDependencyColumns($row, $handle))
-				);
-			}
-		}
-		return $references;
-	}
-
-	/**
-	 * Which element handles does this element refer to, in the settings the reference cleanup can rewrite?
-	 *
-	 * Answered by getElementDependencies(), the same routine the configuration-as-code export uses to work
-	 * out what an element needs before it can be created. It is not cheap - it resolves every id it finds by
-	 * loading that element - and the answer is about the element being examined rather than the one being
-	 * deleted, so it is worked out once and kept. The scan walks the whole elements table once per element
-	 * asked about, which without this turns a question into a question per pair.
-	 *
-	 * Keyed on what was read rather than on the id alone, so an element that changes during the request -
-	 * which is exactly what the integrity test does when it builds its fixtures - is not answered from a
-	 * stale reading.
-	 *
-	 * @param array $row The element row, with the settings columns and ele_type.
-	 * @param string|null $column Only this one of the settings, rather than all of them.
-	 * @return array The handles this element refers to.
-	 */
-	private function elementDependencyHandles($row, $column = null) {
-		static $cache = array();
-		$settings = $this->elementDependencySettings($row);
-		if($column !== null) {
-			// ele_type goes along, because it decides what ele_value means
-			$settings = array('ele_type' => $settings['ele_type'], $column => $settings[$column]);
-		}
-		$key = intval($row['ele_id']).':'.md5(serialize($settings));
-		if(!isset($cache[$key])) {
-			$cache[$key] = $this->getElementDependencies($settings);
-		}
-		return $cache[$key];
-	}
-
-	/**
-	 * Which of an element's settings name this handle - the location of a reference that
-	 * elementDependencyHandles() has found, asked of getElementDependencies() one setting at a time, so where a
-	 * reference is comes from the same definition as whether there is one.
-	 * @param array $row The element row, with the settings columns and ele_type.
-	 * @param string $handle The handle referred to.
-	 * @return array The columns.
-	 */
-	private function elementDependencyColumns($row, $handle) {
-		$columns = array();
-		foreach(array_keys($this->elementDependencySettings($row)) as $column) {
-			if($column !== 'ele_type' AND in_array($handle, $this->elementDependencyHandles($row, $column))) {
-				$columns[] = $column;
-			}
-		}
-		return $columns;
-	}
-
-	/**
-	 * The settings of an element that can refer to another element, in the shape getElementDependencies() reads.
-	 * @param array $row The element row, with the settings columns and ele_type.
-	 * @return array
-	 */
-	private function elementDependencySettings($row) {
-		return array(
-			'ele_type' => $row['ele_type'],
-			'ele_filtersettings' => $row['ele_filtersettings'],
-			'ele_disabledconditions' => $row['ele_disabledconditions'],
-			'ele_dynamicdefault_conditions' => $row['ele_dynamicdefault_conditions'],
-			'ele_dynamicdefault_source' => $row['ele_dynamicdefault_source'],
-			'ele_value' => $row['ele_value']
-		);
-	}
-
-	/**
-	 * Ask an element's own type to rewrite its ele_value without the element being deleted.
-	 *
-	 * Types that can do this implement removeElementFromEleValue(); the rest do not, and their reference is
-	 * reported rather than removed. Loading and instantiating a type handler is not free, so both are cached
-	 * per type across the whole scan - the elements table is read in one pass and most systems have only a
-	 * handful of types in play.
-	 *
-	 * @param array $row The element row being examined, with ele_type and ele_value.
-	 * @param int $elementId The id of the element being deleted.
-	 * @param string $handle The handle of the element being deleted.
-	 * @return array|false What the type reported, or false if it has nothing to say.
-	 */
-	private function removeElementFromEleValueForType($row, $elementId, $handle) {
-		static $typeHandlers = array();
-		$type = $row['ele_type'];
-		if(!isset($typeHandlers[$type])) {
-			$typeHandlers[$type] = false;
-			if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/class/'.$type.'Element.php')) {
-				require_once XOOPS_ROOT_PATH.'/modules/formulize/class/'.$type.'Element.php';
-				$typeHandler = xoops_getmodulehandler($type.'Element', 'formulize');
-				if($typeHandler AND method_exists($typeHandler, 'removeElementFromEleValue')) {
-					$typeHandlers[$type] = $typeHandler;
-				}
-			}
-		}
-		if(!$typeHandlers[$type]) {
-			return false;
-		}
-		$eleValue = @unserialize((string) $row['ele_value']);
-		if(!is_array($eleValue)) {
-			return false;
-		}
-		return $typeHandlers[$type]->removeElementFromEleValue($eleValue, $elementId, $handle);
+		return formulizeElementReferences::forElement($elementObject)->references();
 	}
 
 	/**
@@ -1976,7 +1414,7 @@ class formulizeElementsHandler {
 		}
 
 		// references that cannot be cleaned up automatically, because they are code rather than configuration
-		if($broken = $this->codeReferencesToElement($elementId, $handle)) {
+		if($broken = $this->codeReferencesToElement($elementId, $handle, $formId)) {
 			$impact['references_in_code_that_you_will_need_to_fix'] = $broken;
 			$impact['about_those_references'] = "Deleting an element clears it out of every setting that stores it as configuration - form screen pages and defaults, list screen columns and filters, map and calendar screen settings, custom button effects, display and read only conditions on other elements, dynamic default values, group visibility filters, entries-are-users settings, saved views, and any screen identifying entries by it in the address bar. The references above are different: they are places a person wrote this element's name into code, either a formula on another element or a custom code file. Removing a term from someone's code is not a change that can be made safely without knowing what the code is for, so these are left alone and are yours to fix.";
 		}
@@ -1985,43 +1423,34 @@ class formulizeElementsHandler {
 	}
 
 	/**
-	 * The places a person has written this element's handle into code, which deleting the element cannot fix.
+	 * The places a person has written this element's handle into text or code, which deleting the element cannot fix.
 	 *
-	 * There are two ways a handle gets referenced: as a PHP variable in derived value code ($some_handle),
-	 * and in curly braces in the default value of a text or textarea element and in the content of a static
-	 * content element ({some_handle}).
-	 *
-	 * The SQL is only a coarse filter - it is deliberately loose, because an underscore is a single character
-	 * wildcard in LIKE and handles are full of them. The precise test happens in PHP, where a trailing name
-	 * character can be excluded so that $artifacts_year does not match $artifacts_year_era. The excluded set
-	 * is PHP's own grammar for what may continue a variable name, [a-zA-Z0-9_\x80-\xff], which includes the
-	 * high bytes that let variable names hold accented and other non-ASCII characters. No /u modifier: that
-	 * grammar is defined in bytes, and a multibyte character is a sequence of bytes that are all inside the
-	 * excluded range anyway.
+	 * In the database, these are found by formulizeElementReferences::mentions(): {some_handle} tokens in
+	 * captions, help text, default values, static content and the terms of conditions, a notification's
+	 * {ELEMENT_SOME_HANDLE} tags, and code kept in the database. In the code folder, every file is read for
+	 * $some_handle or {some_handle} - see handleReferencePattern() for why $artifacts_year does not match
+	 * $artifacts_year_era.
 	 *
 	 * @param int $elementId The element's id.
 	 * @param string $handle The element's handle.
+	 * @param int $formId The element's form.
 	 * @return array The references, described for a person.
 	 */
-	private function codeReferencesToElement($elementId, $handle) {
+	private function codeReferencesToElement($elementId, $handle, $formId) {
 		$broken = [];
-		$continuesAName = '(?![A-Za-z0-9_\x80-\xff])';
-		$referencePattern = '/(\$'.preg_quote($handle, '/').$continuesAName.'|\{'.preg_quote($handle, '/').'\})/';
+		$referencePattern = self::handleReferencePattern($handle);
 
-		// other elements naming this one in their settings
+		// text and code in the database naming this element - {handle} tokens, notification tags, code - at the
+		// places formulizeElementReferences knows they can be
 		$elementCodeFilesAlreadyReported = array();
-		$referenceSql = "SELECT ele_id, ele_handle, ele_type, id_form, ele_value FROM ".$this->db->prefix('formulize')."
-			WHERE ele_value LIKE ".$this->db->quoteString('%'.$handle.'%');
-		if($referenceResult = $this->db->query($referenceSql)) {
-			while($referenceRow = $this->db->fetchArray($referenceResult)) {
-				if(intval($referenceRow['ele_id']) === $elementId) { continue; }
-				if(preg_match($referencePattern, (string) $referenceRow['ele_value'])) {
-					$broken[] = "the ".$referenceRow['ele_type']." element '".$referenceRow['ele_handle']."' (form ".intval($referenceRow['id_form']).") refers to this element by name in its settings";
-					// an element that keeps code in ele_value also has that code in a file of its own, named for
-					// its type and handle. It is the same reference seen twice, so the file is not reported again
-					// below - the element it belongs to has already been named, which is the more useful of the two.
-					$elementCodeFilesAlreadyReported[$referenceRow['ele_type'].'_'.$referenceRow['ele_handle'].'.php'] = true;
-				}
+		$references = new formulizeElementReferences($elementId, $handle, $formId);
+		foreach($references->mentions() as $mention) {
+			$broken[] = $mention['description'];
+			if($mention['table'] == 'formulize') {
+				// an element that keeps code in ele_value also has that code in a file of its own, named for
+				// its type and handle. It is the same reference seen twice, so the file is not reported again
+				// below - the element it belongs to has already been named, which is the more useful of the two.
+				$elementCodeFilesAlreadyReported[$mention['row']['ele_type'].'_'.$mention['row']['ele_handle'].'.php'] = true;
 			}
 		}
 

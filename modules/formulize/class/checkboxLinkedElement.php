@@ -69,6 +69,26 @@ class formulizeCheckboxLinkedElement extends formulizeCheckboxElement {
 #[AllowDynamicProperties]
 class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHandler {
 
+	/**
+	 * Where linked checkboxes' ele_value refers to other elements - see formulizeElementReferences. The same
+	 * keys a linked list uses, all reported rather than cleaned up when the element they name is deleted,
+	 * since nothing here has ever rewritten them. A rename still reaches them.
+	 */
+	public static $eleValueReferences = array(
+		ELE_VALUE_SELECT_OPTIONS => array('shape' => 'linked_source', 'holds' => 'handle', 'on_delete' => 'report',
+			'describe' => 'the element its options come from, which it cannot work without - it needs a new source or it needs deleting'),
+		5 => array('shape' => 'conditions', 'holds' => 'either', 'on_delete' => 'report',
+			'describe' => 'in the conditions that decide which options it offers, which you will need to change yourself'),
+		12 => array('shape' => 'value', 'holds' => 'either', 'on_delete' => 'report',
+			'describe' => 'the element its options are sorted by, which you will need to change yourself'),
+		EV_MULTIPLE_LIST_COLUMNS => array('shape' => 'list', 'holds' => 'either', 'on_delete' => 'report',
+			'describe' => 'one of the elements shown in place of its options in lists, which you will need to change yourself'),
+		EV_MULTIPLE_FORM_COLUMNS => array('shape' => 'list', 'holds' => 'either', 'on_delete' => 'report',
+			'describe' => 'one of the elements shown in place of its options in forms, which you will need to change yourself'),
+		EV_MULTIPLE_SPREADSHEET_COLUMNS => array('shape' => 'list', 'holds' => 'either', 'on_delete' => 'report',
+			'describe' => 'one of the elements shown in place of its options in exports, which you will need to change yourself'),
+	);
+
     function create() {
         return new formulizeCheckboxLinkedElement();
     }

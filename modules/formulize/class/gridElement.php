@@ -77,6 +77,15 @@ class formulizeGridElement extends formulizeElement {
 #[AllowDynamicProperties]
 class formulizeGridElementHandler extends formulizeElementsHandler {
 
+	/**
+	 * Where a grid's ele_value refers to another element - see formulizeElementReferences. Key 4 is the
+	 * element it takes its initial values from, blanked to 'none', the value the editor writes for nothing chosen.
+	 */
+	public static $eleValueReferences = array(
+		4 => array('shape' => 'value', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => 'none',
+			'describe' => 'the element it takes its initial values from'),
+	);
+
 	var $db;
 	var $clickable; // used in formatDataForList
 	var $striphtml; // used in formatDataForList
@@ -168,27 +177,6 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 			$eleValueData[4] = $initialElementObject->getVar('ele_handle');
 		}
 		return $eleValueData;
-	}
-
-	/**
-	 * What does this grid's ele_value look like once an element it refers to is deleted? Just the one
-	 * setting: the element the grid takes its initial values from, in key 4.
-	 *
-	 * NOT a detector - getElementDependencies() has already established that the reference is here, by way
-	 * of getEleValueDependencies() below. This knows the thing a list of handles cannot say: which key it
-	 * was in, and what belongs there instead.
-	 *
-	 * @param array $eleValue The ele_value array of the element being examined.
-	 * @param int $elementId The id of the element being deleted.
-	 * @param string $handle The handle of the element being deleted.
-	 * @return array|false array('ele_value' => new array or null, 'used_as' => descriptions), or false.
-	 */
-	public function removeElementFromEleValue($eleValue, $elementId, $handle) {
-		if(!isset($eleValue[4]) OR ($new = $this->clearReferenceToElement($eleValue[4], $elementId, $handle)) === false) {
-			return false;
-		}
-		$eleValue[4] = $new;
-		return array('ele_value' => $eleValue, 'used_as' => array('the element it takes its initial values from'));
 	}
 
 	/**

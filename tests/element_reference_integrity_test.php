@@ -407,10 +407,10 @@ try {
         " . $xoopsDB->quoteString(serialize(array($elementId => 'default', 999997 => 'keep'))) . ")");
 
     // Elements of other types whose own settings point at this one. These references live inside ele_value,
-    // and are found by getElementDependencies() like every other kind. What is type specific is putting
-    // ele_value back together without them, which each type does in removeElementFromEleValue() - nothing
-    // outside the type knows that key 12 of a linked list is a single element you blank while key 10 is a
-    // list you splice.
+    // whose meaning is type specific: each type declares its keys in a static $eleValueReferences on its
+    // handler - nothing outside the type knows that key 12 of a linked list is a single element you blank
+    // while key 10 is a list you splice. PART 1 checks those declarations still find everything
+    // getElementDependencies() does.
     $newElement = function ($type, $handle, $eleValue) use ($xoopsDB, $fixtureFid) {
         $xoopsDB->queryF("INSERT INTO " . prefix('formulize') . "
             (id_form, ele_type, ele_caption, ele_handle, ele_order, ele_display, ele_value)

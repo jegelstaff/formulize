@@ -136,6 +136,14 @@ class formulizeTextareaElement extends formulizeTextElement {
 #[AllowDynamicProperties]
 class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 
+	/**
+	 * The default value, which can carry {handle} tokens, is under a different key than a text element's -
+	 * see formulizeElementReferences.
+	 */
+	public static $eleValueReferences = array(
+		ELE_VALUE_TEXTAREA_DEFAULTVALUE => array('shape' => 'tokens'),
+	);
+
 	function __construct($db) {
 		$this->db =& $db;
 		$this->defaultValueKey = ELE_VALUE_TEXTAREA_DEFAULTVALUE;

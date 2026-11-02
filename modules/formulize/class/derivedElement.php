@@ -159,6 +159,14 @@ if(!empty(\$bookings_name)) {
 #[AllowDynamicProperties]
 class formulizeDerivedElementHandler extends formulizeElementsHandler {
 
+	/**
+	 * The formula, which is code a person wrote - see formulizeElementReferences. It is kept in a code file,
+	 * which renameHandleInCodeFiles() rewrites; any copy still in the database is only ever mentioned.
+	 */
+	public static $eleValueReferences = array(
+		0 => array('shape' => 'code'),
+	);
+
 	var $db;
 	var $clickable; // used in formatDataForList
 	var $striphtml; // used in formatDataForList
