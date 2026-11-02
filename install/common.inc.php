@@ -185,12 +185,50 @@ class XoopsInstallWizard {
 		$this->loadLangFile( 'install' );
 	}
 
+	/**
+	 * What the server must have for Formulize to be installed on it, and whether it has each one. The installer
+	 * does not go past the page that lists them until it has them all - see setPage().
+	 * @return array key => array(label, whether the server has it)
+	 */
+	function requirements() {
+		return array(
+			'php' => array(_PHP_VERSION.' (8.1 or later)', version_compare(phpversion(), '8.1', '>=')),
+			'mysqli' => array(sprintf(PHP_EXTENSION, 'MySQL (mysqli)'), function_exists('mysqli_connect')), // the installer's own connection
+			'pdo_mysql' => array(sprintf(PHP_EXTENSION, 'PDO MySQL'), extension_loaded('pdo_mysql')), // the site's connection, to MySQL or MariaDB
+			'session' => array(sprintf(PHP_EXTENSION, 'Session'), extension_loaded('session')),
+			'pcre' => array(sprintf(PHP_EXTENSION, 'PCRE'), extension_loaded('pcre')),
+			'tokenizer' => array(sprintf(PHP_EXTENSION, 'Tokenizer'), extension_loaded('tokenizer')), // Formulize reads code people write with token_get_all()
+		);
+	}
+
+	/**
+	 * Does the server have everything in requirements()?
+	 * @return bool
+	 */
+	function requirementsMet() {
+		foreach ($this->requirements() as $requirement) {
+			if (!$requirement[1]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	function setPage( $page) {
 		/**
 		 * If server is PHP 4, display the php4 page and stop the install
 		 */
 		if ($this->no_php5 && $page != 'no_php5') {
 			header('location:page_no_php5.php');
+			exit;
+		}
+		/**
+		 * If the server is missing something Formulize needs, go no further than the page that says what
+		 */
+		$requirementsPage = array_search('modcheck', $this->pages);
+		$pageIndex = is_numeric($page) ? (int) $page : array_search($page, $this->pages);
+		if ($requirementsPage !== false && $pageIndex !== false && $pageIndex > $requirementsPage && !$this->requirementsMet()) {
+			header('location:page_modcheck.php');
 			exit;
 		}
 		/**

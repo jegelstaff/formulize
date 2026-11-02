@@ -137,7 +137,7 @@ echo '<body>';
 						<?php echo BUTTON_FINISH; ?>
 					<?php } ?>
 					</button>
-				<?php } else if ($wizard->pages[$wizard->currentPage] != $wizard->lastpage) { ?>
+				<?php } else if ($wizard->pages[$wizard->currentPage] != $wizard->lastpage && empty($pageStopsHere)) { ?>
 					<?php if (@$pageHasForm) { ?>
 					<button type="submit"  title="<?php echo BUTTON_NEXT; ?>" >
 					<?php } else { ?>

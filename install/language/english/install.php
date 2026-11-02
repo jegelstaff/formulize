@@ -19,6 +19,7 @@ define( "CHAR_ENCODING", "Character encoding" );
 define( "XML_PARSING", "XML parsing" );
 define( "OPEN_ID", "OpenID" );
 define( "REQUIREMENTS", "Requirements" );
+define( "REQUIREMENTS_MISSING", "Formulize cannot be installed on this server yet, because PHP is missing what is marked as failed below. Ask your hosting provider or server administrator to enable it for the version of PHP that runs this website, then reload this page." );
 define( "_PHP_VERSION", "PHP version" );
 define( "RECOMMENDED_SETTINGS", "Recommended settings" );
 define( "RECOMMENDED_EXTENSIONS", "Recommended extensions" );
