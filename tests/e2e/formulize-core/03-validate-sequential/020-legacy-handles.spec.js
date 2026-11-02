@@ -36,7 +36,7 @@ test.describe.serial('Legacy handles in settings', () => {
 		expect(before.condition_element).toBe(handle); // what the settings hold before the rename
 
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-		await renameElementHandle(page, handle, 'artifacts_donated');
+		expect(await renameElementHandle(page, handle, 'artifacts_donated')).toBeNull(); // nothing in code it cannot follow
 		const expectConverted = (stored) => {
 			expect(stored.condition_element).toBe(id);
 			expect(stored.list_column).toBe(id);
@@ -67,7 +67,7 @@ test.describe.serial('Legacy handles in settings', () => {
 		// renaming back leaves the ids as they are now, and the values alone
 		await page.goto('/user.php?op=logout');
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-		await renameElementHandle(page, 'artifacts_donated', handle);
+		expect(await renameElementHandle(page, 'artifacts_donated', handle)).toBeNull();
 		expectConverted(JSON.parse(legacySettings('read', handle)));
 	});
 });

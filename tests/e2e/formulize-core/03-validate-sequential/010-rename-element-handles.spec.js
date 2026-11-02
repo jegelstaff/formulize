@@ -5,6 +5,7 @@ import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
 import {
 	login, saveFormulizeForm, saveAdminForm, waitForAdminPageReady, dbQuery, dbPrefix, renameElementHandle, elementId,
 	openArtifactOriginsMap, expectArtifactOriginsMap, loadSavedView, expectCoinsByName, expectArtifactOriginsList,
+	conditionalElementReady, leavePage, setCodeMirrorValue,
 } from '../../utils';
 
 /**
@@ -15,10 +16,13 @@ import {
  *
  * What is stored has two kinds of reference in it. Settings name an element by its id, which a rename does not
  * change, so those must be exactly as they were. Code and text name it by its handle - $handle in a formula, a
- * {handle} token, a notification's {ELEMENT_HANDLE} tag - so those must now say the new handle.
+ * {handle} token, a notification's {ELEMENT_HANDLE} tag, the handle given to display() - so those must now say the
+ * new handle. Where code names the old handle in a way that may or may not be the element, the rename leaves it and
+ * says so in a dialog when the handle is saved; every rename here checks that it says so exactly when it should.
  */
 
 const codeDir = path.resolve(__dirname, '../../../../modules/formulize/code');
+const screensDir = path.resolve(__dirname, '../../../../modules/formulize/templates/screens');
 
 function rowOf(table, keyColumn, key, columns) {
 	return dbQuery(`SELECT ${columns} FROM ${dbPrefix()}_${table} WHERE ${keyColumn} = ${key}`)[0];
@@ -29,6 +33,9 @@ function eleValueOf(handleOrId) {
 }
 function dataColumnExists(formHandle, column) {
 	return dbQuery(`SHOW COLUMNS FROM ${dbPrefix()}_formulize_${formHandle} LIKE '${column}'`).length === 1;
+}
+function formIdOf(title) {
+	return dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = '${title}'`)[0][0];
 }
 async function asAdmin(page) {
 	await page.goto('/user.php?op=logout');
@@ -44,46 +51,73 @@ async function openArtifact(page, idNumber) {
 	await page.getByRole('row', { name: idNumber }).getByRole('link').first().click();
 	await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeVisible();
 }
+// Change the Roman coin's year and back, as curator1, and check Year-Era follows each time
+async function expectYearEraToFollowTheYear(page) {
+	await asCurator(page);
+	await openArtifact(page, 'M001');
+	const year = page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0);
+	await year.fill('151');
+	await saveFormulizeForm(page);
+	await expect.poll(() => rowOf('formulize_artifacts', 'entry_id', 1, 'artifacts_year_era')[0]).toBe('151BCE');
+	await year.fill('150');
+	await saveFormulizeForm(page);
+	await expect.poll(() => rowOf('formulize_artifacts', 'entry_id', 1, 'artifacts_year_era')[0]).toBe('150BCE');
+	await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
+}
+// Leave a form that was filled in and not saved, agreeing to lose the changes when the page asks
+async function leaveWithoutSaving(page) {
+	const agree = dialog => dialog.accept();
+	page.on('dialog', agree);
+	await leavePage(page, '/modules/formulize/');
+	page.off('dialog', agree);
+}
 
 test.describe.serial('Renaming element handles', () => {
 
-	test('Year: the Year-Era formula follows the rename and keeps working', async ({ page }) => {
+	test('Year: the Year-Era formula follows the rename, moves its own variable out of the way, and keeps working', async ({ page }) => {
 		test.setTimeout(300000);
+		// The formula, as setup wrote it, reads the year twice - as the $artifacts_year variable, and through
+		// display() - into a variable of its own called $artifacts_year_made, which is the handle Year is renamed to
+		const formulaFile = path.join(codeDir, 'derived_artifacts_year_era.php');
+		const formula = () => fs.readFileSync(formulaFile, 'utf8').replace(/\r\n/g, '\n'); // a form posts a textarea's lines with \r\n
+		const asBuilt = formula();
+		expect(asBuilt).toContain("$artifacts_year_made = display($entry, 'artifacts_year');");
 		await asAdmin(page);
-		await renameElementHandle(page, 'artifacts_year', 'artifacts_year_made');
-		const formula = () => fs.readFileSync(path.join(codeDir, 'derived_artifacts_year_era.php'), 'utf8');
-		expect(formula()).toContain('$artifacts_year_made.');
-		expect(formula()).not.toMatch(/\$artifacts_year(?![A-Za-z0-9_])/);
+		expect(await renameElementHandle(page, 'artifacts_year', 'artifacts_year_made')).toBeNull();
+		expect(formula()).toBe("$artifacts_year_made_1 = display($entry, 'artifacts_year_made');\n"
+			+ "$value = ($artifacts_year_made_1 == $artifacts_year_made ? $artifacts_year_made : 'mismatch').$artifacts_era;");
 		expect(dataColumnExists('artifacts', 'artifacts_year_made')).toBe(true);
 		expect(dataColumnExists('artifacts', 'artifacts_year')).toBe(false);
-		// the formula runs on save: change the Roman coin's year and back, and Year-Era follows
-		await asCurator(page);
-		await openArtifact(page, 'M001');
-		const year = page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0);
-		await year.fill('151');
-		await saveFormulizeForm(page);
-		await expect.poll(() => rowOf('formulize_artifacts', 'entry_id', 1, 'artifacts_year_era')[0]).toBe('151BCE');
-		await year.fill('150');
-		await saveFormulizeForm(page);
-		await expect.poll(() => rowOf('formulize_artifacts', 'entry_id', 1, 'artifacts_year_era')[0]).toBe('150BCE');
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
-		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
-		// and back
+		// the formula runs on save
+		await expectYearEraToFollowTheYear(page);
+		// and back: no variable is in the way this time, so only the handle changes
 		await asAdmin(page);
-		await renameElementHandle(page, 'artifacts_year_made', 'artifacts_year');
-		expect(formula()).toContain('$artifacts_year.');
-		expect(formula()).not.toContain('artifacts_year_made');
+		expect(await renameElementHandle(page, 'artifacts_year_made', 'artifacts_year')).toBeNull();
+		expect(formula()).toBe("$artifacts_year_made_1 = display($entry, 'artifacts_year');\n"
+			+ "$value = ($artifacts_year_made_1 == $artifacts_year ? $artifacts_year : 'mismatch').$artifacts_era;");
 		expect(dataColumnExists('artifacts', 'artifacts_year')).toBe(true);
+		await expectYearEraToFollowTheYear(page);
+		// put the formula back as setup wrote it, through its settings
+		await asAdmin(page);
+		const yearEraId = elementId('artifacts_year_era');
+		const fid = formIdOf('Artifacts');
+		const aid = dbQuery(`SELECT appid FROM ${dbPrefix()}_formulize_application_form_link WHERE fid = ${fid}`)[0][0];
+		await page.goto(`/modules/formulize/admin/ui.php?page=element&ele_id=${yearEraId}&fid=${fid}&aid=${aid}`);
+		await waitForAdminPageReady(page);
+		await page.getByRole('link', { name: 'Options' }).click();
+		await setCodeMirrorValue(page, 'textarea[name="elements-ele_value[0]"]', asBuilt);
+		await saveAdminForm(page);
+		await expect.poll(formula).toBe(asBuilt);
 	});
 
 	test('Donors Name: the Donor list keeps offering the donors, and its own formula file follows it', async ({ page }) => {
 		test.setTimeout(300000);
 		const donorsNameId = elementId('donors_name');
-		const donorFid = dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = 'Donors'`)[0][0];
-		const source = `${donorFid}#*=:*${donorsNameId}`;
+		const source = `${formIdOf('Donors')}#*=:*${donorsNameId}`;
 		expect(eleValueOf('artifacts_donor')).toContain(`"${source}"`); // the Donor list names its source by id
 		await asAdmin(page);
-		await renameElementHandle(page, 'donors_name', 'donors_full_name');
+		expect(await renameElementHandle(page, 'donors_name', 'donors_full_name')).toBeNull();
 		expect(eleValueOf('artifacts_donor')).toContain(`"${source}"`); // which a rename does not change
 		expect(fs.existsSync(path.join(codeDir, 'derived_donors_full_name.php'))).toBe(true);
 		expect(fs.existsSync(path.join(codeDir, 'derived_donors_name.php'))).toBe(false);
@@ -95,34 +129,65 @@ test.describe.serial('Renaming element handles', () => {
 		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 		// and back
 		await asAdmin(page);
-		await renameElementHandle(page, 'donors_full_name', 'donors_name');
+		expect(await renameElementHandle(page, 'donors_full_name', 'donors_name')).toBeNull();
 		expect(eleValueOf('artifacts_donor')).toContain(`"${source}"`);
 		expect(fs.existsSync(path.join(codeDir, 'derived_donors_name.php'))).toBe(true);
 	});
 
-	test('Exhibit collections and Survey exhibit: the {handle} terms in linked list filters follow the rename', async ({ page }) => {
+	test('Exhibit collections and Survey exhibit: the {handle} terms in linked list filters follow the rename, and still filter', async ({ page }) => {
 		test.setTimeout(300000);
+		const ancient = ['Roman Coin', 'Persian necklace', 'Chinese Sword', 'Egyptian Chariot', 'Babylonian Spoon'];
+		const modern = ['Florentine Book', 'French Musket', 'Japanese Coin', 'American Bicycle', 'Polynesian Canoe', 'Viking Silver Armband'];
+		// A new exhibit of Ancient History offers only its artifacts, as filtered by the {exhibits_collections} term
+		const expectExhibitToOfferItsCollectionsArtifacts = async () => {
+			await asCurator(page);
+			await page.locator('#burger-and-logo').getByRole('link').first().click();
+			await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
+			await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
+			await page.locator('input[type=text]').nth(1).fill('an');
+			await conditionalElementReady(page, 'exhibits_artifacts', () => page.getByText('Ancient History', { exact: true }).click());
+			await page.locator('input[type=text]').nth(2).fill('roman');
+			await expect(page.getByText('Roman Coin')).toBeVisible();
+			await page.locator('input[type=text]').nth(2).fill('flor');
+			await expect(page.getByText('No match found')).toBeVisible();
+			await leaveWithoutSaving(page);
+		};
+		// A survey of Ancient Wonders offers the artifacts that exhibit shows, as limited by the {surveys_exhibit} term
+		const surveySid = dbQuery(`SELECT s.sid FROM ${dbPrefix()}_formulize_screen s WHERE s.fid = ${formIdOf('Surveys')} AND s.type = 'multiPage' ORDER BY s.sid LIMIT 1`)[0][0];
+		const expectSurveyToOfferTheExhibitsArtifacts = async () => {
+			await page.goto('/user.php?op=logout');
+			await page.goto(`/modules/formulize/index.php?sid=${surveySid}`);
+			await page.getByLabel('Which exhibit did you see?').selectOption('Ancient Wonders');
+			const favourite = page.getByLabel('Which was your favourite');
+			await expect(async () => {
+				const offered = await favourite.locator('option').allTextContents();
+				for (const name of ancient) {
+					expect(offered).toContain(name);
+				}
+				for (const name of modern) {
+					expect(offered).not.toContain(name);
+				}
+			}).toPass();
+			await leaveWithoutSaving(page);
+		};
+
 		await asAdmin(page);
-		await renameElementHandle(page, 'exhibits_collections', 'exhibits_collection_list');
+		expect(await renameElementHandle(page, 'exhibits_collections', 'exhibits_collection_list')).toBeNull();
 		expect(eleValueOf('exhibits_artifacts')).toContain('{exhibits_collection_list}');
 		expect(eleValueOf('exhibits_artifacts')).not.toContain('{exhibits_collections}');
-		await renameElementHandle(page, 'surveys_exhibit', 'surveys_exhibit_seen');
+		expect(await renameElementHandle(page, 'surveys_exhibit', 'surveys_exhibit_seen')).toBeNull();
 		expect(eleValueOf('surveys_favourite_artifact')).toContain('{surveys_exhibit_seen}');
 		expect(eleValueOf('surveys_favourite_artifact')).not.toContain('{surveys_exhibit}');
-		// the exhibit form still draws its artifacts, filtered by the term
-		await asCurator(page);
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
-		await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
-		await page.getByRole('row', { name: /History through the Ages/ }).getByRole('link').first().click();
-		await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeVisible();
-		await expect(page.getByText('There was an error')).toHaveCount(0);
-		await page.getByRole('link', { name: 'Save and Close' }).click();
+		await expectExhibitToOfferItsCollectionsArtifacts();
+		await expectSurveyToOfferTheExhibitsArtifacts();
 		// and back
 		await asAdmin(page);
-		await renameElementHandle(page, 'exhibits_collection_list', 'exhibits_collections');
-		await renameElementHandle(page, 'surveys_exhibit_seen', 'surveys_exhibit');
+		expect(await renameElementHandle(page, 'exhibits_collection_list', 'exhibits_collections')).toBeNull();
+		expect(await renameElementHandle(page, 'surveys_exhibit_seen', 'surveys_exhibit')).toBeNull();
 		expect(eleValueOf('exhibits_artifacts')).toContain('{exhibits_collections}');
 		expect(eleValueOf('surveys_favourite_artifact')).toContain('{surveys_exhibit}');
+		await expectExhibitToOfferItsCollectionsArtifacts();
+		await expectSurveyToOfferTheExhibitsArtifacts();
 	});
 
 	test('Short name and Latitude: the map, saved views, help text and notification all follow the rename', async ({ page }) => {
@@ -146,8 +211,8 @@ test.describe.serial('Renaming element handles', () => {
 		await saveAdminForm(page);
 		await expect.poll(() => dbQuery(`SELECT ele_desc FROM ${dbPrefix()}_formulize WHERE ele_id = ${descriptionId}`)[0][0]).toBe('Describe the {artifacts_short_name}');
 
-		await renameElementHandle(page, 'artifacts_short_name', 'artifacts_name');
-		await renameElementHandle(page, 'artifacts_latitude', 'artifacts_lat');
+		expect(await renameElementHandle(page, 'artifacts_short_name', 'artifacts_name')).toBeNull();
+		expect(await renameElementHandle(page, 'artifacts_latitude', 'artifacts_lat')).toBeNull();
 		// settings name them by id, so nothing there has changed
 		const mapAfter = dbQuery(`SELECT m.lat_element, m.label_element, m.columns FROM ${dbPrefix()}_formulize_screen_map m JOIN ${dbPrefix()}_formulize_screen s ON s.sid = m.sid WHERE s.screen_handle = 'artifact_origins'`)[0];
 		expect(mapAfter).toEqual(mapBefore);
@@ -174,8 +239,8 @@ test.describe.serial('Renaming element handles', () => {
 
 		// and back
 		await asAdmin(page);
-		await renameElementHandle(page, 'artifacts_name', 'artifacts_short_name');
-		await renameElementHandle(page, 'artifacts_lat', 'artifacts_latitude');
+		expect(await renameElementHandle(page, 'artifacts_name', 'artifacts_short_name')).toBeNull();
+		expect(await renameElementHandle(page, 'artifacts_lat', 'artifacts_latitude')).toBeNull();
 		expect(subject()).toBe('Artifact updated: {ELEMENT_ARTIFACTS_SHORT_NAME}');
 		expect(dbQuery(`SELECT ele_desc FROM ${dbPrefix()}_formulize WHERE ele_id = ${descriptionId}`)[0][0]).toBe('Describe the {artifacts_short_name}');
 		await page.goto(descriptionSettings);
@@ -191,31 +256,74 @@ test.describe.serial('Renaming element handles', () => {
 		await expectCoinsByName(page);
 	});
 
-	test('Condition: the custom button and the notification keep naming it by id, and the button still works', async ({ page }) => {
+	test('Condition: the custom button and the notification keep naming it by id, the list template\'s search box follows it, and what may not be it is pointed out', async ({ page }) => {
 		test.setTimeout(300000);
 		const conditionId = elementId('artifacts_condition');
-		const buttons = () => dbQuery(`SELECT customactions FROM ${dbPrefix()}_formulize_screen_listofentries l JOIN ${dbPrefix()}_formulize_screen s ON s.sid = l.sid WHERE s.title = 'Artifacts' AND s.type = 'listOfEntries'`)[0][0];
-		const fid = dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = 'Artifacts'`)[0][0];
+		const [listSid, theme] = dbQuery(`SELECT sid, theme FROM ${dbPrefix()}_formulize_screen WHERE title = 'Artifacts' AND type = 'listOfEntries'`)[0];
+		const buttons = () => dbQuery(`SELECT customactions FROM ${dbPrefix()}_formulize_screen_listofentries WHERE sid = ${listSid}`)[0][0];
+		const fid = formIdOf('Artifacts');
 		const notificationCondition = () => dbQuery(`SELECT not_cons_con FROM ${dbPrefix()}_formulize_notification_conditions WHERE not_cons_fid = ${fid}`)[0][0];
 		const buttonsBefore = buttons();
 		const notificationBefore = notificationCondition();
 		expect(notificationBefore).toContain(`"${conditionId}"`);
+
+		// The Artifacts list's bottom template, as Formulize draws it, with a line in front naming the Condition
+		// search box's variable, which a rename follows, and the handle as an array key, which it cannot know is
+		// the element. Taken out again at the end.
+		const templateFolder = path.join(screensDir, theme, String(listSid));
+		const templateFile = path.join(templateFolder, 'bottomtemplate.php');
+		const hadFolder = fs.existsSync(templateFolder);
+		const hadTemplate = fs.existsSync(templateFile) ? fs.readFileSync(templateFile, 'utf8') : null;
+		const themeDefault = path.join(screensDir, theme, 'default', 'listOfEntries', 'bottomtemplate.php');
+		const drawnBottom = fs.readFileSync(fs.existsSync(themeDefault) ? themeDefault : path.join(screensDir, 'default', 'listOfEntries', 'bottomtemplate.php'), 'utf8');
+		const withSearch = (handle) => "<?php $artifactSearches = array('artifacts_condition' => isset($quickSearch" + handle + ") ? $quickSearch" + handle + " : ''); ?>";
+		fs.mkdirSync(templateFolder, { recursive: true });
+		fs.writeFileSync(templateFile, withSearch('artifacts_condition') + drawnBottom);
+		try {
+			await asAdmin(page);
+			const said = await renameElementHandle(page, 'artifacts_condition', 'artifacts_state');
+			expect(said).toContain(`${theme}/${listSid}/bottomtemplate.php`);
+			expect(said).toContain('artifacts_condition');
+			expect(fs.readFileSync(templateFile, 'utf8')).toBe(withSearch('artifacts_state') + drawnBottom);
+			expect(buttons()).toBe(buttonsBefore);
+			expect(notificationCondition()).toBe(notificationBefore);
+			// the button beside an artifact marks it as in perfect condition, in the list drawn with that template
+			const spoon = dbQuery(`SELECT entry_id, artifacts_state FROM ${dbPrefix()}_formulize_artifacts WHERE artifacts_short_name = 'Babylonian Spoon'`)[0];
+			await asCurator(page);
+			await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
+			await Promise.all([page.waitForEvent('load'),
+				page.getByRole('row', { name: /Babylonian Spoon/ }).getByRole('button', { name: 'Mark as in perfect condition' }).click()]);
+			await expect.poll(() => dbQuery(`SELECT artifacts_state FROM ${dbPrefix()}_formulize_artifacts WHERE entry_id = ${spoon[0]}`)[0][0]).toBe('10');
+			dbQuery(`UPDATE ${dbPrefix()}_formulize_artifacts SET artifacts_state = '${spoon[1]}' WHERE entry_id = ${spoon[0]}`); // as it was
+			// and back, where nothing names artifacts_state but the search box variable, so there is nothing to point out
+			await asAdmin(page);
+			expect(await renameElementHandle(page, 'artifacts_state', 'artifacts_condition')).toBeNull();
+			expect(fs.readFileSync(templateFile, 'utf8')).toBe(withSearch('artifacts_condition') + drawnBottom);
+			expect(buttons()).toBe(buttonsBefore);
+			expect(notificationCondition()).toBe(notificationBefore);
+		} finally {
+			if (hadTemplate === null) {
+				fs.rmSync(templateFile, { force: true });
+				if (!hadFolder) {
+					fs.rmSync(templateFolder, { recursive: true, force: true });
+				}
+			} else {
+				fs.writeFileSync(templateFile, hadTemplate);
+			}
+		}
+	});
+
+	test('A name Formulize keeps for its own variables in code is not given as a handle, and the save says why', async ({ page }) => {
+		test.setTimeout(300000);
+		const ratingId = elementId('surveys_rating');
+		const fid = formIdOf('Surveys');
 		await asAdmin(page);
-		await renameElementHandle(page, 'artifacts_condition', 'artifacts_state');
-		expect(buttons()).toBe(buttonsBefore);
-		expect(notificationCondition()).toBe(notificationBefore);
-		// the button beside an artifact marks it as in perfect condition
-		const spoon = dbQuery(`SELECT entry_id, artifacts_state FROM ${dbPrefix()}_formulize_artifacts WHERE artifacts_short_name = 'Babylonian Spoon'`)[0];
-		await asCurator(page);
-		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
-		await Promise.all([page.waitForEvent('load'),
-			page.getByRole('row', { name: /Babylonian Spoon/ }).getByRole('button', { name: 'Mark as in perfect condition' }).click()]);
-		await expect.poll(() => dbQuery(`SELECT artifacts_state FROM ${dbPrefix()}_formulize_artifacts WHERE entry_id = ${spoon[0]}`)[0][0]).toBe('10');
-		dbQuery(`UPDATE ${dbPrefix()}_formulize_artifacts SET artifacts_state = '${spoon[1]}' WHERE entry_id = ${spoon[0]}`); // as it was
-		// and back
-		await asAdmin(page);
-		await renameElementHandle(page, 'artifacts_state', 'artifacts_condition');
-		expect(buttons()).toBe(buttonsBefore);
-		expect(notificationCondition()).toBe(notificationBefore);
+		// a name already taken gets the form's id after it, and so does a kept one
+		const said = await renameElementHandle(page, 'surveys_rating', 'value', `value_f${fid}`);
+		expect(said).toContain('value is a name Formulize uses for its own purposes in code');
+		expect(said).toContain(`value_f${fid}`);
+		expect(elementId(`value_f${fid}`)).toBe(ratingId);
+		expect(await renameElementHandle(page, `value_f${fid}`, 'surveys_rating')).toBeNull();
+		expect(elementId('surveys_rating')).toBe(ratingId);
 	});
 });

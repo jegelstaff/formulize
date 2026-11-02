@@ -35,6 +35,13 @@
  * 3. THE MULTIPAGE PAGE THAT EMPTIES. Deleting the last element on a page leaves the page in place, and
  *    traverseScreenPages() does not carry an empty page through to the form.
  *
+ * 4. CODE AND TEMPLATE FILES. Code files, screens' own template files and mail templates that name the element,
+ *    in the ways a rename rewrites and the ways it leaves for a person: the usage report names each and says which
+ *    a rename would leave, a real rename rewrites them and warns about the same ones, and a cloned screen gets
+ *    copies of its template files. The files are written and removed by name, since a rollback cannot take them.
+ *
+ * 5. RESERVED NAMES. The names Formulize keeps for its own variables in code cannot be element handles.
+ *
  * WHAT THIS DOES NOT COVER
  * The deletion itself - delete() drops a column from the form's data table, which is not transactional and
  * cannot be rolled back, so it has no business running against a system another test may still be reading.
@@ -327,6 +334,11 @@ $elementId = 0;
 // files PART 4 writes, which the rollback cannot take away, so they are removed by name at the end
 $fixtureTemplateRoot = XOOPS_ROOT_PATH . '/modules/formulize/templates/screens/zz_fixture_theme/';
 $fixtureMailTemplate = XOOPS_ROOT_PATH . '/modules/formulize/language/english/mail_template/zz_fixture_reference.tpl';
+$codeDir = XOOPS_ROOT_PATH . '/modules/formulize/code/';
+$fixtureCodeFiles = array(
+    XOOPS_ROOT_PATH . '/modules/formulize/code/derived_zz_fixture_reference_formula.php',
+    XOOPS_ROOT_PATH . '/modules/formulize/code/zz_fixture_reference_code.php',
+);
 
 $xoopsDB->queryF("START TRANSACTION");
 
@@ -629,67 +641,151 @@ try {
 
     echo "\n";
     echo "=====================================================================\n";
-    echo " PART 4 - screen template files and mail templates, reported and renamed\n";
+    echo " PART 4 - code files, screen template files and mail templates, reported and renamed\n";
     echo "=====================================================================\n";
 
-    // A template screen and a list screen with template files of their own, and a mail template. Each names
-    // the element both in the ways a rename rewrites and in ways it must not, beside a longer handle that
-    // starts with this one. The files are removed again below, whatever happens.
+    // A template screen, a list screen and a multipage screen with template files of their own, a template screen
+    // on a form that cannot see this element, two code files and a mail template. Each names the element both in
+    // the ways a rename rewrites and in ways it must leave for a person, beside a longer handle that starts with
+    // this one, and several already use a variable called by the new handle. The files are removed again below,
+    // whatever happens.
     $newHandle = 'zz_renamed_fixture';
+    $H = $handle;
+    $N = $newHandle;
     $templateSid = $newScreen('zzfixtpl', 'Reference integrity template screen', 'template');
     $listSid = $newScreen('zzfixlist', 'Reference integrity list templates', 'listOfEntries');
-    @mkdir($fixtureTemplateRoot . $templateSid, 0777, true);
-    @mkdir($fixtureTemplateRoot . $listSid, 0777, true);
-    $templateCode = '<?php $total = $' . $handle . ' + $' . $handle . '_era; print display($entry, \'' . $handle . '\');';
-    $templateSmarty = '{$' . $handle . '} and {$' . $handle . '_era}';
-    $listTop = '<?php print $quickSearch' . $handle . '; print $quickDateRange' . $handle . '; print $' . $handle . '; print $quickSearch' . $handle . '_era;';
-    $upper = strtoupper($handle);
-    $mailTemplate = 'Hello {ELEMENT_' . $upper . '} {ELEMENT' . $upper . '} {REVISION_ELEMENT_' . $upper . '} {ELEMENT_' . $upper . '_ERA}';
-    file_put_contents($fixtureTemplateRoot . $templateSid . '/code.php', $templateCode);
-    file_put_contents($fixtureTemplateRoot . $templateSid . '/template.html', $templateSmarty);
-    file_put_contents($fixtureTemplateRoot . $listSid . '/toptemplate.php', $listTop);
-    file_put_contents($fixtureMailTemplate, $mailTemplate);
-    // the copy of the template screen's code kept in the database, stored with its special characters encoded
-    $xoopsDB->queryF("INSERT INTO " . prefix('formulize_screen_template') . " (sid, custom_code, template, donedest, savebuttontext, donebuttontext, viewentryscreen)
-        VALUES ($templateSid, " . $xoopsDB->quoteString(htmlspecialchars($templateCode)) . ", " . $xoopsDB->quoteString(htmlspecialchars($templateSmarty)) . ", '', '', '', '')");
-    // a template screen on a form that cannot see this element, whose code has a variable of the same name of its own
+    $formSid = $newScreen('zzfixform', 'Reference integrity form templates', 'multiPage');
+    $xoopsDB->queryF("INSERT INTO " . prefix('formulize_screen_template') . " (sid, donedest, savebuttontext, donebuttontext, viewentryscreen)
+        VALUES ($templateSid, '', '', '', '')");
     $otherFormRow = fetchOne("SELECT id_form FROM " . prefix('formulize_id') . " WHERE id_form != $fixtureFid ORDER BY id_form ASC LIMIT 1");
     $otherFid = $otherFormRow ? intval($otherFormRow['id_form']) : 0;
     $xoopsDB->queryF("INSERT INTO " . prefix('formulize_screen') . " (screen_handle, title, fid, frid, type, rewriteruleElement)
         VALUES ('zzfixothertpl', 'Reference integrity other template screen', $otherFid, 0, 'template', 0)");
     $otherTemplateSid = intval($xoopsDB->getInsertId());
-    @mkdir($fixtureTemplateRoot . $otherTemplateSid, 0777, true);
-    $otherCode = '<?php $' . $handle . ' = 1;';
-    file_put_contents($fixtureTemplateRoot . $otherTemplateSid . '/code.php', $otherCode);
+
+    // path => what it holds, what a rename makes of it, and whether a rename leaves some of it for a person
+    $files = array(
+        // the screen's variables are renamed, and a $N of the code's own moves out of the way, the same in both
+        $fixtureTemplateRoot . $templateSid . '/code.php' => array(
+            '<?php $total = $' . $H . ' + $' . $H . '_era + $' . $N . '; print display($entry, \'' . $H . '\'); $row = $templateScreenData[\'' . $H . '\'];',
+            '<?php $total = $' . $N . ' + $' . $H . '_era + $' . $N . '_1; print display($entry, \'' . $N . '\'); $row = $templateScreenData[\'' . $H . '\'];',
+            true),
+        $fixtureTemplateRoot . $templateSid . '/template.html' => array(
+            '{$' . $H . '} and {$' . $H . '_era} and {$' . $N . '}',
+            '{$' . $N . '} and {$' . $H . '_era} and {$' . $N . '_1}',
+            false),
+        // the search box variables and a filter term are renamed, a variable of the template's own is not
+        $fixtureTemplateRoot . $listSid . '/toptemplate.php' => array(
+            '<?php print $quickSearch' . $H . '; print $quickDateRange' . $H . '; print $quickFilter' . $H . '; print $' . $H . '; print $quickSearch' . $H . '_era; print getData("", 1, "' . $H . '/**/x/**/=");',
+            '<?php print $quickSearch' . $N . '; print $quickDateRange' . $N . '; print $quickFilter' . $N . '; print $' . $H . '; print $quickSearch' . $H . '_era; print getData("", 1, "' . $N . '/**/x/**/=");',
+            true),
+        // a screen that gets no variables: only what can only be the element
+        $fixtureTemplateRoot . $formSid . '/elementtemplate1.php' => array(
+            '<?php print displayElement(\'\', \'' . $H . '\'); print $entry[\'' . $H . '\'];',
+            '<?php print displayElement(\'\', \'' . $N . '\'); print $entry[\'' . $H . '\'];',
+            true),
+        // a template screen on a form that cannot see this element: its variable of the same name is its own
+        $fixtureTemplateRoot . $otherTemplateSid . '/code.php' => array(
+            '<?php $' . $H . ' = 1; print display($entry, \'' . $H . '\');',
+            '<?php $' . $H . ' = 1; print display($entry, \'' . $N . '\');',
+            true),
+        // a formula, whose variables are renamed, and whose own $N moves out of the way
+        $fixtureCodeFiles[0] => array(
+            '$value = $' . $H . ' + $' . $N . '; $x = display($entry, \'' . $H . '\');',
+            '$value = $' . $N . ' + $' . $N . '_1; $x = display($entry, \'' . $N . '\');',
+            false),
+        // code that gets no variables: the string given to getValue() only, not its own variable or a column in a query
+        $fixtureCodeFiles[1] => array(
+            '<?php $' . $H . ' = 5; print getValue($e, "' . $H . '"); $q = "SELECT `' . $H . '` FROM t";',
+            '<?php $' . $H . ' = 5; print getValue($e, "' . $N . '"); $q = "SELECT `' . $H . '` FROM t";',
+            true),
+    );
+    foreach ($files as $path => $file) {
+        @mkdir(dirname($path), 0777, true);
+        file_put_contents($path, $file[0]);
+    }
+    $upper = strtoupper($handle);
+    $mailTemplate = 'Hello {ELEMENT_' . $upper . '} {ELEMENT' . $upper . '} {REVISION_ELEMENT_' . $upper . '} {ELEMENT_' . $upper . '_ERA}';
+    file_put_contents($fixtureMailTemplate, $mailTemplate);
+    $shortName = function ($path) {
+        return str_replace(array(XOOPS_ROOT_PATH . '/modules/formulize/templates/screens/', XOOPS_ROOT_PATH . '/modules/formulize/code/'), '', $path);
+    };
+    $namedIn = function ($path, $list) use ($shortName) {
+        return preg_grep('/' . preg_quote("'" . $shortName($path) . "'", '/') . '/', $list);
+    };
 
     $report = $element_handler->elementUsageReport($fixture);
     $inCode = isset($report['references_in_code_that_you_will_need_to_fix']) ? $report['references_in_code_that_you_will_need_to_fix'] : array();
-    ok('the report names the template screen\'s code', count(preg_grep('/zz_fixture_theme\/' . $templateSid . '\/code\.php/', $inCode)) === 1, implode(' | ', $inCode));
-    ok('the report names the list screen\'s template', count(preg_grep('/zz_fixture_theme\/' . $listSid . '\/toptemplate\.php/', $inCode)) === 1, implode(' | ', $inCode));
+    $left = formulizeElementHandleCode::LEFT_BY_A_RENAME;
+    foreach ($files as $path => $file) {
+        $named = $namedIn($path, $inCode);
+        ok('the report names ' . $shortName($path) . ($file[2] ? ', as left by a rename' : ', as updated by a rename'),
+            count($named) === 1 AND (substr(reset($named), -strlen($left)) === $left) === $file[2], implode(' | ', $inCode));
+    }
     ok('the report names the mail template', count(preg_grep('/zz_fixture_reference\.tpl/', $inCode)) === 1, implode(' | ', $inCode));
 
-    // reported, because the report only asks a person to look - but below, not rewritten
-    ok('the report names a screen on another form too, whose code may reach this element some other way', count(preg_grep('/zz_fixture_theme\/' . $otherTemplateSid . '\//', $inCode)) === 1, implode(' | ', $inCode));
-
-    $element_handler->renameHandleInScreenTemplates($handle, $newHandle, $fixtureFid);
-    $element_handler->renameHandleInMailTemplates($handle, $newHandle);
-    $storedCopy = fetchOne("SELECT custom_code, template FROM " . prefix('formulize_screen_template') . " WHERE sid = $templateSid");
-    check('template screen: the copy of its code in the database is renamed the same way',
-        htmlspecialchars_decode($storedCopy['custom_code']),
-        '<?php $total = $' . $newHandle . ' + $' . $handle . '_era; print display($entry, \'' . $handle . '\');');
-    check('template screen: and the copy of its template', htmlspecialchars_decode($storedCopy['template']), '{$' . $newHandle . '} and {$' . $handle . '_era}');
-    check('a template screen on a form that cannot see this element is left alone', file_get_contents($fixtureTemplateRoot . $otherTemplateSid . '/code.php'), $otherCode);
-    check('template screen code: the variable is renamed, the longer handle and the string are not',
-        file_get_contents($fixtureTemplateRoot . $templateSid . '/code.php'),
-        '<?php $total = $' . $newHandle . ' + $' . $handle . '_era; print display($entry, \'' . $handle . '\');');
-    check('template screen template: the variable is renamed, the longer handle is not',
-        file_get_contents($fixtureTemplateRoot . $templateSid . '/template.html'), '{$' . $newHandle . '} and {$' . $handle . '_era}');
-    check('list screen template: the search box variables are renamed, a bare variable and the longer handle are not',
-        file_get_contents($fixtureTemplateRoot . $listSid . '/toptemplate.php'),
-        '<?php print $quickSearch' . $newHandle . '; print $quickDateRange' . $newHandle . '; print $' . $handle . '; print $quickSearch' . $handle . '_era;');
+    $fixture->setVar('ele_handle', $newHandle);
+    $leftByTheRename = $element_handler->renameElementResources($fixture, $handle);
+    foreach ($files as $path => $file) {
+        check('renamed: ' . $shortName($path), file_get_contents($path), $file[1]);
+        ok('the rename ' . ($file[2] ? 'warns about ' : 'does not warn about ') . $shortName($path),
+            (count($namedIn($path, $leftByTheRename)) === 1) === $file[2], implode(' | ', $leftByTheRename));
+    }
     $newUpper = strtoupper($newHandle);
     check('mail template: every form of the tag is renamed, the longer one is not', file_get_contents($fixtureMailTemplate),
         'Hello {ELEMENT_' . $newUpper . '} {ELEMENT' . $newUpper . '} {REVISION_ELEMENT_' . $newUpper . '} {ELEMENT_' . $upper . '_ERA}');
+
+    // a clone of a screen has its own copies of the template files, a handle of its own, and no address
+    $xoopsDB->queryF("UPDATE " . prefix('formulize_screen') . " SET rewriteruleAddress = 'zzfix-address' WHERE sid = $templateSid");
+    xoops_getmodulehandler('templateScreen', 'formulize')->cloneScreen($templateSid);
+    $cloneRow = fetchOne("SELECT MAX(sid) AS sid FROM " . prefix('formulize_screen') . " WHERE title LIKE 'Reference integrity template screen%'");
+    $cloneSid = intval($cloneRow['sid']);
+    ok('a template screen is cloned', $cloneSid > $templateSid);
+    check('the clone has a copy of the code', @file_get_contents($fixtureTemplateRoot . $cloneSid . '/code.php'), $files[$fixtureTemplateRoot . $templateSid . '/code.php'][1]);
+    check('and of the template', @file_get_contents($fixtureTemplateRoot . $cloneSid . '/template.html'), $files[$fixtureTemplateRoot . $templateSid . '/template.html'][1]);
+    $clone = fetchOne("SELECT screen_handle, rewriteruleAddress FROM " . prefix('formulize_screen') . " WHERE sid = $cloneSid");
+    ok('the clone has a handle of its own, made from its title', $clone['screen_handle'] !== 'zzfixtpl' AND strpos($clone['screen_handle'], 'reference_integrity_template_screen') === 0, $clone['screen_handle']);
+    $sameHandle = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize_screen') . " WHERE screen_handle = " . $xoopsDB->quoteString($clone['screen_handle']));
+    check('and no other screen has it', intval($sameHandle['c']), 1);
+    check('the clone has no address, which stays the original\'s', $clone['rewriteruleAddress'], '');
+
+    // a clone of a list has its own copies of the code its custom buttons keep in files, under its own handle
+    $realList = fetchOne("SELECT * FROM " . prefix('formulize_screen_listofentries') . " ORDER BY sid LIMIT 1");
+    unset($realList['listofentriesid']);
+    $realList['sid'] = $listSid;
+    $realList['customactions'] = serialize(array(1 => array('handle' => 'zzfixbtn', 'applyto' => 'custom_code', 0 => array('code' => ''))));
+    $xoopsDB->queryF("INSERT INTO " . prefix('formulize_screen_listofentries') . " (`" . implode('`, `', array_keys($realList)) . "`) VALUES ("
+        . implode(', ', array_map(array($xoopsDB, 'quoteString'), array_values($realList))) . ")");
+    $buttonCode = '<?php print "zz fixture button";';
+    $fixtureCodeFiles[] = $codeDir . 'custom_code_0_zzfixbtn_zzfixlist.php';
+    file_put_contents($codeDir . 'custom_code_0_zzfixbtn_zzfixlist.php', $buttonCode);
+    xoops_getmodulehandler('listOfEntriesScreen', 'formulize')->cloneScreen($listSid);
+    $listClone = fetchOne("SELECT screen_handle FROM " . prefix('formulize_screen') . " WHERE sid = (SELECT MAX(sid) FROM " . prefix('formulize_screen') . " WHERE title LIKE 'Reference integrity list templates%')");
+    $fixtureCodeFiles[] = $codeDir . 'custom_code_0_zzfixbtn_' . $listClone['screen_handle'] . '.php';
+    ok('a list is cloned with a handle of its own', $listClone AND $listClone['screen_handle'] !== 'zzfixlist', $listClone ? $listClone['screen_handle'] : 'no clone');
+    check('and its button\'s code is copied under it', @file_get_contents($codeDir . 'custom_code_0_zzfixbtn_' . $listClone['screen_handle'] . '.php'), $buttonCode);
+    check('and the original keeps its own', file_get_contents($codeDir . 'custom_code_0_zzfixbtn_zzfixlist.php'), $buttonCode);
+    // and a list whose handle changes takes its button's code with it
+    $fixtureCodeFiles[] = $codeDir . 'custom_code_0_zzfixbtn_zzfixlist_renamed.php';
+    $list_screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+    $fixtureList = $list_screen_handler->get($listSid);
+    $fixtureList->setVar('screen_handle', 'zzfixlist_renamed');
+    ok('a list can be given a new handle', (bool) $list_screen_handler->insert($fixtureList));
+    check('its button\'s code moves to the file named for the new handle', @file_get_contents($codeDir . 'custom_code_0_zzfixbtn_zzfixlist_renamed.php'), $buttonCode);
+    check('and is not left under the old one', file_exists($codeDir . 'custom_code_0_zzfixbtn_zzfixlist.php'), false);
+
+    echo "\n";
+    echo "=====================================================================\n";
+    echo " PART 5 - names Formulize keeps for its own variables are not handles\n";
+    echo "=====================================================================\n";
+
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    foreach (array('value', 'entry', 'entry_id', 'form_id', 'i', 'code_filename', 'this') as $reserved) {
+        check("'$reserved' is not available as a handle", $form_handler->isElementHandleUnique($reserved, '', $fixtureFid), false);
+    }
+    check('a handle that is not kept is available', $form_handler->isElementHandleUnique('zz_fixture_not_kept', '', $fixtureFid), true);
+    ok('asking for a kept name gives a handle with a suffix instead, as a name already taken does',
+        formulizeHandler::enforceUniqueElementHandles('value', $elementId, $fixtureFid) !== 'value');
 
 } catch (Throwable $t) {
     $GLOBALS['__fail']++;
@@ -706,6 +802,9 @@ foreach ((array) glob($fixtureTemplateRoot . '*', GLOB_ONLYDIR) as $fixtureDir) 
 }
 @rmdir($fixtureTemplateRoot);
 @unlink($fixtureMailTemplate);
+foreach ($fixtureCodeFiles as $fixtureCodeFile) {
+    @unlink($fixtureCodeFile);
+}
 
 echo "\n";
 echo "=====================================================================\n";
@@ -715,11 +814,11 @@ echo "=====================================================================\n";
 // If this does not hold then everything above wrote to a real system, so it is checked rather than assumed.
 $leftovers = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize') . " WHERE ele_handle LIKE 'zz_fixture%' OR ele_handle = 'zz_reference_integrity_fixture'");
 check('the fixture elements are gone', intval($leftovers['c']), 0);
-$leftovers = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize_screen') . " WHERE screen_handle LIKE 'zzfix%'");
+$leftovers = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize_screen') . " WHERE screen_handle LIKE 'zzfix%' OR title LIKE 'Reference integrity%'");
 check('the fixture screens are gone', intval($leftovers['c']), 0);
 $leftovers = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize_saved_views') . " WHERE sv_name LIKE 'reference integrity%'");
 check('the fixture saved views are gone', intval($leftovers['c']), 0);
-check('the fixture template files are gone', is_dir($fixtureTemplateRoot) OR file_exists($fixtureMailTemplate), false);
+check('the fixture template and code files are gone', is_dir($fixtureTemplateRoot) OR file_exists($fixtureMailTemplate) OR count(array_filter($fixtureCodeFiles, 'file_exists')) > 0, false);
 // Nothing above wrote to a row this test did not create, so there is no borrowed state to restore - the
 // three checks above cover it. Anything still pointing at the fixture element would mean both that the
 // rollback did not take and that a real row had been reached, so it is worth asking even so.

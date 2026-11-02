@@ -10,6 +10,7 @@ test.describe('Validate menu entries', () => {
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true })).toBeVisible();
+		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifact origins', exact: true })).toBeVisible();
 	})
 	test('Validate menu entries for mhstaff', async ({ page }) => {
 		await login(page, 'mhstaff', '12345');
@@ -18,6 +19,7 @@ test.describe('Validate menu entries', () => {
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true })).toBeVisible();
+		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifact origins', exact: true })).toBeVisible();
 	})
 	test('Validate menu entries for curator1', async ({ page }) => {
 		await login(page, 'curator1', '12345');
@@ -26,6 +28,7 @@ test.describe('Validate menu entries', () => {
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true })).toBeVisible();
+		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifact origins', exact: true })).toBeVisible();
 	})
 })
 

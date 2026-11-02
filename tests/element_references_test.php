@@ -17,6 +17,9 @@
  *    handles in settings Formulize now saves as ids become ids; tokens, {search_handle} tokens and
  *    notification tags take the new handle; ids are left alone.
  * 3. Converting old handles to ids without a rename, and what a numeric legacy handle does.
+ * 4. What formulizeElementHandleCode rewrites in code - the handle given to a display function, a filter term, the
+ *    variables Formulize names after a handle, moving a variable of the author's own out of the way - and what it
+ *    leaves for a person, which the usage report marks and a rename lists.
  *
  * Usage:
  *   php tests/element_references_test.php
@@ -81,15 +84,8 @@ file_put_contents($stubRoot.'/modules/formulize/class/calendarScreen.php', "<?ph
 	public \$vars = array(); function setVar(\$k, \$v) { \$this->vars[\$k] = \$v; } function getVar(\$k) { return isset(\$this->vars[\$k]) ? \$this->vars[\$k] : null; } } }\n");
 require $stubRoot.'/modules/formulize/class/calendarScreen.php';
 
-// the two patterns, copied out of the real class, which needs too much of Formulize around it to load here
-$elementsSrc = file_get_contents($repo.'/modules/formulize/class/elements.php');
-foreach(array('handleReferencePattern', 'handleMentionPattern') as $method) {
-	if(!preg_match('/\tpublic static function '.$method.'\(.*?\n\t}\n/s', $elementsSrc, $m)) {
-		die("no $method in elements.php\n");
-	}
-	$patternMethods[] = $m[0];
-}
-eval("class formulizeElementsHandler {\n".implode("\n", $patternMethods)."}\n");
+// how a handle is written in code, and what a rename rewrites there - the real class, which stands on its own
+require $repo.'/modules/formulize/class/elementHandleCode.php';
 
 // ---- the declaration from xoops_version.php ----
 $xv = file_get_contents($repo.'/modules/formulize/xoops_version.php');
@@ -493,13 +489,18 @@ $described = array_map(function($m) { return $m['table'].':'.$m['key_value']; },
 sort($described);
 check('mentions: a list column search token, a map column search token, a PHP custom page, a button value, a grid caption, a bare column in a query - not a notification term, not approved_by, not a step\'s description, not an HTML page',
 	$described, array('formulize:901', 'formulize_advanced_calculations:51', 'formulize_screen_listofentries:22', 'formulize_screen_map:41', 'formulize_screen_multipage:23'));
-(new formulizeElementReferences(900, 'approved', 3))->rename('is_approved');
+check('mentions: the code a rename would not entirely update is marked - the PHP custom page\'s variable and the query\'s column, not the button value, whose display() call it rewrites',
+	array_map(function($m) { return $m['table'].':'.$m['key_value'].':'.(substr($m['description'], -strlen(formulizeElementHandleCode::LEFT_BY_A_RENAME)) === formulizeElementHandleCode::LEFT_BY_A_RENAME ? 'left' : 'updated'); }, $mentions),
+	array('formulize_screen_listofentries:22:updated', 'formulize_screen_map:41:updated', 'formulize_screen_multipage:23:left', 'formulize:901:updated', 'formulize_advanced_calculations:51:left'));
+$leftByTheRename = (new formulizeElementReferences(900, 'approved', 3))->rename('is_approved');
+sort($leftByTheRename);
+check('rename: names the code it left naming the old handle, and nothing else', $leftByTheRename, array('P (screen 23)', 'the advanced calculation d (calculation 51)'));
 $list = $xoopsDB->row('formulize_screen_listofentries', 'sid', 22);
 check('advanceview: the element becomes the id and its search token is renamed, a search that is only the word is not',
 	unserialize($list['advanceview']), array(array(900, '{is_approved}', '', 'Box'), array(901, 'approved', '', 'Box')));
-check('custom button value: code, so left as it is', unserialize($list['customactions'])[1][0]['value'], '$value = display($entry, \'approved\');');
+check('custom button value: the handle given to display() is renamed', unserialize($list['customactions'])[1][0]['value'], '$value = display($entry, \'is_approved\');');
 check('map column search token renamed', unserialize($xoopsDB->row('formulize_screen_map', 'sid', 41)['columns']), array(array(901, '{search_is_approved}', 'Box')));
-check('custom page code left as it is', unserialize($xoopsDB->row('formulize_screen_multipage', 'sid', 23)['pages']), array(array('PHP', 'print $approved;'), array(901)));
+check('custom page code: a variable of its own is left as it is', unserialize($xoopsDB->row('formulize_screen_multipage', 'sid', 23)['pages']), array(array('PHP', 'print $approved;'), array(901)));
 $grid = unserialize($xoopsDB->row('formulize', 'ele_id', 901)['ele_value']);
 check('grid captions: the token is renamed, the word is not', $grid[1].'|'.$grid[2], 'Row {is_approved},approved|Column one');
 $view = $xoopsDB->row('formulize_saved_views', 'sv_id', 7);
@@ -521,6 +522,47 @@ resetTables(array('formulize_screen_multipage' => array(
 (new formulizeElementReferences(910, 'PHP', 3))->rename('php_element');
 check('an element whose handle is PHP does not turn a custom page into a list of elements',
 	unserialize($xoopsDB->row('formulize_screen_multipage', 'sid', 24)['pages']), array(array('PHP', 'print 1;')));
+
+echo "== what a rename rewrites in code\n";
+$C = 'formulizeElementHandleCode';
+check('display(): the handle given as a quoted string, in either kind of quote',
+	$C::renameStrings('$a = display($entry, \'old\'); $b = getValue($entry, "old");', 'old', 'new'),
+	'$a = display($entry, \'new\'); $b = getValue($entry, "new");');
+check('display(): a call inside the first argument is found, and so is the outer one',
+	$C::renameStrings('getValue(getData(1, 2, \'old/**/5/**/=\'), display($e, \'old\'), 0);', 'old', 'new'),
+	'getValue(getData(1, 2, \'new/**/5/**/=\'), display($e, \'new\'), 0);');
+check('display(): by name, and called as \display()',
+	$C::renameStrings('getValue($e, handle: \'old\'); \display($e, \'old\');', 'old', 'new'),
+	'getValue($e, handle: \'new\'); \display($e, \'new\');');
+check('display(): every one of the display functions, at its element argument',
+	$C::renameStrings("displayElement('', 'old'); displayCaption('', 'old'); displayDescription('', 'old'); displayButton('Go', 'old', 5); displayTogether(\$e, 'old', ','); displayPara(\$e, 'old'); displayBR(\$e, 'old'); displayList(\$e, 'old'); displayRichText(\$e, 'old');", 'old', 'new'),
+	"displayElement('', 'new'); displayCaption('', 'new'); displayDescription('', 'new'); displayButton('Go', 'new', 5); displayTogether(\$e, 'new', ','); displayPara(\$e, 'new'); displayBR(\$e, 'new'); displayList(\$e, 'new'); displayRichText(\$e, 'new');");
+$leftAlone = '$c = $obj->display($e, \'old\'); $d = display($e, \'old_x\'); $e2 = display($e, \'x_\'.$y); $f = display($e, "old$y"); $g = $row[\'old\']; $h = mydisplay($e, \'old\'); // display($e, \'old\')'."\n".'function display($x, $y) {} $i = display(\'old\', $e);';
+check('left alone: a method of the same name, another handle, a handle put together, a key, another function, a comment, the first argument',
+	$C::renameStrings($leftAlone, 'old', 'new'), $leftAlone);
+check('filter terms: first in a string, and after ][, in either kind of quote, and in a string with variables',
+	$C::renameStrings('$f = \'old/**/1/**/=][other/**/2\'; $g = "x/**/1][old/**/2"; $h = "old/**/$v"; $i = "$v][old/**/2";', 'old', 'new'),
+	'$f = \'new/**/1/**/=][other/**/2\'; $g = "x/**/1][new/**/2"; $h = "new/**/$v"; $i = "$v][new/**/2";');
+check('filter terms: not in the middle of a string, nor without /**/ after it',
+	$C::renameStrings('$f = "$v old/**/2"; $g = \'xold/**/1\'; $h = \'old/*1\';', 'old', 'new'), '$f = "$v old/**/2"; $g = \'xold/**/1\'; $h = \'old/*1\';');
+check('text with PHP in it: only what is inside the tags',
+	$C::renameStrings('<div>display($e, \'old\')</div><?php echo display($e, \'old\'); ?>', 'old', 'new', false),
+	'<div>display($e, \'old\')</div><?php echo display($e, \'new\'); ?>');
+check('text without PHP in it: nothing', $C::renameStrings('<p>display($e, \'old\')</p>', 'old', 'new', false), '<p>display($e, \'old\')</p>');
+check('variables: $old becomes $new, not $old_x', $C::renameVariables(array('$old + $old_x'), 'old', 'new'), array('$new + $old_x'));
+check('variables: a $new already there is moved to the first free $new_N, past the ones in use and the ones unavailable, in every text of the group',
+	$C::renameVariables(array('a' => '$old + $new + $new_1', 'b' => '{$new} {$old}'), 'old', 'new', array(''), array('new_2')),
+	array('a' => '$new + $new_3 + $new_1', 'b' => '{$new_3} {$new}'));
+check('variables: with a prefix, only the variable with that prefix',
+	$C::renameVariables(array('$quickSearchold $quickDateRangeold $old'), 'old', 'new', array('quickSearch', 'quickDateRange')),
+	array('$quickSearchnew $quickDateRangenew $old'));
+check('variables: nothing moved out of the way when the old handle is not there', $C::renameVariables(array('$new'), 'old', 'new'), array('$new'));
+check('tokens', $C::renameTokens('{old} {old_x} {search_old}', 'old', 'new'), '{new} {old_x} {search_old}');
+check('still named: a key, a backticked column, a bare column only in a query, a variable, a token; not another handle',
+	array($C::stillNamed('$r[\'old\']', 'old'), $C::stillNamed('SELECT `old` FROM t', 'old'), $C::stillNamed('SELECT old FROM t', 'old'),
+		$C::stillNamed('SELECT old FROM t', 'old', true), $C::stillNamed('$old', 'old'), $C::stillNamed('{old}', 'old'), $C::stillNamed('$old_x \'old_x\'', 'old')),
+	array(true, true, false, true, true, true, false));
+check('reserved names: a formula\'s own variables, and any others asked for', array_values(array_intersect(array('value', 'entry', 'i', 'zz'), $C::reservedNames(array('i')))), array('value', 'entry', 'i'));
 
 printf("\nRESULT: %d passed, %d failed\n", $GLOBALS['__pass'], $GLOBALS['__fail']);
 exit($GLOBALS['__fail'] === 0 ? 0 : 1);

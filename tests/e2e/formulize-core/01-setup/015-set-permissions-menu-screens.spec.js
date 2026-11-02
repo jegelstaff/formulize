@@ -486,6 +486,26 @@ test.describe('Set columns and elements for screens', () => {
 		await expect(page.locator('#cols-0')).toHaveValue('artifacts_short_name');
 	})
 
+	test('Menu entry for the Artifact origins map', async ({ page }) => {
+		// The map gets a link in the Museum menu, for the same groups as the forms' links
+		const sid = dbQuery(`SELECT sid FROM ${dbPrefix()}_formulize_screen WHERE screen_handle = 'artifact_origins'`)[0][0];
+		const linkCount = () => dbQuery(`SELECT COUNT(*) FROM ${dbPrefix()}_formulize_menu_links WHERE screen = 'sid=${sid}'`)[0][0];
+		for (let attempt = 1; attempt <= 3 && linkCount() === '0'; attempt++) {
+			await page.goto('/modules/formulize/admin/ui.php?page=home');
+			await page.getByRole('link', { name: 'Application: Museum' }).click();
+			await page.getByRole('link', { name: 'Menu Entries' }).click();
+			await waitForAdminPageReady(page);
+			await page.locator('#addmenutext').fill('Artifact origins');
+			await page.locator('#listofscreenoptions select').selectOption(`sid=${sid}`);
+			await page.locator('#addgroups').selectOption(['Webmasters', 'Departments - All Users']);
+			await saveAdminForm(page);
+		}
+		expect(linkCount()).toBe('1');
+		const menuId = dbQuery(`SELECT menu_id FROM ${dbPrefix()}_formulize_menu_links WHERE screen = 'sid=${sid}'`)[0][0];
+		const groups = dbQuery(`SELECT g.name FROM ${dbPrefix()}_formulize_menu_permissions p JOIN ${dbPrefix()}_groups g ON g.groupid = p.group_id WHERE p.menu_id = ${menuId}`).map(r => r[0]);
+		expect(groups).toEqual(expect.arrayContaining(['Webmasters', 'Departments - All Users']));
+	})
+
 	test('Custom button on the Artifacts list', async ({ page }) => {
 		// A button beside each artifact in the list that marks it as being in perfect condition, by writing 10 to
 		// Condition. In each row, because a button for the list as a whole only appears where a webmaster's own top

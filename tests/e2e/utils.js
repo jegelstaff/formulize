@@ -1534,21 +1534,33 @@ export async function saveAppearanceEditor(page, name) {
 
 /**
  * Rename an element's handle in its settings, the way a webmaster does, and wait until the new handle is stored.
+ * When the rename leaves places that still name the old handle, or the handle asked for is one Formulize keeps for
+ * itself, the save says so in a dialog, which this reads and closes, the way a person does.
  * The caller must be logged in as a webmaster.
  * @param {import('@playwright/test').Page} page
  * @param {string} oldHandle
  * @param {string} newHandle
- * @returns {Promise<string>} The element's id, which a rename does not change
+ * @param {string} storedHandle - The handle the element ends up with, when it is not the one asked for.
+ * @returns {Promise<string|null>} What the dialog said, or null when there was none
  */
-export async function renameElementHandle(page, oldHandle, newHandle) {
+export async function renameElementHandle(page, oldHandle, newHandle, storedHandle = newHandle) {
 	const [eleId, fid] = dbQuery(`SELECT ele_id, id_form FROM ${dbPrefix()}_formulize WHERE ele_handle = '${sqlEscape(oldHandle)}'`)[0];
 	const apps = dbQuery(`SELECT appid FROM ${dbPrefix()}_formulize_application_form_link WHERE fid = ${fid}`);
 	await page.goto(`/modules/formulize/admin/ui.php?page=element&ele_id=${eleId}&fid=${fid}&aid=${apps.length ? apps[0][0] : 0}`);
 	await waitForAdminPageReady(page);
 	await page.locator('input[name="elements-ele_handle"]').fill(newHandle);
 	await saveAdminForm(page);
-	await expect.poll(() => dbQuery(`SELECT ele_handle FROM ${dbPrefix()}_formulize WHERE ele_id = ${eleId}`)[0][0], { timeout: 30000 }).toBe(newHandle);
-	return eleId;
+	await expect.poll(() => dbQuery(`SELECT ele_handle FROM ${dbPrefix()}_formulize WHERE ele_id = ${eleId}`)[0][0], { timeout: 30000 }).toBe(storedHandle);
+	// the dialog is opened by the save's response, so it is there by the time the save has finished
+	const notice = page.locator('#elementHandleNotice');
+	if (await notice.count() === 0) {
+		return null;
+	}
+	await expect(notice).toBeVisible();
+	const said = await notice.innerText();
+	await page.locator('.ui-dialog').filter({ has: notice }).getByRole('button', { name: 'OK' }).click();
+	await expect(notice).toHaveCount(0);
+	return said;
 }
 
 /**
@@ -1588,7 +1600,7 @@ export async function searchArtifactOriginsMap(page, term) {
  * where it is before anything is clicked.
  * @param {import('@playwright/test').Page} page
  */
-async function waitForMapToSettle(page) {
+export async function waitForMapToSettle(page) {
 	await expect(page.locator('.leaflet-container')).toBeVisible();
 	const pin = page.locator('img.leaflet-marker-icon').first();
 	await expect(pin).toBeVisible();
