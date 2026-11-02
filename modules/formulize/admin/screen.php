@@ -48,7 +48,7 @@ $settings['existingPasscodes'] = $passcode_handler->getOtherScreenPasscodes($scr
 $settings['newPasscode'] = $passcode_handler->generatePasscode();
 $settings['passcodes'] = $passcode_handler->getThisScreenPasscodes($screen_id);
 
-$config_handler = $config_handler = xoops_gethandler('config');
+$config_handler = xoops_gethandler('config');
 $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 $settings['embeddingAllowed'] = formulize_embeddingAllowed(); // a new screen has this question too
 $settings['screenTypes'] = formulize_getScreenTypes();

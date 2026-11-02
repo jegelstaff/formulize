@@ -299,7 +299,7 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 			$listOfRelationships->addOptionArray($relationships);
 			$dataToSendToTemplate['listofrelationshipoptions'] = $listOfRelationships->render();
 		} else {
-			$config_handler = $config_handler = xoops_gethandler('config');
+			$config_handler = xoops_gethandler('config');
 			$formulizeConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId());
 			$dataToSendToTemplate['ele_value'][1] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
 			$dataToSendToTemplate['ele_value'][2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';
