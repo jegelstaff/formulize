@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyColumnChanges, createMuseumForm, deleteMuseumForm } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyColumnChanges, createMuseumForm, deleteMuseumForm, dbQuery, dbPrefix } from '../../utils';
 
 /**
  * T2.10 - a clickable-in-list linked select must render its value as an escaped <a> pointing at the right
@@ -28,6 +28,15 @@ test.describe.serial('T2.10 - clickable linked select renders an escaped link', 
 
 	test('build the source form and give it one payload entry', async ({ page }) => {
 		await login(page, 'admin');
+
+		// self-heal leftovers from an aborted run (see 036 for the rationale). The target picks its source
+		// element by caption, so a leftover source form would be picked instead of the one built here.
+		for (const title of ['XSS Link Target', 'XSS Link Source']) {
+			for (const row of dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = '${title}'`)) {
+				await deleteMuseumForm(page, parseInt(row[0], 10));
+			}
+		}
+
 		sourceFid = await createMuseumForm(page, 'XSS Link Source', 'ID');
 		expect(sourceFid).toBeGreaterThan(0);
 

@@ -275,9 +275,14 @@ export async function waitForWorkingMessage(page) {
  *
  * A section's checkboxes are then found by the form's name: popup.getByRole('group', { name: 'Exhibits', exact: true }).
  *
+ * Callers usually hand over the popup as soon as it opens, before its sections have loaded, so this
+ * waits for the last one to appear. Counting the closed sections any sooner finds none.
+ *
  * @param {import('@playwright/test').Page} popup The "Change columns" popup page
  */
 export async function openAllColumnSections(popup) {
+	await popup.waitForLoadState();
+	await popup.locator('details > summary').last().waitFor();
 	const closed = popup.locator('details:not([open]) > summary');
 	while (await closed.count() > 0) {
 		await closed.first().click();
