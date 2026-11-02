@@ -307,17 +307,22 @@ trait formulizeElementReferenceScanTrait {
 	 *                      up by something other than removeElementReferences() and this is a report entry.
 	 * @param string $keyColumn The primary key column of that table.
 	 * @param int $keyValue The row's primary key.
-	 * @param array $updates column => the exact literal to write. Empty means there is nothing to write.
+	 * @param array $updates column => the exact literal to write when the element is deleted. Empty means there
+	 *                       is nothing to write.
+	 * @param array|null $columns The columns that hold the reference, which a rename rewrites. Usually the same
+	 *                            columns a deletion changes, and taken from $updates when not given. It differs
+	 *                            when a reference is found in a column the deletion cannot work out how to change.
 	 * @return array
 	 */
-	protected function elementReference($section, $description, $table, $keyColumn, $keyValue, $updates = array()) {
+	protected function elementReference($section, $description, $table, $keyColumn, $keyValue, $updates = array(), $columns = null) {
 		return array(
 			'section' => $section,
 			'description' => $description,
 			'table' => $table,
 			'key_column' => $keyColumn,
 			'key_value' => intval($keyValue),
-			'updates' => $updates
+			'updates' => $updates,
+			'columns' => $columns === null ? array_keys($updates) : array_values(array_unique($columns))
 		);
 	}
 }

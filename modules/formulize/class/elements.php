@@ -1086,7 +1086,7 @@ class formulizeElementsHandler {
 	 * @param bool $eleValueWasSavedWithThisChange Whether the save that changed the handle also set ele_value.
 	 *   When it did, setVar has already written or deleted the element's code file under the new handle, and
 	 *   the file under the old handle is a spent copy that is removed rather than renamed over it. Only the
-	 *   caller knows this - see the code file loop below for why it cannot be worked out from the content.
+	 *   caller knows this - see renameElementCodeFiles() for why it cannot be worked out from the content.
 	 * @return void
 	 */
 	function renameElementResources($elementObject, $original_handle, $eleValueWasSavedWithThisChange = false) {
@@ -1104,68 +1104,8 @@ class formulizeElementsHandler {
 				// Files where a matching name is not a reference to this element are left alone; see
 				// codeFilesThatReferenceHandles().
 				$this->renameHandleInCodeFiles($original_handle, $ele_handle);
-				// rename element code files (fullWidthContent, captionedContent, text, textarea, number, derived)
-				// and purge stale derived-value cache files so they regenerate with the new handle
-				//
-				// The old file is only carried across when it is still the truth. It is not, when the same save
-				// also set ele_value: this runs after insert(), which runs after the properties were set, so
-				// setVar has already put the file for the NEW handle into whatever state the content calls for -
-				// written when the content is code, deleted when it is not. Renaming the old file over that
-				// would put back content the admin had just changed, or restore code they had just removed.
-				// Every caller that sets ele_value sets the whole array (the admin Options tab posts it, and
-				// the MCP tools seed it from the element's current ele_value before overwriting the keys they
-				// were given), so ele_value being part of the save does mean setVar acted on the file.
-				//
-				// It cannot be decided by looking at the content instead. A handle-only rename reads exactly the
-				// same as a cleared one at this moment: the stored value was blanked by an earlier save and the
-				// file under the new handle does not exist yet, so the content reads back empty either way.
-				//
-				// A stale file is deleted rather than left behind. These names are per handle, so one sitting
-				// in the code directory under a handle nothing uses is picked up in full by the next element
-				// created with that handle - the file wins over the stored value on read - which is a worse
-				// outcome than not having it.
-				//
-				// Whether a file exists is read from the directory listing, by exact name, rather than asked of
-				// file_exists(). On a file system that ignores case - Windows, and macOS by default - a rename
-				// that only changes case gives two names for one file, so file_exists() says the new one is
-				// there when it is really the old one, and the old one would be deleted as spent, taking the
-				// element's only copy of its code with it. The listing has the one name it really has.
-				$currentType = $elementObject->getVar('ele_type');
-				$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
-				$codeFilesOnDisk = (array) scandir($codeDir);
-				foreach(self::elementCodeFileTypes() as $type) {
-					$oldName = $type.'_'.$original_handle.'.php';
-					$newName = $type.'_'.$ele_handle.'.php';
-					if(!in_array($oldName, $codeFilesOnDisk, true)) { continue; }
-					$newExists = in_array($newName, $codeFilesOnDisk, true);
-					if(!$newExists AND strtolower($oldName) === strtolower($newName)) {
-						// Only the case is changing, and there is one file. Where case is ignored it is the same
-						// file under either name, already holding whatever setVar wrote on this save, so it is
-						// never deleted - only renamed, in two steps, since a rename to the same name differing
-						// only in case is not reliably carried out in one.
-						$temporaryName = $codeDir.$newName.'.renaming';
-						if(rename($codeDir.$oldName, $temporaryName)) {
-							rename($temporaryName, $codeDir.$newName);
-						}
-						continue;
-					}
-					// This element's own type is the one setVar wrote on this save, so the new-handle file is
-					// already right and the old one is spent. A file named for one of the other types is left
-					// over from a type conversion, which setVar knows nothing about, so that one still moves.
-					// A file already sitting under the new name is the live one either way - the backstop for
-					// callers that do not know whether ele_value was part of the save.
-					if(($eleValueWasSavedWithThisChange AND $type === $currentType) OR $newExists) {
-						unlink($codeDir.$oldName);
-					} else {
-						rename($codeDir.$oldName, $codeDir.$newName);
-					}
-				}
-				$cacheDir = XOOPS_ROOT_PATH . '/modules/formulize/cache/';
-				if(is_dir($cacheDir)) {
-					foreach((array)glob($cacheDir . 'Derived_value_formula_for_' . $original_handle . '*.php') as $cacheFile) {
-						@unlink($cacheFile);
-					}
-				}
+				// the element's own code files, and the cached derived value formulas named after it
+				$this->renameElementCodeFiles($elementObject, $original_handle, $eleValueWasSavedWithThisChange);
 				// settings that name this element by its handle - screens, saved views, conditions, filters,
 				// custom buttons - found by the same scan that cleans up after a deletion
 				$this->renameElementInSettings($elementObject, $original_handle);
@@ -1181,6 +1121,78 @@ class formulizeElementsHandler {
 				// cache costs a re-read; a stale one costs a linked element pointing at a handle
 				// that no longer exists.
 				$this->clearElementCache();
+			}
+		}
+	}
+
+	/**
+	 * Rename the code files an element keeps under its own name - <type>_<handle>.php in the code folder, for the
+	 * types listed in elementCodeFileTypes() - and remove the cached derived value formulas named after its old
+	 * handle, so they are regenerated under the new one.
+	 *
+	 * The old file is only carried across when it is still the truth. It is not, when the same save also set
+	 * ele_value: the rename runs after insert(), which runs after the properties were set, so setVar has already
+	 * put the file for the NEW handle into whatever state the content calls for - written when the content is code,
+	 * deleted when it is not. Renaming the old file over that would put back content the admin had just changed,
+	 * or restore code they had just removed. Every caller that sets ele_value sets the whole array (the admin
+	 * Options tab posts it, and the MCP tools seed it from the element's current ele_value before overwriting the
+	 * keys they were given), so ele_value being part of the save does mean setVar acted on the file.
+	 *
+	 * It cannot be decided by looking at the content instead. A handle-only rename reads exactly the same as a
+	 * cleared one at this moment: the stored value was blanked by an earlier save and the file under the new handle
+	 * does not exist yet, so the content reads back empty either way.
+	 *
+	 * A stale file is deleted rather than left behind. These names are per handle, so one sitting in the code
+	 * directory under a handle nothing uses is picked up in full by the next element created with that handle -
+	 * the file wins over the stored value on read - which is a worse outcome than not having it.
+	 *
+	 * Whether a file exists is read from the directory listing, by exact name, rather than asked of file_exists().
+	 * On a file system that ignores case - Windows, and macOS by default - a rename that only changes case gives
+	 * two names for one file, so file_exists() says the new one is there when it is really the old one, and the old
+	 * one would be deleted as spent, taking the element's only copy of its code with it. The listing has the one
+	 * name it really has.
+	 *
+	 * @param object $elementObject The element, with its new handle already set.
+	 * @param string $originalHandle The handle before the rename, as it is written in the database.
+	 * @param bool $eleValueWasSavedWithThisChange See renameElementResources().
+	 * @return void
+	 */
+	protected function renameElementCodeFiles($elementObject, $originalHandle, $eleValueWasSavedWithThisChange) {
+		$newHandle = $elementObject->getVar('ele_handle');
+		$currentType = $elementObject->getVar('ele_type');
+		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		$codeFilesOnDisk = (array) scandir($codeDir);
+		foreach(self::elementCodeFileTypes() as $type) {
+			$oldName = $type.'_'.$originalHandle.'.php';
+			$newName = $type.'_'.$newHandle.'.php';
+			if(!in_array($oldName, $codeFilesOnDisk, true)) { continue; }
+			$newExists = in_array($newName, $codeFilesOnDisk, true);
+			if(!$newExists AND strtolower($oldName) === strtolower($newName)) {
+				// Only the case is changing, and there is one file. Where case is ignored it is the same file under
+				// either name, already holding whatever setVar wrote on this save, so it is never deleted - only
+				// renamed, in two steps, since a rename to the same name differing only in case is not reliably
+				// carried out in one.
+				$temporaryName = $codeDir.$newName.'.renaming';
+				if(rename($codeDir.$oldName, $temporaryName)) {
+					rename($temporaryName, $codeDir.$newName);
+				}
+				continue;
+			}
+			// This element's own type is the one setVar wrote on this save, so the new-handle file is already right
+			// and the old one is spent. A file named for one of the other types is left over from a type
+			// conversion, which setVar knows nothing about, so that one still moves. A file already sitting under
+			// the new name is the live one either way - the backstop for callers that do not know whether
+			// ele_value was part of the save.
+			if(($eleValueWasSavedWithThisChange AND $type === $currentType) OR $newExists) {
+				unlink($codeDir.$oldName);
+			} else {
+				rename($codeDir.$oldName, $codeDir.$newName);
+			}
+		}
+		$cacheDir = XOOPS_ROOT_PATH . '/modules/formulize/cache/';
+		if(is_dir($cacheDir)) {
+			foreach((array)glob($cacheDir . 'Derived_value_formula_for_' . $originalHandle . '*.php') as $cacheFile) {
+				@unlink($cacheFile);
 			}
 		}
 	}
@@ -1327,6 +1339,7 @@ class formulizeElementsHandler {
 	 * @return void
 	 */
 	protected function renameElementInSettings($elementObject, $originalHandle) {
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/class/savedViews.php'; // for renameHandleInSettingText()
 		$newHandle = $elementObject->getVar('ele_handle');
 		if(is_numeric($originalHandle)) {
 			$this->renameNumericHandleInSavedViews($originalHandle, $newHandle);
@@ -1340,21 +1353,12 @@ class formulizeElementsHandler {
 		$elementAsItWas = clone $elementObject;
 		$elementAsItWas->vars['ele_handle'] = array_merge($elementObject->vars['ele_handle'], array('value' => (string) $originalHandle));
 		foreach($this->findReferencesToElement($elementAsItWas) as $reference) {
-			if(!$reference['table']) {
+			// the columns that hold the reference, which are not only the ones a deletion would change - see
+			// elementReference()
+			if(!$reference['table'] OR !$reference['columns']) {
 				continue; // reported only, because it is cleaned up somewhere else - see the scan that found it
 			}
-			$columns = array_keys($reference['updates']);
-			// An element's own type decides what its ele_value means, and a type that cannot rewrite its own
-			// references reports them without proposing an update. So for another element, every column that
-			// can name an element is read, not only the ones a deletion would change, and whether or not the
-			// scan proposed any change at all.
-			if($reference['table'] == 'formulize') {
-				$columns = array_values(array_unique(array_merge($columns, array('ele_value', 'ele_filtersettings', 'ele_disabledconditions', 'ele_dynamicdefault_conditions'))));
-			}
-			if(!$columns) {
-				continue;
-			}
-			$this->rewriteStoredSettings($reference['table'], $reference['key_column'], $reference['key_value'], $columns,
+			$this->rewriteStoredSettings($reference['table'], $reference['key_column'], $reference['key_value'], $reference['columns'],
 				fn($text) => self::renameHandleInSettingText($text, $originalHandle, $newHandle));
 		}
 	}
@@ -1418,7 +1422,7 @@ class formulizeElementsHandler {
 	 * @return string
 	 */
 	protected static function renameHandleInSettingText($text, $originalHandle, $newHandle) {
-		$hiddenColumnPrefix = 'hiddencolumn_'; // formulizeSavedViewsHandler::HIDDEN_COLUMN_PREFIX, which may not be loaded
+		$hiddenColumnPrefix = formulizeSavedViewsHandler::HIDDEN_COLUMN_PREFIX;
 		$entries = explode(',', $text);
 		foreach($entries as $i => $entry) {
 			$prefix = strpos($entry, $hiddenColumnPrefix) === 0 ? $hiddenColumnPrefix : '';
@@ -1522,7 +1526,8 @@ class formulizeElementsHandler {
 			$tokenStart = $match[0][1];
 			$contentStart = $tokenStart + strlen($match[0][0]);
 			$content = substr($value, $contentStart, intval($match[1][0]));
-			$newContent = $rewrite($content);
+			// a string can itself be a serialized value, whose own lengths need the same care
+			$newContent = self::rewriteStringsInStoredValue($content, $rewrite);
 			$rewritten .= substr($value, $position, $tokenStart - $position).'s:'.strlen($newContent).':"'.$newContent;
 			$position = $contentStart + strlen($content);
 		}
@@ -1794,10 +1799,13 @@ class formulizeElementsHandler {
 			}
 
 			if($usedAs) {
+				// where the reference sits is asked separately from what a deletion changes, because a type that
+				// cannot rewrite its own ele_value still holds the reference there, and a rename has to reach it
 				$references[] = $this->elementReference(
 					_AM_ELE_USAGE_SECTION_OTHER_ELEMENTS,
 					"the ".$row['ele_type']." element '".$row['ele_handle']."' (form ".intval($row['id_form']).") - ".implode(', ', $usedAs),
-					'formulize', 'ele_id', $row['ele_id'], $updates
+					'formulize', 'ele_id', $row['ele_id'], $updates,
+					array_merge(array_keys($updates), $this->elementDependencyColumns($row, $handle))
 				);
 			}
 		}
@@ -1818,11 +1826,48 @@ class formulizeElementsHandler {
 	 * stale reading.
 	 *
 	 * @param array $row The element row, with the settings columns and ele_type.
+	 * @param string|null $column Only this one of the settings, rather than all of them.
 	 * @return array The handles this element refers to.
 	 */
-	private function elementDependencyHandles($row) {
+	private function elementDependencyHandles($row, $column = null) {
 		static $cache = array();
-		$settings = array(
+		$settings = $this->elementDependencySettings($row);
+		if($column !== null) {
+			// ele_type goes along, because it decides what ele_value means
+			$settings = array('ele_type' => $settings['ele_type'], $column => $settings[$column]);
+		}
+		$key = intval($row['ele_id']).':'.md5(serialize($settings));
+		if(!isset($cache[$key])) {
+			$cache[$key] = $this->getElementDependencies($settings);
+		}
+		return $cache[$key];
+	}
+
+	/**
+	 * Which of an element's settings name this handle - the location of a reference that
+	 * elementDependencyHandles() has found, asked of getElementDependencies() one setting at a time, so where a
+	 * reference is comes from the same definition as whether there is one.
+	 * @param array $row The element row, with the settings columns and ele_type.
+	 * @param string $handle The handle referred to.
+	 * @return array The columns.
+	 */
+	private function elementDependencyColumns($row, $handle) {
+		$columns = array();
+		foreach(array_keys($this->elementDependencySettings($row)) as $column) {
+			if($column !== 'ele_type' AND in_array($handle, $this->elementDependencyHandles($row, $column))) {
+				$columns[] = $column;
+			}
+		}
+		return $columns;
+	}
+
+	/**
+	 * The settings of an element that can refer to another element, in the shape getElementDependencies() reads.
+	 * @param array $row The element row, with the settings columns and ele_type.
+	 * @return array
+	 */
+	private function elementDependencySettings($row) {
+		return array(
 			'ele_type' => $row['ele_type'],
 			'ele_filtersettings' => $row['ele_filtersettings'],
 			'ele_disabledconditions' => $row['ele_disabledconditions'],
@@ -1830,11 +1875,6 @@ class formulizeElementsHandler {
 			'ele_dynamicdefault_source' => $row['ele_dynamicdefault_source'],
 			'ele_value' => $row['ele_value']
 		);
-		$key = intval($row['ele_id']).':'.md5(serialize($settings));
-		if(!isset($cache[$key])) {
-			$cache[$key] = $this->getElementDependencies($settings);
-		}
-		return $cache[$key];
 	}
 
 	/**

@@ -285,10 +285,12 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
 			// staying silent about a screen that may well be about to break.
 			if(!$readable) {
 				if(strpos((string) $row['datasets'], $handle) !== false) {
+					// nothing for a deletion to write, but the column is named, so a rename - which swaps the
+					// handle in the stored text without unserializing it - still reaches it
 					$references[] = $this->elementReference(
 						_AM_ELE_USAGE_SECTION_CALENDAR_SCREENS,
 						$description.' (this screen could not be read properly, so check it and change it yourself)',
-						'', 'sid', $row['sid']
+						'formulize_screen_calendar', 'sid', $row['sid'], array(), array('datasets')
 					);
 				}
 				continue;

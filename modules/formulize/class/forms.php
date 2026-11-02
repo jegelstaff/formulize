@@ -2278,7 +2278,7 @@ class formulizeFormsHandler {
 	// sanitized (see findDataTableColumn()), so a field still named with the capitals, hyphens or other characters a
 	// handle had before handles lost them is found, and renamed to match, whatever spelling the caller has.
 	// Nothing is done only when the field is already named exactly $newName, in case too, and no data type is given.
-	// Throws an exception if the field cannot be found in the data table, or cannot be renamed.
+	// Throws an exception if the field cannot be found in the data table or the revisions table, or cannot be renamed.
 	function updateField($element, $oldName, $dataType=false, $newName="") {
 		if(!$element = _getElementObject($element)) {
 			throw new Exception("Could not load element object to update field name");
@@ -2292,24 +2292,27 @@ class formulizeFormsHandler {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($element->getVar('id_form'));
 		$dataTable = $this->db->prefix("formulize_" . $formObject->getVar('form_handle'));
-		$tables = array($dataTable => true); // table => whether the field has to be there
-		// The revisions table is checked for directly rather than through revisionsTableExists(), which creates it
-		// when revisions are on for every form. One created here would be built from the element definitions, so
-		// could already have the field under the new name while the data table still has the old one.
+		$tables = array($dataTable);
+		// The revisions table is checked for directly rather than through revisionsTableExists(), because that creates
+		// the table when revisions are on for every form. A rename should not create a table as a side effect, and one
+		// created now would have nothing to rename, while a failure to create it would stop the rename.
 		$revisionsTable = $this->db->prefix("formulize_" . $formObject->getVar('form_handle') . "_revisions");
 		$revisionsRes = $this->db->queryF("SHOW TABLES LIKE " . $this->db->quoteString($revisionsTable));
 		if($revisionsRes AND $this->db->getRowsNum($revisionsRes) > 0) {
-			$tables[$revisionsTable] = false;
+			$tables[] = $revisionsTable;
 		}
 
-		foreach($tables as $table => $required) {
-			$columns = $this->dataTableColumns($table);
-			if(!$column = $this->findDataTableColumn($columns, $oldName, $table)) {
-				if(!isset($columns[$newName]) AND $required) {
-					throw new Exception("Could not find the field $oldName in $table");
-				}
-				continue; // already renamed by an earlier run, or never in this table
+		// Every table is checked before any is changed, so a field missing from one of them stops the update with both
+		// left as they were. A revisions table without the field is already broken - saving a revision copies every
+		// field of the data table by name - and that is for a person to look into, not for an update to cover over.
+		$fields = array(); // table => the field as it is there now
+		foreach($tables as $table) {
+			if(!$fields[$table] = $this->findDataTableColumn($this->dataTableColumns($table), $oldName, $table)) {
+				throw new Exception("Could not find the field $oldName in $table");
 			}
+		}
+
+		foreach($fields as $table => $column) {
 			if($column['Field'] === $newName AND !$dataType) {
 				continue;
 			}
