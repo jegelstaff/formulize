@@ -114,9 +114,17 @@ class formulizeElementReferences {
 	 * Each one says where it is, what a person reads about it, and what deleting the element writes there.
 	 * A reference that a deletion leaves for a person, or that other code cleans up, has no updates.
 	 *
+	 * The usage report prints these and formulizeElementsHandler::removeElementReferences() runs their
+	 * updates, so the two cannot disagree: a report that promises to tidy something up and a clean up that
+	 * misses it is worse than either problem alone, and the only way to be sure they match is for both to be
+	 * the same piece of work.
+	 *
 	 * @return array Each with section, description, table, key_column, key_value and updates.
 	 */
 	public function references() {
+		if(!$this->identified()) {
+			return array();
+		}
 		$references = array();
 		foreach(self::declaration() as $table => $tableSpec) {
 			foreach($this->candidateRows($table, $tableSpec) as $row) {
@@ -174,6 +182,9 @@ class formulizeElementReferences {
 	 * @return array Each with table, key_value, description and row.
 	 */
 	public function mentions() {
+		if(!$this->identified()) {
+			return array();
+		}
 		$mentions = array();
 		foreach(self::declaration() as $table => $tableSpec) {
 			foreach($this->candidateRows($table, $tableSpec) as $row) {
@@ -197,15 +208,44 @@ class formulizeElementReferences {
 	}
 
 	/**
-	 * Rewrite every reference to the old handle so it names the new one: handles at the positions declared
-	 * to hold them, {handle} tokens, and notification tags. Ids are left as they are, because a rename does
-	 * not change an id. Code is left as it is, because it is a person's to change - see mentions().
+	 * Rewrite every reference to the old handle after the element's handle has changed.
+	 *
+	 * Where a setting is declared to hold a handle, the new handle is written. Where it is declared to hold
+	 * either - settings Formulize now saves as element ids, which can still hold a handle written before that -
+	 * the element's id is written instead, so the setting ends up the way a save would leave it today and never
+	 * needs renaming again. {handle} tokens and notification tags take the new handle. Ids are left as they
+	 * are, because a rename does not change an id, and code is left as it is, because it is a person's to
+	 * change - see mentions().
+	 *
 	 * @param string $newHandle The handle as it is now.
 	 * @return void
 	 */
 	public function rename($newHandle) {
 		$newHandle = (string) $newHandle;
 		if($newHandle === '' OR $newHandle === $this->handle) {
+			return;
+		}
+		$this->rewrite('rename', $newHandle);
+	}
+
+	/**
+	 * Turn every reference to the handle into the element's id, in the settings Formulize now saves as ids
+	 * (declared to hold either) but which can still hold a handle written before that. Nothing that is
+	 * meant to hold a handle is touched, and nor are tokens or tags. The element keeps its handle; this only
+	 * brings old settings up to the way a save would write them now.
+	 * @return void
+	 */
+	public function convertLegacyHandlesToIds() {
+		$this->rewrite('to_ids', null);
+	}
+
+	/**
+	 * Read every row that could refer to the element and write back the columns that change.
+	 * @param string $mode 'rename' or 'to_ids'.
+	 * @param string|null $newHandle For a rename.
+	 */
+	private function rewrite($mode, $newHandle) {
+		if(!$this->identified()) {
 			return;
 		}
 		foreach(self::declaration() as $table => $tableSpec) {
@@ -215,7 +255,7 @@ class formulizeElementReferences {
 					if(!array_key_exists($column, $row)) {
 						continue;
 					}
-					$result = $this->walkColumn($spec, $row[$column], 'rename', $newHandle, $row);
+					$result = $this->walkColumn($spec, $row[$column], $mode, $newHandle, $row);
 					if($result['changed']) {
 						$sets[] = "`$column` = ".$this->db->quoteString((string) $result['stored']);
 					}
@@ -254,7 +294,8 @@ class formulizeElementReferences {
 		}
 		$likes = array();
 		$terms = array_unique(array($this->handle, strtoupper($this->handle), (string) $this->elementId));
-		foreach(array_keys($tableSpec['columns']) as $column) {
+		// only columns the table really has, so a column missing on an older site costs that column, not the table
+		foreach(array_intersect(array_keys($tableSpec['columns']), $this->tableColumns($table)) as $column) {
 			foreach($terms as $term) {
 				$likes[] = "t.`$column` LIKE ".$this->db->quoteString('%'.$term.'%');
 			}
@@ -266,6 +307,33 @@ class formulizeElementReferences {
 			}
 		}
 		return $rows;
+	}
+
+	/**
+	 * The columns a table has, read once per request. None, if the table does not exist on this site.
+	 * @param string $table The unprefixed table name.
+	 * @return array
+	 */
+	private function tableColumns($table) {
+		if(!isset(self::$tableColumns[$table])) {
+			self::$tableColumns[$table] = array();
+			if($result = $this->db->query("SHOW COLUMNS FROM `".$this->db->prefix($table)."`")) {
+				while($row = $this->db->fetchArray($result)) {
+					self::$tableColumns[$table][] = $row['Field'];
+				}
+			}
+		}
+		return self::$tableColumns[$table];
+	}
+
+	private static $tableColumns = array();
+
+	/**
+	 * Is there an element to look for? Without an id and a handle, every coarse filter in candidateRows()
+	 * would match everything, so nothing is looked for at all.
+	 */
+	private function identified() {
+		return $this->elementId > 0 AND $this->handle !== '';
 	}
 
 	/**
@@ -377,8 +445,8 @@ class formulizeElementReferences {
 		if($mode == 'remove' AND $this->matches($value, $holds)) {
 			return self::changedTo($this->option($spec, 'set_to', ''));
 		}
-		if($mode == 'rename' AND $this->renamable($value, $holds)) {
-			return self::changedTo($newHandle);
+		if(($replacement = $this->replacement($value, $holds, $mode, $newHandle)) !== null) {
+			return self::changedTo($replacement);
 		}
 		return self::unchanged($value);
 	}
@@ -425,8 +493,8 @@ class formulizeElementReferences {
 				$positions[] = $index;
 				continue;
 			}
-			if($mode == 'rename' AND $this->renamable($bare, $holds)) {
-				$item = ($bare === $item ? '' : $prefix).$newHandle;
+			if(($replacement = $this->replacement($bare, $holds, $mode, $newHandle)) !== null) {
+				$item = $bare === $item ? $replacement : $prefix.$replacement; // an id stays a number where it can
 				$changed = true;
 			}
 			$kept[$index] = $item;
@@ -468,8 +536,8 @@ class formulizeElementReferences {
 					$found = $changed = true;
 					continue;
 				}
-				if($mode == 'rename' AND $this->renamable($row[$at], $holds)) {
-					$row[$at] = $newHandle;
+				if(($replacement = $this->replacement($row[$at], $holds, $mode, $newHandle)) !== null) {
+					$row[$at] = $replacement;
 					$changed = true;
 				}
 			}
@@ -551,15 +619,16 @@ class formulizeElementReferences {
 			return self::unchanged($parts);
 		}
 
-		if($mode == 'rename') {
+		if($mode == 'rename' OR $mode == 'to_ids') {
 			$changed = false;
 			foreach($parts[$elementsKey] as $index => $reference) {
-				if($this->renamable($reference, $holds)) {
-					$parts[$elementsKey][$index] = $newHandle;
+				if(($replacement = $this->replacement($reference, $holds, $mode, $newHandle)) !== null) {
+					$parts[$elementsKey][$index] = $replacement;
 					$changed = true;
 				}
 			}
-			if(isset($parts[$termsKey]) AND is_array($parts[$termsKey])) {
+			// a term is a value, so its tokens only change when the handle does
+			if($mode == 'rename' AND isset($parts[$termsKey]) AND is_array($parts[$termsKey])) {
 				foreach($parts[$termsKey] as $index => $term) {
 					if(is_string($term) AND ($renamed = $this->renameTokens($term, $newHandle, $tokenPrefixes)) !== $term) {
 						$parts[$termsKey][$index] = $renamed;
@@ -614,8 +683,8 @@ class formulizeElementReferences {
 				$changed = true;
 				continue;
 			}
-			if($mode == 'rename' AND $this->renamable($key, $holds)) {
-				$key = $newHandle;
+			if(($replacement = $this->replacement($key, $holds, $mode, $newHandle)) !== null) {
+				$key = $replacement;
 				$changed = true;
 			}
 			$new[$key] = $item;
@@ -713,8 +782,16 @@ class formulizeElementReferences {
 				}
 				continue;
 			}
-			$bare = ($braces AND is_string($child) AND substr($child, 0, 1) == '{' AND substr($child, -1) == '}') ? substr($child, 1, -1) : $child;
-			if($mode == 'remove' AND $this->matches($bare, $holds)) {
+			$bare = $child;
+			$itemHolds = $holds;
+			if($braces) {
+				// a handle only counts in braces, which is what tells it apart from a literal value that looks like
+				// one. Outside them only an id does.
+				$isBraced = (is_string($child) AND substr($child, 0, 1) == '{' AND substr($child, -1) == '}');
+				$bare = $isBraced ? substr($child, 1, -1) : $child;
+				$itemHolds = $isBraced ? 'handle' : 'id';
+			}
+			if($mode == 'remove' AND $this->matches($bare, $itemHolds)) {
 				$outcome['found'] = true;
 				if($this->option($spec, 'on_delete', 'remove') == 'remove_parent') {
 					$outcome['remove_me'] = true; // the array this sits in goes, one level up
@@ -722,8 +799,11 @@ class formulizeElementReferences {
 				}
 				$node[$key] = $this->option($spec, 'set_to', '');
 				$outcome['changed'] = true;
-			} elseif($mode == 'rename' AND $this->renamable($bare, $holds)) {
-				$node[$key] = $bare === $child ? $newHandle : '{'.$newHandle.'}';
+			} elseif($braces AND $itemHolds == 'handle' AND $this->replacement($bare, 'either', $mode, $newHandle) !== null) {
+				$node[$key] = $this->elementId; // what a save writes now, in place of the braced handle
+				$outcome['found'] = $outcome['changed'] = true;
+			} elseif(!$braces AND ($replacement = $this->replacement($bare, $itemHolds, $mode, $newHandle)) !== null) {
+				$node[$key] = $replacement;
 				$outcome['found'] = $outcome['changed'] = true;
 			}
 		}
@@ -751,8 +831,8 @@ class formulizeElementReferences {
 			if($mode == 'remove' AND $this->matches($reference, $holds)) {
 				$object->setVar($property, $this->option($spec, 'set_to', ''));
 				$found = true;
-			} elseif($mode == 'rename' AND $this->renamable($reference, $holds)) {
-				$object->setVar($property, $newHandle);
+			} elseif(($replacement = $this->replacement($reference, $holds, $mode, $newHandle)) !== null) {
+				$object->setVar($property, $replacement);
 				$found = true;
 			}
 		}
@@ -785,8 +865,8 @@ class formulizeElementReferences {
 		if($mode == 'remove' AND $this->matches(trim($parts[1]), $holds)) {
 			return array('found' => true, 'changed' => false, 'value' => $value);
 		}
-		if($mode == 'rename' AND $this->renamable(trim($parts[1]), $holds)) {
-			return self::changedTo($parts[0].'#*=:*'.$newHandle);
+		if(($replacement = $this->replacement(trim($parts[1]), $holds, $mode, $newHandle)) !== null) {
+			return self::changedTo($parts[0].'#*=:*'.$replacement);
 		}
 		return self::unchanged($value);
 	}
@@ -870,8 +950,8 @@ class formulizeElementReferences {
 
 	/**
 	 * Does a stored reference point at this element, given what the setting holds? A setting that holds ids
-	 * matches only the id and one that holds handles only the handle. 'either' accepts both, for settings that
-	 * still hold handles written before they stored ids.
+	 * matches only the id and one that holds handles only the handle. 'either' is a setting Formulize now saves
+	 * as ids, which can still hold a handle written before that, so it accepts both.
 	 */
 	private function matches($reference, $holds) {
 		if(is_array($reference) OR is_object($reference) OR $reference === '' OR $reference === null) {
@@ -887,18 +967,34 @@ class formulizeElementReferences {
 	}
 
 	/**
-	 * Should a rename rewrite this stored reference? Only where it is the old handle. Where a setting can hold
-	 * either, a number is taken to be an id even when the old handle is that number - legacy handles equal
-	 * their element's id - because turning a reference by id into one by handle would be a change of meaning.
+	 * What a rewrite puts in place of a stored reference, or null to leave it as it is.
+	 *
+	 * Only the old handle is ever replaced. In a setting that holds handles, a rename writes the new one. In a
+	 * setting that holds either, the element's id is written instead - by a rename, or by
+	 * convertLegacyHandlesToIds() - because that is what a save writes there now. A number in such a setting is
+	 * already an id, even when the old handle is that number (legacy handles equal their element's id), so it is
+	 * left alone.
+	 *
+	 * @param mixed $reference The stored reference.
+	 * @param string $holds What the setting holds - 'id', 'handle' or 'either'.
+	 * @param string $mode 'rename' or 'to_ids'. Anything else replaces nothing.
+	 * @param string|null $newHandle For a rename.
+	 * @return mixed|null
 	 */
-	private function renamable($reference, $holds) {
-		if(!is_string($reference) AND !is_numeric($reference)) {
-			return false;
+	private function replacement($reference, $holds, $mode, $newHandle) {
+		if(($mode != 'rename' AND $mode != 'to_ids') OR (!is_string($reference) AND !is_numeric($reference))) {
+			return null;
 		}
 		if((string) $reference !== $this->handle) {
-			return false;
+			return null;
 		}
-		return $holds == 'handle' OR ($holds == 'either' AND !is_numeric($reference));
+		if($holds == 'either' AND !is_numeric($reference)) {
+			return $this->elementId;
+		}
+		if($holds == 'handle' AND $mode == 'rename') {
+			return $newHandle;
+		}
+		return null;
 	}
 
 	private function hasToken($text, $prefixes) {

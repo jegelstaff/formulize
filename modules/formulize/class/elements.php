@@ -1298,8 +1298,10 @@ class formulizeElementsHandler {
 	 * Remove every stored reference to an element from the settings that hold one, so that deleting an element
 	 * does not leave configuration pointing at something that no longer exists.
 	 *
-	 * The places are found by findReferencesToElement(), which the usage report reads too, so what the report
-	 * promises to clean up and what is actually cleaned up cannot drift apart.
+	 * The places are found by formulizeElementReferences::references(), which the usage report reads too, so
+	 * what the report promises to clean up and what is actually cleaned up cannot drift apart. Two things are
+	 * not cleaned up here: the element's own column in the form's data table, and the pages of multipage
+	 * screens, which delete() handles directly.
 	 *
 	 * This covers the references that are DATA - columns, conditions, effects, sort settings. It cannot cover
 	 * the two that are CODE: a derived value formula naming $handle, and a custom code file doing the same.
@@ -1312,7 +1314,7 @@ class formulizeElementsHandler {
 	 * @return void
 	 */
 	public function removeElementReferences($elementObject) {
-		foreach($this->findReferencesToElement($elementObject) as $reference) {
+		foreach(formulizeElementReferences::forElement($elementObject)->references() as $reference) {
 			if(!$reference['table'] OR !$reference['updates']) {
 				continue; // reported so a person knows, but cleaned up elsewhere - see the scan that found it
 			}
@@ -1328,36 +1330,12 @@ class formulizeElementsHandler {
 	}
 
 	/**
-	 * Every stored reference to an element, from formulizeElementReferences, which works them out from the
-	 * declaration of where references can be in xoops_version.php.
-	 *
-	 * This exists so that the usage report and the cleanup cannot disagree. A report that promises to tidy
-	 * something up and a cleanup that misses it is worse than either problem alone, and the only way to be
-	 * sure they match is for both to be the same piece of work: the report groups these by section and prints
-	 * the descriptions, and removeElementReferences() runs the updates.
-	 *
-	 * Not covered here, deliberately:
-	 * - the element's own column in the form's data table, and the pages of multipage screens, which delete()
-	 *   handles directly
-	 * - anything a person wrote in text or code, which cannot be rewritten safely - see codeReferencesToElement()
-	 *
-	 * @param object $elementObject The element being asked about.
-	 * @return array The references, in report order.
-	 */
-	private function findReferencesToElement($elementObject) {
-		if(!intval($elementObject->getVar('ele_id')) OR !strlen($elementObject->getVar('ele_handle'))) {
-			return array();
-		}
-		return formulizeElementReferences::forElement($elementObject)->references();
-	}
-
-	/**
 	 * Where is this element used, and what would deleting it cost?
 	 *
 	 * One report, two audiences: the admin interface shows it when someone asks where an element is used and
 	 * again before they delete it, and the MCP delete tool returns it as its preview. It lives here rather
 	 * than in either of those so the answer cannot differ between them, and it reads the same
-	 * findReferencesToElement() that removeElementReferences() acts on, so the report cannot promise a tidy up
+	 * formulizeElementReferences::references() that removeElementReferences() acts on, so the report cannot promise a tidy up
 	 * that does not happen or stay quiet about one that does.
 	 *
 	 * The distinction the report draws is between what deletion handles for you and the one thing it cannot:
@@ -1405,7 +1383,7 @@ class formulizeElementsHandler {
 		// order the sections come out in is the order the scan finds them, which puts the screens people
 		// look at first and the bookkeeping last.
 		$sections = [];
-		foreach($this->findReferencesToElement($elementObject) as $reference) {
+		foreach(formulizeElementReferences::forElement($elementObject)->references() as $reference) {
 			$sections[$reference['section']][] = $reference['description'];
 		}
 		$impact['cleaned_up_automatically'] = [];
