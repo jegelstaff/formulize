@@ -101,8 +101,9 @@ async function useDefaultScreenTemplates(page, fid, sid) {
 	await waitForAdminPageReady(page);
 	await expect(page.getByRole('button', { name: 'Customize the Templates' })).toBeVisible();
 }
-// Add an artifact as curator1, check the On After Save procedure gives it its standard ID number - M and its entry
-// id - in the column ID Number has under the handle given, then delete it again from the Artifacts list
+// Add an artifact as curator1, filling in what the form requires, check the On After Save procedure gives it its
+// standard ID number - M and its entry id - in the column ID Number has under the handle given, then delete it again
+// from the Artifacts list
 async function expectANewArtifactToGetItsIdNumber(page, handle) {
 	const shortName = `Rename check ${handle}`;
 	const added = () => dbQuery(`SELECT entry_id, ${handle} FROM ${dbPrefix()}_formulize_artifacts WHERE artifacts_short_name = '${shortName}'`);
@@ -110,6 +111,12 @@ async function expectANewArtifactToGetItsIdNumber(page, handle) {
 	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 	await page.getByRole('button', { name: 'Add Artifact', exact: true }).click();
 	await page.getByRole('textbox', { name: 'Short name *' }).fill(shortName);
+	const dimensions = page.locator('.formulize-grid').nth(0).locator('input[type="number"]');
+	await dimensions.nth(0).fill('1.0'); // height
+	await dimensions.nth(1).fill('1.0'); // width
+	await dimensions.nth(2).fill('1.0'); // depth
+	await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1900'); // year
+	await page.getByRole('radio', { name: 'CE', exact: true }).check();
 	await saveFormulizeForm(page);
 	await expect.poll(() => added().map(([entryId, idNumber]) => idNumber === 'M' + entryId.padStart(3, '0'))).toEqual([true]);
 	await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
