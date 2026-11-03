@@ -16,7 +16,7 @@ Gets the first entry id which matches all of the values specified for the corres
 ## Parameters
 
 __$elementsAndValues__ - an array of key=>value pairs, where the keys are the element identifiers and the values are the values to look for. Only entries that match every pair will be returned.<br>
-__$operator__ - Optional. the operator to use in when querying for the values. If this is a string, then that same operator is used for all key=>value pairs. If it is an array of strings, then each string is used for the corresponding item in the _$elementsAndValues_ array, ie: first operator for first element/value pair, second operator for second pair, etc. Defaults to equals. Any valid SQL operator can be used. If LIKE is used, _then the values will be automatically wrapped in % signs_ to support pattern matching. If the IN operator is used, the values must be a valid comma separated set of values that will work in a SQL statement. This means strings need to be quoted.
+__$operator__ - Optional. the operator to use in when querying for the values. If this is a string, then that same operator is used for all key=>value pairs. To use different operators for different elements, pass an array of operators keyed by the same element handles or ids as _$elementsAndValues_, ie: `array('colour'=>'=', 'price'=>'>')`. This is the recommended way. The keys must be the same kind as the keys of _$elementsAndValues_: handles for handles, ids for ids. An array without those keys is matched up by position instead: first operator for first element/value pair, second operator for second pair, etc. Don't match by position when the elements are referred to by id, because an operator's position can be taken for an element id. Defaults to equals. Any valid SQL operator can be used. If LIKE is used, _then the values will be automatically wrapped in % signs_ to support pattern matching. If the IN operator is used, the values must be a valid comma separated set of values that will work in a SQL statement. This means strings need to be quoted.<br>
 __$fieldsToReturn__ - Optional. the fields to select out of the database. Defaults to _entry_id_. Separate multiple fields with commas, refer to them by their element handles.
 
 ## Return Values
@@ -48,6 +48,22 @@ $values = array(
     99=>'bar'
 );
 $entry_id = $dataHandler->findFirstEntryWithAllValues($values, "LIKE");
+~~~
+
+~~~php
+// find the first entry created where the 'colour' element is 'blue'
+// and the 'price' element is more than 100, in the Products form
+// each operator is keyed by the element it applies to
+$dataHandler = new formulizeDataHandler(PRODUCTS_FORM_ID);
+$values = array(
+    'colour'=>'blue',
+    'price'=>100
+);
+$operators = array(
+    'colour'=>'=',
+    'price'=>'>'
+);
+$entry_id = $dataHandler->findFirstEntryWithAllValues($values, $operators);
 ~~~
 
 ~~~php

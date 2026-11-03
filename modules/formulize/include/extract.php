@@ -747,6 +747,8 @@ function microtime_float()
  * @param int frid - Optional. The form relationship id, that defines the set of connections, as defined in the Formulize admin UI, that should be taken into account when gathering the dataset. Defaults to the Primary Relationship, which includes all connections between all forms. Only forms directly connected to the main form are included in the dataset. Set to zero to only include data from the main form itself, no connections.
  * @param bool bypassCache - Optional. If set to true, any previously cached result will be ignored and the data will always be fetched fresh from the database. This is useful if, for example, derived values or another process are changing data between calls to gatherDataset on the same page load.
  * @return array Returns the dataset as an array. You can use the functions getValue and getEntryIds to work with the resulting dataset
+ * @formulizeElement $elementHandles lists
+ * @formulizeElement $sortField commas
  */
 function gatherDataset(
 	$fid,
@@ -767,6 +769,30 @@ function gatherDataset(
 		return getData($frid, $fid, $filter, $andOr, $scope, $limitStart, $limitSize, $sortField, $sortOrder, filterElements: $elementHandles, cacheKey: $cacheKey);
 }
 
+/**
+ * Retrieve data from forms, based on their connections. The older form of gatherDataset, which takes the relationship
+ * first, and has some further options that Formulize uses itself. New code should use gatherDataset.
+ * @param int framework - The form relationship id, or 0 or "" to include only the main form, or -1 for the Primary Relationship.
+ * @param int form - The id number of the main form.
+ * @param int|string|array filter - Optional. A filter that will limit the entries included in the dataset - see gatherDataset. A string starting with "SELECT " is taken as the query to run instead.
+ * @param string andor - Optional. The logical operator used between multiple filters. Defaults to AND.
+ * @param array|string scope - Optional. The scope of entries to include - see gatherDataset.
+ * @param int limitStart - Optional. The ordinal number of the record the dataset should start with, as used in a LIMIT clause.
+ * @param int limitSize - Optional. The number of records after limitStart to include, as used in a LIMIT clause.
+ * @param string sortField - Optional. The element, or comma-separated list of elements, to sort by - see gatherDataset.
+ * @param string sortOrder - Optional. The direction, or comma-separated list of directions, to sort in - see gatherDataset.
+ * @param bool forceQuery - Optional. Gather the entries even when there are more than the list of entries limit set in the module preferences.
+ * @param int mainFormOnly - Optional. Leave out the forms connected to the main form.
+ * @param bool includeArchived - Optional. Include archived entries.
+ * @param string dbTableUidField - Not in use. Kept for the order of the parameters.
+ * @param bool id_reqsOnly - Optional. Return only the entry ids of the main form's entries, as the keys and values of an array.
+ * @param bool resultOnly - Optional. Return the database result of the query, rather than the dataset.
+ * @param array filterElements - Optional. The elements to include in the dataset, as an array of arrays of elements, keyed by form id - see gatherDataset's elementHandles.
+ * @param string cacheKey - Optional. The key the result is cached under for the rest of the page load. Worked out from the other parameters if not given.
+ * @return array The dataset - see gatherDataset.
+ * @formulizeElement $sortField commas
+ * @formulizeElement $filterElements lists
+ */
 function getData(
 	$framework,
 	$form,
@@ -4400,6 +4426,13 @@ function getFormHandlesFromEntry($entry)
 
 /**
  * An alias of the getValue function, kept here for backwards compatibility with historical code.
+ * @param array entry - The entry, or the entire dataset - see getValue.
+ * @param string handle - The element handle for the field that you want to retrieve.
+ * @param int datasetKey - Optional. See getValue.
+ * @param int localEntryId - Optional. See getValue.
+ * @param boolean returnRawDBValue - Optional. See getValue's raw.
+ * @return string|int|float|array See getValue.
+ * @formulizeElement $handle one
  */
 function display($entry, $handle, $datasetKey = null, $localEntryId = null, $returnRawDBValue = false) {
 	return getValue($entry, $handle, $datasetKey, $localEntryId, $returnRawDBValue);
@@ -4419,6 +4452,7 @@ function display($entry, $handle, $datasetKey = null, $localEntryId = null, $ret
  * @param boolean raw - Optional. A flag to indicate if the raw value from the database should be returned for form elements, or if the value should be prepped for user consumption, ie: foreign keys converted to readable values, etc. Default is false (ie: by default, prepped values are returned)
  * @param string formHandle - Optional. The handle of the form that the element belongs to, if the caller already knows it. Saves searching the entry for the form that contains the element. Ignored if the form is not part of the entry, or does not contain the element.
  * @return string|int|float|array Returns the value for the specified element in the passed in entry, optionally limited to the specified localEntryId. If values are prepped and there are multiple values in the result (such as in the case of a checkbox element *with multiple boxes checked*) then the function will return an array of values. If a multiple option element only has one element checked, the function will return the single value selected. An array will also be returned if there are multiple records in the dataset from the form that the handle belongs to.
+ * @formulizeElement $handle one
  */
 function getValue($entry, $handle, $datasetKey = null, $localEntryId = null, $raw = false, $formHandle = "" ) {
 
@@ -4490,16 +4524,24 @@ function getValue($entry, $handle, $datasetKey = null, $localEntryId = null, $ra
  * @param int $dataSetKey Optional. The key in the dataset array of the entry record we want to work with. Required if $entryOrDataset is the entire dataset.
  * @param int $localId Optional. The ordinal id of the instance of the element handle we want to work with. Only required if there are multiple entries represented in this dataset record which all include data attached to this element handle, ie: if the handle is on the many side of a one to many connection in the dataset.
  * @return string Returns the value of the element handle in the dataset record we're working with, with all the HTML characters decoded.
+ * @formulizeElement $elementHandle one
  */
-
 function displayRichText($entryOrDataset, $elementHandle, $dataSetKey = null, $localId = "NULL")
 {
 	return htmlspecialchars_decode(getValue($entryOrDataset, $elementHandle, $dataSetKey, $localId), ENT_QUOTES);
 }
 
-// this function puts the results of a display call together into a string using the separator specified.  Allows filtering based on a specific localid of an entry in the given master result entry
-// intended for use when there is more than one value that will match
-// used for export of data
+/**
+ * Put the values of a field together into a string, with the separator specified. Intended for when there is more
+ * than one value that will match. Used for export of data.
+ * @param array entry - The entry, or the entire dataset - see getValue.
+ * @param string handle - The element handle for the field that you want to retrieve.
+ * @param string sep - The separator to put between the values.
+ * @param int id - Optional. The key of the entry in the dataset, if the entire dataset is passed - see getValue's datasetKey.
+ * @param int localid - Optional. The entry id of a specific record to retrieve values from - see getValue's localEntryId.
+ * @return string The values, separated.
+ * @formulizeElement $handle one
+ */
 function displayTogether($entry, $handle, $sep, $id = "NULL", $localid = "NULL")
 {
 	$result = getValue($entry, $handle, $id, $localid);
@@ -4588,23 +4630,46 @@ function makeBR($string)
 	}
 }
 
-// this function returns the contents of a text area as a series of HTML formatted paragraphs
-
+/**
+ * Return the contents of a text area as a series of HTML paragraphs.
+ * @param array entry - The entry, or the entire dataset - see getValue.
+ * @param string handle - The element handle for the field that you want to retrieve.
+ * @param int id - Optional. The key of the entry in the dataset, if the entire dataset is passed - see getValue's datasetKey.
+ * @param string parasToReturn - Optional. A comma-separated list of which paragraphs to return, counting from 0. Defaults to all of them.
+ * @return string The paragraphs.
+ * @formulizeElement $handle one
+ */
 function displayPara($entry, $handle, $id = "NULL", $parasToReturn = "NULL")
 {
 	$values = getValue($entry, $handle, $id);
 	return makePara($values, $parasToReturn);
 }
 
-// this function returns the contents of a text are with a BR between each line
+/**
+ * Return the contents of a text area with a BR tag between each line.
+ * @param array entry - The entry, or the entire dataset - see getValue.
+ * @param string handle - The element handle for the field that you want to retrieve.
+ * @param int id - Optional. The key of the entry in the dataset, if the entire dataset is passed - see getValue's datasetKey.
+ * @param int localid - Optional. The entry id of a specific record to retrieve values from - see getValue's localEntryId.
+ * @return string The lines.
+ * @formulizeElement $handle one
+ */
 function displayBR($entry, $handle, $id = "NULL", $localid = "NULL")
 {
 	$values = getValue($entry, $handle, $id, $localid);
 	return makeBR($values);
 }
 
-// THIS FUNCTION returns an HTML formatted string that will display a bulleted or numbered list, based on each paragraph in a text area element
-
+/**
+ * Return the paragraphs of a text area as an HTML bulleted or numbered list.
+ * @param array entry - The entry, or the entire dataset - see getValue.
+ * @param string handle - The element handle for the field that you want to retrieve.
+ * @param string type - Optional. "bulleted" or "numbered". Defaults to bulleted.
+ * @param int id - Optional. The key of the entry in the dataset, if the entire dataset is passed - see getValue's datasetKey.
+ * @param int localid - Optional. The entry id of a specific record to retrieve values from - see getValue's localEntryId.
+ * @return string The list, or the value as it is if it is a single paragraph.
+ * @formulizeElement $handle one
+ */
 function displayList($entry, $handle, $type = "bulleted", $id = "NULL", $localid = "NULL")
 {
 	$values = getValue($entry, $handle, $id, $localid);

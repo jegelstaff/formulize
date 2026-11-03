@@ -37,6 +37,7 @@ require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 require_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementReferences.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementHandleCode.php";
+require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elementParameters.php";
 // NB userAccountElement.php is required at the BOTTOM of this file, not here. It declares classes that
 // extend formulizeElementsHandler, so it is loaded once that class has been declared below. Nothing in this
 // file needs those classes at declaration time; the two methods that call them do so at runtime.
@@ -1208,30 +1209,62 @@ class formulizeElementsHandler {
 	}
 
 	/**
-	 * Which code files name element handles in a syntax of their own, beyond the strings every kind of code can
-	 * pass to the display functions - see formulizeElementHandleCode::renameStrings(). The prefix decides, and it is
-	 * not a formality: only derived value formulas and the three save/delete procedures have the entry's values
-	 * made into variables named after the handles (see the generated wrappers in forms.php and extract.php), so
-	 * only there is $handle a reference to this element. In custom_edit_check, application code and custom button
-	 * code nothing is named after a handle, so a variable of that name is somebody's own and renaming it would be
-	 * editing unrelated logic.
+	 * The syntaxes some kinds of code file have for naming elements, which a rename rewrites as well as what it
+	 * rewrites in every code file: the handle as a quoted string where Formulize's functions take an element, and
+	 * filter terms - see formulizeElementHandleCode::renameStrings(). A file whose name starts with none of these
+	 * prefixes has only those. The prefix decides, and it is not a formality, because only some code has variables
+	 * made for it that are named after handles, and then only for some elements:
+	 * - a derived value formula, derived_<element handle>.php, gets a variable for any element whose handle it
+	 *   names as one, in whatever form - see formulize_includeDerivedValueFormulas(), which looks each one up.
+	 * - the save and delete procedures, on_before_save_<form handle>.php and the others, get a variable for each of
+	 *   the elements of their own form, the values being saved or deleted - see the functions formulizeForm writes
+	 *   around them. In another form's procedures, a variable of the same name is that procedure's own.
+	 * - custom_edit_check, application code and custom button code get none, so a variable named like a handle is
+	 *   somebody's own there, and renaming it would be editing unrelated logic.
 	 *
-	 * The content and default-value files are the mirror image: their references are {handle} tokens that
-	 * Formulize substitutes, and their $value / $default variables are outputs rather than element references.
+	 * The content and default-value files are the mirror image. They are the PHP an element runs to make its
+	 * content or its default value - fullWidthContent_<element handle>.php and captionedContent_<element handle>.php
+	 * for static content, and text_, textarea_ and number_<element handle>.php for a default value - which names
+	 * other elements by {handle} tokens: an element's handle in curly brackets, like {artifacts_year}. Before the code
+	 * runs, Formulize swaps each token for a variable holding that element's value in the entry being displayed - see
+	 * formulizeElementRenderer::evalAdminPHPWithReferences(). A token is looked up by its handle, whatever form the
+	 * element is in, so like a formula's variable it is that element anywhere. Their $value and $default variables are
+	 * what the code sets, the content or the default, and are not named after any element.
 	 *
-	 * @return array filename prefix => reference syntax used in that kind of file
+	 * @return array filename prefix => reference syntax used in that kind of file: 'variable' for any element,
+	 *   'form variable' for the elements of the form the rest of the file name is the handle of, or 'token' for
+	 *   {handle} tokens of any element
 	 */
-	public static function codeFilesThatReferenceHandles() {
+	public static function codeFileHandleSyntaxes() {
 		return array(
 			'derived_' => 'variable',
-			'on_before_save_' => 'variable',
-			'on_after_save_' => 'variable',
-			'on_delete_' => 'variable',
+			'on_before_save_' => 'form variable',
+			'on_after_save_' => 'form variable',
+			'on_delete_' => 'form variable',
 			'fullWidthContent_' => 'token',
 			'captionedContent_' => 'token',
 			'text_' => 'token',
 			'textarea_' => 'token',
+			'number_' => 'token',
 		);
+	}
+
+	/**
+	 * How a code file names an element of a form, in a syntax of its own - see codeFileHandleSyntaxes().
+	 * @param string $fileName The code file's name.
+	 * @param string $formHandle The handle of the element's form.
+	 * @return string|false 'variable', 'token', or false for neither.
+	 */
+	public static function codeFileSyntax($fileName, $formHandle) {
+		foreach(self::codeFileHandleSyntaxes() as $prefix => $syntax) {
+			if(strpos($fileName, $prefix) === 0) {
+				if($syntax == 'form variable') {
+					return ($formHandle !== '' AND $fileName === $prefix.$formHandle.'.php') ? 'variable' : false;
+				}
+				return $syntax;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -1293,7 +1326,7 @@ class formulizeElementsHandler {
 	 * variable's name, for the screens that get them - see screensSeeingForm():
 	 * - a template screen's code and template get a $handle variable for every element of the forms it shows -
 	 *   see formulizeTemplateScreenHandler::formsWithHandleVariables() - the same as the procedures in
-	 *   codeFilesThatReferenceHandles().
+	 *   codeFileHandleSyntaxes().
 	 * - a list screen's templates get a variable for each search box, named for the kind of box and the handle -
 	 *   $quickSearchhandle, $quickDateRangehandle and the rest - see formulize_quickSearchTypeNames().
 	 * @param string $screenType
@@ -1323,15 +1356,12 @@ class formulizeElementsHandler {
 	 */
 	private static function codeAndTemplateFiles($formId) {
 		$files = array();
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($formId);
+		$formHandle = $formObject ? $formObject->getVar('form_handle') : '';
 		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
 		foreach((array) glob($codeDir.'*.php') as $path) {
-			$syntax = false;
-			foreach(self::codeFilesThatReferenceHandles() as $prefix => $prefixSyntax) {
-				if(strpos(basename($path), $prefix) === 0) {
-					$syntax = $prefixSyntax;
-					break;
-				}
-			}
+			$syntax = self::codeFileSyntax(basename($path), $formHandle);
 			$files[$path] = array(
 				'label' => "custom code file '".basename($path)."'",
 				'group' => $path,
@@ -1388,6 +1418,7 @@ class formulizeElementsHandler {
 		}
 		$reserved = self::reservedHandleNames();
 		$unavailable = null;
+		$parameters = formulizeElementParameters::all();
 		$rewrites = array();
 		foreach($groups as $files) {
 			$namesHandle = false;
@@ -1417,7 +1448,7 @@ class formulizeElementsHandler {
 				$rewrites[$path] = array(
 					'label' => $file['label'],
 					'original' => $file['original'],
-					'rewritten' => formulizeElementHandleCode::renameStrings($text, $originalHandle, $newHandle, $file['isCode']),
+					'rewritten' => formulizeElementHandleCode::renameStrings($text, $originalHandle, $newHandle, $parameters, $file['isCode']),
 				);
 			}
 		}
@@ -1581,7 +1612,7 @@ class formulizeElementsHandler {
 		// references that cannot be cleaned up automatically, because they are code rather than configuration
 		if($broken = $this->codeReferencesToElement($elementId, $handle, $formId)) {
 			$impact['references_in_code_that_you_will_need_to_fix'] = $broken;
-			$impact['about_those_references'] = "Deleting an element clears it out of every setting that stores it as configuration - form screen pages and defaults, list screen columns and filters, map and calendar screen settings, custom button effects, display and read only conditions on other elements, dynamic default values, group visibility filters, entries-are-users settings, saved views, and any screen identifying entries by it in the address bar. The references above are different: they are places a person wrote this element's name into code or text - a formula on another element, a custom code file, a screen's template, a custom page or button, a notification's message. Removing a term from someone's code is not a change that can be made safely without knowing what the code is for, so these are left alone and are yours to fix. Renaming the element is different again: a rename updates the variables Formulize names after the handle, {handle} tokens, notification tags, and the handle given to a display function or starting a filter, and the references marked above as left for you are the ones it cannot.";
+			$impact['about_those_references'] = "Deleting an element clears it out of every setting that stores it as configuration - form screen pages and defaults, list screen columns and filters, map and calendar screen settings, custom button effects, display and read only conditions on other elements, dynamic default values, group visibility filters, entries-are-users settings, saved views, and any screen identifying entries by it in the address bar. The references above are different: they are places a person wrote this element's name into code or text - a formula on another element, a custom code file, a screen's template, a custom page or button, a notification's message. Removing a term from someone's code is not a change that can be made safely without knowing what the code is for, so these are left alone and are yours to fix. Renaming the element is different again: a rename updates the variables Formulize names after the handle, {handle} tokens, notification tags, and the handle written as a quoted string where Formulize's functions take an element, or starting a filter, and the references marked above as left for you are the ones it cannot.";
 		}
 
 		return $impact;

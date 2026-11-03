@@ -24,8 +24,9 @@ if (!defined("XOOPS_ROOT_PATH")) {
  * How an element's handle is written in code and templates, and how a rename rewrites it there.
  *
  * Only what can only be the element is rewritten:
- * - a variable Formulize names after the handle, in code that is given one - see variables()
- * - the handle passed as a quoted string to one of Formulize's display functions - display($entry, 'handle')
+ * - a variable Formulize names after the handle, in code that is given one - see renameVariables()
+ * - the handle passed as a quoted string to a parameter of Formulize's that takes elements - display($entry,
+ *   'handle'), or a key in formulize_writeEntry(array('handle' => 1)) - see formulizeElementParameters
  * - the handle at the start of a filter term in a quoted string - 'handle/**\/value', or after '][' in one
  * Anything else that names the handle - an array key, a column in a query, the handle inside other text - may or
  * may not be the element, so it is left as it is, and a person is told it is there - see stillNamed().
@@ -56,24 +57,6 @@ class formulizeElementHandleCode {
 	 * for a person to update.
 	 */
 	const LEFT_BY_A_RENAME = ' - renaming the element would leave this for you to update';
-
-	/**
-	 * Formulize's display functions, with the name of the parameter that takes an element. It is the second
-	 * parameter of each of them.
-	 */
-	const DISPLAY_FUNCTIONS = array(
-		'display' => 'handle',
-		'getvalue' => 'handle',
-		'displaytogether' => 'handle',
-		'displaypara' => 'handle',
-		'displaybr' => 'handle',
-		'displaylist' => 'handle',
-		'displayrichtext' => 'elementHandle',
-		'displayelement' => 'ele',
-		'displaycaption' => 'ele',
-		'displaydescription' => 'ele',
-		'displaybutton' => 'ele',
-	);
 
 	/**
 	 * The variables Formulize itself sets in the code that gets a variable for each handle: the parameters and
@@ -226,23 +209,28 @@ class formulizeElementHandleCode {
 	}
 
 	/**
-	 * Rewrite the handle where PHP code passes it as a string that can only mean the element: the element argument
-	 * of one of the DISPLAY_FUNCTIONS, written as a quoted string on its own, and a filter term in a quoted string,
-	 * where it comes first or straight after '][', followed by /**\/ - 'handle/**\/value/**\/=' and the like.
+	 * Rewrite the handle where PHP code passes it as a string that can only mean the element: at a parameter of
+	 * Formulize's that takes elements, in the shape that parameter takes them - see formulizeElementParameters - and
+	 * in a filter term in a quoted string, where it comes first or straight after '][', followed by /**\/ -
+	 * 'handle/**\/value/**\/=' and the like.
 	 *
-	 * The code is read the way PHP reads it, so a string, a comment or a call is seen for what it is: a method
-	 * called display() is not the function, a call inside the first argument is found as well as the outer one, and
-	 * 'artifacts_'.$x or "artifacts_$x" is not a handle at all. Text outside <?php ?> is left alone.
+	 * The code is read the way PHP reads it, so a string, a comment or a call is seen for what it is: a function
+	 * being declared is not a call, a call inside an argument is found as well as the outer one, and 'artifacts_'.$x
+	 * or "artifacts_$x" is not a handle at all. Text outside <?php ?> is left alone.
 	 *
 	 * @param string $code
 	 * @param string $oldHandle
 	 * @param string $newHandle
+	 * @param array $parameters The parameters that take elements - see formulizeElementParameters::all().
 	 * @param bool $isCode Whether the text is PHP throughout, without an opening tag - a formula, a procedure, code
 	 *        kept in the database. Otherwise only what is inside <?php ?> is PHP.
 	 * @return string
 	 */
-	public static function renameStrings($code, $oldHandle, $newHandle, $isCode = true) {
-		if(!is_string($code) OR $oldHandle === '' OR strpos($code, $oldHandle) === false) {
+	public static function renameStrings($code, $oldHandle, $newHandle, $parameters, $isCode = true) {
+		// A number given as an element is read as the element's id, everywhere an element can be given that way - see
+		// formulizeElementsHandler::get() and prepareElementMetaData() - so for an element whose old handle is a number,
+		// such a string is some element's id and never this element's handle.
+		if(!is_string($code) OR $oldHandle === '' OR is_numeric($oldHandle) OR strpos($code, $oldHandle) === false) {
 			return $code;
 		}
 		$hasOpeningTag = strpos($code, '<?') !== false;
@@ -254,11 +242,15 @@ class formulizeElementHandleCode {
 		foreach(token_get_all($opening.$code) as $token) {
 			$tokens[] = is_array($token) ? array($token[0], $token[1]) : array($token, $token);
 		}
-		foreach(self::displayFunctionElementArguments($tokens) as $index) {
+		foreach(self::elementArgumentStrings($tokens, $parameters) as $index => $separatedByCommas) {
 			$text = $tokens[$index][1];
-			if(substr($text, 1, -1) === $oldHandle) {
-				$tokens[$index][1] = $text[0].$newHandle.$text[0];
+			$elements = $separatedByCommas ? explode(',', substr($text, 1, -1)) : array(substr($text, 1, -1));
+			foreach($elements as $e => $element) {
+				if(trim($element) === $oldHandle) {
+					$elements[$e] = str_replace($oldHandle, $newHandle, $element); // keeping the spaces around it
+				}
 			}
+			$tokens[$index][1] = $text[0].implode(',', $elements).$text[0];
 		}
 		$quotedHandle = preg_quote($oldHandle, '/');
 		$renameTerms = function($text, $startsTheString) use ($quotedHandle, $newHandle) {
@@ -285,12 +277,14 @@ class formulizeElementHandleCode {
 	}
 
 	/**
-	 * The tokens that are the element argument of a call to one of the DISPLAY_FUNCTIONS, where it is a quoted string
-	 * and nothing else.
+	 * The quoted strings that are elements given to a parameter that takes them, in a call to a function or method
+	 * that has one - see formulizeElementParameters. A method is known by its name alone, since which class an object
+	 * is cannot be read from the code.
 	 * @param array $tokens (id, text) pairs, from token_get_all().
-	 * @return array Their indexes.
+	 * @param array $parameters See renameStrings().
+	 * @return array index of each string's token => whether it is elements separated by commas, rather than one.
 	 */
-	private static function displayFunctionElementArguments($tokens) {
+	private static function elementArgumentStrings($tokens, $parameters) {
 		$ignorable = array(T_WHITESPACE, T_COMMENT, T_DOC_COMMENT);
 		$significant = array();
 		foreach($tokens as $index => $token) {
@@ -298,16 +292,14 @@ class formulizeElementHandleCode {
 				$significant[] = $index;
 			}
 		}
-		$notTheFunction = array(T_OBJECT_OPERATOR, T_DOUBLE_COLON, T_FUNCTION, T_NEW);
+		$calledOn = array(T_OBJECT_OPERATOR, T_DOUBLE_COLON);
 		if(defined('T_NULLSAFE_OBJECT_OPERATOR')) {
-			$notTheFunction[] = T_NULLSAFE_OBJECT_OPERATOR;
+			$calledOn[] = T_NULLSAFE_OBJECT_OPERATOR;
 		}
 		$names = array(T_STRING);
 		if(defined('T_NAME_FULLY_QUALIFIED')) {
 			$names[] = T_NAME_FULLY_QUALIFIED;
 		}
-		$opening = array('(', '[', '{', T_CURLY_OPEN, T_DOLLAR_OPEN_CURLY_BRACES);
-		$closing = array(')', ']', '}');
 		$found = array();
 		$count = count($significant);
 		for($s = 0; $s < $count - 1; $s++) {
@@ -315,48 +307,135 @@ class formulizeElementHandleCode {
 			if(!in_array($token[0], $names, true) OR $tokens[$significant[$s + 1]][0] !== '(') {
 				continue;
 			}
-			$function = strtolower(ltrim($token[1], '\\'));
-			if(!isset(self::DISPLAY_FUNCTIONS[$function])
-				OR ($s > 0 AND in_array($tokens[$significant[$s - 1]][0], $notTheFunction, true))) {
+			$before = $s > 0 ? $tokens[$significant[$s - 1]][0] : null;
+			if($before === T_FUNCTION OR $before === T_NEW
+				OR ($s > 1 AND $tokens[$significant[$s - 1]][1] === '&' AND $tokens[$significant[$s - 2]][0] === T_FUNCTION)) {
+				continue; // a function being declared, or a class being made
+			}
+			$kind = in_array($before, $calledOn, true) ? 'method' : 'function';
+			$name = strtolower(ltrim($token[1], '\\'));
+			if(!isset($parameters[$kind][$name])) {
 				continue;
 			}
 			// the significant tokens of each argument, read to the closing bracket
-			$arguments = array(array());
-			$depth = 0;
-			for($a = $s + 1; $a < $count; $a++) {
-				$id = $tokens[$significant[$a]][0];
-				if(in_array($id, $opening, true)) {
-					$depth++;
-					if($depth == 1) {
-						continue;
-					}
-				} elseif(in_array($id, $closing, true)) {
-					$depth--;
-					if($depth == 0) {
-						break;
-					}
-				} elseif($id === ',' AND $depth == 1) {
-					$arguments[] = array();
-					continue;
-				}
-				$arguments[count($arguments) - 1][] = $significant[$a];
-			}
-			// by name - display($entry, handle: 'x') - or else second
-			$parameter = self::DISPLAY_FUNCTIONS[$function];
-			$element = null;
+			$arguments = self::separated($tokens, array_slice($significant, $s + 1), ',');
+			// by name - display($entry, handle: 'x') - or else by position, which only the arguments before the first
+			// one given by name, or spread out of an array, have
+			$byName = array();
+			$byPosition = array();
 			foreach($arguments as $position => $argument) {
 				if(count($argument) > 2 AND $tokens[$argument[0]][0] === T_STRING AND $tokens[$argument[1]][0] === ':') {
-					if($tokens[$argument[0]][1] === $parameter) {
-						$element = array_slice($argument, 2);
-					}
-				} elseif($position == 1) {
-					$element = $argument;
+					$byName[$tokens[$argument[0]][1]] = array_slice($argument, 2);
+				} elseif($argument AND $tokens[$argument[0]][0] === T_ELLIPSIS) {
+					break;
+				} elseif(!$byName) {
+					$byPosition[$position] = $argument;
 				}
 			}
-			if($element AND count($element) == 1 AND $tokens[$element[0]][0] === T_CONSTANT_ENCAPSED_STRING) {
-				$found[] = $element[0];
+			foreach($parameters[$kind][$name] as $parameter => $declared) {
+				$argument = $byName[$parameter] ?? ($byPosition[$declared['position']] ?? null);
+				if($argument) {
+					$found = $found + self::stringsInShape($tokens, $argument, $declared['shape']);
+				}
 			}
 		}
 		return $found;
+	}
+
+	/**
+	 * The quoted strings in an argument that are elements, given the shape the parameter takes them in - see
+	 * formulizeElementParameters. Only a string standing on its own is one, at a place the shape says an element is.
+	 * @param array $tokens
+	 * @param array $argument The indexes of the argument's significant tokens.
+	 * @param string $shape
+	 * @return array See elementArgumentStrings().
+	 */
+	private static function stringsInShape($tokens, $argument, $shape) {
+		$found = array();
+		if($shape == 'one' OR $shape == 'commas') {
+			if(count($argument) == 1 AND $tokens[$argument[0]][0] === T_CONSTANT_ENCAPSED_STRING) {
+				$found[$argument[0]] = ($shape == 'commas');
+			}
+			return $found;
+		}
+		foreach(self::arrayItems($tokens, $argument) as list($key, $value)) {
+			if($shape == 'keys' OR $shape == 'map') {
+				$found = $found + self::stringsInShape($tokens, (array) $key, 'one');
+			}
+			if($shape == 'list' OR $shape == 'map') {
+				$found = $found + self::stringsInShape($tokens, $value, 'one');
+			} elseif($shape == 'lists') {
+				$found = $found + self::stringsInShape($tokens, $value, 'list');
+			}
+		}
+		return $found;
+	}
+
+	/**
+	 * The items of an argument that is an array written out - array(...) or [...] - and nothing else.
+	 * @param array $tokens
+	 * @param array $argument The indexes of the argument's significant tokens.
+	 * @return array array(key, value) for each item, as the indexes of their significant tokens, the key null where
+	 *   the item has none.
+	 */
+	private static function arrayItems($tokens, $argument) {
+		if($argument AND $tokens[$argument[0]][0] === T_ARRAY) {
+			array_shift($argument);
+		}
+		if(!$argument OR !in_array($tokens[$argument[0]][0], array('(', '['), true)) {
+			return array();
+		}
+		$items = self::separated($tokens, $argument, ',', true, true);
+		if($items === null) {
+			return array();
+		}
+		$keysAndValues = array();
+		foreach($items as $item) {
+			$parts = self::separated($tokens, $item, T_DOUBLE_ARROW, false);
+			if(count($parts) == 2) {
+				$keysAndValues[] = array($parts[0], $parts[1]);
+			} elseif($item) {
+				$keysAndValues[] = array(null, $item);
+			}
+		}
+		return $keysAndValues;
+	}
+
+	/**
+	 * Split significant tokens at a separator that is not inside brackets of their own.
+	 * @param array $tokens
+	 * @param array $indexes The indexes of the significant tokens to split.
+	 * @param mixed $separator The separator's token id.
+	 * @param bool $bracketed Whether the indexes start with an opening bracket, and what is split is what is inside it,
+	 *        up to the bracket that closes it. Otherwise they are split as they are.
+	 * @param bool $wholly For bracketed tokens, whether the closing bracket must be the last of them.
+	 * @return array|null The parts, each the indexes of its tokens, or null if the closing bracket had to be the last
+	 *         and was not.
+	 */
+	private static function separated($tokens, $indexes, $separator, $bracketed = true, $wholly = false) {
+		$opening = array('(', '[', '{', T_CURLY_OPEN, T_DOLLAR_OPEN_CURLY_BRACES);
+		$closing = array(')', ']', '}');
+		$parts = array(array());
+		$depth = $bracketed ? 0 : 1;
+		$last = count($indexes) - 1;
+		foreach(array_values($indexes) as $i => $index) {
+			$id = $tokens[$index][0];
+			if(in_array($id, $opening, true)) {
+				$depth++;
+				if($depth == 1) {
+					continue;
+				}
+			} elseif(in_array($id, $closing, true)) {
+				$depth--;
+				if($depth == 0) {
+					return (!$wholly OR $i == $last) ? $parts : null;
+				}
+			} elseif($id === $separator AND $depth == 1) {
+				$parts[] = array();
+				continue;
+			}
+			$parts[count($parts) - 1][] = $index;
+		}
+		return ($bracketed AND $wholly) ? null : $parts;
 	}
 }

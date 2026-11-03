@@ -964,7 +964,7 @@ class formulizeElementReferences {
 	/**
 	 * Code a person wrote and keeps in the database. Nothing Formulize puts in scope for this code is named after a
 	 * handle, so a variable matching one is not known to be a reference to it. A rename rewrites only what can only
-	 * be the element - the handle given to a display function, or starting a filter - see
+	 * be the element - the handle given to a parameter of Formulize's that takes elements, or starting a filter - see
 	 * formulizeElementHandleCode::renameStrings(). A query is not PHP, so nothing in it is rewritten.
 	 *
 	 * Mentioned wherever the handle appears as a name - see formulizeElementHandleCode::mentionPattern() - which can
@@ -978,7 +978,7 @@ class formulizeElementReferences {
 		}
 		$sql = $this->option($spec, 'sql', false);
 		$renamed = $sql ? $value : formulizeElementHandleCode::renameStrings($value, $this->handle,
-			$mode == 'rename' ? $newHandle : formulizeElementHandleCode::RENAME_CHECK_HANDLE);
+			$mode == 'rename' ? $newHandle : formulizeElementHandleCode::RENAME_CHECK_HANDLE, formulizeElementParameters::all());
 		if(formulizeElementHandleCode::stillNamed($renamed, $this->handle, $sql)) {
 			$this->codeLeftByARename = true;
 		}

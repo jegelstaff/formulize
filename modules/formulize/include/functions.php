@@ -3986,6 +3986,7 @@ function trans($string, $lang = null) {
  * @param int|string|null $entry_id The entry id which the value belongs to, or 'new' if the entry is a new entry, or null if something else (like a blank subform default record)
  * @param int|null $subformBlankCounter For prepareing subform blank values, this is the instance of the blank subform entry we are saving. Multiple blank subform values can be saved on a given pageload and the counter differentiates the set of data belonging to each one prior to them being saved and getting an entry id of their own.
  * @return mixed The prepared value, ready to be inserted into the database, or false if the element identifier was invalid. The type of the returned value will depend on the element type and the prepareDataForSaving method for that element type.
+ * @formulizeElement $elementIdentifier one
  */
 function prepDataForWrite($elementIdentifier, $value, $entry_id=null, $subformBlankCounter=null) {
 
@@ -4139,9 +4140,10 @@ function prepareLiteralTextForDB($elementObjectOrIdentifier, $value, $curlyBrack
  * Only returns true or false, not the actual value
  *
  * @param mixed $entry_id The entry id for which to check the value.
- * @param int $element_id The element id for which to check the value.
+ * @param int|string|object $element_id The element id, handle or object for which to check the value, or a metadata field such as creation_uid.
  * @param int $fid The form id for which to check the value.
  * @return bool True if the element has a value, false otherwise.
+ * @formulizeElement $element_id one
  */
 function getElementValue($entry_id, $element_id, $fid) {
 	$data_handler = new formulizeDataHandler($fid);
@@ -5945,6 +5947,7 @@ function getDefaultCols($fid, $frid="") {
  * @param bool $lvoverride - Optional. Use if the value you're passing in is a predetermined foreign key, or comma separated string of fks. Note that comma separated strings have preceding and trailing commas. ie: ,1,3,15,17,
  * @param int $linkedTargetHint - Optional. The entry id that a linked selectbox element should be writing to, if known. This allows for disambiguation of target values that we might be trying to link to, that might occur in more than one source entry.
  * @return void
+ * @formulizeElement $elementIdentifier one
  */
 function writeElementValue($formframe, $elementIdentifier, $entry, $value, $append="replace", $prevValue=null, $lvoverride=false, $linkedTargetHint = 0) {
 
@@ -6201,6 +6204,7 @@ function formulize_scandirAndClean($dir, $filter="", $timeWindow=21600, $sorting
  * @param bool $writeOwnerInfo - Optional. A flag to indicate that the ownership info should be written for new entries. Defaults to true.
  * @return int|void Returns the entry ID of the entry that was written, or void if nothing was written which will happen if the values in the database match the passed in values.
  * @throws Exception if the writing operation failed, or if no element was found corresponding to the first key in the values array.
+ * @formulizeElement $values keys
  */
 function formulize_writeEntry($values, $entry_id="new", $action="replace", $proxyUser=false, $forceUpdate=false, $writeOwnerInfo=true) {
     if ($entry_id < 1 and "new" != $entry_id) {
@@ -6428,6 +6432,7 @@ function synchSubformBlankDefaults() {
  * Internal function that retrieves an element object if necessary
  * @param mixed $element The element to retrieve - can be an element ID, handle, or object itself
  * @return formulizeElement|false The element object or false if not found
+ * @formulizeElement $element one
  */
 function _getElementObject($element) {
     if (is_object($element)) {
@@ -6753,6 +6758,7 @@ function formulize_getMetadataFilterOptions($metadataHandle, $fid) {
  * @param bool $negativeFilter - A flag used to indicate if the filter should be a "negative" filter, that selects which values to exclude instead of include.
  * @param int $metadataFid - The form id to use when $element_identifier is a metadata field (creation_uid, mod_uid, etc.), since metadata fields have no element object to derive the form from. Defaults to 0.
  * @return string HTML markup for the filter element, including necessary javascript to submit the form the filter is part of (based on formDOMid)
+ * @formulizeElement $element_identifier one
  */
 function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $defaultValue=false, $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false, $multi=false, $negativeFilter=false, $metadataFid=0) {
 

@@ -162,7 +162,7 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 	/**
 	 * The formula, which is code a person wrote - see formulizeElementReferences. It is kept in a code file,
 	 * which a rename rewrites - see formulizeElementsHandler::handleRewritesInFiles(). Any copy still in the
-	 * database only has the handles given to display functions rewritten, like other code kept there.
+	 * database only has the handles given to Formulize's functions rewritten, like other code kept there.
 	 */
 	public static $eleValueReferences = array(
 		0 => array('shape' => 'code'),

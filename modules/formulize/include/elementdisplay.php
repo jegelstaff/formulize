@@ -42,8 +42,19 @@ $GLOBALS['formulize_renderedElementHasConditions'] = array();
 $GLOBALS['formulize_elementScreenIds'] = array();
 $GLOBALS['formulize_elementIsSimpleDisplayCondition'] = array();
 
-// $groups is optional and can be passed in to override getting the user's groups.  This is necessary for the registration form to work with custom displayed elements
-// $noSave is used to specify a different name for the element, so we can get back an HTML element that we will use in a different context than a normal form
+/**
+ * Display a single form element, for an entry, outside of a form screen.
+ * @param string|int $formframe - Not used.
+ * @param object|string|int $ele - An element object, or id, or handle.
+ * @param int|string $entry - Optional. The entry id, or "new" for a new entry. Defaults to "new".
+ * @param bool|string $noSave - Optional. True to display the element so that what is entered in it is not saved, or a name to give the element instead, so its value can be picked up after the form is submitted.
+ * @param object $screen - Optional. The screen the element is being displayed in, if any.
+ * @param array $prevEntry - Optional. The entry's values, as determined by the displayForm function, to save looking them up again.
+ * @param bool $renderElement - Optional. Whether to render the element, or only work out whether it would be displayed. Defaults to true.
+ * @param array|string $groups - Optional. Groups to use instead of the user's groups. This is necessary for the registration form to work with custom displayed elements.
+ * @return mixed The rendered element, or "invalid_element" if the element could not be found.
+ * @formulizeElement $ele one
+ */
 function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $screen=null, $prevEntry=null, $renderElement=true, $groups="") {
 
 	static $cachedPrevEntries = array();
@@ -532,9 +543,18 @@ function _formulize_returnElement($ele) {
   return $element;
 }
 
-// FUNCTION FOR DISPLAYING A TEXT LINK OR BUTTON THAT APPENDS OR OVERWRITES VALUES FOR AN ELEMENT
-// DO NOT USE WITH LINKED FIELDS!!!
-//function displayButton($text, $ele, $value, $entry="new", $append="replace", $buttonOrLink="button") {
+/**
+ * Display a button or text link that appends or overwrites a value in an element. Do not use with linked elements!
+ * @param string $text - The text of the button or link.
+ * @param object|string|int $ele - An element object, or id, or handle.
+ * @param mixed $value - The value to write to the element.
+ * @param int|string $entry - Optional. The entry id, or "new" for a new entry. Defaults to "new".
+ * @param string $append - Optional. "replace", "append", or "remove" - see writeElementValue. Defaults to "replace".
+ * @param string $buttonOrLink - Optional. "button" or "link". Defaults to "button".
+ * @param string|int $formframe - Optional. Passed through to the javascript that handles the click.
+ * @return void
+ * @formulizeElement $ele one
+ */
 function displayButton($text, $ele, $value, $entry="new", $append="replace", $buttonOrLink="button", $formframe = "") {
 	//echo "text: $text, ele: $ele, value: $value, entry: $entry, append: $append, buttonOrLink: $buttonOrLink, formframe: $formframe<br>";
 
@@ -568,6 +588,7 @@ function displayButton($text, $ele, $value, $entry="new", $append="replace", $bu
  * @param string|int $formframe - not used
  * @param object|string|int $ele - an element object, or id, or handle
  * @return string The caption for the element
+ * @formulizeElement $ele one
  */
 // added June 25 2006 -- jwe
 function displayCaption($formframe='', $ele=0) {
@@ -585,6 +606,7 @@ function displayCaption($formframe='', $ele=0) {
  * @param string|int $formframe - not used
  * @param object|string|int $ele - an element object, or id, or handle
  * @return string The description (help text) for the element
+ * @formulizeElement $ele one
  */
 // THIS FUNCTION RETURNS THE description FOR AN ELEMENT
 function displayDescription($formframe='', $ele=0) {
