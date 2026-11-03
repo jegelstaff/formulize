@@ -42,7 +42,7 @@ concurrency:
 jobs:
   # Build job
   build:
-    runs-on: ubuntu-24.04 # Playwright 1.55 cannot install its browser deps on ubuntu-latest (26.04)
+    runs-on: ubuntu-26.04 # Not ubuntu-latest: Playwright only installs browser deps on the OS releases it knows, so move this up together with Playwright
     steps:
       - name: Checkout
         uses: actions/checkout@v6
