@@ -40,7 +40,7 @@ env:
 
 jobs:
   manual-e2e-test-run:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright 1.55 cannot install its browser deps on ubuntu-latest (26.04)
 
     steps:
     - name: Checkout repository
