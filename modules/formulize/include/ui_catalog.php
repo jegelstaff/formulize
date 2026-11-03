@@ -825,6 +825,7 @@ HTML
                 ),
                 'notes' => array(
                     'Add `role="status"` to a callout that appears because of something the user just did, so screen readers announce it.',
+                    'A `fz-btn--ghost` in a callout, such as a button that dismisses it, hovers in a deeper tint of the callout\'s colour.',
                 ),
                 'example' => <<<'HTML'
 <div class="fz-stack fz-gap-3">

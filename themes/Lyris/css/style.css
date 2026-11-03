@@ -2071,7 +2071,8 @@ body:has(#formulize-masquerade-block) {
   right: 0;
   height: var(--lyris-masquerade-height);
   background: var(--fz-color-warning);
-  color: #fff;
+  /* the text colour, not white: the warning colour is a light orange */
+  color: var(--fz-color-text);
   padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 4);
   font-size: var(--fz-text-xs-plus);
   font-weight: 500;

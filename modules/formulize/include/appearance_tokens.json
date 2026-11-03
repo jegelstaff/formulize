@@ -430,6 +430,7 @@
     "Phone-width spacing (title bar, cards, drawer) and the top bar's height on phones, which are fixed.",
     "The 44px minimum height of fields and buttons on phones.",
     "Checkboxes, radio buttons, switches and badges.",
+    "Callouts, other than their colours, which are the status colours.",
     "Filter chips, pagination, and the top bar other than its height.",
     "Dialogs, date pickers and subform tables."
   ],
