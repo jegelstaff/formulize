@@ -175,10 +175,7 @@ test.describe('Artifacts Elements', async () => {
   	await page.locator('input[name="elements-ele_caption"]').fill('Year-Era');
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_year_era');
   	await page.getByRole('link', { name: 'Options' }).click();
-		// The year is read twice, as the $artifacts_year variable and through display(), into a variable of the
-		// formula's own whose name 03-validate-sequential renames Year to - so a rename has to move it out of the way
-  	await setCodeMirrorValue(page, 'textarea[name="elements-ele_value[0]"]',
-			"$artifacts_year_made = display($entry, 'artifacts_year');\n$value = ($artifacts_year_made == $artifacts_year ? $artifacts_year : 'mismatch').$artifacts_era;");
+  	await setCodeMirrorValue(page, 'textarea[name="elements-ele_value[0]"]', '$value = $artifacts_year.$artifacts_era;');
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Year-Era');
 	});

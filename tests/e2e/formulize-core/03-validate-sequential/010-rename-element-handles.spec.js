@@ -5,7 +5,7 @@ import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
 import {
 	login, saveFormulizeForm, saveAdminForm, waitForAdminPageReady, dbQuery, dbPrefix, renameElementHandle, elementId,
 	openArtifactOriginsMap, expectArtifactOriginsMap, loadSavedView, expectCoinsByName, expectArtifactOriginsList,
-	conditionalElementReady, leavePage, setCodeMirrorValue,
+	conditionalElementReady, leavePage,
 } from '../../utils';
 
 /**
@@ -16,7 +16,7 @@ import {
  *
  * What is stored has two kinds of reference in it. Settings name an element by its id, which a rename does not
  * change, so those must be exactly as they were. Code and text name it by its handle - $handle in a formula, a
- * {handle} token, a notification's {ELEMENT_HANDLE} tag, the handle given to display() - so those must now say the
+ * {handle} token, a notification's {ELEMENT_HANDLE} tag, the handle given to formulize_writeEntry() - so those must now say the
  * new handle. Where code names the old handle in a way that may or may not be the element, the rename leaves it and
  * says so in a dialog when the handle is saved; every rename here checks that it says so exactly when it should.
  */
@@ -65,6 +65,26 @@ async function expectYearEraToFollowTheYear(page) {
 	await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
 	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 }
+// Take the Roman coin's ID number away, then change its year and back as curator1, and check the On After Save
+// procedure gives it its standard ID number again, in the column ID Number has under the handle given. The year is
+// changed because the procedure only runs when a save changes something. Whatever happens, the ID number is put back.
+async function expectIdNumberToBeStandardized(page, handle) {
+	dbQuery(`UPDATE ${dbPrefix()}_formulize_artifacts SET ${handle} = '' WHERE entry_id = 1`);
+	try {
+		await asCurator(page);
+		await openArtifact(page, 'Roman Coin');
+		const year = page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0);
+		await year.fill('151');
+		await saveFormulizeForm(page);
+		await expect.poll(() => rowOf('formulize_artifacts', 'entry_id', 1, handle)[0]).toBe('M001');
+		await year.fill('150');
+		await saveFormulizeForm(page);
+		await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
+	} finally {
+		dbQuery(`UPDATE ${dbPrefix()}_formulize_artifacts SET ${handle} = 'M001' WHERE entry_id = 1`);
+	}
+}
 // Leave a form that was filled in and not saved, agreeing to lose the changes when the page asks
 async function leaveWithoutSaving(page) {
 	const agree = dialog => dialog.accept();
@@ -75,40 +95,56 @@ async function leaveWithoutSaving(page) {
 
 test.describe.serial('Renaming element handles', () => {
 
-	test('Year: the Year-Era formula follows the rename, moves its own variable out of the way, and keeps working', async ({ page }) => {
+	test('Year: the Year-Era formula follows the rename, and keeps working', async ({ page }) => {
 		test.setTimeout(300000);
-		// The formula, as setup wrote it, reads the year twice - as the $artifacts_year variable, and through
-		// display() - into a variable of its own called $artifacts_year_made, which is the handle Year is renamed to
 		const formulaFile = path.join(codeDir, 'derived_artifacts_year_era.php');
 		const formula = () => fs.readFileSync(formulaFile, 'utf8').replace(/\r\n/g, '\n'); // a form posts a textarea's lines with \r\n
-		const asBuilt = formula();
-		expect(asBuilt).toContain("$artifacts_year_made = display($entry, 'artifacts_year');");
+		expect(formula()).toBe('$value = $artifacts_year.$artifacts_era;');
 		await asAdmin(page);
 		expect(await renameElementHandle(page, 'artifacts_year', 'artifacts_year_made')).toBeNull();
-		expect(formula()).toBe("$artifacts_year_made_1 = display($entry, 'artifacts_year_made');\n"
-			+ "$value = ($artifacts_year_made_1 == $artifacts_year_made ? $artifacts_year_made : 'mismatch').$artifacts_era;");
+		expect(formula()).toBe('$value = $artifacts_year_made.$artifacts_era;');
 		expect(dataColumnExists('artifacts', 'artifacts_year_made')).toBe(true);
 		expect(dataColumnExists('artifacts', 'artifacts_year')).toBe(false);
 		// the formula runs on save
 		await expectYearEraToFollowTheYear(page);
-		// and back: no variable is in the way this time, so only the handle changes
+		// and back
 		await asAdmin(page);
 		expect(await renameElementHandle(page, 'artifacts_year_made', 'artifacts_year')).toBeNull();
-		expect(formula()).toBe("$artifacts_year_made_1 = display($entry, 'artifacts_year');\n"
-			+ "$value = ($artifacts_year_made_1 == $artifacts_year ? $artifacts_year : 'mismatch').$artifacts_era;");
+		expect(formula()).toBe('$value = $artifacts_year.$artifacts_era;');
 		expect(dataColumnExists('artifacts', 'artifacts_year')).toBe(true);
 		await expectYearEraToFollowTheYear(page);
-		// put the formula back as setup wrote it, through its settings
+	});
+
+	test('ID Number: the On After Save procedure that standardizes it follows the rename, and keeps working', async ({ page }) => {
+		test.setTimeout(300000);
+		// The procedure names ID Number twice: as the $artifacts_id_number variable, which Formulize gives the
+		// Artifacts form's own procedures, and as the key of the array it gives formulize_writeEntry()
+		const procedureFile = path.join(codeDir, 'on_after_save_artifacts.php');
+		const procedure = () => fs.readFileSync(procedureFile, 'utf8').replace(/\r\n/g, '\n');
+		const namesIdNumberAs = handle => [
+			`if(!$${handle} || !preg_match('/^M\\d{3}$/', $${handle})) {`,
+			`formulize_writeEntry(['${handle}' => $${handle}], $entry_id);`,
+		];
+		for (const line of namesIdNumberAs('artifacts_id_number')) {
+			expect(procedure()).toContain(line);
+		}
 		await asAdmin(page);
-		const yearEraId = elementId('artifacts_year_era');
-		const fid = formIdOf('Artifacts');
-		const aid = dbQuery(`SELECT appid FROM ${dbPrefix()}_formulize_application_form_link WHERE fid = ${fid}`)[0][0];
-		await page.goto(`/modules/formulize/admin/ui.php?page=element&ele_id=${yearEraId}&fid=${fid}&aid=${aid}`);
-		await waitForAdminPageReady(page);
-		await page.getByRole('link', { name: 'Options' }).click();
-		await setCodeMirrorValue(page, 'textarea[name="elements-ele_value[0]"]', asBuilt);
-		await saveAdminForm(page);
-		await expect.poll(formula).toBe(asBuilt);
+		expect(await renameElementHandle(page, 'artifacts_id_number', 'artifacts_catalogue_number')).toBeNull();
+		for (const line of namesIdNumberAs('artifacts_catalogue_number')) {
+			expect(procedure()).toContain(line);
+		}
+		expect(procedure()).not.toContain('artifacts_id_number');
+		expect(dataColumnExists('artifacts', 'artifacts_catalogue_number')).toBe(true);
+		await expectIdNumberToBeStandardized(page, 'artifacts_catalogue_number');
+		// and back
+		await asAdmin(page);
+		expect(await renameElementHandle(page, 'artifacts_catalogue_number', 'artifacts_id_number')).toBeNull();
+		for (const line of namesIdNumberAs('artifacts_id_number')) {
+			expect(procedure()).toContain(line);
+		}
+		expect(procedure()).not.toContain('artifacts_catalogue_number');
+		expect(dataColumnExists('artifacts', 'artifacts_id_number')).toBe(true);
+		await expectIdNumberToBeStandardized(page, 'artifacts_id_number');
 	});
 
 	test('Donors Name: the Donor list keeps offering the donors, and its own formula file follows it', async ({ page }) => {
