@@ -1207,6 +1207,13 @@ class formulizeFormsHandler {
 					'custom_edit_check'
 				);
 				foreach($procedures as $procedure) {
+					// Only a procedure set on this save is written. The form object reads its procedures from their
+					// files when it is loaded, and the object is kept for the rest of the request, so one loaded before
+					// something else rewrote a file - renaming one of the form's elements, say - would otherwise put the
+					// file back the way it was whenever the form is saved for any other reason.
+					if($formObject->isVarClean($procedure)) {
+						continue;
+					}
 					$code = removeOpeningPHPTag(${$procedure}) != "" ? ${$procedure} : "";
 					$fileName = $procedure."_".formulizeForm::sanitize_handle_name($form_handle).'.php';
 					$filePath = XOOPS_ROOT_PATH . "/modules/formulize/code/" . $fileName;
