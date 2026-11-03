@@ -599,6 +599,10 @@ test.describe('Data entry for Survey', () => {
 				// (the 4 005 forms shifted museum screen ids up by 6; was sid=10).
 				await page.goto('/modules/formulize/index.php?sid=16');
 			}
+			// say which way the survey was reached, so the run shows whether the .htaccess rewrite rules are in effect
+			const reachedBy = rewriteWorks ? '/survey (the .htaccess rewrite rule worked)' : 'index.php?sid=16 (FALLBACK: /survey did not load the survey, so the .htaccess rewrite rule is not in effect)';
+			console.log(`Survey for ${name} reached by ${reachedBy}`);
+			test.info().annotations.push({ type: 'survey address', description: reachedBy });
 			await page.getByRole('textbox', { name: 'Your name' }).fill(name);
 			await expect(page.getByText('Thank you for visiting the Museum!')).toBeVisible();
 			await expect(page.getByText('Flagged to the staff')).not.toBeVisible();
