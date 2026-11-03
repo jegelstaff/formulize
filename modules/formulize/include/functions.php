@@ -8668,6 +8668,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				$filterTermParts = explode(',',$filterTerms[$filterId]);
 				foreach($filterTermParts as $i=>$ftp) {
 					$filterTermParts[$i] = trim(htmlspecialchars_decode($ftp, ENT_QUOTES), " \n\r\t\v\x00\"'"); // trim any white space and single or double quotes the user might have put on the terms
+					$filterTermParts[$i] = _convertLiteralTermForConditionsFilterSQL($filterElementObject, $filterTermParts[$i]);
 				}
 				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
 					$curlyBracketINNeedsSingleQuotes = true;
@@ -8698,21 +8699,33 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		if(strstr($filterTerms[$filterId], '{ID}')) {
 			$filterTerms[$filterId] = str_replace('{ID}',intval($curlyBracketEntry),$filterTerms[$filterId]);
 		}
+		// IN terms were converted part by part above, and are now wrapped in placeholder quotes and brackets
+		if($overrideReturnedOp != "IN") {
+			$filterTerms[$filterId] = _convertLiteralTermForConditionsFilterSQL($filterElementObject, $filterTerms[$filterId], strstr(strtoupper($filterOps[$filterId]), "LIKE") !== false);
+		}
 
 		if(!isMetaDataField($filterElementIds[$filterId])) {
 				$targetElementObject = $element_handler->get($filterElementIds[$filterId]);
 				$targetElementEleValue = $targetElementObject->getVar('ele_value'); // get the properties of the source element
 		}
 
+		$nullClauseHandled = false; // a NULL comparison is added at most once per condition, see createNullForComparisonValueIfNecessary
+
 		// *** OPTION 1: FILTER TERM IS {BLANK}
     if ($filterTerms[$filterId]=="{BLANK}") {
-      $conditionsFilterComparisonValue = 'NULL';
       $filterTerms[$filterId]="";
-      if($filterOps[$filterId] == '!=' OR $filterOps[$filterId] == 'NOT LIKE') {
-        $filterOps[$filterId] = 'IS NOT';
+      $blankIsNegative = ($filterOps[$filterId] == '!=' OR $filterOps[$filterId] == 'NOT LIKE');
+      // A field is blank if it is empty or NULL, so look for both, the same as a {BLANK} search in a list of entries does
+      // Except in numeric fields, where MySQL treats '' as 0, so 0 would count as blank. Only NULL is blank in those.
+      if(!isMetaDataField($filterElementIds[$filterId]) AND is_object($filterElementObject) AND !$filterElementObject->hasNumericDataType()) {
+        $blankHandle = $filterElementObject->getVar('ele_handle');
+        $filterOps[$filterId] = $blankIsNegative ? '!=' : '=';
+        $conditionsFilterComparisonValue = $blankIsNegative ? "'' AND `$blankHandle` IS NOT NULL " : "'' OR `$blankHandle` IS NULL ";
       } else {
-        $filterOps[$filterId] = 'IS';
+        $filterOps[$filterId] = $blankIsNegative ? 'IS NOT' : 'IS';
+        $conditionsFilterComparisonValue = 'NULL';
       }
+      $nullClauseHandled = true;
 
 		// *** OPTION 2: THE TARGET ELEMENT IS A LINKED FIELD, NON-SNAPSHOT...
 		// ie: left side is linked to something else
@@ -8940,7 +8953,9 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		// SWAP IN THE PLAIN LITERAL AND LITERAL-TO-DB-VALUE IF APPLICABLE, REDETERMINE QUOTES
 		$plainLiteralValue = $plainLiteralValue != $literalToDBValue ? $plainLiteralValue : "";
 		$filterTerms[$filterId] = $literalToDBValue ? $literalToDBValue : $filterTerms[$filterId];
-		$quotes = (is_numeric($filterTerms[$filterId]) AND !$likebits) ? "" : "'";
+		// a literal IN list is already in brackets with placeholder quotes around each item, so it must not be quoted as a whole
+		// a { } IN term does need the quotes, they're fixed up into a list at the end
+		$quotes = ((is_numeric($filterTerms[$filterId]) AND !$likebits) OR ($overrideReturnedOp == "IN" AND !$curlyBracketINNeedsSingleQuotes)) ? "" : "'";
 
 		// *** OPTION 4: IF WE HAVEN'T SET IT ALREADY, FIGURE OUT THE COMPARISON VALUE (POSSIBLY BASED ON THE PLAIN LITERAL AND LITERAL-TO-DB DETERMINATIONS ABOVE)
     if ($conditionsFilterComparisonValue === NULL) {
@@ -8964,6 +8979,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
               if($nullClause = createNullForComparisonValueIfNecessary(formulize_db_escape($filterTerms[$filterId]), $filterOps[$filterId], $filterElementObject->getVar('ele_handle'))) {
                   $conditionsFilterComparisonValue = "-->>OPENONEEXTRABRACKET<<--".$conditionsFilterComparisonValue.") $nullClause "; // OPENONEEXTRABRACKET causes an additional opening bracket, which we need because we're closing ahead of our OR null clause
               }
+              $nullClauseHandled = true;
           }
         } else {
             $conditionsFilterComparisonValue = $quotes.$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits.$quotes;
@@ -8979,7 +8995,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
         }
     }
 
-		$conditionsFilterComparisonValue .= createNullForComparisonValueIfNecessary($conditionsFilterComparisonValue, $filterOps[$filterId], $filterElementObject->getVar('ele_handle'));
+		// Not when the comparison is with an entry in another form, because it ends with AND curlybracketform.`entry_id`=..., so an OR after
+		// that would let a NULL field match every entry in that form
+		if(!$nullClauseHandled AND !strstr($conditionsFilterComparisonValue, "curlybracketform")) {
+			$conditionsFilterComparisonValue .= createNullForComparisonValueIfNecessary($conditionsFilterComparisonValue, $filterOps[$filterId], $filterElementObject->getVar('ele_handle'));
+		}
 
 
 		// convert any single quote placeholders we made, if we had to construct them into the filter term (since they don't go through formulize_db_escape cleanly after being put into the filter term)
@@ -8993,11 +9013,42 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 }
 
 /**
+ * Convert a literal term in a condition, as a user typed it, into the value the element stores in the database
+ * ie: Yes becomes 1 for a yn element, a province name becomes its code, a user's name becomes their uid, UI text becomes the option's database value
+ * Uses the element's UI text, and then the element type's own prepareLiteralTextForDB method. Not the generic prepareLiteralTextForDB function,
+ * because that does much more than we want at this point (resolves { } references, turns linked values into entry ids, etc)
+ * Linked elements are left alone, because the comparison for them is built as a subquery on their source instead
+ * Leaves the term alone if it doesn't convert to one value, so an invalid term fails to match, rather than matching blanks (same as buildEvaluationCondition)
+ *
+ * @param object|false $elementObject - The element object that the condition is filtering on, or false if the condition is on a metadata field
+ * @param string $term - The filter term
+ * @param bool $partialMatch - True if the condition uses LIKE or NOT LIKE, so the element type can allow for a partial term, ie: keep % wildcards around it
+ * @return mixed The database value for the term, or the term unchanged if there is nothing to convert or it doesn't convert to one value
+ */
+function _convertLiteralTermForConditionsFilterSQL($elementObject, $term, $partialMatch = false) {
+	if(!is_object($elementObject)
+		OR $elementObject->isLinked
+		OR $term === ''
+		OR (substr($term,0,1) == "{" AND substr($term,-1) == "}")) {
+		return $term;
+	}
+	$value = checkUITextForValue($term, $elementObject);
+	if($value === false OR is_array($value)) {
+		$value = $term; // UI text is set, but the term isn't one of them, so maybe the element type can convert it
+	}
+	if(!$typeHandler = xoops_getmodulehandler($elementObject->getVar('ele_type')."Element", "formulize")) {
+		return $value;
+	}
+	$dbValue = $typeHandler->prepareLiteralTextForDB($value, $elementObject, $partialMatch);
+	return (is_array($dbValue) OR $dbValue === false OR $dbValue === null OR $dbValue === '') ? $value : $dbValue;
+}
+
+/**
  * This function sets up a NULL comparison for the comparison value if necessary, based on the filter operator and the filter comparison value.
  * This is used to ensure that comparisons involving empty values or explicit values include NULL in the SQL query.
  * ie: field LIKE "" should be expanded to field LIKE "" OR field IS NULL
  * ie: field != "xyz" should be expanded to field != "xyz" OR field IS NULL
- * Only run once! If we've followed a path that included this, do not do the operation again
+ * Only run once per condition! If the caller has followed a path that included this, it must not do the operation again
  * We use it as a safety net, but earlier more complex paths might invoke it more selectively in which case we don't want to do it again
  * @param string $conditionsFilterComparisonValue The comparison value for the filter condition
  * @param string $filterOp The filter operator (e.g., '=', '!=', 'LIKE', 'NOT LIKE')
@@ -9005,11 +9056,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
  * @return string The modified comparison value, potentially including a NULL comparison
  */
 function createNullForComparisonValueIfNecessary($conditionsFilterComparisonValue, $filterOp, $filterElementHandle) {
-	static $hasBeenCalled = false;
 	$nullClause = "";
 	if(
-		$hasBeenCalled == false
-		AND (
 			(
 				$filterOp != "!="
 				AND $filterOp != "NOT LIKE"
@@ -9035,7 +9083,6 @@ function createNullForComparisonValueIfNecessary($conditionsFilterComparisonValu
 					AND $conditionsFilterComparisonValue != '%""%'
 				)
 			)
-		)
 	) {
 		switch($filterOp) {
 			case "<=>":
@@ -9049,7 +9096,6 @@ function createNullForComparisonValueIfNecessary($conditionsFilterComparisonValu
 				break;
 		}
 	}
-	$hasBeenCalled = true;
 	return $nullClause;
 }
 

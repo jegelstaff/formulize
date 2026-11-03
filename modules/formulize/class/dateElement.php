@@ -312,8 +312,12 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 		}
 		$firstChar = substr($value, 0, 1);
 		$operators = array("=", "!", ">", "<");
-		if(!in_array($firstChar, $operators)) {
-			$value = date('Y-m-d', strtotime($value));
+		// A whole year or month is not one day, so keep it as typed, because strtotime reads 2026 as a time of day today,
+		// and March as today's date in March. List searches turn the term as typed into a range (see buildSearchWhereClause),
+		// and a LIKE condition matches it as typed, since dates are stored as YYYY-MM-DD.
+		// Anything strtotime can't read is kept as typed too, ie: %2026-03%, rather than date() reading false as 1970-01-01.
+		if(!in_array($firstChar, $operators) AND !formulize_parseDatePeriodSearchTerm($value) AND ($timestamp = strtotime($value)) !== false) {
+			$value = date('Y-m-d', $timestamp);
 		}
 		return $value;
 	}
