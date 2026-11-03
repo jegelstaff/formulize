@@ -210,15 +210,21 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
 				print "<div class='formulize-template-screen-contents ck-content'>"; // wrap it in a div so it can be targetted, and include ck-content so right text editor stuff formats as expected
 
-        if (file_exists($custom_code_filename) and file_exists($template_filename)) {
+        // the screen is its code and its template. It can do without either one - code that draws everything itself,
+        // or a template that needs no code - but not both
+        $hasCode = file_exists($custom_code_filename);
+        $hasTemplate = file_exists($template_filename);
+        if ($hasCode OR $hasTemplate) {
             $vars = $this->run_template_php_code($screen, $custom_code_filename, $entry_id, $settings);
             global $xoopsTpl;
             foreach ($vars as $key => $value) {
                 $xoopsTpl->assign($key, $value);
             }
 
+            // what the code and the template use decides what the page needs for them to work
+            $codeContents = ($hasCode ? file_get_contents($custom_code_filename) : '')."\n".($hasTemplate ? file_get_contents($template_filename) : '');
+
             // if the php code is not calling displayForm of some kind, then include necessary javascript
-            $codeContents = file_get_contents($custom_code_filename);
             if(!strstr($codeContents,' displayForm(') AND !strstr($codeContents,' displayFormPages(') AND !strstr($codeContents,'->render(') AND (strstr($codeContents,"\$saveButton") OR strstr($codeContents,"\$doneButton"))) {
                 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/formdisplay.php';
                 $doneDestination = $screen->getVar('donedest');
@@ -267,7 +273,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
                         <input type='hidden' name='loadreport' value=''>
 						<input type='hidden' name='formulize_scrollx' value=''>
 						<input type='hidden' name='formulize_scrolly' value=''>";
-                    $xoopsTpl->display("file:".$template_filename);
+                    if ($hasTemplate) {
+                        $xoopsTpl->display("file:".$template_filename);
+                    }
                     print "</form>";
                     // pretty hacky! include the js for lists, so that the viewEntryLink etc will work
                     // can mimic add buttons by calling addNew('single') in js or addNew() for multiple entry
@@ -277,7 +285,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
             // no viewEntryLink etc in the template, so away we go like normal, just the template
             } else {
-                $xoopsTpl->display("file:".$template_filename);
+                if ($hasTemplate) {
+                    $xoopsTpl->display("file:".$template_filename);
+                }
                 if($code = updateAlternateURLIdentifierCode($screen, $entry_id)) {
                     print "\n<script>\n$code\n</script>\n";
                 }
@@ -367,7 +377,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             $snapshotEntry = $entry;
         }
 
-        include_once($code_filename);
+        if (file_exists($code_filename)) {
+            include_once($code_filename);
+        }
 
         $vars = get_defined_vars();
 
@@ -438,13 +450,45 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         return $templates['template'];
     }
 
+    /**
+     * Give a template screen copies of its code and template from one theme, in a theme where it has neither yet.
+     * A template screen has no default templates to fall back on, so without either one it cannot be drawn in that
+     * theme. The files are copied as they are.
+     *
+     * @param object $screen The template screen.
+     * @param string $fromTheme The theme to copy them from.
+     * @param string $toTheme The theme to copy them to.
+     * @return bool Whether everything there was to copy was copied.
+     */
+    function copyTemplatesToTheme($screen, $fromTheme, $toTheme) {
+        if(file_exists($this->custom_code_filename($screen, $toTheme)) OR file_exists($this->template_filename($screen, $toTheme))) {
+            return true;
+        }
+        $copied = true;
+        if(file_exists($codeFile = $this->custom_code_filename($screen, $fromTheme))) {
+            $copied = $this->write_custom_code_to_file(file_get_contents($codeFile), $screen, $toTheme);
+        }
+        if(file_exists($templateFile = $this->template_filename($screen, $fromTheme))) {
+            $copied = ($this->write_template_to_file(file_get_contents($templateFile), $screen, $toTheme) AND $copied);
+        }
+        return $copied;
+    }
+
     // Writes a code.php file in /modules/formulize/templates/screens/default/$sid/code.php
+    // Code that is empty, or only the opening PHP tag the code box starts with, is no code, so it gets no file
     function write_custom_code_to_file($content, $screen, $theme="") {
+        if (formulize_screenTemplateIsEmpty($content)) {
+            return $this->remove_file($screen, "code.php", $theme);
+        }
         return $this->write_to_file($content, $screen, "/code.php", $theme);
     }
 
     // Writes a template.html file in /modules/formulize/templates/screens/default/$sid/template.html
+    // A template with nothing in it is no template, so it gets no file
     function write_template_to_file($content, $screen, $theme="") {
+			if (trim($content) === '') {
+				return $this->remove_file($screen, "template.html", $theme);
+			}
 			if($result = $this->write_to_file($content, $screen, "/template.html", $theme)) {
 				$result = self::recompileTemplate($this->template_filename($screen, $theme));
 			}
@@ -474,6 +518,17 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             }
         }
         return $tpl->touch($resource) ? true : false;
+    }
+
+    // Removes one of a template screen's files, and the screen's folder once nothing is left in it
+    function remove_file($screen, $name, $theme="") {
+        $foldername = $this->cache_folder_name($screen, $theme);
+        if (file_exists($foldername.$name) AND !unlink($foldername.$name)) {
+            error_log("ERROR: Could not remove template screen file: ".$foldername.$name);
+            return false;
+        }
+        formulize_removeScreenTemplateFolderIfEmpty($foldername);
+        return true;
     }
 
     function write_to_file($content, $screen, $name, $theme="") {

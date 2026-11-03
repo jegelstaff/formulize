@@ -22,7 +22,6 @@ import {
  */
 
 const codeDir = path.resolve(__dirname, '../../../../modules/formulize/code');
-const screensDir = path.resolve(__dirname, '../../../../modules/formulize/templates/screens');
 
 function rowOf(table, keyColumn, key, columns) {
 	return dbQuery(`SELECT ${columns} FROM ${dbPrefix()}_${table} WHERE ${keyColumn} = ${key}`)[0];
@@ -93,6 +92,11 @@ async function setScreenTemplate(page, fid, sid, box, code) {
 	await openScreenTemplates(page, fid, sid);
 	await setCodeMirrorValue(page, `textarea[name="screens-${box}"]`, code);
 	await saveAdminForm(page);
+}
+// What one of a screen's template boxes shows, in the screen's settings
+async function shownScreenTemplate(page, fid, sid, box) {
+	await openScreenTemplates(page, fid, sid);
+	return templatesForm(page).locator(`textarea[name="screens-${box}"] + .CodeMirror`).evaluate(editor => editor.CodeMirror.getValue());
 }
 // Empty all of a screen's template boxes and save, in the screen's settings, which puts it back on the default
 // templates
@@ -356,19 +360,20 @@ test.describe.serial('Renaming element handles', () => {
 		// The Artifacts list's bottom template, set in the list's settings with a line in front naming the Condition
 		// search box's variable, which a rename follows, and the handle as an array key, which it cannot know is the
 		// element. Put back as it was at the end, through the same settings.
-		const templateFile = path.join(screensDir, theme, String(listSid), 'bottomtemplate.php');
-		const template = () => fs.readFileSync(templateFile, 'utf8').replace(/\r\n/g, '\n'); // a form posts a textarea's lines with \r\n
+		const template = () => shownScreenTemplate(page, fid, listSid, 'bottomtemplate');
 		const withSearch = (handle) => "<?php $artifactSearches = array('artifacts_condition' => isset($quickSearch" + handle + ") ? $quickSearch" + handle + " : ''); ?>";
 		await asAdmin(page);
 		const customized = await openScreenTemplates(page, fid, listSid);
-		const asItWas = template();
+		const asItWas = await template();
 		try {
 			await setScreenTemplate(page, fid, listSid, 'bottomtemplate', withSearch('artifacts_condition') + asItWas);
-			await expect.poll(template).toBe(withSearch('artifacts_condition') + asItWas);
+			const saved = await template();
+			expect(saved.startsWith(withSearch('artifacts_condition'))).toBe(true);
 			const said = await renameElementHandle(page, 'artifacts_condition', 'artifacts_state');
 			expect(said).toContain(`${theme}/${listSid}/bottomtemplate.php`);
 			expect(said).toContain('artifacts_condition');
-			expect(template()).toBe(withSearch('artifacts_state') + asItWas);
+			// the same template, with only the search box's variable changed
+			expect(await template()).toBe(saved.replaceAll('$quickSearchartifacts_condition', '$quickSearchartifacts_state'));
 			expect(buttons()).toBe(buttonsBefore);
 			expect(notificationCondition()).toBe(notificationBefore);
 			// the button beside an artifact marks it as in perfect condition, in the list drawn with that template
@@ -381,7 +386,7 @@ test.describe.serial('Renaming element handles', () => {
 			// and back, where nothing names artifacts_state but the search box variable, so there is nothing to point out
 			await asAdmin(page);
 			expect(await renameElementHandle(page, 'artifacts_state', 'artifacts_condition')).toBeNull();
-			expect(template()).toBe(withSearch('artifacts_condition') + asItWas);
+			expect(await template()).toBe(saved);
 			expect(buttons()).toBe(buttonsBefore);
 			expect(notificationCondition()).toBe(notificationBefore);
 			// the spoon's condition as it was, in its form

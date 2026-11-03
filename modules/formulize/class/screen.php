@@ -282,7 +282,9 @@ class formulizeScreen extends FormulizeObject {
             // there is no template saved in memory, read it from the file
             $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$this->getVar('sid')."/".$templateName.".php";
             if (file_exists($pathname)) {
-                $templates[$theme][$this->getVar('sid')][$templateName] = file_get_contents($pathname);
+                // a template that says nothing is no template, and the screen is drawn with the default
+                $template = file_get_contents($pathname);
+                $templates[$theme][$this->getVar('sid')][$templateName] = formulize_screenTemplateIsEmpty($template) ? '' : $template;
             } else {
                 $templates[$theme][$this->getVar('sid')][$templateName] = $this->getVar($templateName) ? htmlspecialchars_decode($this->getVar($templateName), ENT_QUOTES) : $this->getVar($templateName);
                 if ($templates[$theme][$this->getVar('sid')][$templateName] AND strlen($templates[$theme][$this->getVar('sid')][$templateName]) > 0) {
@@ -302,6 +304,19 @@ class formulizeScreen extends FormulizeObject {
             $theme = $xoopsConfig['theme_set'];
         }
         $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$this->getVar('sid')."/";
+        $filename = $pathname.$template_name.".php";
+
+        // a template that says nothing is the screen having no template of its own, and it is drawn with the
+        // default, so it gets no file - and once none of the screen's templates are left, no folder either
+        if (formulize_screenTemplateIsEmpty($template_content)) {
+            if (file_exists($filename) AND !unlink($filename)) {
+                error_log("ERROR: Could not remove empty template cache file: $filename");
+                return false;
+            }
+            formulize_removeScreenTemplateFolderIfEmpty($pathname);
+            return true;
+        }
+
         // check if folder exists, if not, make it.
         if (!is_dir($pathname)) {
             mkdir($pathname, 0777, true);
@@ -310,8 +325,6 @@ class formulizeScreen extends FormulizeObject {
         if (!is_writable($pathname)) {
             chmod($pathname, 0777);
         }
-
-        $filename = $pathname."/".$template_name.".php";
 
         $success = file_put_contents($filename, $template_content);
         if (false === $success) {
@@ -872,6 +885,29 @@ function getDefaultTemplate($templateName, $type, $theme="") {
 	return $cachedDefaultTemplates[$theme][$type][$templateName];
 }
 
+/**
+ * Does a screen's template say nothing? Empty, or holding only the opening PHP tag that a code editor starts with.
+ * A screen with a template like that has no template of its own, and is drawn with the default.
+ *
+ * @param string $template The template's contents.
+ * @return bool True if there is nothing in it.
+ */
+function formulize_screenTemplateIsEmpty($template) {
+	return trim(removeOpeningPHPTag((string) $template)) === '';
+}
+
+/**
+ * Remove a screen's folder of templates, templates/screens/<theme>/<sid>/, if there is nothing left in it.
+ *
+ * @param string $folder The folder's path.
+ * @return void
+ */
+function formulize_removeScreenTemplateFolderIfEmpty($folder) {
+	if (is_dir($folder) AND !array_diff((array) scandir($folder), array('.', '..'))) {
+		rmdir($folder);
+	}
+}
+
 // returns the actual template we will use at render time. Reverts to default template if no specific template is set for this screen.
 function getTemplateToRender($templateName, $screenOrScreenType="", $theme="") {
 	if(is_object($screenOrScreenType) AND is_a($screenOrScreenType, 'formulizeScreen')) {
@@ -902,7 +938,8 @@ function getTemplatePath($screenOrScreenType, $templateName, $subdir = '') {
 	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/default/".$type."/".$file;
 	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$type."/".$file;
 	foreach($paths as $path) {
-		if(file_exists($path) AND filesize($path)) {
+		// a template that says nothing is no template, and the next one along is used
+		if(file_exists($path) AND filesize($path) AND !formulize_screenTemplateIsEmpty(file_get_contents($path))) {
 			return $path;
 		}
 	}

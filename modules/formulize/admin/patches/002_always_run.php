@@ -71,6 +71,7 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 
 	formulize_remove_stray_registered_user_edit_form_permissions();
 	formulize_ensure_screen_template_folder_for_theme();
+	formulize_remove_empty_screen_templates();
 	formulize_warn_about_element_containers_missing_element_class();
 	formulize_repair_custom_openlisttemplate_functions();
 
@@ -159,6 +160,72 @@ function formulize_ensure_screen_template_folder_for_theme() {
 	$screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/";
 	if(!file_exists($screenpathname)) {
 		recurse_copy(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/", $screenpathname);
+	}
+}
+
+/**
+ * Remove the screen template files that have nothing in them, and the screens' template folders that leaves
+ * empty. Mark the ones that hold only the opening PHP tag as blank on purpose.
+ *
+ * A screen whose template has nothing in it has no template of its own and is drawn with the default, the same
+ * as when there is no file. Saving a screen's templates leaves no files like that (see
+ * formulizeScreen::writeTemplateFile), but earlier versions wrote them for every new screen, and for every
+ * template box saved empty.
+ *
+ * A template holding only the opening PHP tag used to be drawn as it is, showing nothing in its place, so a
+ * screen could have been made that way to keep the default out. Formulize now reads it as no template, and
+ * draws the default, so a comment is added to keep those screens as they were. (Sites coming up from below
+ * dbversion 18 had these emptied first, by emptyTemplateFixer() in 000_schema_migrations, as they always have.)
+ *
+ * A template screen's code.php is removed too when it has nothing in it, or only the opening PHP tag, and its
+ * template.html when it has nothing in it: neither has a default it could be keeping out, and the screen is drawn
+ * from whichever of the two it has. A screen left with neither shows that it has no code or template, where it
+ * used to show nothing.
+ *
+ * Runs on every update, to catch them on every site, including any that come back with a copy of a site's files.
+ *
+ * @return void
+ */
+function formulize_remove_empty_screen_templates() {
+	include_once XOOPS_ROOT_PATH.'/modules/formulize/class/screen.php';
+	$removed = 0;
+	$markedBlank = array();
+	$notMarked = array();
+	foreach((array) glob(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/*/*', GLOB_ONLYDIR) as $screenFolder) {
+		if(!ctype_digit(basename($screenFolder))) {
+			continue; // a theme's default templates, not one screen's own
+		}
+		foreach(array_merge((array) glob($screenFolder.'/*.php'), (array) glob($screenFolder.'/template.html')) as $templateFile) {
+			if(!is_file($templateFile)) {
+				continue;
+			}
+			$template = file_get_contents($templateFile);
+			if(trim($template) !== '' AND (basename($templateFile) == 'template.html' OR !formulize_screenTemplateIsEmpty($template))) {
+				continue;
+			}
+			$shortName = str_replace(XOOPS_ROOT_PATH.'/', '', $templateFile);
+			if(trim($template) === '' OR basename($templateFile) == 'code.php') {
+				if(unlink($templateFile)) {
+					$removed++;
+				}
+			} elseif(file_put_contents($templateFile, "<?php\n// Blank on purpose, so the screen shows nothing here instead of the default template\n") !== false) {
+				$markedBlank[] = $shortName;
+			} else {
+				$notMarked[] = $shortName;
+			}
+		}
+		formulize_removeScreenTemplateFolderIfEmpty($screenFolder);
+	}
+	if($removed) {
+		print "Removed $removed empty screen template files. result: OK<br>";
+	}
+	if($markedBlank) {
+		print "These screen templates held nothing but &lt;?php, which shows nothing in their place. A comment now says they are blank on purpose, so they keep doing that. result: OK<br>"
+			.implode("<br>", array_map('htmlspecialchars', $markedBlank))."<br>";
+	}
+	if($notMarked) {
+		print "Warning: these screen templates hold nothing but &lt;?php, and could not be changed (not writable by the web server). Their screens will now show the default template in their place. To keep them showing nothing, add a comment after the &lt;?php, such as // Blank on purpose.<br>"
+			.implode("<br>", array_map('htmlspecialchars', $notMarked))."<br>";
 	}
 }
 

@@ -233,10 +233,10 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
         $theme = $xoopsConfig['theme_set'];
 
         ob_start();
-        eval(substr(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/'.$theme.'/'.$screen->getVar('sid').'/toptemplate.php'), 5));
+        eval(removeOpeningPHPTag($screen->getTemplate('toptemplate', $theme)));
         $toptemplate = ob_get_clean();
         ob_start();
-        eval(substr(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/'.$theme.'/'.$screen->getVar('sid').'/bottomtemplate.php'), 5));
+        eval(removeOpeningPHPTag($screen->getTemplate('bottomtemplate', $theme)));
         $bottomtemplate = ob_get_clean();
         // the screen's introductory text, from its Appearance tab, above whatever the top template has: a
         // calendar has no default templates for it to be a variable in
