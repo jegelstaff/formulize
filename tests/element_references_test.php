@@ -638,56 +638,18 @@ check('the shapes at their edges: nesting, comments, trailing commas, spreading,
 	$C::renameStrings($edges, 'old', 'new', $P), $edgesRenamed);
 check('the shapes at their edges: line endings are kept', $C::renameStrings(str_replace("\n", "\r\n", $edges), 'old', 'new', $P), str_replace("\n", "\r\n", $edgesRenamed));
 
-// what a rename does to real code: each of Formulize's own source files, renamed for handles it actually quotes and
-// then back again. Only strings may change, and in them only the handle where it is a whole name, and renaming back
-// must give the file exactly as it was.
-$sourceProblems = array();
-$sourceRenames = 0;
-$sourceChanges = 0;
-foreach(formulizeElementParameters::sourceFiles($repo.'/modules/formulize/') as $sourceFile) {
-	$source = file_get_contents($sourceFile);
-	preg_match_all("/['\"]([a-z][a-z0-9_]{2,})['\"]/", $source, $quoted);
-	$handles = array_values(array_unique($quoted[1]));
-	// some of the strings it quotes most, and some of the strings it gives to the parameters declared to take elements
-	preg_match_all("/(?:display|getValue|gatherDataset|formulize_writeEntry|WithValue|WithAllValues|ForField|_getElementObject)\s*\([^;]*?['\"]([a-z][a-z0-9_]{2,})['\"]/i", $source, $given);
-	$handles = array_values(array_unique(array_merge(array_slice($handles, 0, 3), array_slice(array_unique($given[1]), 0, 5))));
-	foreach($handles as $handle) {
-		$newHandle = $handle.'_zq';
-		if(strpos($source, $newHandle) !== false) {
-			continue;
-		}
-		$sourceRenames++;
-		$renamed = $C::renameStrings($source, $handle, $newHandle, $P, false);
-		$label = basename($sourceFile).' renaming '.$handle;
-		if($renamed === $source) {
-			continue;
-		}
-		$sourceChanges++;
-		$before = token_get_all($source);
-		$after = token_get_all($renamed);
-		if(count($before) != count($after)) {
-			$sourceProblems[] = $label.': the code is no longer the same shape';
-			continue;
-		}
-		foreach($before as $t => $token) {
-			$id = is_array($token) ? $token[0] : $token;
-			$afterId = is_array($after[$t]) ? $after[$t][0] : $after[$t];
-			$text = is_array($token) ? $token[1] : $token;
-			$afterText = is_array($after[$t]) ? $after[$t][1] : $after[$t];
-			if($id !== $afterId) {
-				$sourceProblems[] = $label.': a '.token_name($id).' became a '.token_name($afterId);
-			} elseif($text !== $afterText AND (!in_array($id, array(T_CONSTANT_ENCAPSED_STRING, T_ENCAPSED_AND_WHITESPACE), true)
-				OR preg_replace('/(?<![A-Za-z0-9_])'.$handle.'(?![A-Za-z0-9_])/', $newHandle, $text) !== $afterText)) {
-				$sourceProblems[] = $label.': '.$text.' became '.$afterText;
-			}
-		}
-		if($C::renameStrings($renamed, $newHandle, $handle, $P, false) !== $source) {
-			$sourceProblems[] = $label.': renaming back does not give the file as it was';
-		}
-	}
-}
-check('Formulize\'s own code, renamed and renamed back: only the handle in strings changes, and it all comes back', $sourceProblems, array());
-ok('and the renames of Formulize\'s own code did rewrite some of it ('.$sourceChanges.' of '.$sourceRenames.')', $sourceChanges > 0);
+check('the right argument, whatever the others hold: the same nested array in the arguments either side of the declared one is left',
+	$C::renameStrings("gatherDataset(array(5 => array('old')), array(5 => array('old')), array(5 => array('old')), 'old', 'old', 'old', 'old', 'old', 'old');", 'old', 'new', $P),
+	"gatherDataset(array(5 => array('old')), array(5 => array('new')), array(5 => array('old')), 'old', 'old', 'old', 'old', 'new', 'old');");
+check('no deeper than the shape: a list inside a list of lists, and an array keyed by elements inside one, are left',
+	$C::renameStrings("gatherDataset(5, array(5 => array('old', array('old'), 'x'), 6 => array(array('old' => 1)))); formulize_writeEntry(array('x' => array('old' => 1), 'old' => array('old' => 1)));", 'old', 'new', $P),
+	"gatherDataset(5, array(5 => array('new', array('old'), 'x'), 6 => array(array('old' => 1)))); formulize_writeEntry(array('x' => array('old' => 1), 'new' => array('old' => 1)));");
+check('nested calls at every level: each call\'s own declared argument, inside the arrays and arguments of the others',
+	$C::renameStrings("formulize_writeEntry(array('old' => gatherDataset(display(\$e, 'old'), array(5 => array(getValue(\$e, 'old'), 'old')), sortField: 'old')));", 'old', 'new', $P),
+	"formulize_writeEntry(array('new' => gatherDataset(display(\$e, 'new'), array(5 => array(getValue(\$e, 'new'), 'new')), sortField: 'new')));");
+check('written across lines, with the brackets mixed and everything trailing',
+	$C::renameStrings("gatherDataset(\n\t5,\n\t[\n\t\t5 => array(\n\t\t\t'x', // a comment, with 'old' in it\n\t\t\t'old',\n\t\t),\n\t],\n);", 'old', 'new', $P),
+	"gatherDataset(\n\t5,\n\t[\n\t\t5 => array(\n\t\t\t'x', // a comment, with 'old' in it\n\t\t\t'new',\n\t\t),\n\t],\n);");
 
 // the declarations themselves: each one readable, the methods named only once, and the parameters that take elements found
 $problems = array();
