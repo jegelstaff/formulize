@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumForm, dbQuery, dbPrefix } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled, dbQuery, dbPrefix } from '../../utils';
 
 /**
  * T3.5 - eval-OUTPUT purification: admin-authored PHP that INTERPOLATES a referenced value.
@@ -48,9 +48,7 @@ test.describe.serial('T3.5 - PHP interpolation of referenced values', () => {
 		await login(page, 'admin');
 
 		// Self-heal any form left behind by an aborted previous run (see 036 for the rationale).
-		for (const row of dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = 'XSS PHP Interp Test'`)) {
-			await deleteMuseumForm(page, parseInt(row[0], 10));
-		}
+		await deleteMuseumFormsTitled(page, ['XSS PHP Interp Test']);
 
 		testFid = await createMuseumForm(page, 'XSS PHP Interp Test', 'ID');
 		expect(testFid).toBeGreaterThan(0);
@@ -151,10 +149,9 @@ test.describe.serial('T3.5 - PHP interpolation of referenced values', () => {
 	// afterAll rather than a trailing test(): test.describe.serial skips everything after a failure, so a
 	// trailing cleanup test would leave the throwaway form behind. See 034 for the full rationale.
 	test.afterAll(async ({ browser }) => {
-		if (!testFid) { return; }
 		const page = await browser.newPage();
 		await login(page, 'admin');
-		await deleteMuseumForm(page, testFid);
+		await deleteMuseumFormsTitled(page, ['XSS PHP Interp Test']);
 		await page.close();
 	});
 });

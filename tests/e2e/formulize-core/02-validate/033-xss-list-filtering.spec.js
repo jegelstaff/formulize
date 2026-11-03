@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveFormulizeForm } from '../../utils';
+import { login, saveFormulizeForm, dbQuery, dbPrefix } from '../../utils';
 
 /**
  * T2 (list pipeline) security regression tests.
@@ -49,5 +49,26 @@ test.describe('T2 - XSS filtering in list output', () => {
 		expect(await page.evaluate(() => window.__xss033)).toBeFalsy();
 		// 3. The value did round-trip and is shown as (escaped) text - the marker prefix is visible.
 		await expect(page.locator('body')).toContainText(MARKER);
+	});
+
+	// The Collections form belongs to the museum setup, so remove the entry rather than the form - the way
+	// the person who made it would, with Delete selected in the Collections list. In afterAll so it runs
+	// even when the test fails, and it removes every payload entry, including any a killed run left behind.
+	test.afterAll(async ({ browser }) => {
+		const entryIds = dbQuery(`SELECT entry_id FROM ${dbPrefix()}_formulize_collections WHERE collections_name LIKE '${MARKER}%'`)
+			.map(row => parseInt(row[0], 10));
+		if (entryIds.length === 0) { return; }
+		const page = await browser.newPage();
+		await login(page, 'ahstaff', '12345');
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
+		for (const entryId of entryIds) {
+			await page.locator(`#delete_${entryId}`).check();
+		}
+		page.once('dialog', dialog => dialog.accept()); // "You are about to delete the selected entries"
+		await page.locator('#formulize_deleteButton').click();
+		await expect(page.locator(`#delete_${entryIds[0]}`)).toHaveCount(0);
+		await page.close();
+		expect(dbQuery(`SELECT entry_id FROM ${dbPrefix()}_formulize_collections WHERE collections_name LIKE '${MARKER}%'`)).toEqual([]);
 	});
 });

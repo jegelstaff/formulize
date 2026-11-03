@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumForm, dbQuery, dbPrefix } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled, dbQuery, dbPrefix } from '../../utils';
 
 /**
  * T3.6 - read-only display funnel (makeValueSafeForReadOnlyDisplay), the DISABLED render path.
@@ -42,9 +42,7 @@ test.describe.serial('T3.6 - read-only display funnel (disabled elements)', () =
 		await login(page, 'admin');
 
 		// self-heal any form left behind by a previous aborted run (see 036 for the rationale)
-		for (const row of dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = 'XSS ReadOnly Test'`)) {
-			await deleteMuseumForm(page, parseInt(row[0], 10));
-		}
+		await deleteMuseumFormsTitled(page, ['XSS ReadOnly Test']);
 
 		testFid = await createMuseumForm(page, 'XSS ReadOnly Test', 'ID');
 		expect(testFid).toBeGreaterThan(0);
@@ -126,9 +124,12 @@ test.describe.serial('T3.6 - read-only display funnel (disabled elements)', () =
 		expect(await page.evaluate(() => window.__xssRoArea037)).toBeUndefined();
 	});
 
-	test('cleanup: delete the throwaway form', async ({ page }) => {
-		expect(testFid, 'the build test must have run first').toBeGreaterThan(0);
+	// afterAll rather than a trailing test(): test.describe.serial skips everything after a failure, so a
+	// trailing cleanup test would leave the throwaway form behind. See 034 for the full rationale.
+	test.afterAll(async ({ browser }) => {
+		const page = await browser.newPage();
 		await login(page, 'admin');
-		await deleteMuseumForm(page, testFid);
+		await deleteMuseumFormsTitled(page, ['XSS ReadOnly Test']);
+		await page.close();
 	});
 });

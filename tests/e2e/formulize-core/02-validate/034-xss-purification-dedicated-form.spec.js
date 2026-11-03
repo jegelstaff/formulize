@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyColumnChanges, createMuseumForm, deleteMuseumForm, setCodeMirrorValue } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyColumnChanges, createMuseumForm, deleteMuseumFormsTitled, setCodeMirrorValue } from '../../utils';
 
 /**
  * T2 (list pipeline) - comprehensive XSS filtering on a purpose-built, throwaway form.
@@ -35,6 +35,8 @@ const RICH_PAYLOAD = `${RICH_MARKER}<b>bold</b><img src=x class="${RICH_PROBE}" 
 
 const DERIVED_WRAPPER = 'xss-derived-wrapper-034'; // admin markup in the derived formula - SHOULD survive
 
+const FORM_TITLE = 'XSS Filter Test';
+
 let testFid = 0;
 
 test.describe.serial('T2 - XSS filtering on a dedicated form', () => {
@@ -42,10 +44,13 @@ test.describe.serial('T2 - XSS filtering on a dedicated form', () => {
 	test('build the throwaway form with text, rich-text and derived elements', async ({ page }) => {
 		await login(page, 'admin');
 
+		// Clear out any form a killed run left behind (afterAll removes it on an ordinary failure).
+		await deleteMuseumFormsTitled(page, [FORM_TITLE]);
+
 		// Create the form INSIDE the existing Museum application (created by the setup specs), the same way
 		// 029 does - so the cleanup test can find it under "Application: Museum" and delete it. Creating it
 		// via the aid=0 URL instead leaves it unassigned, where the delete navigation cannot reach it.
-		testFid = await createMuseumForm(page, 'XSS Filter Test', 'ID');
+		testFid = await createMuseumForm(page, FORM_TITLE, 'ID');
 		expect(testFid).toBeGreaterThan(0);
 
 		// Add elements by navigating straight to the "new element" admin URL for each type - more robust
@@ -155,12 +160,12 @@ test.describe.serial('T2 - XSS filtering on a dedicated form', () => {
 	// remaining test once one fails - a trailing 'cleanup' test would never run, leaving the throwaway
 	// form behind forever. afterAll runs regardless of pass/fail (that is its whole purpose here), so
 	// the form is always removed. It needs its own page: afterAll is worker-scoped and cannot use the
-	// test-scoped `page` fixture, whose browser context is already gone by the time this runs.
+	// test-scoped `page` fixture, whose browser context is already gone by the time this runs. It goes by
+	// title, not testFid, so it also removes a form that was saved before its fid could be read back.
 	test.afterAll(async ({ browser }) => {
-		if (!testFid) { return; } // the build step never got far enough to create a form
 		const page = await browser.newPage();
 		await login(page, 'admin');
-		await deleteMuseumForm(page, testFid);
+		await deleteMuseumFormsTitled(page, [FORM_TITLE]);
 		await page.close();
 	});
 });

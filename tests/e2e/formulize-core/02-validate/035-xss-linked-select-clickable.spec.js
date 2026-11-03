@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyColumnChanges, createMuseumForm, deleteMuseumForm, dbQuery, dbPrefix } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyColumnChanges, createMuseumForm, deleteMuseumFormsTitled } from '../../utils';
 
 /**
  * T2.10 - a clickable-in-list linked select must render its value as an escaped <a> pointing at the right
@@ -21,6 +21,9 @@ const LINK_MARKER = 'LINKMARK035';
 const LINK_PROBE = 'xss-link-probe-035';
 const LINK_PAYLOAD = `${LINK_MARKER}"><img src=x class="${LINK_PROBE}" onerror="window.__xssLink035=1">`;
 
+// the target links to the source, so it is deleted first
+const FORM_TITLES = ['XSS Link Target', 'XSS Link Source'];
+
 let sourceFid = 0;
 let targetFid = 0;
 
@@ -31,11 +34,7 @@ test.describe.serial('T2.10 - clickable linked select renders an escaped link', 
 
 		// self-heal leftovers from an aborted run (see 036 for the rationale). The target picks its source
 		// element by caption, so a leftover source form would be picked instead of the one built here.
-		for (const title of ['XSS Link Target', 'XSS Link Source']) {
-			for (const row of dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = '${title}'`)) {
-				await deleteMuseumForm(page, parseInt(row[0], 10));
-			}
-		}
+		await deleteMuseumFormsTitled(page, FORM_TITLES);
 
 		sourceFid = await createMuseumForm(page, 'XSS Link Source', 'ID');
 		expect(sourceFid).toBeGreaterThan(0);
@@ -122,10 +121,12 @@ test.describe.serial('T2.10 - clickable linked select renders an escaped link', 
 		await expect(page.locator(`a[href*="fid=${sourceFid}&ve="] [onerror]`)).toHaveCount(0);
 	});
 
-	test('cleanup: delete both throwaway forms', async ({ page }) => {
-		expect(targetFid, 'the build tests must have run first').toBeGreaterThan(0);
+	// afterAll rather than a trailing test(): test.describe.serial skips everything after a failure, so a
+	// trailing cleanup test would leave the throwaway forms behind. See 034 for the full rationale.
+	test.afterAll(async ({ browser }) => {
+		const page = await browser.newPage();
 		await login(page, 'admin');
-		await deleteMuseumForm(page, targetFid);
-		await deleteMuseumForm(page, sourceFid);
+		await deleteMuseumFormsTitled(page, FORM_TITLES);
+		await page.close();
 	});
 });

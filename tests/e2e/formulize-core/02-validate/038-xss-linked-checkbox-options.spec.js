@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumForm, dbQuery, dbPrefix } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled } from '../../utils';
 
 /**
  * T3.6 - linked-element OPTION LABELS in the form render.
@@ -25,6 +25,9 @@ const LINK_MARKER = 'CBLINKMARK038';
 const LINK_PROBE = 'xss-cblink-probe-038';
 const LINK_PAYLOAD = `${LINK_MARKER}<img src=x class="${LINK_PROBE}" onerror="window.__xssCbLink038=1">`;
 
+// the target links to the source, so it is deleted first
+const FORM_TITLES = ['XSS CBLink Target', 'XSS CBLink Source'];
+
 let sourceFid = 0;
 let targetFid = 0;
 
@@ -34,11 +37,7 @@ test.describe.serial('T3.6 - linked checkbox option labels are escaped in the fo
 		await login(page, 'admin');
 
 		// self-heal leftovers from an aborted run (see 036 for the rationale)
-		for (const title of ['XSS CBLink Source', 'XSS CBLink Target']) {
-			for (const row of dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = '${title}'`)) {
-				await deleteMuseumForm(page, parseInt(row[0], 10));
-			}
-		}
+		await deleteMuseumFormsTitled(page, FORM_TITLES);
 
 		sourceFid = await createMuseumForm(page, 'XSS CBLink Source', 'ID');
 		expect(sourceFid).toBeGreaterThan(0);
@@ -96,10 +95,12 @@ test.describe.serial('T3.6 - linked checkbox option labels are escaped in the fo
 		expect(await page.evaluate(() => window.__xssCbLink038)).toBeUndefined();
 	});
 
-	test('cleanup: delete both throwaway forms', async ({ page }) => {
-		expect(targetFid, 'the build tests must have run first').toBeGreaterThan(0);
+	// afterAll rather than a trailing test(): test.describe.serial skips everything after a failure, so a
+	// trailing cleanup test would leave the throwaway forms behind. See 034 for the full rationale.
+	test.afterAll(async ({ browser }) => {
+		const page = await browser.newPage();
 		await login(page, 'admin');
-		await deleteMuseumForm(page, targetFid);
-		await deleteMuseumForm(page, sourceFid);
+		await deleteMuseumFormsTitled(page, FORM_TITLES);
+		await page.close();
 	});
 });

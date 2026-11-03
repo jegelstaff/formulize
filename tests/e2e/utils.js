@@ -1017,6 +1017,24 @@ export async function deleteMuseumForm(page, fid, opts = {}) {
 }
 
 /**
+ * Delete every Museum form with one of these titles, in the order given. A spec that builds throwaway
+ * forms calls this from afterAll, so its forms are removed even when a test fails part way through, and
+ * at the start of its build step, to clear forms that a run which was killed outright left behind.
+ * Going by title rather than fid catches a form that was saved before the test could read its fid back.
+ * List a form that links to another form before the form it links to.
+ *
+ * @param {object} page Playwright page, logged in as admin
+ * @param {string[]} titles Form titles
+ */
+export async function deleteMuseumFormsTitled(page, titles) {
+	for (const title of titles) {
+		for (const row of dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = '${sqlEscape(title)}'`)) {
+			await deleteMuseumForm(page, parseInt(row[0], 10));
+		}
+	}
+}
+
+/**
  * Robustly set the "show this link to these groups" selection for an application
  * menu entry, working around the Playwright-vs-browser-UI save race.
  *
