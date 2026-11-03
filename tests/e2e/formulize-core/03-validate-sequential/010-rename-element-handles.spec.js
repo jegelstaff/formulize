@@ -72,15 +72,21 @@ async function openScreenTemplates(page, fid, sid) {
 	await page.goto(templates);
 	await waitForAdminPageReady(page);
 	const customize = page.getByRole('button', { name: 'Customize the Templates' });
-	await expect(customize.or(page.locator('.CodeMirror').first())).toBeVisible();
+	// every tab is on the page, so only the editors in the templates tab's form count
+	const templateEditor = templatesForm(page).locator('.CodeMirror').first();
+	await expect(customize.or(templateEditor)).toBeVisible();
 	const customized = await customize.isVisible();
 	if (customized) {
 		await Promise.all([page.waitForEvent('load'), customize.click()]);
 		await page.goto(templates);
 		await waitForAdminPageReady(page);
 	}
-	await expect(page.locator('.CodeMirror').first()).toBeVisible();
+	await expect(templateEditor).toBeVisible();
 	return customized;
+}
+// The form in a screen's settings that holds its template boxes
+function templatesForm(page) {
+	return page.locator('form:has(input[name="formulize_admin_handler"][value$="_templates"])');
 }
 // Put code in one of a screen's template boxes, and save it, in the screen's settings
 async function setScreenTemplate(page, fid, sid, box, code) {
@@ -92,7 +98,7 @@ async function setScreenTemplate(page, fid, sid, box, code) {
 // templates
 async function useDefaultScreenTemplates(page, fid, sid) {
 	await openScreenTemplates(page, fid, sid);
-	const templateBoxes = page.locator('form:has(input[name="formulize_admin_handler"][value$="_templates"]) textarea.code-textarea');
+	const templateBoxes = templatesForm(page).locator('textarea.code-textarea');
 	for (const name of await templateBoxes.evaluateAll(boxes => boxes.map(box => box.name))) {
 		await setCodeMirrorValue(page, `textarea[name="${name}"]`, '');
 	}
