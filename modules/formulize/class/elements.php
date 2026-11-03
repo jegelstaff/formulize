@@ -1102,8 +1102,9 @@ class formulizeElementsHandler {
 				$this->renameElementCodeFiles($elementObject, $original_handle, $eleValueWasSavedWithThisChange);
 				// what names the handle in the code files and every screen's own template files, where it can only be
 				// the element, and the tags in the notification mail templates
-				$this->renameWarnings = $this->renameHandleInFiles($original_handle, $ele_handle, $elementObject->getVar('fid'));
-				$this->renameHandleInMailTemplates($original_handle, $ele_handle);
+				$this->renameWarnings = array_merge(
+					$this->renameHandleInFiles($original_handle, $ele_handle, $elementObject->getVar('fid')),
+					$this->renameHandleInMailTemplates($original_handle, $ele_handle));
 				// every setting that names this element by its old handle, at the positions declared to hold one,
 				// {handle} tokens and notification tags, and the code kept in the database - see
 				// formulizeElementReferences
@@ -1458,7 +1459,7 @@ class formulizeElementsHandler {
 	/**
 	 * Rewrite what names an element's handle in the code files and screen templates, when the handle changes - see
 	 * handleRewritesInFiles() for what is rewritten - and say which of them still name the old handle afterwards, in
-	 * a way that may or may not be the element and so is left for a person.
+	 * a way that may or may not be the element and so is left for a person, and which could not be written at all.
 	 * @param string $originalHandle The handle as it was.
 	 * @param string $newHandle The handle as it now is.
 	 * @param int $formId The element's form.
@@ -1468,14 +1469,18 @@ class formulizeElementsHandler {
 		$leftByTheRename = array();
 		foreach($this->handleRewritesInFiles($originalHandle, $newHandle, $formId) as $path => $rewrite) {
 			if($rewrite['rewritten'] !== $rewrite['original']) {
-				if(strpos($path, XOOPS_ROOT_PATH.'/modules/formulize/code/') === 0) {
-					formulize_writeCodeToFile(basename($path), $rewrite['rewritten']);
-				} else {
-					file_put_contents($path, $rewrite['rewritten']);
-					if(substr($path, -5) == '.html') {
-						// a template screen's template, which Smarty compiles - see formulizeTemplateScreenHandler::recompileTemplate()
-						formulizeTemplateScreenHandler::recompileTemplate($path);
-					}
+				// a file the web server cannot write - one deployed by someone else, say - keeps all of the old handle,
+				// and the person is told that, rather than that it only has what a rename leaves
+				$isCodeFile = strpos($path, XOOPS_ROOT_PATH.'/modules/formulize/code/') === 0;
+				if(!is_writable($path) OR ($isCodeFile
+					? formulize_writeCodeToFile(basename($path), $rewrite['rewritten'])
+					: file_put_contents($path, $rewrite['rewritten'])) === false) {
+					$leftByTheRename[] = $rewrite['label'].formulizeElementHandleCode::NOT_WRITTEN;
+					continue;
+				}
+				if(!$isCodeFile AND substr($path, -5) == '.html') {
+					// a template screen's template, which Smarty compiles - see formulizeTemplateScreenHandler::recompileTemplate()
+					formulizeTemplateScreenHandler::recompileTemplate($path);
 				}
 			}
 			if(formulizeElementHandleCode::stillNamed($rewrite['rewritten'], $originalHandle)) {
@@ -1499,17 +1504,29 @@ class formulizeElementsHandler {
 	 * formulizeElementReferences does for the tags in a notification's subject.
 	 * @param string $originalHandle The handle as it was.
 	 * @param string $newHandle The handle as it now is.
-	 * @return void
+	 * @return array Where each mail template that could not be written is, for a person.
 	 */
 	public function renameHandleInMailTemplates($originalHandle, $newHandle) {
+		$notWritten = array();
 		$oldTags = formulizeElementReferences::notificationTags($originalHandle);
 		$newTags = formulizeElementReferences::notificationTags($newHandle);
 		foreach(self::mailTemplateFiles() as $file) {
 			$contents = file_get_contents($file);
-			if($contents !== false AND ($newContents = str_replace($oldTags, $newTags, $contents)) !== $contents) {
-				file_put_contents($file, $newContents);
+			if($contents !== false AND ($newContents = str_replace($oldTags, $newTags, $contents)) !== $contents
+				AND (!is_writable($file) OR @file_put_contents($file, $newContents) === false)) {
+				$notWritten[] = self::mailTemplateLabel($file).formulizeElementHandleCode::NOT_WRITTEN;
 			}
 		}
+		return $notWritten;
+	}
+
+	/**
+	 * Where a notification mail template is, for a person.
+	 * @param string $file Its path.
+	 * @return string
+	 */
+	private static function mailTemplateLabel($file) {
+		return "notification mail template '".basename(dirname(dirname($file))).'/'.basename($file)."'";
 	}
 
 	/**
@@ -1667,7 +1684,7 @@ class formulizeElementsHandler {
 		foreach(self::mailTemplateFiles() as $mailTemplate) {
 			$contents = file_get_contents($mailTemplate);
 			if($contents !== false AND str_replace($tags, '', $contents) !== $contents) {
-				$broken[] = "notification mail template '".basename(dirname(dirname($mailTemplate))).'/'.basename($mailTemplate)."' refers to this element by name";
+				$broken[] = self::mailTemplateLabel($mailTemplate)." refers to this element by name";
 			}
 		}
 

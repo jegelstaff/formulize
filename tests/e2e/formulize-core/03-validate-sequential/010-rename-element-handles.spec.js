@@ -5,7 +5,7 @@ import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
 import {
 	login, saveFormulizeForm, saveAdminForm, waitForAdminPageReady, dbQuery, dbPrefix, renameElementHandle, elementId,
 	openArtifactOriginsMap, expectArtifactOriginsMap, loadSavedView, expectCoinsByName, expectArtifactOriginsList,
-	conditionalElementReady, leavePage,
+	conditionalElementReady, leavePage, setCodeMirrorValue,
 } from '../../utils';
 
 /**
@@ -65,25 +65,62 @@ async function expectYearEraToFollowTheYear(page) {
 	await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
 	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 }
-// Take the Roman coin's ID number away, then change its year and back as curator1, and check the On After Save
-// procedure gives it its standard ID number again, in the column ID Number has under the handle given. The year is
-// changed because the procedure only runs when a save changes something. Whatever happens, the ID number is put back.
-async function expectIdNumberToBeStandardized(page, handle) {
-	dbQuery(`UPDATE ${dbPrefix()}_formulize_artifacts SET ${handle} = '' WHERE entry_id = 1`);
-	try {
-		await asCurator(page);
-		await openArtifact(page, 'Roman Coin');
-		const year = page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0);
-		await year.fill('151');
-		await saveFormulizeForm(page);
-		await expect.poll(() => rowOf('formulize_artifacts', 'entry_id', 1, handle)[0]).toBe('M001');
-		await year.fill('150');
-		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
-		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
-	} finally {
-		dbQuery(`UPDATE ${dbPrefix()}_formulize_artifacts SET ${handle} = 'M001' WHERE entry_id = 1`);
+// Open a screen's templates in its settings, first giving the screen its own copies of the default templates with
+// the "Customize the Templates" button, if it does not have them yet. Says whether it had to.
+async function openScreenTemplates(page, fid, sid) {
+	const templates = `/modules/formulize/admin/ui.php?page=screen&fid=${fid}&sid=${sid}&tab=templates`;
+	await page.goto(templates);
+	await waitForAdminPageReady(page);
+	const customize = page.getByRole('button', { name: 'Customize the Templates' });
+	await expect(customize.or(page.locator('.CodeMirror').first())).toBeVisible();
+	const customized = await customize.isVisible();
+	if (customized) {
+		await Promise.all([page.waitForEvent('load'), customize.click()]);
+		await page.goto(templates);
+		await waitForAdminPageReady(page);
 	}
+	await expect(page.locator('.CodeMirror').first()).toBeVisible();
+	return customized;
+}
+// Put code in one of a screen's template boxes, and save it, in the screen's settings
+async function setScreenTemplate(page, fid, sid, box, code) {
+	await openScreenTemplates(page, fid, sid);
+	await setCodeMirrorValue(page, `textarea[name="screens-${box}"]`, code);
+	await saveAdminForm(page);
+}
+// Empty all of a screen's template boxes and save, in the screen's settings, which puts it back on the default
+// templates
+async function useDefaultScreenTemplates(page, fid, sid) {
+	await openScreenTemplates(page, fid, sid);
+	const templateBoxes = page.locator('form:has(input[name="formulize_admin_handler"][value$="_templates"]) textarea.code-textarea');
+	for (const name of await templateBoxes.evaluateAll(boxes => boxes.map(box => box.name))) {
+		await setCodeMirrorValue(page, `textarea[name="${name}"]`, '');
+	}
+	await saveAdminForm(page);
+	await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${fid}&sid=${sid}&tab=templates`);
+	await waitForAdminPageReady(page);
+	await expect(page.getByRole('button', { name: 'Customize the Templates' })).toBeVisible();
+}
+// Add an artifact as curator1, check the On After Save procedure gives it its standard ID number - M and its entry
+// id - in the column ID Number has under the handle given, then delete it again from the Artifacts list
+async function expectANewArtifactToGetItsIdNumber(page, handle) {
+	const shortName = `Rename check ${handle}`;
+	const added = () => dbQuery(`SELECT entry_id, ${handle} FROM ${dbPrefix()}_formulize_artifacts WHERE artifacts_short_name = '${shortName}'`);
+	await asCurator(page);
+	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
+	await page.getByRole('button', { name: 'Add Artifact', exact: true }).click();
+	await page.getByRole('textbox', { name: 'Short name *' }).fill(shortName);
+	await saveFormulizeForm(page);
+	await expect.poll(() => added().map(([entryId, idNumber]) => idNumber === 'M' + entryId.padStart(3, '0'))).toEqual([true]);
+	await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
+	await page.locator('input[name="search_artifacts_short_name"]').fill(shortName);
+	await page.getByRole('link', { name: 'Short name' }).click();
+	await expect(page.getByText('1 to 1 of 1.')).toBeVisible();
+	await page.locator('[id^=delete_]').first().check();
+	page.once('dialog', dialog => dialog.accept());
+	await Promise.all([page.waitForEvent('load'), page.getByRole('button', { name: 'Delete selected' }).click()]);
+	await expect.poll(() => added().length).toBe(0);
 }
 // Leave a form that was filled in and not saved, agreeing to lose the changes when the page asks
 async function leaveWithoutSaving(page) {
@@ -135,7 +172,7 @@ test.describe.serial('Renaming element handles', () => {
 		}
 		expect(procedure()).not.toContain('artifacts_id_number');
 		expect(dataColumnExists('artifacts', 'artifacts_catalogue_number')).toBe(true);
-		await expectIdNumberToBeStandardized(page, 'artifacts_catalogue_number');
+		await expectANewArtifactToGetItsIdNumber(page, 'artifacts_catalogue_number');
 		// and back
 		await asAdmin(page);
 		expect(await renameElementHandle(page, 'artifacts_catalogue_number', 'artifacts_id_number')).toBeNull();
@@ -144,7 +181,7 @@ test.describe.serial('Renaming element handles', () => {
 		}
 		expect(procedure()).not.toContain('artifacts_catalogue_number');
 		expect(dataColumnExists('artifacts', 'artifacts_id_number')).toBe(true);
-		await expectIdNumberToBeStandardized(page, 'artifacts_id_number');
+		await expectANewArtifactToGetItsIdNumber(page, 'artifacts_id_number');
 	});
 
 	test('Donors Name: the Donor list keeps offering the donors, and its own formula file follows it', async ({ page }) => {
@@ -303,24 +340,22 @@ test.describe.serial('Renaming element handles', () => {
 		const notificationBefore = notificationCondition();
 		expect(notificationBefore).toContain(`"${conditionId}"`);
 
-		// The Artifacts list's bottom template, as Formulize draws it, with a line in front naming the Condition
-		// search box's variable, which a rename follows, and the handle as an array key, which it cannot know is
-		// the element. Taken out again at the end.
-		const templateFolder = path.join(screensDir, theme, String(listSid));
-		const templateFile = path.join(templateFolder, 'bottomtemplate.php');
-		const hadFolder = fs.existsSync(templateFolder);
-		const hadTemplate = fs.existsSync(templateFile) ? fs.readFileSync(templateFile, 'utf8') : null;
-		const themeDefault = path.join(screensDir, theme, 'default', 'listOfEntries', 'bottomtemplate.php');
-		const drawnBottom = fs.readFileSync(fs.existsSync(themeDefault) ? themeDefault : path.join(screensDir, 'default', 'listOfEntries', 'bottomtemplate.php'), 'utf8');
+		// The Artifacts list's bottom template, set in the list's settings with a line in front naming the Condition
+		// search box's variable, which a rename follows, and the handle as an array key, which it cannot know is the
+		// element. Put back as it was at the end, through the same settings.
+		const templateFile = path.join(screensDir, theme, String(listSid), 'bottomtemplate.php');
+		const template = () => fs.readFileSync(templateFile, 'utf8').replace(/\r\n/g, '\n'); // a form posts a textarea's lines with \r\n
 		const withSearch = (handle) => "<?php $artifactSearches = array('artifacts_condition' => isset($quickSearch" + handle + ") ? $quickSearch" + handle + " : ''); ?>";
-		fs.mkdirSync(templateFolder, { recursive: true });
-		fs.writeFileSync(templateFile, withSearch('artifacts_condition') + drawnBottom);
+		await asAdmin(page);
+		const customized = await openScreenTemplates(page, fid, listSid);
+		const asItWas = template();
 		try {
-			await asAdmin(page);
+			await setScreenTemplate(page, fid, listSid, 'bottomtemplate', withSearch('artifacts_condition') + asItWas);
+			await expect.poll(template).toBe(withSearch('artifacts_condition') + asItWas);
 			const said = await renameElementHandle(page, 'artifacts_condition', 'artifacts_state');
 			expect(said).toContain(`${theme}/${listSid}/bottomtemplate.php`);
 			expect(said).toContain('artifacts_condition');
-			expect(fs.readFileSync(templateFile, 'utf8')).toBe(withSearch('artifacts_state') + drawnBottom);
+			expect(template()).toBe(withSearch('artifacts_state') + asItWas);
 			expect(buttons()).toBe(buttonsBefore);
 			expect(notificationCondition()).toBe(notificationBefore);
 			// the button beside an artifact marks it as in perfect condition, in the list drawn with that template
@@ -330,21 +365,28 @@ test.describe.serial('Renaming element handles', () => {
 			await Promise.all([page.waitForEvent('load'),
 				page.getByRole('row', { name: /Babylonian Spoon/ }).getByRole('button', { name: 'Mark as in perfect condition' }).click()]);
 			await expect.poll(() => dbQuery(`SELECT artifacts_state FROM ${dbPrefix()}_formulize_artifacts WHERE entry_id = ${spoon[0]}`)[0][0]).toBe('10');
-			dbQuery(`UPDATE ${dbPrefix()}_formulize_artifacts SET artifacts_state = '${spoon[1]}' WHERE entry_id = ${spoon[0]}`); // as it was
 			// and back, where nothing names artifacts_state but the search box variable, so there is nothing to point out
 			await asAdmin(page);
 			expect(await renameElementHandle(page, 'artifacts_state', 'artifacts_condition')).toBeNull();
-			expect(fs.readFileSync(templateFile, 'utf8')).toBe(withSearch('artifacts_condition') + drawnBottom);
+			expect(template()).toBe(withSearch('artifacts_condition') + asItWas);
 			expect(buttons()).toBe(buttonsBefore);
 			expect(notificationCondition()).toBe(notificationBefore);
+			// the spoon's condition as it was, in its form
+			await asCurator(page);
+			await openArtifact(page, 'Babylonian Spoon');
+			await page.getByRole('slider', { name: 'Condition' }).fill(spoon[1]);
+			await saveFormulizeForm(page);
+			await expect.poll(() => dbQuery(`SELECT artifacts_condition FROM ${dbPrefix()}_formulize_artifacts WHERE entry_id = ${spoon[0]}`)[0][0]).toBe(spoon[1]);
+			await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+			await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 		} finally {
-			if (hadTemplate === null) {
-				fs.rmSync(templateFile, { force: true });
-				if (!hadFolder) {
-					fs.rmSync(templateFolder, { recursive: true, force: true });
-				}
+			// as it was: on the default templates again if this test gave the list its own, or else with its own
+			// bottom template as it found it
+			await asAdmin(page);
+			if (customized) {
+				await useDefaultScreenTemplates(page, fid, listSid);
 			} else {
-				fs.writeFileSync(templateFile, hadTemplate);
+				await setScreenTemplate(page, fid, listSid, 'bottomtemplate', asItWas);
 			}
 		}
 	});

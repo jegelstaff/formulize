@@ -59,6 +59,11 @@ class formulizeElementHandleCode {
 	const LEFT_BY_A_RENAME = ' - renaming the element would leave this for you to update';
 
 	/**
+	 * What a rename adds to a file it could not write, so it still names the old handle wherever it did before.
+	 */
+	const NOT_WRITTEN = ' - the web server cannot write to it, so none of it was updated';
+
+	/**
 	 * The variables Formulize itself sets in the code that gets a variable for each handle: the parameters and
 	 * working variables of the function a derived value formula runs in (see formulize_includeDerivedValueFormulas())
 	 * and of the save and delete procedures (see formulizeForm), the metadata a formula can name, and $this. An
