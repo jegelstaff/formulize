@@ -52,6 +52,15 @@ them *after* the e2e suite, when the setup specs have finished building the muse
   to the menu block, which has to follow whether any menu item is visible to Anonymous. Checks every way an
   item's groups change - adding an item, changing one, deleting one - plus the start page lookup. Builds its own
   menu item inside a transaction it rolls back.
+* `condition_filters_test.php` - the SQL that conditions become (`buildConditionsFilterSQL()`), for subform
+  filters, linked element options, dynamic defaults and a list's fundamental filters. Each scenario is a set of
+  conditions on a museum form, combining "match all" and "match one or more", and the entries its SQL finds are
+  compared with an independently written query that treats NULL and '' as the same blank. Covers negations,
+  {BLANK} and empty terms, numeric fields, linked elements single and multi value, checkboxes, Yes/No terms, dates
+  written out and whole years or months, { } references in existing and new entries, asynchronous values and
+  metadata fields. Every scenario is built in order and again in reverse order, so no condition depends on what was
+  built before it, then in extraction mode, and the same conditions are checked against each entry with
+  `checkConditionsAgainstAnEntry()`, so they mean the same thing when elements are displayed. Read-only.
 * `element_code_files_test.php` - the code files that captionedContent, fullWidthContent, text, number,
   textarea and derived elements keep in `modules/formulize/code/`. Saving an element sets `ele_value`
   twice, so each type is checked for both halves of the contract: the file on disk is right, *and* the
