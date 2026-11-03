@@ -193,11 +193,21 @@ if(primaryRelationshipExists() === false AND !$formulizeNeedsDBPatch) {
 }
 
 // switch the theme for the screen if that's requested
-if(isset($_POST['themeswitch']) AND $_POST['themeswitch'] AND isset($_GET['sid'])) {
+// only to a theme the list of themes offers, since the name is a folder the screen's templates are kept in
+if(isset($_POST['themeswitch']) AND $_POST['themeswitch'] AND isset($_GET['sid']) AND isset(formulize_selectableThemesList()[$_POST['themeswitch']])) {
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
     $screen = $screen_handler->get($_GET['sid']);
+    $previousTheme = $screen->getVar('theme');
     $screen->setVar('theme', $_POST['themeswitch']);
     $screen_handler->insert($screen);
+    // a template screen has no default templates to fall back on, so it takes its own along to a theme where it
+    // has none yet
+    if($screen->getVar('type') == 'template') {
+        $template_screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
+        if(!$template_screen_handler->copyTemplatesToTheme($screen, $previousTheme, $_POST['themeswitch'])) {
+            print "<p>Error: could not copy the screen's code and template from the ".htmlspecialchars($previousTheme)." theme.</p>";
+        }
+    }
 }
 
 // create a set of templates for the screen if that's what the user requested

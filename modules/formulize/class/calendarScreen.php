@@ -71,6 +71,35 @@ class formulizeCalendarScreenDataset extends xoopsObject {
         $this->initVar("datehandle", XOBJ_DTYPE_TXTBOX, NULL, false, 100);
     }
 
+    /**
+     * The element the entries are placed on is stored as its id, so renaming it cannot leave the calendar
+     * pointing at a handle that no longer exists - the same arrangement as formulizeScreen::elementColumnSettings().
+     */
+    public function setVar($key, $value, $not_gpc = false) {
+        if($key == 'datehandle' AND is_string($value) AND $value !== '' AND !is_numeric($value)) {
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            if($elementObject = $element_handler->get($value)) {
+                $value = (string) $elementObject->getVar('ele_id');
+            }
+        }
+        parent::setVar($key, $value, $not_gpc);
+    }
+
+    /**
+     * Handed out as the handle, which is what the calendar and the admin page work in. A dataset saved before
+     * it was stored as an id holds the handle, which passes through. Pass the 'n' format for what is stored.
+     */
+    public function getVar($key, $format = 's') {
+        $value = parent::getVar($key, $format);
+        if($key == 'datehandle' AND $format != 'n' AND is_numeric($value)) {
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            if($elementObject = $element_handler->get($value)) {
+                $value = $elementObject->getVar('ele_handle');
+            }
+        }
+        return $value;
+    }
+
 }
 
 #[AllowDynamicProperties]
@@ -204,10 +233,10 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
         $theme = $xoopsConfig['theme_set'];
 
         ob_start();
-        eval(substr(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/'.$theme.'/'.$screen->getVar('sid').'/toptemplate.php'), 5));
+        eval(removeOpeningPHPTag($screen->getTemplate('toptemplate', $theme)));
         $toptemplate = ob_get_clean();
         ob_start();
-        eval(substr(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/'.$theme.'/'.$screen->getVar('sid').'/bottomtemplate.php'), 5));
+        eval(removeOpeningPHPTag($screen->getTemplate('bottomtemplate', $theme)));
         $bottomtemplate = ob_get_clean();
         // the screen's introductory text, from its Appearance tab, above whatever the top template has: a
         // calendar has no default templates for it to be a variable in
@@ -240,76 +269,5 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
             return false;
         }
     }
-
-	/**
-	 * Where does a calendar screen refer to an element, and what does the setting look like once the element
-	 * is gone? The element holding the date each dataset is plotted on.
-	 *
-	 * A calendar's datasets are stored as serialized formulizeCalendarScreenDataset objects rather than
-	 * plain arrays - which is declared a few lines up this file, and is exactly why this scan belongs here.
-	 * A row whose datasets do not come back as those objects is reported but left alone: rewriting a
-	 * structure that could not be read properly would do more harm than the dangling reference does.
-	 *
-	 * Called by formulizeElementsHandler::findReferencesToElement().
-	 *
-	 * @param object $elementObject The element being asked about.
-	 * @return array The references found.
-	 */
-	public function scanForElementReferences($elementObject) {
-		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
-		$references = array();
-		$sql = "SELECT s.sid, s.title, c.datasets
-			FROM ".$this->db->prefix('formulize_screen')." s
-			INNER JOIN ".$this->db->prefix('formulize_screen_calendar')." c ON c.sid = s.sid";
-		if(!$result = $this->db->query($sql)) {
-			return $references;
-		}
-		while($row = $this->db->fetchArray($result)) {
-			$description = $this->describeById($row['title'], 'screen', $row['sid'])
-				.' - the date the entries are placed on, which the screen cannot be drawn without';
-
-			$datasets = @unserialize((string) $row['datasets']);
-			$readable = is_array($datasets) AND $datasets;
-			if($readable) {
-				foreach($datasets as $dataset) {
-					if(!($dataset instanceof formulizeCalendarScreenDataset)) {
-						$readable = false;
-						break;
-					}
-				}
-			}
-
-			// a screen whose datasets did not come back as the objects they are stored as cannot be rewritten
-			// safely, so fall back to asking whether the handle appears anywhere in the stored text at all.
-			// That is a loose question and it may say yes when the answer is no, but the alternative is
-			// staying silent about a screen that may well be about to break.
-			if(!$readable) {
-				if(strpos((string) $row['datasets'], $handle) !== false) {
-					$references[] = $this->elementReference(
-						_AM_ELE_USAGE_SECTION_CALENDAR_SCREENS,
-						$description.' (this screen could not be read properly, so check it and change it yourself)',
-						'', 'sid', $row['sid']
-					);
-				}
-				continue;
-			}
-
-			$changed = false;
-			foreach($datasets as $dataset) {
-				if($this->referencePointsAtElement($dataset->getVar('datehandle'), $elementId, $handle)) {
-					$dataset->setVar('datehandle', '');
-					$changed = true;
-				}
-			}
-			if($changed) {
-				$references[] = $this->elementReference(
-					_AM_ELE_USAGE_SECTION_CALENDAR_SCREENS, $description,
-					'formulize_screen_calendar', 'sid', $row['sid'],
-					array('datasets' => serialize($datasets))
-				);
-			}
-		}
-		return $references;
-	}
 
 }

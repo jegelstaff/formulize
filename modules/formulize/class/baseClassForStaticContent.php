@@ -96,6 +96,14 @@ abstract class formulizeStaticContentElement extends formulizeElement {
 #[AllowDynamicProperties]
 abstract class formulizeStaticContentElementHandler extends formulizeElementsHandler {
 
+	/**
+	 * The content, which can carry {handle} tokens - see formulizeElementReferences. Content that is PHP lives
+	 * in a code file instead, which a rename deals with - see formulizeElementsHandler::handleRewritesInFiles().
+	 */
+	public static $eleValueReferences = array(
+		ELE_VALUE_STATICCONTENT_CONTENT => array('shape' => 'tokens'),
+	);
+
 	var $db;
 	// set to true in a subclass if a blank content should fall back to displaying the element's caption
 	protected $useCaptionAsContentFallback = false;

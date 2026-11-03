@@ -65,47 +65,35 @@ function xoDiagIfWritable( $path) {
     return xoDiag( $error ? -1 : 1, $error ? 'Not writable' : 'Writable' );
 }
 
-function phpVersionCheck() {
-    if (version_compare( phpversion(), '8.1', '>=')) {
-        return 1;
-    } else {
-        return -1;
-    }
-}
-
 function successImg($success_val) {
     $img_name = $success_val >= 0 ? "yes" : "no";
     return '<img src="img/' . $img_name . '.png" alt="Success?" class="rootimg" />';
 }
 
-$php_version_success = phpVersionCheck();
-$mysql_success = function_exists('mysqli_connect') ? 1 : -1;
-$extension_success = extension_loaded('session') ? 1 : -1;
-$pcre_success = extension_loaded('pcre') ? 1 : -1;
-
-$php_version_success_str = xoDiag($php_version_success, phpversion()) . successImg($php_version_success);
-$mysql_success_str = xoDiag($mysql_success) . successImg($mysql_success);
-$extension_success_str = xoDiag($extension_success) . successImg($extension_success);
-$pcre_success_str = xoDiag($pcre_success) . successImg($pcre_success);
+// everything Formulize needs, which the installer will not go past this page without - see XoopsInstallWizard::requirements()
+$requirements = $wizard->requirements();
+$pageStopsHere = !$wizard->requirementsMet();
+$requirementStr = array();
+foreach ($requirements as $key => $requirement) {
+    $status = $requirement[1] ? 1 : -1;
+    $requirementStr[$key] = xoDiag($status, $key == 'php' ? phpversion() : '') . successImg($status);
+}
 
 ob_start();
 ?>
 
+    <?php if ($pageStopsHere) { ?>
+    <div class="error"><p><?php echo REQUIREMENTS_MISSING; ?></p></div>
+    <?php } ?>
     <fieldset>
         <h3><?php echo REQUIREMENTS; ?></h3>
         <h4><?php echo SERVER_API; ?>:&nbsp; <?php echo php_sapi_name(); ?> <img
                     src="img/yes.png" alt="Success" class="rootimg" /></h4>
         <div class="clear">&nbsp;</div>
-        <h4><?php echo _PHP_VERSION; ?>:&nbsp;
-            <?php echo $php_version_success_str ?>
-        </h4>
+        <?php foreach ($requirements as $key => $requirement) { ?>
+        <h4><?php echo $requirement[0]; ?>:&nbsp; <?php echo $requirementStr[$key]; ?></h4>
         <div class="clear">&nbsp;</div>
-        <h4><?php printf( PHP_EXTENSION, 'MySQL' ); ?>:&nbsp; <?php echo $mysql_success_str; ?> </h4>
-        <div class="clear">&nbsp;</div>
-        <h4><?php printf( PHP_EXTENSION, 'Session' ); ?>:&nbsp; <?php echo $extension_success_str ?></h4>
-        <div class="clear">&nbsp;</div>
-        <h4><?php printf( PHP_EXTENSION, 'PCRE' ); ?>:&nbsp; <?php echo $pcre_success_str ?></h4>
-        <div class="clear">&nbsp;</div>
+        <?php } ?>
         <h4>file_uploads:&nbsp; <?php echo xoDiagBoolSetting( 'file_uploads', true ); ?>
         <div class="clear">&nbsp;</div>
     </fieldset>

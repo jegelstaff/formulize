@@ -136,6 +136,27 @@ class icms_core_Object {
 	/**#@-*/
 
 	/**
+	 * Does a variable still hold the value the object was made or loaded with? isDirty() asks about the object as a
+	 * whole.
+	 *
+	 * @param string $key The variable's name.
+	 * @return bool True until setVar() sets it.
+	 */
+	public function isVarClean($key) {
+		return empty($this->vars[$key]['changed']);
+	}
+
+	/**
+	 * Has a variable been set since the object was made or loaded? The opposite of isVarClean().
+	 *
+	 * @param string $key The variable's name.
+	 * @return bool True once setVar() has set it.
+	 */
+	public function isVarDirty($key) {
+		return !$this->isVarClean($key);
+	}
+
+	/**
 	 * initialize variables for the object
 	 *
 	 * @access public

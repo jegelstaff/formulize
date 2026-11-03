@@ -159,6 +159,15 @@ if(!empty(\$bookings_name)) {
 #[AllowDynamicProperties]
 class formulizeDerivedElementHandler extends formulizeElementsHandler {
 
+	/**
+	 * The formula, which is code a person wrote - see formulizeElementReferences. It is kept in a code file,
+	 * which a rename rewrites - see formulizeElementsHandler::handleRewritesInFiles(). Any copy still in the
+	 * database only has the handles given to Formulize's functions rewritten, like other code kept there.
+	 */
+	public static $eleValueReferences = array(
+		0 => array('shape' => 'code'),
+	);
+
 	var $db;
 	var $clickable; // used in formatDataForList
 	var $striphtml; // used in formatDataForList
@@ -291,7 +300,7 @@ class formulizeDerivedElementHandler extends formulizeElementsHandler {
 			$listOfRelationships->addOptionArray($relationships);
 			$dataToSendToTemplate['listofrelationshipoptions'] = $listOfRelationships->render();
 		} else {
-			$config_handler = $config_handler = xoops_gethandler('config');
+			$config_handler = xoops_gethandler('config');
 			$formulizeConfig =& $config_handler->getConfigsByCat(0, getFormulizeModId());
 			$dataToSendToTemplate['ele_value'][1] = isset($formulizeConfig['number_decimals']) ? $formulizeConfig['number_decimals'] : 0;
 			$dataToSendToTemplate['ele_value'][2] = isset($formulizeConfig['number_prefix']) ? $formulizeConfig['number_prefix'] : '';

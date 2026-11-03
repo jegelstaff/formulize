@@ -383,8 +383,14 @@ if($pubflag) {
 	$advanced .= formulize_popupField(_formulize_DE_SAVE_SEARCHES_FUNDAMENTAL, $searches_are_fundamental_question);
 
     // get the pubfilters for the viewselection
-    $pubfilters = q("SELECT sv_pubfilters FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_id = '" . substr($viewselection, 1) . "'");
-    $pubfilters = $pubfilters[0]['sv_pubfilters'] ? explode(",",$pubfilters[0]['sv_pubfilters']) : array();
+    // through the handler, which hands them out as handles, the way the list of elements below names them
+    $pubfilters = array();
+    if(is_numeric(substr($viewselection, 1))) {
+        $savedViewsHandler = xoops_getmodulehandler('savedViews', 'formulize');
+        if(($viewForFilters = $savedViewsHandler->get(intval(substr($viewselection, 1)))) AND $viewForFilters['sv_pubfilters']) {
+            $pubfilters = explode(",", $viewForFilters['sv_pubfilters']);
+        }
+    }
     // the help text goes above the list of elements, which can be long
     $advanced .= formulize_popupField(_formulize_DE_SAVE_PUBFILTERS, "<p class='fz-field__help'>" . _formulize_DE_SAVE_PUBFILTERS_DESC . "</p>" . generateTidyElementList($fid, getAllColList($fid, $frid, $groups), $pubfilters));
 

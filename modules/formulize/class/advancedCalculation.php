@@ -1311,8 +1311,8 @@ document.addEventListener('click', function(e) {
 	$postName = $acid."_".$thisFilter['handle'];
 	if($thisFilter['form'] AND is_numeric($thisFilter['form'])) {
 	    $elementObject = $element_handler->get($thisFilter['form']);
-	    $formId = $elementObject->getVar('id_form');
 	    if(is_object($elementObject)) {
+	        $formId = $elementObject->getVar('id_form');
 	        $fieldName = $elementObject->getVar('ele_handle');
 	        if($thisFilter['type']['kind'] == 3) {
 		    $filterValue .= "`".$fieldName."` IN (";

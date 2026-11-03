@@ -54,11 +54,9 @@ class formulizeTemplateScreen extends formulizeScreen {
 
     function __construct() {
         parent::__construct();
-        $this->initVar("custom_code", XOBJ_DTYPE_TXTAREA);
         $this->initVar("savebuttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
         $this->initVar("donebuttontext", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
         $this->initVar("donedest", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
-        $this->initVar("template", XOBJ_DTYPE_TXTAREA);
         $this->initVar("viewentryscreen", XOBJ_DTYPE_TXTBOX, NULL, false, 10);
     }
 }
@@ -69,6 +67,37 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
     const FORMULIZE_CSS_FILE = "/modules/formulize/templates/css/formulize.css";
     const FORMULIZE_JS_FILE = "/modules/formulize/libraries/formulize.js";
+
+    // Names an element's handle never becomes a variable under in a template screen's code, because the code
+    // that runs the template still needs them after the handles are made into variables - see
+    // run_template_php_code(). An element with one of these handles has no variable of its own there.
+    const RESERVED_TEMPLATE_VARIABLES = array(
+        'code_filename',                                          // include target below (the LFI guard)
+        'templateScreenData', 'form_handler',                    // read after the loop / next outer pass
+        'elementTypes', 'internalRecordIds', 'i', 'thisHandle',  // loop-carried, read after the assignment
+        'preparedForTemplate', 'preparedWasFormatted', 'entry_id', // consumed by the purify pass below
+        'formulize_reservedTemplateVars',                        // so a handle cannot disable this guard
+    );
+
+    /**
+     * The forms whose elements a template screen's code gets a $handle variable for: the screen's form, or every
+     * form of its relationship when the screen has one that includes its form.
+     * @param object $screen The template screen.
+     * @return array The form ids.
+     */
+    public static function formsWithHandleVariables($screen) {
+        $formIds = array();
+        if($screen->getVar('frid')) {
+            $form_relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
+            if($formRelationship = $form_relationship_handler->get($screen->getVar('frid'))) {
+                $formIds = (array) $formRelationship->getVar('fids');
+            }
+        }
+        if(!$screen->getVar('frid') OR !in_array($screen->getVar('fid'), $formIds)) {
+            $formIds = array($screen->getVar('fid'));
+        }
+        return $formIds;
+    }
 
     function __construct(&$db) {
         $this->db =& $db;
@@ -96,11 +125,11 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         $screen->assignVar('sid', $sid);
 
         if (!$update) {
-            $sql = sprintf("INSERT INTO %s (sid, custom_code, template, donedest, savebuttontext, donebuttontext, viewentryscreen) VALUES (%u, %s, %s, %s, %s, %s, %s)", $this->db->prefix('formulize_screen_template'),
-                $screen->getVar('sid'), $this->db->quoteString($screen->getVar('custom_code')), $this->db->quoteString($screen->getVar('template')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('donebuttontext')), $this->db->quoteString($screen->getVar('viewentryscreen')));
+            $sql = sprintf("INSERT INTO %s (sid, donedest, savebuttontext, donebuttontext, viewentryscreen) VALUES (%u, %s, %s, %s, %s)", $this->db->prefix('formulize_screen_template'),
+                $screen->getVar('sid'), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('donebuttontext')), $this->db->quoteString($screen->getVar('viewentryscreen')));
         } else {
-            $sql = sprintf("UPDATE %s SET custom_code = %s, template = %s, donedest = %s, savebuttontext = %s, donebuttontext = %s, viewentryscreen = %s WHERE sid = %u", $this->db->prefix('formulize_screen_template'),
-                $this->db->quoteString($screen->getVar('custom_code')), $this->db->quoteString($screen->getVar('template')), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('donebuttontext')), $this->db->quoteString($screen->getVar('viewentryscreen')), $sid);
+            $sql = sprintf("UPDATE %s SET donedest = %s, savebuttontext = %s, donebuttontext = %s, viewentryscreen = %s WHERE sid = %u", $this->db->prefix('formulize_screen_template'),
+                $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString($screen->getVar('savebuttontext')), $this->db->quoteString($screen->getVar('donebuttontext')), $this->db->quoteString($screen->getVar('viewentryscreen')), $sid);
         }
         $result = $this->db->query($sql);
         if (!$result) {
@@ -181,15 +210,21 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
 				print "<div class='formulize-template-screen-contents ck-content'>"; // wrap it in a div so it can be targetted, and include ck-content so right text editor stuff formats as expected
 
-        if (file_exists($custom_code_filename) and file_exists($template_filename)) {
+        // the screen is its code and its template. It can do without either one - code that draws everything itself,
+        // or a template that needs no code - but not both
+        $hasCode = file_exists($custom_code_filename);
+        $hasTemplate = file_exists($template_filename);
+        if ($hasCode OR $hasTemplate) {
             $vars = $this->run_template_php_code($screen, $custom_code_filename, $entry_id, $settings);
             global $xoopsTpl;
             foreach ($vars as $key => $value) {
                 $xoopsTpl->assign($key, $value);
             }
 
+            // what the code and the template use decides what the page needs for them to work
+            $codeContents = ($hasCode ? file_get_contents($custom_code_filename) : '')."\n".($hasTemplate ? file_get_contents($template_filename) : '');
+
             // if the php code is not calling displayForm of some kind, then include necessary javascript
-            $codeContents = file_get_contents($custom_code_filename);
             if(!strstr($codeContents,' displayForm(') AND !strstr($codeContents,' displayFormPages(') AND !strstr($codeContents,'->render(') AND (strstr($codeContents,"\$saveButton") OR strstr($codeContents,"\$doneButton"))) {
                 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/formdisplay.php';
                 $doneDestination = $screen->getVar('donedest');
@@ -238,7 +273,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
                         <input type='hidden' name='loadreport' value=''>
 						<input type='hidden' name='formulize_scrollx' value=''>
 						<input type='hidden' name='formulize_scrolly' value=''>";
-                    $xoopsTpl->display("file:".$template_filename);
+                    if ($hasTemplate) {
+                        $xoopsTpl->display("file:".$template_filename);
+                    }
                     print "</form>";
                     // pretty hacky! include the js for lists, so that the viewEntryLink etc will work
                     // can mimic add buttons by calling addNew('single') in js or addNew() for multiple entry
@@ -248,7 +285,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
             // no viewEntryLink etc in the template, so away we go like normal, just the template
             } else {
-                $xoopsTpl->display("file:".$template_filename);
+                if ($hasTemplate) {
+                    $xoopsTpl->display("file:".$template_filename);
+                }
                 if($code = updateAlternateURLIdentifierCode($screen, $entry_id)) {
                     print "\n<script>\n$code\n</script>\n";
                 }
@@ -299,28 +338,14 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         //    of another local after the point the handle loop could overwrite it.
         //  - separately, the element-handler lookup is guarded with is_object() so a handle colliding with
         //    a "<type>Element" variable cannot turn a later method call into a fatal.
-        $formulize_reservedTemplateVars = array(
-            'code_filename',                                          // include target below (the LFI guard)
-            'templateScreenData', 'form_handler',                    // read after the loop / next outer pass
-            'elementTypes', 'internalRecordIds', 'i', 'thisHandle',  // loop-carried, read after the assignment
-            'preparedForTemplate', 'preparedWasFormatted', 'entry_id', // consumed by the purify pass below
-            'formulize_reservedTemplateVars',                        // so a handle cannot disable this guard
-        );
+        $formulize_reservedTemplateVars = self::RESERVED_TEMPLATE_VARIABLES;
         $preparedForTemplate = array();  // handle => value we prepared (to detect code changes afterwards)
         $preparedWasFormatted = array(); // handle => true if formatDataForList already made it safe
 
         // make this a configuration option on the Templates tab!!!
         if (!empty($entry_id)) {
             $templateScreenData = gatherDataset($screen->getVar('fid'), filter: $entry_id, frid: $screen->getVar('frid'));
-						$formIds = array();
-						if($screen->getVar('frid')) {
-							$form_relationship_handler = xoops_getmodulehandler('frameworks', 'formulize');
-							$formRelationship = $form_relationship_handler->get($screen->getVar('frid'));
-							$formIds = $formRelationship->getVar('fids');
-						}
-						if(!$screen->getVar('frid') OR !in_array($screen->getVar('fid'), $formIds)) {
-							$formIds = array($screen->getVar('fid'));
-						}
+						$formIds = self::formsWithHandleVariables($screen);
 						$form_handler = xoops_getmodulehandler('forms', 'formulize');
 						foreach($formIds as $thisFid) {
             	$formObject = $form_handler->get($thisFid);
@@ -352,7 +377,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             $snapshotEntry = $entry;
         }
 
-        include_once($code_filename);
+        if (file_exists($code_filename)) {
+            include_once($code_filename);
+        }
 
         $vars = get_defined_vars();
 
@@ -403,56 +430,105 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
         return $this->cache_folder_name($screen, $theme) ."template.html";
     }
 
-    // returns code.php file
+    // returns the code.php file, which is the screen's code itself - there is no other copy
     function getCustomCode($screen, $theme="") {
         static $templates = array();
         if (!isset($templates['custom_code'])) {
             $pathname = $this->custom_code_filename($screen, $theme);
-            if (file_exists($pathname)) {
-                $templates['custom_code'] = file_get_contents($pathname);
-            } else {
-                $templates['custom_code'] = $screen->getVar('custom_code');
-                if (strlen($templates['custom_code']) > 0) {
-                    $this->write_custom_code_to_file(htmlspecialchars_decode($templates['custom_code'], ENT_QUOTES), $screen, $theme);
-                }
-            }
+            $templates['custom_code'] = file_exists($pathname) ? file_get_contents($pathname) : '';
         }
         return $templates['custom_code'];
-
     }
 
-    // returns template.html file
+    // returns the template.html file, which is the screen's template itself - there is no other copy
     function getTemplateHtml($screen, $theme="") {
         static $templates = array();
         if (!isset($templates['template'])) {
-            // there is no template saved in memory, read it from the file;
             $pathname = $this->template_filename($screen, $theme);
-            if (file_exists($pathname)) {
-                $templates['template'] = file_get_contents($pathname);
-            } else {
-                $templates['template'] = $screen->getVar('template');
-                if (strlen($templates['template']) > 0) {
-                    $this->write_template_to_file(htmlspecialchars_decode($templates['template'], ENT_QUOTES), $screen, $theme);
-                }
-            }
+            $templates['template'] = file_exists($pathname) ? file_get_contents($pathname) : '';
         }
         return $templates['template'];
     }
 
+    /**
+     * Give a template screen copies of its code and template from one theme, in a theme where it has neither yet.
+     * A template screen has no default templates to fall back on, so without either one it cannot be drawn in that
+     * theme. The files are copied as they are.
+     *
+     * @param object $screen The template screen.
+     * @param string $fromTheme The theme to copy them from.
+     * @param string $toTheme The theme to copy them to.
+     * @return bool Whether everything there was to copy was copied.
+     */
+    function copyTemplatesToTheme($screen, $fromTheme, $toTheme) {
+        if(file_exists($this->custom_code_filename($screen, $toTheme)) OR file_exists($this->template_filename($screen, $toTheme))) {
+            return true;
+        }
+        $copied = true;
+        if(file_exists($codeFile = $this->custom_code_filename($screen, $fromTheme))) {
+            $copied = $this->write_custom_code_to_file(file_get_contents($codeFile), $screen, $toTheme);
+        }
+        if(file_exists($templateFile = $this->template_filename($screen, $fromTheme))) {
+            $copied = ($this->write_template_to_file(file_get_contents($templateFile), $screen, $toTheme) AND $copied);
+        }
+        return $copied;
+    }
+
     // Writes a code.php file in /modules/formulize/templates/screens/default/$sid/code.php
+    // Code that is empty, or only the opening PHP tag the code box starts with, is no code, so it gets no file
     function write_custom_code_to_file($content, $screen, $theme="") {
+        if (formulize_screenTemplateIsEmpty($content)) {
+            return $this->remove_file($screen, "code.php", $theme);
+        }
         return $this->write_to_file($content, $screen, "/code.php", $theme);
     }
 
     // Writes a template.html file in /modules/formulize/templates/screens/default/$sid/template.html
+    // A template with nothing in it is no template, so it gets no file
     function write_template_to_file($content, $screen, $theme="") {
+			if (trim($content) === '') {
+				return $this->remove_file($screen, "template.html", $theme);
+			}
 			if($result = $this->write_to_file($content, $screen, "/template.html", $theme)) {
-				// update cached copy
-				include XOOPS_ROOT_PATH.'/header.php';
-				global $xoopsTpl;
-				$result = $xoopsTpl->touch("file:".$this->template_filename($screen, $theme));
+				$result = self::recompileTemplate($this->template_filename($screen, $theme));
 			}
 			return $result;
+    }
+
+    /**
+     * Make Smarty compile a template screen's template again after its file has changed - when the admin page saves
+     * it, and when renaming an element rewrites the handles in it. Smarty only notices a changed file by itself when
+     * theme_fromfile is on, so otherwise the screen keeps showing the compiled copy of what the file used to say.
+     *
+     * Every compiled copy of the file is removed, not only the one touch() replaces: the copies are kept per theme set,
+     * and when the admin theme differs from the site theme, webmasters and everyone else are shown different ones. A
+     * copy that is gone is compiled again the next time the screen is shown. A new template engine does the touch,
+     * rather than the page's own, so this works where no page is being drawn - a save, an MCP request, an update.
+     *
+     * @param string $filename The template's path.
+     * @return bool Whether the template compiled.
+     */
+    public static function recompileTemplate($filename) {
+        $tpl = new icms_view_Tpl();
+        $resource = "file:".$filename;
+        if(!$tpl->use_sub_dirs) {
+            // compiled copies are named <compile id>^<the name Smarty gives the file>.php, one per compile id
+            foreach((array) glob($tpl->compile_dir."/*".basename($tpl->_get_auto_filename($tpl->compile_dir, $resource)).".php") as $compiledCopy) {
+                @unlink($compiledCopy);
+            }
+        }
+        return $tpl->touch($resource) ? true : false;
+    }
+
+    // Removes one of a template screen's files, and the screen's folder once nothing is left in it
+    function remove_file($screen, $name, $theme="") {
+        $foldername = $this->cache_folder_name($screen, $theme);
+        if (file_exists($foldername.$name) AND !unlink($foldername.$name)) {
+            error_log("ERROR: Could not remove template screen file: ".$foldername.$name);
+            return false;
+        }
+        formulize_removeScreenTemplateFolderIfEmpty($foldername);
+        return true;
     }
 
     function write_to_file($content, $screen, $name, $theme="") {

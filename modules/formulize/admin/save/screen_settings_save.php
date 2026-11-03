@@ -86,8 +86,6 @@ if($isNew) {
       $screen->setVar('alldonebuttontext', _formulize_DONE);
   } else if ($screens['type'] == 'template') {
       $screen->setVar('frid', -1);
-      $screen->setVar('custom_code', "");
-      $screen->setVar('template', "");
       $screen->setVar('savebuttontext', _formulize_SAVE);
       $screen->setVar('donebuttontext', _formulize_SAVE_AND_LEAVE);
       $screen->setVar('donedest', "");
@@ -181,25 +179,7 @@ if($_POST['make_new_passcode']) {
 }
 
 if($isNew) {
-
-  // write out the necessary templates...
-  if($screens['type'] == "multiPage") {
-    $screen_handler->writeTemplateToFile("", 'toptemplate', $screen);
-    $screen_handler->writeTemplateToFile("", 'elementtemplate', $screen);
-    $screen_handler->writeTemplateToFile("", 'bottomtemplate', $screen);
-  } elseif($screens['type'] == "listOfEntries") {
-    $screen_handler->writeTemplateToFile("", 'toptemplate', $screen);
-    $screen_handler->writeTemplateToFile("", 'listtemplate', $screen);
-    $screen_handler->writeTemplateToFile("", 'bottomtemplate', $screen);
-  } elseif($screens['type'] == "template") {
-      $screen_handler->write_custom_code_to_file("", $screen);
-      $screen_handler->write_template_to_file("", $screen);
-  } elseif($screens['type'] == "calendar") {
-      $screen_handler->writeTemplateToFile("", 'toptemplate', $screen);
-      $screen_handler->writeTemplateToFile("", 'bottomtemplate', $screen);
-  }
-
-    // send code to client that will to be evaluated
+  // send code to client that will to be evaluated
   $url = XOOPS_URL . "/modules/formulize/admin/ui.php?page=screen&tab=settings&aid=".$aid.'&fid='.$fid.'&sid='.$sid;
   print '/* eval */ window.location = "'.$url.'";';
 } elseif($reloadNow) {

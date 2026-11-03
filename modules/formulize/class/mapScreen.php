@@ -60,6 +60,16 @@ class formulizeMapScreen extends formulizeScreen {
         $this->initVar("tileset_key", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
         $this->initVar("tileset_attribution", XOBJ_DTYPE_TXTBOX, NULL, false, 1000);
     }
+
+    /**
+     * The elements the pins are placed and labelled by, and the columns people can search the map by - see
+     * formulizeScreen::elementColumnSettings(). The columns are rows like a list screen's advanceview, with
+     * the element in position 0.
+     */
+    protected function elementColumnSettings() {
+        return array('lat_element' => 'value', 'lng_element' => 'value', 'label_element' => 'value',
+            'description_element' => 'value', 'columns' => 'rows');
+    }
 }
 
 #[AllowDynamicProperties]
@@ -98,7 +108,7 @@ class formulizeMapScreenHandler extends formulizeScreenHandler {
                 $this->db->quoteString($screen->getVar('description_element')),
                 $this->db->quoteString($screen->getVar('viewentryscreen')),
                 intval($screen->getVar('show_view_entry_link', 'n')),
-                $this->db->quoteString(serialize($screen->getVar('columns'))),
+                $this->db->quoteString(serialize($screen->getVar('columns', 'n'))), // the element ids stored, not the handles read
                 $this->db->quoteString(serialize($screen->getVar('fundamental_filters'))),
                 $this->db->quoteString($screen->getVar('filter_button_text')),
                 $this->db->quoteString($screen->getVar('tileset', 'n')),
@@ -115,7 +125,7 @@ class formulizeMapScreenHandler extends formulizeScreenHandler {
                 $this->db->quoteString($screen->getVar('description_element')),
                 $this->db->quoteString($screen->getVar('viewentryscreen')),
                 intval($screen->getVar('show_view_entry_link', 'n')),
-                $this->db->quoteString(serialize($screen->getVar('columns'))),
+                $this->db->quoteString(serialize($screen->getVar('columns', 'n'))), // the element ids stored, not the handles read
                 $this->db->quoteString(serialize($screen->getVar('fundamental_filters'))),
                 $this->db->quoteString($screen->getVar('filter_button_text')),
                 $this->db->quoteString($screen->getVar('tileset', 'n')),
@@ -194,64 +204,4 @@ class formulizeMapScreenHandler extends formulizeScreenHandler {
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
     }
 
-	/**
-	 * Where does a map screen refer to an element, and what does the setting look like once the element is
-	 * gone? The four elements a map is plotted and labelled from, the columns shown beside it, and the
-	 * fundamental filters - all declared by initVar() at the top of this file.
-	 *
-	 * Called by formulizeElementsHandler::findReferencesToElement().
-	 *
-	 * @param object $elementObject The element being asked about.
-	 * @return array The references found.
-	 */
-	public function scanForElementReferences($elementObject) {
-		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
-		$references = array();
-		$sql = "SELECT s.sid, s.title, m.lat_element, m.lng_element, m.label_element, m.description_element,
-			m.columns, m.fundamental_filters
-			FROM ".$this->db->prefix('formulize_screen')." s
-			INNER JOIN ".$this->db->prefix('formulize_screen_map')." m ON m.sid = s.sid";
-		if(!$result = $this->db->query($sql)) {
-			return $references;
-		}
-		while($row = $this->db->fetchArray($result)) {
-			$updates = array();
-			$usedAs = array();
-
-			// a map cannot be drawn without somewhere to put the pins, so losing either coordinate stops the
-			// screen working until a person picks another element. Say so rather than leaving them to find out.
-			foreach(array(
-				'lat_element' => 'the latitude, which the screen cannot be drawn without',
-				'lng_element' => 'the longitude, which the screen cannot be drawn without',
-				'label_element' => 'the label on each pin',
-				'description_element' => 'the description on each pin'
-			) as $column => $description) {
-				if($this->referencePointsAtElement($row[$column], $elementId, $handle)) {
-					$updates[$column] = '';
-					$usedAs[] = $description;
-				}
-			}
-
-			$newColumns = $this->removeElementFromColumnRows(@unserialize((string) $row['columns']), $elementId, $handle);
-			if($newColumns !== false) {
-				$updates['columns'] = serialize($newColumns);
-				$usedAs[] = 'a column';
-			}
-
-			$newFilters = $this->removeElementFromConditions(@unserialize((string) $row['fundamental_filters']), $elementId, $handle);
-			if($newFilters !== false) {
-				$updates['fundamental_filters'] = serialize($newFilters);
-				$usedAs[] = 'a fundamental filter';
-			}
-
-			if($usedAs) {
-				$references[] = $this->elementReference(
-					_AM_ELE_USAGE_SECTION_MAP_SCREENS,
-					$this->describeById($row['title'], 'screen', $row['sid']).' - '.implode(', ', $usedAs),
-					'formulize_screen_map', 'sid', $row['sid'], $updates
-				);
-			}
-		}
-		return $references;
-	}
 }

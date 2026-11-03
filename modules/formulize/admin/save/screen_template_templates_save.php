@@ -57,8 +57,7 @@ if($formObject->getVar('lockedform')) {
 if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
   return;
 }
-$screen->setVar('custom_code',htmlspecialchars(trim($screens['custom_code'])));
-$screen->setVar('template',htmlspecialchars(trim($screens['template'])));
+// insert() writes the code and template to the screen's files, from screens-custom_code and screens-template
 
 
 if(!$screen_handler->insert($screen)) {

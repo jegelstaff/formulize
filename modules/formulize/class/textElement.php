@@ -156,6 +156,14 @@ class formulizeTextElement extends formulizeElement {
 #[AllowDynamicProperties]
 class formulizeTextElementHandler extends formulizeElementsHandler {
 
+	/**
+	 * Where a text element's ele_value refers to other elements - see formulizeElementReferences. The default
+	 * value can carry {handle} tokens. Inherited by number elements; textarea declares its own key.
+	 */
+	public static $eleValueReferences = array(
+		ELE_VALUE_TEXT_DEFAULTVALUE => array('shape' => 'tokens'),
+	);
+
 	var $db;
 	var $clickable; // used in formatDataForList
 	var $striphtml; // used in formatDataForList

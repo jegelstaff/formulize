@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveFormulizeForm, conditionalElementReady, openElementAccordion, saveAdminForm, applyColumnChanges, openAllColumnSections, ensureMainMenuOpen, leavePage } from '../../utils';
+import { login, saveFormulizeForm, conditionalElementReady, openElementAccordion, saveAdminForm, applyColumnChanges, openAllColumnSections, ensureMainMenuOpen, leavePage, dbQuery, dbPrefix } from '../../utils';
 
 test.describe('Validate menu entries', () => {
 	test('Validate menu entries for ahstaff', async ({ page }) => {
@@ -10,6 +10,7 @@ test.describe('Validate menu entries', () => {
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true })).toBeVisible();
+		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifact origins', exact: true })).toBeVisible();
 	})
 	test('Validate menu entries for mhstaff', async ({ page }) => {
 		await login(page, 'mhstaff', '12345');
@@ -18,6 +19,7 @@ test.describe('Validate menu entries', () => {
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true })).toBeVisible();
+		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifact origins', exact: true })).toBeVisible();
 	})
 	test('Validate menu entries for curator1', async ({ page }) => {
 		await login(page, 'curator1', '12345');
@@ -26,6 +28,7 @@ test.describe('Validate menu entries', () => {
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true })).toBeVisible();
+		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifact origins', exact: true })).toBeVisible();
 	})
 })
 
@@ -132,6 +135,12 @@ test.describe('Data Entry for Donors', () => {
 
 })
 
+// Where an artifact comes from, which the Artifact origins map screen plots
+async function fillOrigin(page, latitude, longitude) {
+	await page.locator('.form-row:has(.formulize-label-artifacts_latitude) input[type="number"]').fill(latitude);
+	await page.locator('.form-row:has(.formulize-label-artifacts_longitude) input[type="number"]').fill(longitude);
+}
+
 test.describe('Data entry for Artifacts as ahstaff', () => {
 
 	test.beforeEach(async ({ page }) => {
@@ -168,6 +177,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('8');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
 		await page.getByRole('checkbox', { name: 'Coins' }).check();
+		await fillOrigin(page, '41.9028', '12.4964');
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -185,6 +195,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByLabel('Donor').selectOption({label: 'Emilie Du Châtelet'});
 		await page.getByRole('slider', { name: 'Condition' }).fill('9');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
+		await fillOrigin(page, '29.9355', '52.8916');
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -203,6 +214,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('7');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
 		await page.getByRole('checkbox', { name: 'Weapons' }).check();
+		await fillOrigin(page, '34.3416', '108.9398');
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -220,6 +232,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
 		await page.getByRole('checkbox', { name: 'Weapons' }).check();
 		await expect(page.getByRole('radio', { name: 'No' })).toBeChecked(); // default should be selected already
+		await fillOrigin(page, '25.6872', '32.6396');
 		await saveFormulizeForm(page);
 		await expect(page.getByRole('radio', { name: 'No' })).toBeChecked(); // default should have been saved
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
@@ -238,6 +251,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 		await page.getByLabel('Donor').selectOption({ label: 'François-Marie Arouet' });
 		await page.getByRole('slider', { name: 'Condition' }).fill('8');
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
+		await fillOrigin(page, '32.5422', '44.4209');
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -265,6 +279,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByLabel('Donor').selectOption({label: 'Emilie Du Châtelet' });
 		await page.getByRole('slider', { name: 'Condition' }).fill('9');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
+		await fillOrigin(page, '43.7696', '11.2558');
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -281,6 +296,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('7');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
 		await page.getByRole('checkbox', { name: 'Weapons' }).check();
+		await fillOrigin(page, '48.8566', '2.3522');
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -299,6 +315,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByRole('slider', { name: 'Condition' }).fill('10');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
 		await page.getByRole('checkbox', { name: 'Coins' }).check();
+		await fillOrigin(page, '35.6762', '139.6503');
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -314,6 +331,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2007-05-09');
 		await page.getByRole('slider', { name: 'Condition' }).fill('4');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
+		await fillOrigin(page, '42.3601', '-71.0589');
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -331,6 +349,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByLabel('Donor').selectOption({ label: 'François-Marie Arouet' });
 		await page.getByRole('slider', { name: 'Condition' }).fill('8');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
+		await fillOrigin(page, '-17.5516', '-149.5585');
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -348,6 +367,7 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 		await page.getByLabel('Donor').selectOption({ label: 'Emilie Du Châtelet' });
 		await page.getByRole('slider', { name: 'Condition' }).fill('9');
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
+		await fillOrigin(page, '59.8586', '17.6389');
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -579,6 +599,10 @@ test.describe('Data entry for Survey', () => {
 				// (the 4 005 forms shifted museum screen ids up by 6; was sid=10).
 				await page.goto('/modules/formulize/index.php?sid=16');
 			}
+			// say which way the survey was reached, so the run shows whether the .htaccess rewrite rules are in effect
+			const reachedBy = rewriteWorks ? '/survey (the .htaccess rewrite rule worked)' : 'index.php?sid=16 (FALLBACK: /survey did not load the survey, so the .htaccess rewrite rule is not in effect)';
+			console.log(`Survey for ${name} reached by ${reachedBy}`);
+			test.info().annotations.push({ type: 'survey address', description: reachedBy });
 			await page.getByRole('textbox', { name: 'Your name' }).fill(name);
 			await expect(page.getByText('Thank you for visiting the Museum!')).toBeVisible();
 			await expect(page.getByText('Flagged to the staff')).not.toBeVisible();
@@ -799,3 +823,100 @@ test.describe('Change entry owner', () => {
 	})
 })
 
+
+// Save the list as it is as a new view, the way a person does: "Save view" opens a window that asks for a name in a
+// dialog, then closes itself and has the list save the view.
+async function saveCurrentViewAs(page, name) {
+	await page.getByRole('button', { name: '...' }).click();
+	const popupPromise = page.context().waitForEvent('page');
+	await page.getByRole('button', { name: 'Save view' }).click();
+	const popup = await popupPromise;
+	await popup.waitForLoadState();
+	popup.once('dialog', dialog => dialog.accept(name));
+	const closed = popup.waitForEvent('close');
+	closed.catch(() => {});
+	try {
+		await popup.getByRole('button', { name: 'Save the current view settings with these options' }).click({ noWaitAfter: true });
+	} catch (error) {
+		if (!popup.isClosed()) throw error;
+	}
+	await closed;
+	// the view is saved when the list reloads, which it then shows the view in
+	await expect(page.locator('select[name="currentview"] option:checked')).toHaveText(new RegExp(name));
+}
+
+test.describe('Saved views', () => {
+	// Views a curator keeps, which name elements in their columns, searches and sorting. 03-validate-sequential
+	// renames those elements and checks the views still load.
+
+	test('Save a view of the coins, by name', async ({ page }) => {
+		await login(page, 'curator1', '12345');
+		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
+		await page.locator('input[name="search_artifacts_short_name"]').fill('coin');
+		await page.getByRole('link', { name: 'Short name' }).click();
+		await expect(page.getByRole('row', { name: 'Check this box to select/unselect this entry.' })).toHaveCount(2);
+		await saveCurrentViewAs(page, 'Coins by name');
+		const view = dbQuery(`SELECT sv_quicksearches, sv_sort FROM ${dbPrefix()}_formulize_saved_views WHERE sv_name = 'Coins by name'`);
+		expect(view).toHaveLength(1);
+		expect(view[0][0]).toContain('coin');
+		const shortNameId = dbQuery(`SELECT ele_id FROM ${dbPrefix()}_formulize WHERE ele_handle = 'artifacts_short_name'`)[0][0];
+		expect(view[0][1]).toBe(shortNameId); // saved views name their elements by id
+	})
+
+	test('Save a view of where the artifacts come from', async ({ page }) => {
+		await login(page, 'curator1', '12345');
+		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
+		const popupPromise = page.context().waitForEvent('page');
+		await page.getByRole('button', { name: 'Change columns' }).click();
+		const popup = await popupPromise;
+		await popup.bringToFront();
+		await openAllColumnSections(popup);
+		await popup.getByRole('group', { name: 'Artifacts', exact: true }).getByLabel('Latitude', { exact: true }).check();
+		await popup.getByRole('group', { name: 'Artifacts', exact: true }).getByLabel('Longitude', { exact: true }).check();
+		await applyColumnChanges(popup);
+		await expect(page.getByRole('link', { name: 'Latitude' })).toBeVisible();
+		await saveCurrentViewAs(page, 'Artifact origins list');
+		const columns = dbQuery(`SELECT sv_oldcols FROM ${dbPrefix()}_formulize_saved_views WHERE sv_name = 'Artifact origins list'`)[0][0];
+		const latitudeId = dbQuery(`SELECT ele_id FROM ${dbPrefix()}_formulize WHERE ele_handle = 'artifacts_latitude'`)[0][0];
+		expect(columns.split(',')).toContain(latitudeId);
+	})
+})
+
+test.describe('Notifications', () => {
+
+	test('Notify the curators when a well kept artifact is updated', async ({ page }) => {
+		// The subject names the artifact by a tag, and the condition names Condition by its id. 03-validate-sequential
+		// renames those elements and checks the notification follows.
+		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+		const fid = dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = 'Artifacts'`)[0][0];
+		await page.goto(`/modules/formulize/index.php?fid=${fid}`);
+		await page.getByRole('button', { name: '...' }).click();
+		const popupPromise = page.context().waitForEvent('page');
+		await page.getByRole('button', { name: 'Notifications' }).click();
+		const popup = await popupPromise;
+		await popup.waitForLoadState();
+		await popup.locator('input[name="setwhen"][value="update_entry"]').check();
+		await popup.locator('input[name="setwho"][value="groupid"]').check();
+		await popup.locator('#gid').selectOption({ label: 'Departments - Curators' });
+		await popup.locator('input[name="setfor"][value="con"]').check();
+		await popup.locator('#new_element').selectOption({ label: 'Condition' });
+		await popup.locator('#new_op').selectOption('>=');
+		await popup.locator('#new_term').fill('8');
+		// adding the condition sends the window back to itself with the choices made so far
+		await Promise.all([popup.waitForEvent('load'), popup.getByRole('button', { name: 'Add another condition' }).click()]);
+		await expect(popup.getByText('Condition >= 8')).toBeVisible();
+		await popup.locator('input[name="setwhen"][value="update_entry"]').check();
+		await popup.locator('input[name="setwho"][value="groupid"]').check();
+		await popup.locator('#gid').selectOption({ label: 'Departments - Curators' });
+		await popup.locator('input[name="setfor"][value="con"]').check();
+		await popup.locator('#subject').fill('Artifact updated: {ELEMENT_ARTIFACTS_SHORT_NAME}');
+		await Promise.all([popup.waitForEvent('load'), popup.getByRole('button', { name: 'Save this notification' }).click()]);
+		// Verify what is stored: the tag in the subject, and the condition on Condition by its id
+		const conditionId = dbQuery(`SELECT ele_id FROM ${dbPrefix()}_formulize WHERE ele_handle = 'artifacts_condition'`)[0][0];
+		const notification = dbQuery(`SELECT not_cons_subject, not_cons_con FROM ${dbPrefix()}_formulize_notification_conditions WHERE not_cons_fid = ${fid}`);
+		expect(notification).toHaveLength(1);
+		expect(notification[0][0]).toBe('Artifact updated: {ELEMENT_ARTIFACTS_SHORT_NAME}');
+		expect(notification[0][1]).toContain(`"${conditionId}"`);
+		expect(notification[0][1]).toContain('"8"');
+	})
+})

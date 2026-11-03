@@ -55,6 +55,8 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 	// Sites updated between 2026-07-03 and 2026-09-09 had their handles converted without their data table
 	// columns, which the migration above cannot see any more because the handles no longer have hyphens.
 	formulize_repair_hyphenated_data_columns();
+	// Turning encryption on or off used to rename an element's field in the revisions table without putting it back
+	formulize_repair_revisions_fields_left_by_encryption();
 
 	// Add to the Primary Relationship any connection between forms that is missing from it.
 	// Runs on every update, because a Primary Relationship can be left incomplete by an earlier
@@ -69,10 +71,12 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 
 	formulize_remove_stray_registered_user_edit_form_permissions();
 	formulize_ensure_screen_template_folder_for_theme();
+	formulize_remove_empty_screen_templates();
 	formulize_warn_about_element_containers_missing_element_class();
 	formulize_repair_custom_openlisttemplate_functions();
 
 	// The PHP the site runs on can change between updates, so check for the optional image support every time
+	formulize_warn_about_missing_tokenizer();
 	formulize_warn_about_missing_image_support();
 
 	// The web server config can change between updates too, so check every time that the uploads folder,
@@ -160,6 +164,72 @@ function formulize_ensure_screen_template_folder_for_theme() {
 }
 
 /**
+ * Remove the screen template files that have nothing in them, and the screens' template folders that leaves
+ * empty. Mark the ones that hold only the opening PHP tag as blank on purpose.
+ *
+ * A screen whose template has nothing in it has no template of its own and is drawn with the default, the same
+ * as when there is no file. Saving a screen's templates leaves no files like that (see
+ * formulizeScreen::writeTemplateFile), but earlier versions wrote them for every new screen, and for every
+ * template box saved empty.
+ *
+ * A template holding only the opening PHP tag used to be drawn as it is, showing nothing in its place, so a
+ * screen could have been made that way to keep the default out. Formulize now reads it as no template, and
+ * draws the default, so a comment is added to keep those screens as they were. (Sites coming up from below
+ * dbversion 18 had these emptied first, by emptyTemplateFixer() in 000_schema_migrations, as they always have.)
+ *
+ * A template screen's code.php is removed too when it has nothing in it, or only the opening PHP tag, and its
+ * template.html when it has nothing in it: neither has a default it could be keeping out, and the screen is drawn
+ * from whichever of the two it has. A screen left with neither shows that it has no code or template, where it
+ * used to show nothing.
+ *
+ * Runs on every update, to catch them on every site, including any that come back with a copy of a site's files.
+ *
+ * @return void
+ */
+function formulize_remove_empty_screen_templates() {
+	include_once XOOPS_ROOT_PATH.'/modules/formulize/class/screen.php';
+	$removed = 0;
+	$markedBlank = array();
+	$notMarked = array();
+	foreach((array) glob(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/*/*', GLOB_ONLYDIR) as $screenFolder) {
+		if(!ctype_digit(basename($screenFolder))) {
+			continue; // a theme's default templates, not one screen's own
+		}
+		foreach(array_merge((array) glob($screenFolder.'/*.php'), (array) glob($screenFolder.'/template.html')) as $templateFile) {
+			if(!is_file($templateFile)) {
+				continue;
+			}
+			$template = file_get_contents($templateFile);
+			if(trim($template) !== '' AND (basename($templateFile) == 'template.html' OR !formulize_screenTemplateIsEmpty($template))) {
+				continue;
+			}
+			$shortName = str_replace(XOOPS_ROOT_PATH.'/', '', $templateFile);
+			if(trim($template) === '' OR basename($templateFile) == 'code.php') {
+				if(unlink($templateFile)) {
+					$removed++;
+				}
+			} elseif(file_put_contents($templateFile, "<?php\n// Blank on purpose, so the screen shows nothing here instead of the default template\n") !== false) {
+				$markedBlank[] = $shortName;
+			} else {
+				$notMarked[] = $shortName;
+			}
+		}
+		formulize_removeScreenTemplateFolderIfEmpty($screenFolder);
+	}
+	if($removed) {
+		print "Removed $removed empty screen template files. result: OK<br>";
+	}
+	if($markedBlank) {
+		print "These screen templates held nothing but &lt;?php, which shows nothing in their place. A comment now says they are blank on purpose, so they keep doing that. result: OK<br>"
+			.implode("<br>", array_map('htmlspecialchars', $markedBlank))."<br>";
+	}
+	if($notMarked) {
+		print "Warning: these screen templates hold nothing but &lt;?php, and could not be changed (not writable by the web server). Their screens will now show the default template in their place. To keep them showing nothing, add a comment after the &lt;?php, such as // Blank on purpose.<br>"
+			.implode("<br>", array_map('htmlspecialchars', $notMarked))."<br>";
+	}
+}
+
+/**
  * Warn about custom elementcontainero.php files that predate the $elementClass variable.
  *
  * These are files the site's own people maintain, and a copy of an old one can arrive at any time,
@@ -209,6 +279,23 @@ function formulize_warn_about_missing_image_support() {
 		echo '<h3>Image support missing from PHP on this server:</h3>';
 		echo '<p>Formulize will keep working, but images uploaded to forms will not display as well as they could, because the PHP installation on this server is missing:</p><ul>' . implode('', $missing) . '</ul>';
 		echo '<p>To fix this, ask your hosting provider or server administrator to enable the items above for the version of PHP that runs this website. Then run the Formulize update again, and this message will no longer appear.</p>';
+	}
+}
+
+/**
+ * Warn if PHP on this server has no tokenizer extension. Formulize reads the code people write in it with
+ * token_get_all() - to fill in the {handle} references in code (see formulize_bindCurlyReferencesInPHPCode) and to
+ * update code when an element's handle changes (see formulizeElementHandleCode) - and without the extension those
+ * stop with a fatal error. PHP includes it unless it was built without it, but some Linux distributions package it
+ * separately.
+ *
+ * @return void
+ */
+function formulize_warn_about_missing_tokenizer() {
+	if(!extension_loaded('tokenizer')) {
+		echo '<h3>Required PHP extension missing on this server: tokenizer</h3>';
+		echo '<p><b>Some parts of Formulize will stop with an error until it is installed:</b> forms with elements whose code refers to other elements, and changing an element&#039;s handle.</p>';
+		echo '<p>To fix this, ask your hosting provider or server administrator to enable the tokenizer extension for the version of PHP that runs this website (on some systems it is a separate package, such as php-tokenizer). Then run the Formulize update again, and this message will no longer appear.</p>';
 	}
 }
 
@@ -726,13 +813,15 @@ function formulize_migrate_hyphenated_handles() {
         }
         print "<p>Renamed: <code>" . htmlspecialchars($rename['old']) . "</code> &rarr; <code>" . htmlspecialchars($newHandle) . "</code> (form_id=" . $rename['fid'] . ")</p>\n";
         $oldHandles[] = $rename['old'];
-        $element_handler->renameElementResources($element, $rename['old']);
+        foreach ($element_handler->renameElementResources($element, $rename['old']) as $leftByTheRename) {
+            $renameLeftovers[] = $leftByTheRename . " still has \"" . $rename['old'] . "\" in it, written in a way that may or may not mean the element";
+        }
     }
 
     // Alert for userland code that cannot be auto-updated.
     // Scan on_before_save / on_after_save / on_delete and advanced calculations
     // for any surviving occurrences of the old handle strings.
-    $alertLines = array();
+    $alertLines = isset($renameLeftovers) ? $renameLeftovers : array();
 
     $formProcRes = $xoopsDB->queryF(
         "SELECT id_form, on_before_save, on_after_save, on_delete FROM " . $xoopsDB->prefix('formulize_id')
@@ -860,6 +949,110 @@ function formulize_rename_hyphenated_data_column($fid, $oldHandle, $newHandle) {
     }
 
     return '';
+}
+
+/**
+ * Restore the revisions table fields that turning encryption on or off left under a temporary name.
+ *
+ * formulizeDataHandler::toggleEncryption() renames an element's field to <handle>qaz, puts a new <handle> field in
+ * its place and drops the renamed one. Until 2026-11, the rename reached the revisions table but the rest did not,
+ * so the revisions table was left with <handle>qaz and no <handle>. Saving a revision then fails, because that copies
+ * every field of the data table into the revisions table by name, and so does changing the element's handle.
+ *
+ * The field is renamed back, and its history encrypted or decrypted to match the field in the data table, which is
+ * what toggleEncryption() does to it now. Idempotent: once restored, there is no <handle>qaz left to find.
+ */
+function formulize_repair_revisions_fields_left_by_encryption() {
+    global $xoopsDB;
+
+    // Every revisions table field ending in qaz, in one query. LIKE wildcards are only a coarse filter here; the
+    // exact names are checked below.
+    $colRes = $xoopsDB->queryF(
+        "SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE '%revisions' AND COLUMN_NAME LIKE '%qaz'"
+    );
+    if (!$colRes) {
+        print "<p>Error: could not look for revisions table fields left behind by turning encryption on or off: " . htmlspecialchars($xoopsDB->error()) . " Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>";
+        return;
+    }
+    $leftovers = array(); // revisions table name => the fields ending in qaz
+    while ($row = $xoopsDB->fetchArray($colRes)) {
+        if (substr($row['TABLE_NAME'], -strlen('_revisions')) == '_revisions' AND substr($row['COLUMN_NAME'], -3) == 'qaz') {
+            $leftovers[$row['TABLE_NAME']][] = $row['COLUMN_NAME'];
+        }
+    }
+    if (!$leftovers) {
+        return;
+    }
+
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $headingShown = false;
+    $formRes = $xoopsDB->queryF("SELECT id_form, form_handle FROM " . $xoopsDB->prefix('formulize_id') . " WHERE form_handle != ''");
+    while ($formRes AND $formRow = $xoopsDB->fetchArray($formRes)) {
+        $dataTable = $xoopsDB->prefix('formulize_' . $formRow['form_handle']);
+        $revisionsTable = $dataTable . '_revisions';
+        // every element, including those that are not displayed, since any of them can have a field - and read fresh,
+        // since earlier steps of the update can have changed the form's elements after it was cached
+        if (!isset($leftovers[$revisionsTable]) OR !$formObject = $form_handler->get(intval($formRow['id_form']), true, true)) {
+            continue;
+        }
+        $dataColumns = formulize_patch_table_columns($dataTable);
+        $revisionsColumns = formulize_patch_table_columns($revisionsTable);
+        if ($dataColumns === false OR $revisionsColumns === false) {
+            print "<p>Error: could not read the fields of $dataTable or $revisionsTable: " . htmlspecialchars($xoopsDB->error()) . "</p>";
+            continue;
+        }
+        $elementHandles = $formObject->getVar('elementHandles');
+        foreach ($leftovers[$revisionsTable] as $leftover) {
+            $field = substr($leftover, 0, -3);
+            // Only what toggleEncryption() leaves: an element of this form whose field the data table has and the
+            // revisions table does not, where the revisions table has the field's temporary name instead. A field whose
+            // name is itself the handle of one of the form's elements, or a field of the data table, is that element's
+            // own field and not a leftover, whatever its name ends in.
+            if (in_array($leftover, $elementHandles, true) OR isset($dataColumns[$leftover])
+                OR !in_array($field, $elementHandles, true) OR !isset($dataColumns[$field]) OR isset($revisionsColumns[$field])) {
+                continue;
+            }
+            if (!$headingShown) {
+                print "<h3>Restoring revisions table fields that turning encryption on or off had renamed:</h3>\n";
+                $headingShown = true;
+            }
+            // The history is in the state the field was in before encryption was first turned on or off for it -
+            // encrypted when it is a blob - and is brought into the state the field is in now
+            $historyIsEncrypted = stripos($revisionsColumns[$leftover]['Type'], 'blob') !== false;
+            $fieldIsEncrypted = stripos($dataColumns[$field]['Type'], 'blob') !== false;
+            if ($historyIsEncrypted === $fieldIsEncrypted) {
+                $definition = $revisionsColumns[$leftover]['Type'] . (($revisionsColumns[$leftover]['Null'] == 'YES') ? ' NULL' : ' NOT NULL');
+                if ($revisionsColumns[$leftover]['Default'] !== null) {
+                    $definition .= ' DEFAULT ' . $xoopsDB->quoteString($revisionsColumns[$leftover]['Default']);
+                }
+                $restored = $xoopsDB->queryF("ALTER TABLE `$revisionsTable` CHANGE `$leftover` `$field` $definition");
+            } else {
+                $restored = $form_handler->moveFieldValuesThroughEncryption($revisionsTable, $leftover, $field, $fieldIsEncrypted);
+            }
+            if ($restored) {
+                print "<p>Restored the field <code>" . htmlspecialchars($field) . "</code> in $revisionsTable. result: OK</p>\n";
+            } else {
+                print "<p>Error: could not restore the field <code>" . htmlspecialchars($field) . "</code> in $revisionsTable, which is currently called <code>" . htmlspecialchars($leftover) . "</code>: " . htmlspecialchars($xoopsDB->error()) . " Revisions of entries in this form cannot be saved until it is restored. Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.</p>\n";
+            }
+        }
+    }
+}
+
+/**
+ * The fields of a table, as SHOW COLUMNS describes them, keyed by their exact names - or false if they cannot be read.
+ * @param string $table The prefixed table name
+ * @return array|false
+ */
+function formulize_patch_table_columns($table) {
+    global $xoopsDB;
+    if (!$res = $xoopsDB->queryF("SHOW COLUMNS FROM `$table`")) {
+        return false;
+    }
+    $columns = array();
+    while ($row = $xoopsDB->fetchArray($res)) {
+        $columns[$row['Field']] = $row;
+    }
+    return $columns;
 }
 
 /**

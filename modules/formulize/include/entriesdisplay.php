@@ -1776,30 +1776,6 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 }
 
 /**
- * The names every quicksearch type goes by, derived from the one canonical list of types.
- *
- * A type shows up under three different names: the value stored in a screen's advanceview ('DateRange'), the key it is
- * packaged under in a column's quickSearches array ('dateRange'), and the template variable prefixes a webmaster writes
- * ('$quickDateRange<handle>' and '$quickSearchDateRange_<handle>'). All of it follows from the stored value, so adding a
- * type means adding it to formulizeHandler::listScreenSearchTypes() and building it in packageSearches(), nowhere else.
- *
- * @return array storedValue => array('key' => quickSearches key, 'prefixes' => array(short, long) template variable prefixes)
- */
-function formulize_quickSearchTypeNames() {
-    static $typeNames = null;
-    if($typeNames === null) {
-        $typeNames = array();
-        foreach(formulizeHandler::listScreenSearchTypes() as $storedValue) {
-            // the plain search box predates the convention the other types follow, so it keeps the names it has always had
-            $typeNames[$storedValue] = ($storedValue == 'Box')
-                ? array('key' => 'search', 'prefixes' => array('quickSearch', 'quickSearchBox_'))
-                : array('key' => lcfirst($storedValue), 'prefixes' => array('quick'.$storedValue, 'quickSearch'.$storedValue.'_'));
-        }
-    }
-    return $typeNames;
-}
-
-/**
  * Check whether any of a list screen's templates mention a string, which is how we tell whether a screen uses a
  * template variable, so that buttons, search boxes and other UI elements are only prepared when they will be shown.
  *
@@ -3379,7 +3355,7 @@ function convertRawValuesToRealValues($value, $handle, $returnFlat=false) {
 	$isNamesList = false;
 	if(is_array($ele_value)) {
 		if(isset($ele_value[2])) {
-			if(is_string($ele_value[2]) AND strstr($ele_value[2], "#*=:*")) {
+			if($thisElement->isLinked) {
 				$isLinkedSelectBox = true;
 				$linkedMetaData = formulize_isLinkedElement($thisElement->getVar('ele_id'));
 			} elseif(isset($ele_value[2]["{FULLNAMES}"]) OR isset($ele_value[2]["{USERNAMES}"]))  {
@@ -3391,7 +3367,7 @@ function convertRawValuesToRealValues($value, $handle, $returnFlat=false) {
 	foreach($value as $thisValue) {
 		if($isLinkedSelectBox) {
 			// convert the pointers for the linked selectbox values, to their source values
-			$sourceMeta = explode("#*=:*", $linkedMetaData[2]);
+			$sourceMeta = formulize_linkedSourceParts($linkedMetaData[2]);
 			$data_handler = new formulizeDataHandler($sourceMeta[0]);
 			$realValues = $data_handler->findAllValuesForEntries($sourceMeta[1], explode(",",trim($thisValue, ",")), true); // trim opening and closing commas and split by comma into an array, final true causes values to be prepped for display to users
 			// findAllValuesForEntries method returns an array, so convert to a single value

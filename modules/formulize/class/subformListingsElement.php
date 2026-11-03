@@ -79,6 +79,27 @@ class formulizeSubformListingsElement extends formulizeElement {
 #[AllowDynamicProperties]
 class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 
+	/**
+	 * Where a subform's ele_value refers to other elements - see formulizeElementReferences. Inherited by
+	 * subformFullForm and subformEditableRow. Keys 1 and 'disabledelements' are a real array or a comma separated
+	 * string, depending on whether they came from the admin UI or an import, and come back in whichever shape
+	 * they went in.
+	 */
+	public static $eleValueReferences = array(
+		1 => array('shape' => 'list', 'delimiter' => ',', 'holds' => 'either', 'on_delete' => 'remove',
+			'describe' => 'one of the elements it shows'),
+		'disabledelements' => array('shape' => 'list', 'delimiter' => ',', 'holds' => 'either', 'on_delete' => 'remove',
+			'describe' => 'one of the elements it shows without allowing edits'),
+		7 => array('shape' => 'conditions', 'holds' => 'either', 'on_delete' => 'remove',
+			'describe' => 'in the conditions that decide which entries it shows'),
+		'subform_prepop_element' => array('shape' => 'value', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => 'none',
+			'describe' => 'the element it prepopulates new entries from'),
+		'SortingElement' => array('shape' => 'value', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => 'none',
+			'describe' => 'the element its entries are sorted by'),
+		'UserFilterByElement' => array('shape' => 'value', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => 'none',
+			'describe' => 'the element its entries are filtered by for the current user'),
+	);
+
 	var $db;
 	var $clickable; // used in formatDataForList
 	var $striphtml; // used in formatDataForList
@@ -345,56 +366,6 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 		}
 
 		return $eleValueData;
-	}
-
-	/**
-	 * What does this subform's ele_value look like once an element it refers to is deleted?
-	 *
-	 * NOT a detector - getElementDependencies() has already established that the reference is here, by way
-	 * of getEleValueDependencies() below, which reads the same keys. This knows what that cannot say: which
-	 * setting the reference sits in, and what that setting is allowed to look like without it. The elements
-	 * to show are a comma separated string or an array depending on how they were saved; the filters are a
-	 * conditions set; the three sorting and filtering settings name one element each.
-	 *
-	 * @param array $eleValue The ele_value array of the element being examined.
-	 * @param int $elementId The id of the element being deleted.
-	 * @param string $handle The handle of the element being deleted.
-	 * @return array|false array('ele_value' => new array or null, 'used_as' => descriptions), or false.
-	 */
-	public function removeElementFromEleValue($eleValue, $elementId, $handle) {
-		$usedAs = array();
-
-		// key 1 is the elements to show in the subform, 'disabledelements' the ones shown but not editable.
-		// Either can be a real array or a comma separated string of ids, so both shapes are accepted.
-		foreach(array(
-			1 => 'one of the elements it shows',
-			'disabledelements' => 'one of the elements it shows without allowing edits'
-		) as $key => $description) {
-			if(isset($eleValue[$key]) AND ($new = $this->removeElementFromList($eleValue[$key], $elementId, $handle)) !== false) {
-				$eleValue[$key] = $new;
-				$usedAs[] = $description;
-			}
-		}
-
-		// key 7 is the filter conditions deciding which entries the subform shows
-		if(isset($eleValue[7]) AND ($new = $this->removeElementFromConditions($eleValue[7], $elementId, $handle)) !== false) {
-			$eleValue[7] = $new;
-			$usedAs[] = 'in the conditions that decide which entries it shows';
-		}
-
-		// settings that name one element each
-		foreach(array(
-			'subform_prepop_element' => 'the element it prepopulates new entries from',
-			'SortingElement' => 'the element its entries are sorted by',
-			'UserFilterByElement' => 'the element its entries are filtered by for the current user'
-		) as $key => $description) {
-			if(isset($eleValue[$key]) AND ($new = $this->clearReferenceToElement($eleValue[$key], $elementId, $handle)) !== false) {
-				$eleValue[$key] = $new;
-				$usedAs[] = $description;
-			}
-		}
-
-		return $usedAs ? array('ele_value' => $eleValue, 'used_as' => $usedAs) : false;
 	}
 
 	/**
@@ -958,7 +929,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             if(is_array($optionElementFilterConditions) AND count((array) $optionElementFilterConditions)>1) {
                 // if it's not a curly bracket value, then element name is the id, and value is the term
                 // if it is a curly bracket value, then element name is the curly bracket value, and value is the value that field has in the parent entry to this one we're about to create!
-                $optionElementEleValue2 = explode("#*=:*", $optionElementEleValue[2]);
+                $optionElementEleValue2 = formulize_linkedSourceParts($optionElementEleValue[2]);
                 $optionSourceFid = $optionElementEleValue2[0];
                 $filterElementHandles = convertElementIdsToElementHandles($optionElementFilterConditions[0], $optionSourceFid);
                 $filterElementIds = $optionElementFilterConditions[0];
@@ -1309,7 +1280,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
             // if linked, go join to the source element
             if($sortTablePrefix == 'source') {
                 $sortEleValue = $sortElementObject->getVar('ele_value');
-                $sortEleValue2Parts = explode("#*=:*", $sortEleValue[2]);
+                $sortEleValue2Parts = formulize_linkedSourceParts($sortEleValue[2]);
                 $sourceFid = $sortEleValue2Parts[0];
                 $sourceHandle = $sortEleValue2Parts[1];
                 $sourceFormObject = $form_handler->get($sourceFid);

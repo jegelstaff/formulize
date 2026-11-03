@@ -855,12 +855,10 @@ EOF;
 }
 
 include_once XOOPS_ROOT_PATH . '/modules/formulize/class/adHocTableFormTrait.php';
-include_once XOOPS_ROOT_PATH . '/modules/formulize/class/elementReferenceScanTrait.php';
 
 #[AllowDynamicProperties]
 class formulizeFormsHandler {
 	use formulizeAdHocTableFormTrait;
-	use formulizeElementReferenceScanTrait;
 
 	var $db;
 	function __construct(&$db) {
@@ -1209,6 +1207,13 @@ class formulizeFormsHandler {
 					'custom_edit_check'
 				);
 				foreach($procedures as $procedure) {
+					// Only a procedure set on this save is written. The form object reads its procedures from their
+					// files when it is loaded, and the object is kept for the rest of the request, so one loaded before
+					// something else rewrote a file - renaming one of the form's elements, say - would otherwise put the
+					// file back the way it was whenever the form is saved for any other reason.
+					if($formObject->isVarClean($procedure)) {
+						continue;
+					}
 					$code = removeOpeningPHPTag(${$procedure}) != "" ? ${$procedure} : "";
 					$fileName = $procedure."_".formulizeForm::sanitize_handle_name($form_handle).'.php';
 					$filePath = XOOPS_ROOT_PATH . "/modules/formulize/code/" . $fileName;
@@ -1896,6 +1901,10 @@ class formulizeFormsHandler {
 		if (!$skipMetadataCheck && isMetaDataField($handle)){
 			return false; // don't allow reserved words that will be used in the main data extraction queries
 		}
+		xoops_getmodulehandler('elements', 'formulize'); // so its class is there to ask
+		if (!$skipMetadataCheck && in_array($handle, formulizeElementsHandler::reservedHandleNames(), true)) {
+			return false; // nor the names Formulize keeps for its own variables in the code that gets one for each handle
+		}
 		// validate element id, convert to element id if it was a handle or object
 		if($elementIdentifier) {
 			$elementObject = _getElementObject($elementIdentifier);
@@ -2274,41 +2283,176 @@ class formulizeFormsHandler {
 
 	// update the field name in the datatable.  $element can be an id or an object.
 	// $newName can be used to override the current ele_handle value.  Introduced for handling the toggling of encryption on/off where we need to rename fields to something other than the ele_handle value.
+	// $oldName is the field as it is named now. It is looked for among the table's actual fields as a handle would be
+	// sanitized (see findDataTableColumn()), so a field still named with the capitals, hyphens or other characters a
+	// handle had before handles lost them is found, and renamed to match, whatever spelling the caller has.
+	// Nothing is done only when the field is already named exactly $newName, in case too, and no data type is given.
+	// Throws an exception if the field cannot be found in the data table or the revisions table, or cannot be renamed.
 	function updateField($element, $oldName, $dataType=false, $newName="") {
 		if(!$element = _getElementObject($element)) {
 			throw new Exception("Could not load element object to update field name");
 		}
-
-		$newName = $newName ? $newName : $element->getVar('ele_handle');
-		$oldName = formulizeElement::sanitize_handle_name($oldName);
-		$newName = formulizeElement::sanitize_handle_name($newName);
-		// if the old name and new name are the same, and no data type is provided, then there's nothing to do
-		if($oldName === $newName AND !$dataType) {
-			return true;
+		if(!$element->hasData) {
+			return true; // nothing in the data table belongs to this element
 		}
+
+		$newName = formulizeElement::sanitize_handle_name($newName ? $newName : $element->getVar('ele_handle'));
 
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($element->getVar('id_form'));
-		if(!$dataType) {
-			// first get its current state:
-			$fieldStateSQL = "SHOW COLUMNS FROM " . $this->db->prefix("formulize_" . $formObject->getVar('form_handle')) ." LIKE '$oldName'"; // note very odd use of LIKE as a clause of its own in SHOW statements, very strange, but that's what MySQL does
-			if(!$fieldStateRes = $this->db->queryF($fieldStateSQL)) {
-        throw new Exception("Could not retrieve field state for $oldName: " . $this->db->error());
+
+		// Every table is checked before any is changed, so a field missing from one of them stops the update with both
+		// left as they were. A revisions table without the field is already broken - saving a revision copies every
+		// field of the data table by name - and that is for a person to look into, not for an update to cover over.
+		$fields = array(); // table => the field as it is there now
+		foreach($this->entryTables($formObject) as $table) {
+			if(!$fields[$table] = $this->findDataTableColumn($this->dataTableColumns($table), $oldName, $table)) {
+				throw new Exception("Could not find the field $oldName in $table");
 			}
-			$fieldStateData = $this->db->fetchArray($fieldStateRes);
-			$dataType = $fieldStateData['Type'];
 		}
-		$updateFieldSQL = "ALTER TABLE " . $this->db->prefix("formulize_" . $formObject->getVar('form_handle')) . " CHANGE `$oldName` `$newName` ". $dataType;
-		if(!$updateFieldRes = $this->db->queryF($updateFieldSQL)) {
-      throw new Exception("Could not update field $oldName to $newName: " . $this->db->error());
-		}
-		if($this->revisionsTableExists($element->getVar('id_form')) AND $this->elementFieldPresent($element, $oldName, revisionsTable: true)) {
-			$updateFieldSQL = "ALTER TABLE " . $this->db->prefix("formulize_" . $formObject->getVar('form_handle')."_revisions") . " CHANGE `$oldName` `$newName` ". $dataType;
-			if(!$updateFieldRes = $this->db->queryF($updateFieldSQL)) {
-			  throw new Exception("Could not update the field $oldName in form ".$formObject->getVar('form_handle').": " . $this->db->error());
+
+		foreach($fields as $table => $column) {
+			if($column['Field'] === $newName AND !$dataType) {
+				continue;
+			}
+			// with no data type asked for, the field keeps the one it has, along with whether it can be null and what
+			// its default is, which giving the type alone would lose
+			$definition = $dataType ? $dataType : $this->dataTableColumnDefinition($column);
+			if(!$this->db->queryF("ALTER TABLE `$table` CHANGE `" . $column['Field'] . "` `$newName` $definition")) {
+				throw new Exception("Could not update field " . $column['Field'] . " to $newName in $table: " . $this->db->error());
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * The tables that hold a form's entries: its data table, and its revisions table when it has one.
+	 * The revisions table is checked for directly rather than through revisionsTableExists(), because that creates the
+	 * table when revisions are on for every form. Working on the fields of the tables that are there should not create
+	 * one as a side effect: one created now would have nothing to work on, and a failure to create it would stop the work.
+	 * @param object $formObject The form
+	 * @return array The prefixed table names, the data table first
+	 */
+	public function entryTables($formObject) {
+		$tables = array($this->db->prefix("formulize_" . $formObject->getVar('form_handle')));
+		$revisionsTable = $this->db->prefix("formulize_" . $formObject->getVar('form_handle') . "_revisions");
+		$revisionsRes = $this->db->queryF("SHOW TABLES LIKE " . $this->db->quoteString($revisionsTable));
+		if($revisionsRes AND $this->db->getRowsNum($revisionsRes) > 0) {
+			$tables[] = $revisionsTable;
+		}
+		return $tables;
+	}
+
+	/**
+	 * Make sure an element's field is there to follow its handle, before the handle is changed.
+	 *
+	 * The handle is saved, and everything that names it rewritten, before updateField() renames the field: the admin
+	 * saves the element's names in one request and its field in another, and the MCP tools rename references first.
+	 * So a field updateField() cannot find has to be caught here, or the element ends up named for a field that is still
+	 * called by its old handle, and its values disappear everywhere. The field can be under either name, since an update
+	 * patch may move the field before it changes the handle.
+	 *
+	 * @param object $element The element, as it is stored now.
+	 * @param string $oldName The handle it has now.
+	 * @param string $newName The handle it is to have.
+	 * @return void
+	 * @throws Exception If the data table or the revisions table has no field for the element, so that the handle is not changed.
+	 */
+	public function confirmFieldCanFollowHandle($element, $oldName, $newName) {
+		if(!$element->hasData) {
+			return; // nothing in the data table belongs to this element
+		}
+		if(!$formObject = $this->get($element->getVar('id_form')) OR $formObject->getVar('tableform')) {
+			return; // a table form's elements are fields of a table Formulize does not manage
+		}
+		foreach($this->entryTables($formObject) as $table) {
+			$columns = $this->dataTableColumns($table);
+			if(!$this->findDataTableColumn($columns, $oldName, $table) AND !$this->findDataTableColumn($columns, $newName, $table)) {
+				throw new Exception("The handle '$oldName' was not changed to '$newName', because $table has no field for that element. Every element that stores data needs a field in its form's data table, and in the form's revisions table too when it has one. The table needs to be repaired before the handle can be changed. Please contact info@formulize.org for assistance.");
+			}
+		}
+	}
+
+	/**
+	 * Put a field's values into a new field, encrypting or decrypting them on the way, and drop the old field.
+	 * Used by formulizeDataHandler::toggleEncryption() on every table that holds the form's entries, so the revisions
+	 * table keeps the same fields as the data table - saving a revision copies every field of the data table into it by
+	 * name - and the history of a field is encrypted along with its current values.
+	 * @param string $table The prefixed table name
+	 * @param string $fromField The field the values are in now
+	 * @param string $toField The field to put them in, which must not exist yet
+	 * @param bool $encrypt True to encrypt the values, into a blob field. False to decrypt them, into a text field.
+	 * @return bool Whether every step worked
+	 */
+	public function moveFieldValuesThroughEncryption($table, $fromField, $toField, $encrypt) {
+		$typeWithDefault = $encrypt ? "blob NULL default NULL" : "text";
+		$aesFunction = $encrypt ? "AES_ENCRYPT" : "AES_DECRYPT";
+		if(!$this->db->queryF("ALTER TABLE `$table` ADD `$toField` $typeWithDefault")) {
+			return false;
+		}
+		if(!$this->db->queryF("UPDATE `$table` SET `$toField` = $aesFunction(`$fromField`, " . $this->db->quoteString(getAESPassword()) . ")")) {
+			return false;
+		}
+		return $this->db->queryF("ALTER TABLE `$table` DROP `$fromField`") ? true : false;
+	}
+
+	/**
+	 * The fields of a table, as SHOW COLUMNS describes them, keyed by their exact names.
+	 * Read in full rather than with SHOW COLUMNS ... LIKE, because the underscores every handle is full of are
+	 * single character wildcards in a LIKE pattern.
+	 * @param string $table The prefixed table name
+	 * @return array field name => the SHOW COLUMNS row for it
+	 */
+	protected function dataTableColumns($table) {
+		// a table that cannot be read must not look like one without the field, or a rename would be skipped as done
+		if(!$res = $this->db->queryF("SHOW COLUMNS FROM `$table`")) {
+			throw new Exception("Could not read the fields of $table: " . $this->db->error());
+		}
+		$columns = array();
+		while($row = $this->db->fetchArray($res)) {
+			$columns[$row['Field']] = $row;
+		}
+		return $columns;
+	}
+
+	/**
+	 * Find the field a name refers to: the field with exactly that name, or else the one field whose name sanitizes
+	 * to the same handle. That covers every spelling a handle has had before it was sanitized the way it is now -
+	 * capitals, hyphens, and in the oldest handles spaces and other characters.
+	 * @param array $columns The table's fields, from dataTableColumns()
+	 * @param string $name The name to look for
+	 * @param string $table The table, for the message if the name is ambiguous
+	 * @return array|false The SHOW COLUMNS row for the field, or false if there is none
+	 */
+	protected function findDataTableColumn($columns, $name, $table) {
+		if(isset($columns[$name])) {
+			return $columns[$name];
+		}
+		$matches = array();
+		foreach($columns as $field => $column) {
+			if(formulizeElement::sanitize_handle_name($field) === formulizeElement::sanitize_handle_name($name)) {
+				$matches[] = $column;
+			}
+		}
+		if(count($matches) > 1) {
+			throw new Exception("$table has more than one field that could be $name; they must be reconciled by hand.");
+		}
+		return $matches ? $matches[0] : false;
+	}
+
+	/**
+	 * The definition to give a field when renaming it without changing it otherwise: its type, whether it can be
+	 * null, and its default.
+	 * @param array $column The SHOW COLUMNS row for the field
+	 * @return string
+	 */
+	protected function dataTableColumnDefinition($column) {
+		$definition = $column['Type'];
+		$definition .= ($column['Null'] == 'YES') ? ' NULL' : ' NOT NULL';
+		if($column['Default'] !== null) {
+			$definition .= ' DEFAULT ' . $this->db->quoteString($column['Default']);
+		}
+		return $definition;
 	}
 
 	// this function deletes an element field from the data table
@@ -2330,120 +2474,6 @@ class formulizeFormsHandler {
 			}
 		}
 		return true;
-	}
-
-	/**
-	 * Where does a form refer to an element, and what do those settings look like once the element is gone?
-	 *
-	 * Two places, both owned by this class: the per group filters that decide which entries of a form a group
-	 * may see, written by setPerGroupFilters() just below and read by getPerGroupFilterWhereClause(), and the
-	 * entries-are-users settings declared by initVar() in formulizeForm at the top of this file.
-	 *
-	 * Called by formulizeElementsHandler::findReferencesToElement(), which turns the result into the usage
-	 * report and applies the updates when an element is deleted.
-	 *
-	 * @param object $elementObject The element being asked about.
-	 * @return array The references found.
-	 */
-	public function scanForElementReferences($elementObject) {
-		return array_merge(
-			$this->scanGroupFiltersForElementReferences($elementObject),
-			$this->scanFormSettingsForElementReferences($elementObject)
-		);
-	}
-
-	/**
-	 * The per group filters that decide which entries of a form a group is allowed to see.
-	 * @param object $elementObject The element being asked about.
-	 * @return array The references found.
-	 */
-	private function scanGroupFiltersForElementReferences($elementObject) {
-		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
-		$references = array();
-		$sql = "SELECT gf.filterid, gf.filter, gf.groupid, g.name AS group_name, f.form_title
-			FROM ".$this->db->prefix('formulize_group_filters')." gf
-			LEFT JOIN ".$this->db->prefix('groups')." g ON g.groupid = gf.groupid
-			LEFT JOIN ".$this->db->prefix('formulize_id')." f ON f.id_form = gf.fid";
-		if(!$result = $this->db->query($sql)) {
-			return $references;
-		}
-		while($row = $this->db->fetchArray($result)) {
-			$newFilter = $this->removeElementFromConditions(@unserialize((string) $row['filter']), $elementId, $handle);
-			if($newFilter === false) {
-				continue;
-			}
-			$references[] = $this->elementReference(
-				_AM_ELE_USAGE_SECTION_GROUP_FILTERS,
-				$this->describeById($row['group_name'], 'group', $row['groupid'])
-					.' - which entries of '.trim(strip_tags((string) $row['form_title'])).' they can see',
-				'formulize_group_filters', 'filterid', $row['filterid'],
-				array('filter' => serialize($newFilter))
-			);
-		}
-		return $references;
-	}
-
-	/**
-	 * Settings on a form itself: the conditions that decide whether entries become user accounts, and the
-	 * elements that connect a template group to the entry the real group comes from.
-	 * @param object $elementObject The element being asked about.
-	 * @return array The references found.
-	 */
-	private function scanFormSettingsForElementReferences($elementObject) {
-		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
-		$references = array();
-		$sql = "SELECT id_form, form_title, entries_are_users_conditions, entries_are_users_default_groups_element_links
-			FROM ".$this->db->prefix('formulize_id');
-		if(!$result = $this->db->query($sql)) {
-			return $references;
-		}
-		while($row = $this->db->fetchArray($result)) {
-			$updates = array();
-			$usedAs = array();
-
-			// key 0 holds the conditions that apply generally, and every other key is a group id holding the
-			// conditions for that group, so the keys are kept as they are and only the contents change
-			$conditions = @unserialize((string) $row['entries_are_users_conditions']);
-			if(is_array($conditions)) {
-				$changed = false;
-				foreach($conditions as $groupId => $groupConditions) {
-					$newConditions = $this->removeElementFromConditions($groupConditions, $elementId, $handle);
-					if($newConditions !== false) {
-						$conditions[$groupId] = $newConditions;
-						$changed = true;
-					}
-				}
-				if($changed) {
-					$updates['entries_are_users_conditions'] = serialize($conditions);
-					$usedAs[] = 'in the conditions that decide whether an entry becomes a user account';
-				}
-			}
-
-			$links = @unserialize((string) $row['entries_are_users_default_groups_element_links']);
-			if(is_array($links)) {
-				$changed = false;
-				foreach($links as $groupId => $linkedElements) {
-					$newLinks = $this->removeElementFromList($linkedElements, $elementId, $handle);
-					if($newLinks !== false) {
-						$links[$groupId] = $newLinks;
-						$changed = true;
-					}
-				}
-				if($changed) {
-					$updates['entries_are_users_default_groups_element_links'] = serialize($links);
-					$usedAs[] = 'as what connects a group to the entry that decides who is in it';
-				}
-			}
-
-			if($usedAs) {
-				$references[] = $this->elementReference(
-					_AM_ELE_USAGE_SECTION_FORM_SETTINGS,
-					$this->describeById($row['form_title'], 'form', $row['id_form']).' - '.implode(', ', $usedAs),
-					'formulize_id', 'id_form', $row['id_form'], $updates
-				);
-			}
-		}
-		return $references;
 	}
 
 	// this function updates the per group filter settings for a form

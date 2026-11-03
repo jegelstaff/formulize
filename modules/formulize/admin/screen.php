@@ -48,7 +48,7 @@ $settings['existingPasscodes'] = $passcode_handler->getOtherScreenPasscodes($scr
 $settings['newPasscode'] = $passcode_handler->generatePasscode();
 $settings['passcodes'] = $passcode_handler->getThisScreenPasscodes($screen_id);
 
-$config_handler = $config_handler = xoops_gethandler('config');
+$config_handler = xoops_gethandler('config');
 $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 $settings['embeddingAllowed'] = formulize_embeddingAllowed(); // a new screen has this question too
 $settings['screenTypes'] = formulize_getScreenTypes();
@@ -520,7 +520,7 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
 
 if ($screen_id != "new" && $settings['type'] == 'template') {
     $screen = $screen_handler->get($screen_id);
-    $templates['custom_code'] = str_replace("&", "&amp;", $screen_handler->getCustomCode($screen, $screen->getVar('theme'))); // admin UI so load based on current theme set in the admin UI for this screen
+    $templates['custom_code'] = str_replace("&", "&amp;", ensureOpeningPHPTag($screen_handler->getCustomCode($screen, $screen->getVar('theme')))); // admin UI so load based on current theme set in the admin UI for this screen
     $templates['template'] = str_replace("&", "&amp;", $screen_handler->getTemplateHtml($screen, $screen->getVar('theme'))); // admin UI so load based on current theme set in the admin UI for this screen
     $templates['donedest'] = $screen->getVar('donedest');
     $templates['savebuttontext'] = $screen->getVar('savebuttontext');

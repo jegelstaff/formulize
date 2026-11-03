@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue } from '../../utils';
+import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -19,6 +19,16 @@ test.beforeEach(async ({ page }) => {
 // preview rows that the template-group panel's entry-group-selector widget adds.
 async function checkPerm(groupLocator, nameSuffix) {
 	await groupLocator.locator(`input[name$="${nameSuffix}"]`).first().check();
+}
+
+// Open a custom button's settings on a list screen's Custom buttons tab, by the heading the button is listed under -
+// its handle, or 'New button' until it has one - unless they are open already.
+async function openCustomButton(page, heading) {
+	const handleBox = page.locator('#tabs input[name^="handle_"]:visible');
+	if (await handleBox.count() === 0) {
+		await page.locator('h3', { hasText: heading }).first().click();
+	}
+	await expect(handleBox.first()).toBeVisible();
 }
 
 // Permission name suffixes (from form_permissions_group_panel.html):
@@ -94,11 +104,8 @@ async function setAnonPermissions(page) {
 // which copies Artifacts' full permission set — including the template→entry group cascade and
 // groupscope — onto the child form (re-synced if Artifacts changes). De-duplicates the identical
 // permission setup and proves inheritance carries the cascade. Must run AFTER the Artifacts test.
-// `openFormPermissions` clicks the child form's name then its Permissions tab. The caller's
-// beforeEach has already navigated to the Museum forms-list page (which has NO self-referential
-// "Application: Museum" link), so openFormPermissions must NOT click that link; for the
-// verify-after-save reopen we first click "Application: Museum" (present on the form admin page)
-// to get back to the list, then call openFormPermissions again.
+// `openFormPermissions` opens the child form's Permissions tab - see openFormPermissionsByTitle below.
+// The verify-after-save reopen goes back to the same address.
 async function inheritPermissionsFromArtifacts(page, openFormPermissions) {
 	await openFormPermissions();
 	const formUrl = page.url(); // form admin URL (carries the fid) — used to reopen for the verify
@@ -152,25 +159,24 @@ test.describe('Set Permissions', () => {
 		await expect(page.getByText('View entries made by their group(s)')).not.toBeVisible();
 	})
 
+	// Straight to the form's Permissions tab by its address. Clicking the form's name and then its Permissions link
+	// can land while the application's list is still opening, and then the click goes nowhere.
+	const openFormPermissionsByTitle = (page, title) => async () => {
+		const rows = dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = '${sqlEscape(title)}'`);
+		await page.goto(`/modules/formulize/admin/ui.php?page=form&fid=${rows[0][0]}&tab=permissions`);
+		await waitForAdminPageReady(page);
+	};
+
 	test('Donors inherits permissions from Artifacts (form-to-form)', async ({ page }) => {
-		await inheritPermissionsFromArtifacts(page, async () => {
-			await page.getByText('Donors').first().click();
-			await page.getByRole('link', { name: 'Permissions', exact: true }).click();
-		});
+		await inheritPermissionsFromArtifacts(page, openFormPermissionsByTitle(page, 'Donors'));
 	})
 
 	test('Collections inherits permissions from Artifacts (form-to-form)', async ({ page }) => {
-		await inheritPermissionsFromArtifacts(page, async () => {
-			await page.getByText('Collections').first().click();
-			await page.getByRole('link', { name: 'Permissions', exact: true }).click();
-		});
+		await inheritPermissionsFromArtifacts(page, openFormPermissionsByTitle(page, 'Collections'));
 	})
 
 	test('Exhibits inherits permissions from Artifacts (form-to-form)', async ({ page }) => {
-		await inheritPermissionsFromArtifacts(page, async () => {
-			await page.getByText('Exhibits').nth(2).click();
-			await page.getByRole('link', { name: 'Permissions', exact: true }).click();
-		});
+		await inheritPermissionsFromArtifacts(page, openFormPermissionsByTitle(page, 'Exhibits'));
 	})
 
 	test('Set permissions for Surveys', async ({ page }) => {
@@ -259,6 +265,8 @@ test.describe('Set columns and elements for screens', () => {
 			'Artifacts: Era',
 			'Artifacts: Date of acquisition',
 			'Artifacts: Donated to museum',
+			'Artifacts: Latitude',
+			'Artifacts: Longitude',
 			'Artifacts: Donor',
 			'Artifacts: Condition',
 			'Artifacts: Collections',
@@ -448,11 +456,93 @@ test.describe('Set columns and elements for screens', () => {
 		await saveAdminForm(page);
 	})
 
+	test('Artifact origins map screen', async ({ page }) => {
+		// A map of where the artifacts come from: the pins are placed by Latitude and Longitude, labelled with the
+		// Short name, and show the Full description when opened. People can search the map by Short name.
+		await page.locator('div[id^=form-details-box-]').nth(0).getByRole('link', { name: 'Screens' }).click();
+		await page.getByRole('link', { name: 'Create a new Screen' }).click();
+		await page.getByRole('textbox', { name: 'Name of the screen:' }).fill('Artifact origins');
+		await page.getByLabel('What kind of screen is this:').selectOption('map');
+		await page.getByRole('textbox', { name: 'Handle for the screen:' }).fill('artifact_origins');
+		await saveAdminForm(page);
+		await waitForAdminPageReady(page);
+		await page.getByRole('link', { name: 'Map Options' }).click();
+		await page.locator('#screens-lat_element').selectOption({ label: 'Artifacts: Latitude' });
+		await page.locator('#screens-lng_element').selectOption({ label: 'Artifacts: Longitude' });
+		await page.locator('#screens-label_element').selectOption({ label: 'Artifacts: Short name' });
+		await page.locator('#screens-description_element').selectOption({ label: 'Artifacts: Full description' });
+		await page.locator('#cols-0').selectOption('artifacts_short_name');
+		await saveAdminForm(page);
+		// Verify after save, from a fresh load of the screen's settings
+		const [sid, fid] = dbQuery(`SELECT sid, fid FROM ${dbPrefix()}_formulize_screen WHERE screen_handle = 'artifact_origins'`)[0];
+		const aid = dbQuery(`SELECT appid FROM ${dbPrefix()}_formulize_application_form_link WHERE fid = ${fid}`)[0][0];
+		await page.goto(`/modules/formulize/admin/ui.php?page=screen&aid=${aid}&fid=${fid}&sid=${sid}`);
+		await waitForAdminPageReady(page);
+		await page.getByRole('link', { name: 'Map Options' }).click();
+		await expect(page.locator('#screens-lat_element option:checked')).toHaveText('Artifacts: Latitude');
+		await expect(page.locator('#screens-lng_element option:checked')).toHaveText('Artifacts: Longitude');
+		await expect(page.locator('#screens-label_element option:checked')).toHaveText('Artifacts: Short name');
+		await expect(page.locator('#screens-description_element option:checked')).toHaveText('Artifacts: Full description');
+		await expect(page.locator('#cols-0')).toHaveValue('artifacts_short_name');
+	})
+
+	test('Menu entry for the Artifact origins map', async ({ page }) => {
+		// The map gets a link in the Museum menu, for the same groups as the forms' links
+		const sid = dbQuery(`SELECT sid FROM ${dbPrefix()}_formulize_screen WHERE screen_handle = 'artifact_origins'`)[0][0];
+		const linkCount = () => dbQuery(`SELECT COUNT(*) FROM ${dbPrefix()}_formulize_menu_links WHERE screen = 'sid=${sid}'`)[0][0];
+		for (let attempt = 1; attempt <= 3 && linkCount() === '0'; attempt++) {
+			await page.goto('/modules/formulize/admin/ui.php?page=home');
+			await page.getByRole('link', { name: 'Application: Museum' }).click();
+			await page.getByRole('link', { name: 'Menu Entries' }).click();
+			await waitForAdminPageReady(page);
+			await page.locator('#addmenutext').fill('Artifact origins');
+			await page.locator('#listofscreenoptions select').selectOption(`sid=${sid}`);
+			await page.locator('#addgroups').selectOption(['Webmasters', 'Departments - All Users']);
+			await saveAdminForm(page);
+		}
+		expect(linkCount()).toBe('1');
+		const menuId = dbQuery(`SELECT menu_id FROM ${dbPrefix()}_formulize_menu_links WHERE screen = 'sid=${sid}'`)[0][0];
+		const groups = dbQuery(`SELECT g.name FROM ${dbPrefix()}_formulize_menu_permissions p JOIN ${dbPrefix()}_groups g ON g.groupid = p.group_id WHERE p.menu_id = ${menuId}`).map(r => r[0]);
+		expect(groups).toEqual(expect.arrayContaining(['Webmasters', 'Departments - All Users']));
+	})
+
+	test('Custom button on the Artifacts list', async ({ page }) => {
+		// A button beside each artifact in the list that marks it as being in perfect condition, by writing 10 to
+		// Condition. In each row, because a button for the list as a whole only appears where a webmaster's own top
+		// template prints it.
+		const [sid, fid] = dbQuery(`SELECT sid, fid FROM ${dbPrefix()}_formulize_screen WHERE title = 'Artifacts' AND type = 'listOfEntries'`)[0];
+		const aid = dbQuery(`SELECT appid FROM ${dbPrefix()}_formulize_application_form_link WHERE fid = ${fid}`)[0][0];
+		await page.goto(`/modules/formulize/admin/ui.php?page=screen&aid=${aid}&fid=${fid}&sid=${sid}`);
+		await waitForAdminPageReady(page);
+		await page.getByRole('link', { name: 'Custom buttons' }).click();
+		await page.getByRole('link', { name: 'Add a custom button' }).click();
+		await waitForAdminPageReady(page);
+		await openCustomButton(page, 'New button');
+		await page.locator('input[name="handle_0"]').fill('mark_perfect_condition');
+		await page.locator('input[name="buttontext_0"]').fill('Mark as in perfect condition');
+		await page.locator('input[name="appearinline_0"][value="1"]').check();
+		await page.locator('select[name="applyto_0"]').selectOption('inline');
+		// adding an effect saves the button and reloads the page with the effect's settings on it
+		await page.locator('input.addeffectbutton[target="0"]').click();
+		await waitForAdminPageReady(page);
+		await openCustomButton(page, 'mark_perfect_condition');
+		await page.locator('select[name^="element_0["]').selectOption({ label: 'Condition' });
+		await page.locator('select[name^="action_0["]').selectOption('replace');
+		await setCodeMirrorValue(page, 'textarea[name^="value_0["]', '10');
+		await saveAdminForm(page);
+		// Verify after save, from what is stored: the button, and its effect on Condition by the element's id
+		const conditionId = dbQuery(`SELECT ele_id FROM ${dbPrefix()}_formulize WHERE ele_handle = 'artifacts_condition'`)[0][0];
+		const stored = dbQuery(`SELECT customactions FROM ${dbPrefix()}_formulize_screen_listofentries WHERE sid = ${sid}`)[0][0];
+		expect(stored).toContain('"mark_perfect_condition"');
+		expect(stored).toMatch(new RegExp(`"element";(i:${conditionId};|s:\\d+:"${conditionId}";)`));
+		expect(stored).toContain('s:5:"value";s:2:"10"');
+	})
+
 	test('Procedures for Artifacts form', async ({ page }) => {
 		await page.getByText('Artifacts').first().click();
 		await page.getByRole('link', { name: 'Procedures' }).click();
    	await setCodeMirrorValue(page, 'textarea[name="forms-on_before_save"]', '<?php\n\n// If there\'s a donor, mark as donated\nif($artifacts_donor) {\n\t$artifacts_donated_to_museum = 1; // yes is 1 in the database\n}\n');
-   	await setCodeMirrorValue(page, 'textarea[name="forms-on_after_save"]', '<?php\n\n// standardize the artifacts ID numbers\nif(!$artifacts_id_number || !preg_match(\'/^M\d{3}$/\', $artifacts_id_number)) {\n\t$idLength = strlen($entry_id);\n\t$zeros = 3 - $idLength;\n\t$zeros = $zeros < 0 ? 0 : $zeros;\n\t$artifacts_id_number = "M";\n\tfor($i=1;$i<=$zeros;$i++) {\n\t\t$artifacts_id_number .= "0";\n\t}\n\t$artifacts_id_number .= $entry_id;\n\tformulize_writeEntry([\'artifacts_id_number\' => $artifacts_id_number], $entry_id);\n}');
+   	await setCodeMirrorValue(page, 'textarea[name="forms-on_after_save"]', '<?php\n\n// standardize the artifacts ID numbers\nif(!$artifacts_id_number || !preg_match(\'/^M\\d{3}$/\', $artifacts_id_number)) {\n\t$idLength = strlen($entry_id);\n\t$zeros = 3 - $idLength;\n\t$zeros = $zeros < 0 ? 0 : $zeros;\n\t$artifacts_id_number = "M";\n\tfor($i=1;$i<=$zeros;$i++) {\n\t\t$artifacts_id_number .= "0";\n\t}\n\t$artifacts_id_number .= $entry_id;\n\tformulize_writeEntry([\'artifacts_id_number\' => $artifacts_id_number], $entry_id);\n}');
 		await saveAdminForm(page);
 	})
 

@@ -698,9 +698,14 @@ define("_AM_ELE_USAGE_SECTION_GROUP_FILTERS","Used in what these groups are allo
 define("_AM_ELE_USAGE_SECTION_SAVED_VIEWS","In these saved views");
 define("_AM_ELE_USAGE_SECTION_FORM_SETTINGS","In these form settings");
 define("_AM_ELE_USAGE_SECTION_RELATIONSHIPS","Connects these forms together");
+define("_AM_ELE_USAGE_SECTION_NOTIFICATIONS","In these notifications");
 define("_AM_ELE_USAGE_CODE","Named in code, which you would need to fix yourself");
 define("_AM_ELE_USAGE_CODE_INTRO","Deleting the element clears it out of every setting above. It cannot change code somebody wrote, so these are left as they are:");
 define("_AM_ELE_USAGE_CLOSE","Close");
+define("_AM_ELE_RENAME_NOTICE_TITLE","About the new handle");
+define("_AM_ELE_RENAME_NOTICE_OK","OK");
+define("_AM_ELE_RENAME_LEFT_INTRO","Wherever %1\$s was used in code and templates to refer to this element, it has been changed to %2\$s. There are some places where it might refer to this element or it might refer to something else. Since we can't be sure, these places still have %1\$s in them. Check each one, and change it to %2\$s where necessary:");
+define("_AM_ELE_HANDLE_RESERVED","%1\$s is a name Formulize uses for its own purposes in code, so the handle is %2\$s instead.");
 define("_AM_ELE_USAGE_DELETE_BUTTON","Delete this element");
 define("_AM_ELE_USAGE_CANCEL","Cancel");
 

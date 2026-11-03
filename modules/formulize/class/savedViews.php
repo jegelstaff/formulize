@@ -20,8 +20,6 @@ if (!defined("XOOPS_ROOT_PATH")) {
     die("XOOPS root path not defined");
 }
 
-require_once XOOPS_ROOT_PATH.'/modules/formulize/class/elementReferenceScanTrait.php';
-
 /**
  * Saved views - the columns, searches, calculations and sort order a person saved off a list screen.
  *
@@ -33,7 +31,8 @@ require_once XOOPS_ROOT_PATH.'/modules/formulize/class/elementReferenceScanTrait
  * which rewrites it - and the two fell out of step, which is how searches ended up being applied to the
  * wrong columns after a column was removed.
  *
- * Right now this holds the format constants and the reference scan. The load and save logic in
+ * Right now this holds the format constants, which the declaration of where elements are referenced names
+ * for saved views (see $modversion['formulize_element_references']). The load and save logic in
  * entriesdisplay.php (see saveReport() and loadReport() there) is the natural next thing to move in, so
  * that there is one place that knows how a saved view is put together.
  *
@@ -41,8 +40,6 @@ require_once XOOPS_ROOT_PATH.'/modules/formulize/class/elementReferenceScanTrait
  */
 #[AllowDynamicProperties]
 class formulizeSavedViewsHandler {
-
-	use formulizeElementReferenceScanTrait;
 
 	// One search per column, in the same order as the columns. Chosen to be something that will not occur
 	// in a search term. See where $qsearches is assembled in include/entriesdisplay.php.
@@ -103,7 +100,50 @@ class formulizeSavedViewsHandler {
 			throw new Exception("Could not load the specified saved view: '".strip_tags(htmlspecialchars($idOrName))."'");
 		}
 		$row = $this->db->fetchArray($result);
-		return $row ? $row : false;
+		if(!$row) {
+			return false;
+		}
+		foreach(self::ELEMENT_SETTINGS as $column) {
+			if(isset($row[$column])) {
+				$row[$column] = $this->columnsAs($row[$column], 'handle');
+			}
+		}
+		return $row;
+	}
+
+	/**
+	 * The settings of a view that name elements: the columns, the columns it is sorted by, and the columns
+	 * whose search boxes it offers. They are stored as element ids, so that renaming an element cannot leave a
+	 * view pointing at a handle that no longer exists, and handed out as handles, which is what the list works
+	 * in. A view saved before they were stored as ids holds handles, which pass through either way.
+	 */
+	const ELEMENT_SETTINGS = array('sv_oldcols', 'sv_sort', 'sv_pubfilters');
+
+	/**
+	 * Turn the elements named in a comma separated list of columns into ids or into handles. Entries that are
+	 * not elements - the metadata columns such as creation_uid, or an element that no longer exists - are
+	 * left as they are, and so is the hidden column prefix.
+	 * @param string $columns The columns.
+	 * @param string $as 'id' or 'handle'.
+	 * @return string
+	 */
+	private function columnsAs($columns, $as) {
+		if((string) $columns === '') {
+			return $columns;
+		}
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$entries = explode(',', (string) $columns);
+		foreach($entries as $index => $entry) {
+			$prefix = strpos($entry, self::HIDDEN_COLUMN_PREFIX) === 0 ? self::HIDDEN_COLUMN_PREFIX : '';
+			$reference = substr($entry, strlen($prefix));
+			if($reference === '' OR ($as == 'id') == is_numeric($reference)) {
+				continue; // already in the form asked for
+			}
+			if($elementObject = $element_handler->get($reference)) {
+				$entries[$index] = $prefix.($as == 'id' ? $elementObject->getVar('ele_id') : $elementObject->getVar('ele_handle'));
+			}
+		}
+		return implode(',', $entries);
 	}
 
 	/**
@@ -120,6 +160,11 @@ class formulizeSavedViewsHandler {
 	public function save($values, $svId = 0) {
 		if(!is_array($values) OR !$values) {
 			return false;
+		}
+		foreach(self::ELEMENT_SETTINGS as $column) {
+			if(isset($values[$column])) {
+				$values[$column] = $this->columnsAs($values[$column], 'id');
+			}
 		}
 		$sets = array();
 		foreach($values as $column => $value) {
@@ -187,71 +232,4 @@ class formulizeSavedViewsHandler {
 		return array_key_exists($svId, $owners) ? $owners[$svId] : false;
 	}
 
-	/**
-	 * Where does a saved view refer to an element, and what does the view look like once the element is
-	 * gone? The columns someone chose, the searches on them, the calculations, and the sort column.
-	 *
-	 * The parallel lists are the whole reason this needs care: removing a column without removing the same
-	 * position from the searches shifts every later search onto the wrong column, which shows up as a list
-	 * quietly filtering on something nobody asked it to.
-	 *
-	 * Called by formulizeElementsHandler::findReferencesToElement().
-	 *
-	 * @param object $elementObject The element being asked about.
-	 * @return array The references found.
-	 */
-	public function scanForElementReferences($elementObject) {
-		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
-		$references = array();
-		// the LIKE clauses are a coarse filter only. An underscore is a single character wildcard in LIKE and
-		// handles are full of them, so this deliberately catches more rows than it needs to and the precise
-		// test happens below.
-		$sql = "SELECT sv_id, sv_name, sv_oldcols, sv_quicksearches, sv_sort, sv_calc_cols, sv_calc_calcs,
-			sv_calc_blanks, sv_calc_grouping FROM ".$this->db->prefix('formulize_saved_views')."
-			WHERE sv_oldcols LIKE ".$this->db->quoteString('%'.$handle.'%')."
-			OR sv_calc_cols LIKE ".$this->db->quoteString('%'.intval($elementId).'%')."
-			OR sv_sort = ".$this->db->quoteString($handle);
-		if(!$result = $this->db->query($sql)) {
-			return $references;
-		}
-		while($row = $this->db->fetchArray($result)) {
-			$updates = array();
-			$usedAs = array();
-
-			// the columns of the view, one of which can carry a hiddencolumn_ prefix when it was included for
-			// the sake of a persistent search without being shown. The searches are stored one per column in
-			// the same order, so the positions that come out of the columns come out of the searches too.
-			if($columns = $this->removeElementFromDelimitedList($row['sv_oldcols'], ',', $elementId, $handle, self::HIDDEN_COLUMN_PREFIX)) {
-				list($newColumns, $removedPositions) = $columns;
-				$updates['sv_oldcols'] = $newColumns;
-				$updates['sv_quicksearches'] = $this->removePositionsFromDelimitedList($row['sv_quicksearches'], self::SEARCH_DELIMITER, $removedPositions);
-				$usedAs[] = 'a column';
-			}
-
-			// the calculations, which name their column by element id, and which run parallel to the three
-			// settings saying what is calculated, how blanks are treated and how results are grouped
-			if($calculations = $this->removeElementFromDelimitedList($row['sv_calc_cols'], self::CALCULATION_DELIMITER, $elementId, $handle)) {
-				list($newCalcCols, $removedPositions) = $calculations;
-				$updates['sv_calc_cols'] = $newCalcCols;
-				foreach(array('sv_calc_calcs', 'sv_calc_blanks', 'sv_calc_grouping') as $parallelSetting) {
-					$updates[$parallelSetting] = $this->removePositionsFromDelimitedList($row[$parallelSetting], self::CALCULATION_DELIMITER, $removedPositions);
-				}
-				$usedAs[] = 'a calculation';
-			}
-
-			if((string) $row['sv_sort'] === (string) $handle) {
-				$updates['sv_sort'] = ''; // the list falls back to its default order
-				$usedAs[] = 'the column it is sorted by';
-			}
-
-			if($usedAs) {
-				$references[] = $this->elementReference(
-					_AM_ELE_USAGE_SECTION_SAVED_VIEWS,
-					$this->describeById($row['sv_name'], 'view', $row['sv_id']).' - '.implode(', ', $usedAs),
-					'formulize_saved_views', 'sv_id', $row['sv_id'], $updates
-				);
-			}
-		}
-		return $references;
-	}
 }

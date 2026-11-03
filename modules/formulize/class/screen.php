@@ -35,7 +35,6 @@ if (!defined("XOOPS_ROOT_PATH")) {
 }
 
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
-require_once XOOPS_ROOT_PATH.'/modules/formulize/class/elementReferenceScanTrait.php';
 class formulizeScreen extends FormulizeObject {
 
 	function __construct() {
@@ -136,7 +135,116 @@ class formulizeScreen extends FormulizeObject {
     }
 
     public function setVar($key, $value, $not_gpc = false) {
-        parent::setVar($key, self::normalize_values($key, $value), $not_gpc);
+        $value = self::normalize_values($key, $value);
+        $settings = $this->elementColumnSettings();
+        if(isset($settings[$key])) {
+            $value = $this->elementReferencesAsIds($settings[$key], $value);
+        }
+        parent::setVar($key, $value, $not_gpc);
+    }
+
+    /**
+     * The settings of this screen type that name elements, which are STORED as element ids.
+     *
+     * Storing ids is what keeps them out of the handle-rename maintenance: an id does not change when an
+     * element is renamed, so there is nothing to keep in step. Lists and rows of columns are READ as handles,
+     * though, because everything that consumes them - list and map rendering, saved views, the tools - speaks
+     * handles, so the translation happens in setVar() and getVar() rather than at each of those places. A
+     * setting that names one element is read as the id, which is what the admin page selects it by and what
+     * _getElementObject() resolves.
+     *
+     * Overridden by each screen type that has such settings.
+     *
+     * @return array setting name => 'list' for a flat list, 'rows' for rows with the element in position 0,
+     *   'value' for a single element
+     */
+    protected function elementColumnSettings() {
+        return array();
+    }
+
+    /**
+     * Read a setting, with any list or rows of columns it holds as handles, whatever is stored. Values from
+     * before a setting became id-based are already handles and pass straight through, since the conversion
+     * leaves anything that is not an element id alone - which also covers the metadata field names
+     * (creation_uid, mod_datetime, etc) that are valid columns everywhere an element handle is.
+     * Pass the 'n' format to get what is actually stored; insert() uses that to write ids back.
+     */
+    public function getVar($key, $format = 's') {
+        $value = parent::getVar($key, $format);
+        $settings = $this->elementColumnSettings();
+        if(!isset($settings[$key]) OR $settings[$key] == 'value' OR $format == 'n' OR !is_array($value)) {
+            return $value;
+        }
+        foreach($value as $index => $column) {
+            if($settings[$key] == 'list') {
+                $value[$index] = $this->columnReferenceAsHandle($column);
+            } elseif(is_array($column) AND isset($column[0])) {
+                $value[$index][0] = $this->columnReferenceAsHandle($column[0]);
+            }
+        }
+        return $value;
+    }
+
+    /**
+     * Turn the elements a setting names into element ids, for storing. Accepts the value as an array or as an
+     * already-serialized string, because the admin save handlers pass one and the upsert apparatus the other.
+     * @param string $kind 'list', 'rows' or 'value' - see elementColumnSettings()
+     * @param mixed $value The setting.
+     * @return mixed The setting, in the shape it came in.
+     */
+    private function elementReferencesAsIds($kind, $value) {
+        if($kind == 'value') {
+            if(is_string($value) AND $value !== '' AND !is_numeric($value)) {
+                $converted = convertElementHandlesToElementIds(array($value));
+                $value = (string) $converted[0];
+            }
+            return $value;
+        }
+        $wasSerialized = is_string($value);
+        $columns = $wasSerialized ? @unserialize($value) : $value;
+        if(!is_array($columns)) {
+            return $value;
+        }
+        if($kind == 'list') {
+            $columns = convertElementHandlesToElementIds($columns);
+        } else {
+            foreach($columns as $index => $column) {
+                if(is_array($column) AND isset($column[0])) {
+                    $converted = convertElementHandlesToElementIds(array($column[0]));
+                    $columns[$index][0] = $converted[0];
+                }
+            }
+        }
+        return $wasSerialized ? serialize($columns) : $columns;
+    }
+
+    /**
+     * Turn one stored column reference into a handle.
+     *
+     * Deliberately not convertElementIdsToElementHandles(): that one works out a single form id from the
+     * first entry and converts the whole set within it, which is wrong here on two counts. A screen's columns
+     * can come from several forms when a relationship is in effect, and the first column is often a metadata
+     * field, which it cannot resolve a form from - it throws in that case.
+     *
+     * An id that no longer resolves is returned as it is rather than raising. This runs while a screen is
+     * being rendered, so one column left over from a deleted element must not take the whole screen down; it
+     * simply will not match a column and is ignored downstream.
+     *
+     * @param mixed $reference An element id, an element handle, or a metadata field name.
+     * @return mixed The handle, or the reference unchanged.
+     */
+    protected function columnReferenceAsHandle($reference) {
+        if(!is_numeric($reference)) {
+            return $reference; // already a handle, or a metadata field name
+        }
+        static $handles = array();
+        $reference = intval($reference);
+        if(!isset($handles[$reference])) {
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            $elementObject = $element_handler->get($reference);
+            $handles[$reference] = $elementObject ? $elementObject->getVar('ele_handle') : $reference;
+        }
+        return $handles[$reference];
     }
 
     public function form_id() {
@@ -174,7 +282,9 @@ class formulizeScreen extends FormulizeObject {
             // there is no template saved in memory, read it from the file
             $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$this->getVar('sid')."/".$templateName.".php";
             if (file_exists($pathname)) {
-                $templates[$theme][$this->getVar('sid')][$templateName] = file_get_contents($pathname);
+                // a template that says nothing is no template, and the screen is drawn with the default
+                $template = file_get_contents($pathname);
+                $templates[$theme][$this->getVar('sid')][$templateName] = formulize_screenTemplateIsEmpty($template) ? '' : $template;
             } else {
                 $templates[$theme][$this->getVar('sid')][$templateName] = $this->getVar($templateName) ? htmlspecialchars_decode($this->getVar($templateName), ENT_QUOTES) : $this->getVar($templateName);
                 if ($templates[$theme][$this->getVar('sid')][$templateName] AND strlen($templates[$theme][$this->getVar('sid')][$templateName]) > 0) {
@@ -194,6 +304,19 @@ class formulizeScreen extends FormulizeObject {
             $theme = $xoopsConfig['theme_set'];
         }
         $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$this->getVar('sid')."/";
+        $filename = $pathname.$template_name.".php";
+
+        // a template that says nothing is the screen having no template of its own, and it is drawn with the
+        // default, so it gets no file - and once none of the screen's templates are left, no folder either
+        if (formulize_screenTemplateIsEmpty($template_content)) {
+            if (file_exists($filename) AND !unlink($filename)) {
+                error_log("ERROR: Could not remove empty template cache file: $filename");
+                return false;
+            }
+            formulize_removeScreenTemplateFolderIfEmpty($pathname);
+            return true;
+        }
+
         // check if folder exists, if not, make it.
         if (!is_dir($pathname)) {
             mkdir($pathname, 0777, true);
@@ -202,8 +325,6 @@ class formulizeScreen extends FormulizeObject {
         if (!is_writable($pathname)) {
             chmod($pathname, 0777);
         }
-
-        $filename = $pathname."/".$template_name.".php";
 
         $success = file_put_contents($filename, $template_content);
         if (false === $success) {
@@ -218,11 +339,6 @@ class formulizeScreen extends FormulizeObject {
 
 #[AllowDynamicProperties]
 class formulizeScreenHandler {
-
-	// every screen type handler extends this one, so putting the trait here gives them all the shared
-	// vocabulary for working out what refers to an element - each type then declares its own
-	// scanForElementReferences() covering the columns it is the owner of
-	use formulizeElementReferenceScanTrait;
 
 	// marks the stand-in handle settleHandle gives a new screen that has nothing usable to make one from, so
 	// that insert() can recognize it and swap in a handle made from the sid the database has just assigned
@@ -564,6 +680,9 @@ class formulizeScreenHandler {
     // CLONE AND INSERT CLONED FORM INTO FORMULIZE_SCREEN TABLE
     // Takes the screen id of the screen being cloned
     // Returns the id of the newly cloned screen inserted into table
+    // The clone gets a handle of its own, made from its new title, since a handle names one screen. It gets no
+    // address, since the address the original has is the original's - two screens on one address would leave
+    // which one it opens to chance.
     function insertCloneIntoScreenTable($sid, $newtitle) {
         $getrow = q("SELECT * FROM " . $this->db->prefix("formulize_screen") . " WHERE sid = $sid");
         $insert_sql = "INSERT INTO " . $this->db->prefix("formulize_screen") . " (";
@@ -580,6 +699,8 @@ class formulizeScreenHandler {
         foreach($getrow[0] as $field=>$value) {
             if($field == "sid") { continue; }
             if($field == "title") { $value = $newtitle; }
+            if($field == "screen_handle") { $value = $this->makeHandleUnique($newtitle); }
+            if($field == "rewriteruleAddress") { $value = ""; }
             if(!$start) { $insert_sql .= ", "; }
             $start = 0;
             $insert_sql .= "'".formulize_db_escape($value)."'";
@@ -622,39 +743,32 @@ class formulizeScreenHandler {
         if(!$result = $this->db->query($insert_sql)) {
             throw new Exception("Could not clone screen '$newtitle' into $tablename. SQL: $insert_sql. ".$this->db->error());
         }
+        $this->copyTemplateFiles($sid, $newsid);
         return $result;
     }
 
-	/**
-	 * Where does an element get referenced in the columns every screen has, whatever its type?
-	 *
-	 * Only rewriteruleElement, which names the element a screen puts in the address bar instead of the entry
-	 * id. The per-type settings are each type handler's own scanForElementReferences().
-	 *
-	 * Deliberately not called scanForElementReferences(): every screen type handler extends this class, so a
-	 * shared name would be inherited by all of them and this row would be reported once per type.
-	 * formulizeElementsHandler::findReferencesToElement() calls this once, on this handler.
-	 *
-	 * @param object $elementObject The element being asked about.
-	 * @return array The references found.
-	 */
-	public function scanScreenTableForElementReferences($elementObject) {
-		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
-		$references = array();
-		// this setting only ever holds an id, never a handle, so there is nothing else to match on
-		$sql = "SELECT sid, title FROM ".$this->db->prefix('formulize_screen')." WHERE rewriteruleElement = ".intval($elementId);
-		if(!$result = $this->db->query($sql)) {
-			return $references;
-		}
-		while($row = $this->db->fetchArray($result)) {
-			$references[] = $this->elementReference(
-				_AM_ELE_USAGE_SECTION_SCREEN_ADDRESSES,
-				$this->describeById($row['title'], 'screen', $row['sid']).' - the address will go back to using the entry id',
-				'formulize_screen', 'sid', $row['sid'], array('rewriteruleElement' => 0)
-			);
-		}
-		return $references;
-	}
+    /**
+     * Give a cloned screen copies of the original's own template files, in every theme that has them -
+     * templates/screens/<theme>/<sid>/ - since they are the templates themselves, and are kept nowhere else.
+     * @param int $sid The screen being cloned.
+     * @param int $newsid The clone.
+     * @return void
+     */
+    function copyTemplateFiles($sid, $newsid) {
+        $screensDir = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/";
+        foreach((array) glob($screensDir."*/".intval($sid), GLOB_ONLYDIR) as $sourceDir) {
+            $targetDir = dirname($sourceDir)."/".intval($newsid);
+            if(!is_dir($targetDir) AND !mkdir($targetDir, 0777, true)) {
+                error_log("ERROR: Could not make the folder for the templates of cloned screen $newsid: $targetDir");
+                continue;
+            }
+            foreach((array) glob($sourceDir."/*") as $sourceFile) {
+                if(is_file($sourceFile) AND !copy($sourceFile, $targetDir."/".basename($sourceFile))) {
+                    error_log("ERROR: Could not copy template file $sourceFile for cloned screen $newsid");
+                }
+            }
+        }
+    }
 
 }
 
@@ -771,6 +885,29 @@ function getDefaultTemplate($templateName, $type, $theme="") {
 	return $cachedDefaultTemplates[$theme][$type][$templateName];
 }
 
+/**
+ * Does a screen's template say nothing? Empty, or holding only the opening PHP tag that a code editor starts with.
+ * A screen with a template like that has no template of its own, and is drawn with the default.
+ *
+ * @param string $template The template's contents.
+ * @return bool True if there is nothing in it.
+ */
+function formulize_screenTemplateIsEmpty($template) {
+	return trim(removeOpeningPHPTag((string) $template)) === '';
+}
+
+/**
+ * Remove a screen's folder of templates, templates/screens/<theme>/<sid>/, if there is nothing left in it.
+ *
+ * @param string $folder The folder's path.
+ * @return void
+ */
+function formulize_removeScreenTemplateFolderIfEmpty($folder) {
+	if (is_dir($folder) AND !array_diff((array) scandir($folder), array('.', '..'))) {
+		rmdir($folder);
+	}
+}
+
 // returns the actual template we will use at render time. Reverts to default template if no specific template is set for this screen.
 function getTemplateToRender($templateName, $screenOrScreenType="", $theme="") {
 	if(is_object($screenOrScreenType) AND is_a($screenOrScreenType, 'formulizeScreen')) {
@@ -801,7 +938,8 @@ function getTemplatePath($screenOrScreenType, $templateName, $subdir = '') {
 	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/default/".$type."/".$file;
 	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$type."/".$file;
 	foreach($paths as $path) {
-		if(file_exists($path) AND filesize($path)) {
+		// a template that says nothing is no template, and the next one along is used
+		if(file_exists($path) AND filesize($path) AND !formulize_screenTemplateIsEmpty(file_get_contents($path))) {
 			return $path;
 		}
 	}

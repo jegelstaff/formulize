@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 25,
+	'dbversion' => 26,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -47,23 +47,25 @@ $modversion['sqlfile']['mysql'] = "sql/mysql.sql";
 $modversion['sqlfile']['pdo.mysql'] = "sql/mysql.sql";
 
 // Tables created by sql file (without prefix!)
+// Tables marked LEGACY are no longer created or used. They are listed only so that uninstalling Formulize drops
+// them on very old sites that still have them.
 $modversion['tables'] = array(
 	"formulize",
 	"formulize_id",
-	"formulize_menu",
+	"formulize_menu", // LEGACY
 	"formulize_menu_links",
 	"formulize_menu_permissions",
 	"formulize_resource_mapping",
 	"formulize_frameworks",
-	"formulize_framework_forms",
-	"formulize_framework_elements",
+	"formulize_framework_forms", // LEGACY
+	"formulize_framework_elements", // LEGACY
 	"formulize_framework_links",
-	"formulize_menu_cats",
+	"formulize_menu_cats", // LEGACY
 	"formulize_saved_views",
 	"group_lists",
 	"formulize_other",
 	"formulize_notification_conditions",
-	"formulize_valid_imports",
+	"formulize_valid_imports", // LEGACY
 	"formulize_screen",
 	"formulize_screen_multipage",
 	"formulize_screen_listofentries",
@@ -84,7 +86,8 @@ $modversion['tables'] = array(
 	"formulize_tokens",
   "formulize_digest_data",
   "formulize_passcodes",
-  "tfa_codes"
+  "tfa_codes",
+  "formulize_ai_keys"
 );
 
 $modversion['formulize_exportable_tables'] = array(
@@ -116,6 +119,286 @@ $modversion['formulize_exportable_tables'] = array(
     "formulize_apikeys",
     "formulize_tokens",
     "formulize_passcodes"
+);
+
+// Everywhere a setting can refer to an element. The usage report, the clean up when an element is deleted, and the
+// rewrite when its handle changes all work from this, through formulizeElementReferences
+// (class/elementReferences.php), which documents the format. What an element type keeps in its own ele_value is
+// declared on its handler, as a static $eleValueReferences.
+//
+// For each table: its key column, the usage report heading and how a row is named, and each column that can
+// refer to an element - the shape of what is stored, what it holds, and what a deletion does with it. 'holds'
+// is 'id' where only ids have ever been stored, 'handle' where Formulize saves handles, and 'either' where it
+// now saves ids but older settings can still hold handles - a rename writes the element's id there, so the
+// setting ends up the way a save would leave it today.
+//
+// Records are left out even where they mention an element - logs, people's "Other" answers, digest content -
+// since they are a history of what happened rather than settings, and so is anything holding arbitrary values,
+// like tokens and passcodes.
+//
+// The tables are listed in the order the usage report reads, screens first.
+$modversion['formulize_element_references'] = array(
+
+	'formulize_screen_calendar' => array(
+		'key' => 'sid',
+		'section' => '_AM_ELE_USAGE_SECTION_CALENDAR_SCREENS',
+		'label' => '{title} (screen {sid})',
+		'joins' => array(array('table' => 'formulize_screen', 'on' => array('sid' => 'sid'), 'columns' => array('title' => 'title'))),
+		'columns' => array(
+			'datasets' => array('shape' => 'property', 'class' => 'formulizeCalendarScreenDataset', 'class_file' => 'calendarScreen.php',
+				'property' => 'datehandle', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => '',
+				'describe' => 'the date the entries are placed on, which the screen cannot be drawn without'),
+		),
+	),
+
+	'formulize_screen_form' => array(
+		'key' => 'sid',
+		'section' => '_AM_ELE_USAGE_SECTION_FORM_SCREENS',
+		'label' => '{title} (screen {sid})',
+		'joins' => array(array('table' => 'formulize_screen', 'on' => array('sid' => 'sid'), 'columns' => array('title' => 'title'))),
+		'columns' => array(
+			// an empty list means "show every element", so a screen showing only this one is never emptied
+			'formelements' => array('shape' => 'list', 'holds' => 'id', 'on_delete' => 'remove_unless_empty',
+				'describe' => 'one of the elements chosen to appear',
+				'describe_when_emptied' => 'the only element chosen to appear, so the screen will show nothing until another is chosen'),
+			'elementdefaults' => array('shape' => 'keys', 'holds' => 'either', 'on_delete' => 'remove',
+				'describe' => 'given a default value by the screen'),
+		),
+	),
+
+	'formulize_screen_listofentries' => array(
+		'key' => 'sid',
+		'section' => '_AM_ELE_USAGE_SECTION_LIST_SCREENS',
+		'label' => '{title} (screen {sid})',
+		'joins' => array(array('table' => 'formulize_screen', 'on' => array('sid' => 'sid'), 'columns' => array('title' => 'title'))),
+		'columns' => array(
+			// each row is a column: the element at 0, ids since formulizeScreen::setVar converts them, handles in
+			// rows not saved since. The search the column starts with is at 1, and can carry {handle} and
+			// {search_handle} tokens, as a saved view's searches can.
+			'advanceview' => array(
+				array('shape' => 'rows', 'at' => 0, 'holds' => 'either', 'on_delete' => 'remove',
+					'describe' => 'a column'),
+				array('shape' => 'path', 'path' => '*.1', 'of' => array('shape' => 'tokens', 'token_prefixes' => array('', 'search_'))),
+			),
+			'hiddencolumns' => array('shape' => 'list', 'holds' => 'either', 'on_delete' => 'remove',
+				'describe' => 'a hidden value column'),
+			'decolumns' => array('shape' => 'list', 'holds' => 'either', 'on_delete' => 'remove',
+				'describe' => 'an inline editable column'),
+			'fundamental_filters' => array('shape' => 'conditions', 'holds' => 'either', 'on_delete' => 'remove',
+				'describe' => 'a fundamental filter'),
+			// a custom button's effects sit under numeric keys beside its own properties. The effect goes, the
+			// button stays - removing someone's button is a bigger decision than removing an effect that cannot run.
+			// The value an effect writes is PHP when it mentions $value - see processButtonValue().
+			'customactions' => array(
+				array('shape' => 'path', 'path' => '*.#.element', 'holds' => 'either', 'on_delete' => 'remove_parent',
+					'describe' => 'the effect of a custom button'),
+				array('shape' => 'path', 'path' => '*.#.value', 'of' => array('shape' => 'code')),
+			),
+		),
+	),
+
+	'formulize_screen_map' => array(
+		'key' => 'sid',
+		'section' => '_AM_ELE_USAGE_SECTION_MAP_SCREENS',
+		'label' => '{title} (screen {sid})',
+		'joins' => array(array('table' => 'formulize_screen', 'on' => array('sid' => 'sid'), 'columns' => array('title' => 'title'))),
+		'columns' => array(
+			'lat_element' => array('shape' => 'value', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => '',
+				'describe' => 'the latitude, which the screen cannot be drawn without'),
+			'lng_element' => array('shape' => 'value', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => '',
+				'describe' => 'the longitude, which the screen cannot be drawn without'),
+			'label_element' => array('shape' => 'value', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => '',
+				'describe' => 'the label on each pin'),
+			'description_element' => array('shape' => 'value', 'holds' => 'either', 'on_delete' => 'set', 'set_to' => '',
+				'describe' => 'the description on each pin'),
+			// as a list screen's columns: the element at 0, the search the column starts with at 1
+			'columns' => array(
+				array('shape' => 'rows', 'at' => 0, 'holds' => 'either', 'on_delete' => 'remove',
+					'describe' => 'a column'),
+				array('shape' => 'path', 'path' => '*.1', 'of' => array('shape' => 'tokens', 'token_prefixes' => array('', 'search_'))),
+			),
+			'fundamental_filters' => array('shape' => 'conditions', 'holds' => 'either', 'on_delete' => 'remove',
+				'describe' => 'a fundamental filter'),
+		),
+	),
+
+	'formulize_screen_multipage' => array(
+		'key' => 'sid',
+		'section' => '_AM_ELE_USAGE_SECTION_FORM_SCREENS',
+		'label' => '{title} (screen {sid})',
+		'joins' => array(array('table' => 'formulize_screen', 'on' => array('sid' => 'sid'), 'columns' => array('title' => 'title'))),
+		'columns' => array(
+			// removed from the pages by formulizeMultiPageScreenHandler::removeElementsFromScreens(), which delete()
+			// calls, so only described here - including any page it would leave empty. A custom page is stored as
+			// array('PHP', code) or array('HTML', markup) instead of a list of elements.
+			'pages' => array(
+				array('shape' => 'each', 'of' => array('shape' => 'list'), 'holds' => 'id', 'on_delete' => 'elsewhere',
+					'describe_pages' => true),
+				// only a PHP page's code is run; an HTML page is printed as it is, and its attributes are not references
+				array('shape' => 'path', 'path' => '*.1', 'where' => array(0 => 'PHP'), 'of' => array('shape' => 'code')),
+			),
+			// keyed by page number
+			'conditions' => array('shape' => 'each', 'of' => array('shape' => 'conditions'), 'holds' => 'either', 'on_delete' => 'remove',
+				'describe' => 'in the conditions that decide whether a page is shown'),
+			'elementdefaults' => array('shape' => 'keys', 'holds' => 'either', 'on_delete' => 'remove',
+				'describe' => 'given a default value by the screen'),
+		),
+	),
+
+	'formulize_screen' => array(
+		'key' => 'sid',
+		'section' => '_AM_ELE_USAGE_SECTION_SCREEN_ADDRESSES',
+		'label' => '{title} (screen {sid})',
+		'columns' => array(
+			'rewriteruleElement' => array('shape' => 'value', 'holds' => 'id', 'on_delete' => 'set', 'set_to' => 0,
+				'describe' => 'the address will go back to using the entry id'),
+		),
+	),
+
+	'formulize' => array(
+		'key' => 'ele_id',
+		'own_row' => true, // a row is an element, and the element's own row is not a reference to it
+		'section' => '_AM_ELE_USAGE_SECTION_OTHER_ELEMENTS',
+		'label' => "the {ele_type} element '{ele_handle}' (form {id_form})",
+		'columns' => array(
+			'ele_caption' => array('shape' => 'tokens'),
+			'ele_desc' => array('shape' => 'tokens'),
+			'ele_filtersettings' => array('shape' => 'conditions', 'holds' => 'either', 'on_delete' => 'remove',
+				'describe' => 'in the conditions that decide whether it is shown'),
+			'ele_disabledconditions' => array('shape' => 'conditions', 'holds' => 'either', 'on_delete' => 'remove',
+				'describe' => 'in the conditions that decide whether it is read only'),
+			'ele_dynamicdefault_conditions' => array('shape' => 'conditions', 'holds' => 'either', 'on_delete' => 'remove',
+				'describe' => 'in the conditions on its dynamic default value'),
+			// with nothing left to read the default out of, its conditions go too, as the element editor does
+			'ele_dynamicdefault_source' => array('shape' => 'value', 'holds' => 'id', 'on_delete' => 'set', 'set_to' => 0,
+				'also_set' => array('ele_dynamicdefault_conditions' => 'a:0:{}'),
+				'describe' => 'as the source of its dynamic default value'),
+			'ele_value' => array('shape' => 'per_type'),
+		),
+	),
+
+	'formulize_saved_views' => array(
+		'key' => 'sv_id',
+		'section' => '_AM_ELE_USAGE_SECTION_SAVED_VIEWS',
+		'label' => '{sv_name} (view {sv_id})',
+		'columns' => array(
+			// a column can carry the hidden column prefix, when it was only included for a persistent search on it.
+			// The searches line up with the columns by position, so they lose the same positions.
+			'sv_oldcols' => array('shape' => 'list', 'delimiter' => ',', 'prefix' => 'formulizeSavedViewsHandler::HIDDEN_COLUMN_PREFIX',
+				'holds' => 'either', 'parallel' => array('sv_quicksearches' => 'formulizeSavedViewsHandler::SEARCH_DELIMITER'),
+				'on_delete' => 'remove', 'describe' => 'a column'),
+			// a view saved from a screen that sorts on several columns holds them all, with their directions in step in sv_order
+			'sv_sort' => array('shape' => 'list', 'delimiter' => ',', 'holds' => 'either', 'parallel' => array('sv_order' => ','),
+				'on_delete' => 'remove', 'describe' => 'a column it is sorted by'),
+			// the calculations name their columns by id, and three settings run parallel to them
+			'sv_calc_cols' => array('shape' => 'list', 'delimiter' => 'formulizeSavedViewsHandler::CALCULATION_DELIMITER', 'holds' => 'id',
+				'parallel' => array('sv_calc_calcs' => 'formulizeSavedViewsHandler::CALCULATION_DELIMITER',
+					'sv_calc_blanks' => 'formulizeSavedViewsHandler::CALCULATION_DELIMITER',
+					'sv_calc_grouping' => 'formulizeSavedViewsHandler::CALCULATION_DELIMITER'),
+				'on_delete' => 'remove', 'describe' => 'a calculation'),
+			// what each calculation is grouped by: per calculated column, per calculation, then the element ids
+			'sv_calc_grouping' => array('shape' => 'list', 'delimiter' => array('formulizeSavedViewsHandler::CALCULATION_DELIMITER', ',', '!@^%*'),
+				'holds' => 'id', 'on_delete' => 'remove', 'describe' => 'what a calculation is grouped by'),
+			// a search can name another column's search box, {search_handle}
+			'sv_quicksearches' => array('shape' => 'tokens', 'token_prefixes' => array('', 'search_')),
+			// the columns whose search boxes the view puts above the list for people to use
+			'sv_pubfilters' => array('shape' => 'list', 'delimiter' => ',', 'holds' => 'either', 'on_delete' => 'remove',
+				'describe' => 'a search box it offers'),
+		),
+	),
+
+	'formulize_group_filters' => array(
+		'key' => 'filterid',
+		'section' => '_AM_ELE_USAGE_SECTION_GROUP_FILTERS',
+		'label' => '{group_name} (group {groupid})',
+		'joins' => array(
+			array('table' => 'groups', 'on' => array('groupid' => 'groupid'), 'columns' => array('name' => 'group_name')),
+			array('table' => 'formulize_id', 'on' => array('fid' => 'id_form'), 'columns' => array('form_title' => 'form_title')),
+		),
+		'columns' => array(
+			'filter' => array('shape' => 'conditions', 'holds' => 'either', 'on_delete' => 'remove',
+				'describe' => 'which entries of {form_title} they can see'),
+		),
+	),
+
+	'formulize_id' => array(
+		'key' => 'id_form',
+		'section' => '_AM_ELE_USAGE_SECTION_FORM_SETTINGS',
+		'label' => '{form_title} (form {id_form})',
+		'columns' => array(
+			// key 0 holds the conditions that apply generally, every other key is a group id
+			'entries_are_users_conditions' => array('shape' => 'each', 'of' => array('shape' => 'conditions'), 'holds' => 'either',
+				'on_delete' => 'remove', 'describe' => 'in the conditions that decide whether an entry becomes a user account'),
+			'entries_are_users_default_groups_element_links' => array('shape' => 'each', 'of' => array('shape' => 'list'), 'holds' => 'id',
+				'on_delete' => 'remove', 'describe' => 'as what connects a group to the entry that decides who is in it'),
+			// cleared by formulizeElementsHandler::delete(), and reported separately as is_the_principal_identifier
+			'pi' => array('shape' => 'value', 'holds' => 'id', 'on_delete' => 'elsewhere',
+				'describe' => 'as its principal identifier'),
+			// the columns of the form's default list, with a separator before the first one. Very old forms hold
+			// captions here instead of ids, which this does not match.
+			'headerlist' => array('shape' => 'list', 'delimiter' => '*=+*:', 'holds' => 'id', 'on_delete' => 'remove',
+				'describe' => 'one of the columns of its default list'),
+		),
+	),
+
+	'formulize_framework_links' => array(
+		'key' => 'fl_id',
+		'section' => '_AM_ELE_USAGE_SECTION_RELATIONSHIPS',
+		'label' => '{frame_name} - joins {form1_title} (form {fl_form1_id}) to {form2_title} (form {fl_form2_id})',
+		'joins' => array(
+			array('table' => 'formulize_frameworks', 'on' => array('fl_frame_id' => 'frame_id'), 'columns' => array('frame_name' => 'frame_name')),
+			array('table' => 'formulize_id', 'on' => array('fl_form1_id' => 'id_form'), 'columns' => array('form_title' => 'form1_title')),
+			array('table' => 'formulize_id', 'on' => array('fl_form2_id' => 'id_form'), 'columns' => array('form_title' => 'form2_title')),
+		),
+		'columns' => array(
+			// a key only counts on the side of the link that is the element's own form. Links are removed by
+			// formulizeFrameworksHandler, through formulizeElementsHandler::delete().
+			'fl_key1' => array('shape' => 'value', 'holds' => 'id', 'when_form_is' => 'fl_form1_id', 'on_delete' => 'elsewhere',
+				'describe' => 'what the connection is made on'),
+			'fl_key2' => array('shape' => 'value', 'holds' => 'id', 'when_form_is' => 'fl_form2_id', 'on_delete' => 'elsewhere',
+				'describe' => 'what the connection is made on'),
+		),
+	),
+
+	'formulize_notification_conditions' => array(
+		'key' => 'not_cons_id',
+		'section' => '_AM_ELE_USAGE_SECTION_NOTIFICATIONS',
+		'label' => 'a notification on {form_title} (form {not_cons_fid})',
+		'joins' => array(array('table' => 'formulize_id', 'on' => array('not_cons_fid' => 'id_form'), 'columns' => array('form_title' => 'form_title'))),
+		'columns' => array(
+			// Left for a person to change rather than cleaned up: taking away a notification's last condition, or the
+			// element that says who receives it, changes who it goes to, which is not a decision a deletion can make.
+			// The conditions are three serialized arrays inside the serialized value - see include/setnot.php.
+			// Unlike other conditions, a term here is never read for {handle} tokens, so none are looked for.
+			'not_cons_con' => array('shape' => 'conditions', 'serialized_parts' => true, 'holds' => 'id', 'token_prefixes' => array(), 'on_delete' => 'report',
+				'describe' => 'in the conditions that decide when it is sent, which you will need to change yourself'),
+			'not_cons_elementuids' => array('shape' => 'value', 'holds' => 'id', 'on_delete' => 'report',
+				'describe' => 'the element that says who receives it, which you will need to change yourself'),
+			'not_cons_linkcreator' => array('shape' => 'value', 'holds' => 'id', 'on_delete' => 'report',
+				'describe' => 'the element whose linked entry\'s creator receives it, which you will need to change yourself'),
+			'not_cons_elementemail' => array('shape' => 'value', 'holds' => 'id', 'on_delete' => 'report',
+				'describe' => 'the element holding the address it is sent to, which you will need to change yourself'),
+			'not_cons_subject' => array('shape' => 'tags'),
+		),
+	),
+
+	'formulize_advanced_calculations' => array(
+		'key' => 'acid',
+		'section' => '_AM_ELE_USAGE_SECTION_FORM_SETTINGS',
+		'label' => 'the advanced calculation {name} (calculation {acid})',
+		'columns' => array(
+			'input' => array('shape' => 'code'),
+			'output' => array('shape' => 'code'),
+			// each step is a query, which names a column by the bare handle, and PHP around it
+			'steps' => array(
+				array('shape' => 'path', 'path' => '#.sql', 'of' => array('shape' => 'code', 'sql' => true)),
+				array('shape' => 'path', 'path' => '#.preCalculate|calculate|postCalculate', 'of' => array('shape' => 'code')),
+			),
+			// each filter can be tied to an element, by id, or to none
+			'fltr_grps' => array('shape' => 'path', 'path' => '#.form', 'holds' => 'id', 'on_delete' => 'set', 'set_to' => 'none',
+				'describe' => 'the element one of its filters is tied to'),
+		),
+	),
 );
 
 // tables that we skip when only dealing with groups in common

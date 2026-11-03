@@ -88,9 +88,13 @@ class formulizeDataHandler {
 																		"owner_groups" => "text");
 	}
 
-	// this function copies data from one form to another
-	// sourceFid is the ID of the form that we're copying data from
-	// map is an array with the keys being the handles in the source form, and the values being the handle in the new cloned form
+	/**
+	 * Copy the data from one form to this one, which is a clone of it.
+	 * @param int $sourceFid The id of the form the data is copied from.
+	 * @param array $map The element handles in the source form as keys, and the handles of the elements they were cloned to in this form as values.
+	 * @return bool True if the data was copied, false if the copying failed.
+	 * @formulizeElement $map map
+	 */
 	function cloneData($sourceFid, $map) {
 		global $xoopsDB;
 		// 1. get all the data in the source form
@@ -155,7 +159,7 @@ class formulizeDataHandler {
 				$element_handler = xoops_getmodulehandler('elements', 'formulize');
 				$elementObject = $element_handler->get($elementId); // gets the element from the old form, that the user just clicked on to make a copy of
 				$ele_value = $elementObject->getVar('ele_value');
-				$boxproperties = explode("#*=:*", $ele_value[2]); // split the linked selectbox properties into target fid and target element handle
+				$boxproperties = formulize_linkedSourceParts($ele_value[2]); // split the linked selectbox properties into target fid and target element handle
 				$lines = file_get_contents(XOOPS_ROOT_PATH."/cache/formulize_clonedFormMaps_".$boxproperties[0]."_to_".$targetForm); // read the cached info about the cloning of the target form that happened in the past
         list($targetHandleMap, $targetEntryMap) = explode("\r\n", $lines); // get the mapping info about that cloning
 				$targetHandleMap = unserialize($targetHandleMap);
@@ -163,7 +167,7 @@ class formulizeDataHandler {
 				// get the corresponding element to this linked selectbox, from the form we just created in the cloning process
 				$newElement = $element_handler->get($map[$elementObject->getVar('ele_handle')]);
 				$newEleValue = $newElement->getVar('ele_value');
-				$newEleValue[2] = $targetForm."#*=:*".$targetHandleMap[$boxproperties[1]]; // change the element pointer
+				$newEleValue[2] = formulize_linkedSourceString($targetForm, $targetHandleMap[$boxproperties[1]]); // change the element pointer
 				$newElement->setVar('ele_value', $newEleValue);
 				if(!$element_handler->insert($newElement)) { // update the element properties in the database
 					print "Error: could not relink linked selectbox element ".$map[$elementObject->getVar('ele_handle')]." to the selected new target form.<br>";
@@ -219,8 +223,15 @@ class formulizeDataHandler {
   }
 
 
-	// this function looks in a particular entry in a particular form, and finds the entries it is pointing at, and then finds the new entries that it should be pointing at, and reassigns the values to match
-	// intended to be called once per pair of linked selectboxes involved in an entry cloning process
+	/**
+	 * Point a linked selectbox in cloned entries at the clones of the entries it pointed at, where those were cloned
+	 * too. Intended to be called once per pair of linked selectboxes involved in an entry cloning process.
+	 * @param int $sourceFid The id of the form the linked selectbox gets its options from.
+	 * @param object $lsbElement The linked selectbox element object.
+	 * @param array $entryMap Form id => original entry id => the ids of its clones.
+	 * @return bool False if the reassigning failed.
+	 * @formulizeElement $lsbElement one
+	 */
 	function reassignLSB($sourceFid, $lsbElement, $entryMap) {
 		global $xoopsDB;
 		foreach($entryMap[$lsbElement->getVar('id_form')] as $originalEntry=>$newEntries) {
@@ -363,7 +374,13 @@ class formulizeDataHandler {
 	}
 
 
-	// this function figures out if a given element has a value in the given entry
+	/**
+	 * Does an element have a value in an entry?
+	 * @param int $id The entry id.
+	 * @param int|string|object $element_id The element id, handle or object, or a metadata field such as creation_uid.
+	 * @return bool
+	 * @formulizeElement $element_id one
+	 */
 	function elementHasValueInEntry($id, $element_id) {
 		if(isMetaDataField($element_id)) {
 			$fieldName = $element_id;
@@ -391,8 +408,15 @@ class formulizeDataHandler {
 		}
 	}
 
-	// this function returns the value of a given element in the given entry
-	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_group_ids.
+	/**
+	 * The value of an element in an entry, as it is stored in the database.
+	 * @param int $id The entry id.
+	 * @param int|string|object $element_id The element id, handle or object, or a metadata field such as creation_uid.
+	 * @param array $scope_uids Optional. User ids the entry must have been made by. Only for when entries by the current user are searched for. All other group based scopes should use scope_group_ids.
+	 * @param array $scope_group_ids Optional. Group ids the entry must belong to.
+	 * @return mixed The value, or false if the element is not found or the query failed.
+	 * @formulizeElement $element_id one
+	 */
 	function getElementValueInEntry($id, $element_id, $scope_uids=array(), $scope_group_ids=array()) {
 		if(isMetaDataField($element_id)) {
 			$fieldName = $element_id;
@@ -555,12 +579,29 @@ class formulizeDataHandler {
 
 	}
 
-    // this function returns the entry ID of the last entry found in the form with the specified value in the specified element
+    /**
+     * The entry id of the last entry in the form with the value in the element.
+     * @param int|string|object $element_id The element id, handle or object, or a metadata field such as creation_uid.
+     * @param mixed $value The value to look for.
+     * @param string $operator Optional. The comparison to make. Defaults to =.
+     * @param array $scope_uids Optional. User ids the entry must have been made by.
+     * @return int|false The entry id, or false if none was found.
+     * @formulizeElement $element_id one
+     */
     function findLastEntryWithValue($element_id, $value, $operator="=", $scope_uids=array()) {
         return $this->findFirstEntryWithValue($element_id, $value, $operator, $scope_uids, true);
     }
 
-	// this function returns the entry ID of the first entry found in the form with the specified value in the specified element
+	/**
+	 * The entry id of the first entry in the form with the value in the element.
+	 * @param int|string|object $element_id The element id, handle or object, or a metadata field such as creation_uid.
+	 * @param mixed $value The value to look for.
+	 * @param string $operator Optional. The comparison to make. Defaults to =.
+	 * @param array $scope_uids Optional. User ids the entry must have been made by.
+	 * @param bool $desc Optional. Find the last entry instead.
+	 * @return int|false The entry id, or false if none was found.
+	 * @formulizeElement $element_id one
+	 */
 	function findFirstEntryWithValue($element_id, $value, $operator="=", $scope_uids=array(), $desc=false) {
 		if(isMetaDataField($element_id)) {
 			$fieldName = $element_id;
@@ -596,9 +637,12 @@ class formulizeDataHandler {
 /**
 	 * This function returns the requested field(s) found for the first entry in the form which matches all the specified values for the specified elements
 	 * @param array $values An array of key=>value pairs, where keys are the element ids or element handles, and the values are the things to look for
-	 * @param string $operator Optional. A string indicating the operator to use when looking for the specified values, or an array of operators corresponding to the key value pairs we're looking for.
-	 * @param string $fieldsToReturn Optional. A field name or comma separated set of field names, or * which will be used in the SELECT clause. Defaults to entry_id.
+	 * @param string|array $operator Optional. A string indicating the operator to use for all the specified values, or an array of operators keyed by the same element ids or handles as the values array, which is the recommended way. An array without those keys is matched to the values by position, which can mistake a position for an element id when the values are keyed by id.
+	 * @param string $fieldsToReturn Optional. A field name or comma separated set of field names, or * which will be used in the SELECT clause. The field names are element handles, or metadata fields such as entry_id. Defaults to entry_id.
 	 * @return mixed Returns the value of the specified field for the first entry found, or an array of all the field values if more than one field is requested, where the keys are the field names and values are the values. Returns false if no entries were found or the query failed.
+	 * @formulizeElement $values keys
+	 * @formulizeElement $operator keys
+	 * @formulizeElement $fieldsToReturn commas
 	 */
 	function findFirstEntryWithAllValues($values, $operator="=", $fieldsToReturn = "entry_id") {
 		return $this->findEntryOrEntriesWithAllValues($values, $operator, true, $fieldsToReturn);
@@ -607,9 +651,12 @@ class formulizeDataHandler {
 	/**
 	 * This function returns the requested field(s) found for all the entries in the form which match all the specified values for the specified elements
 	 * @param array $values An array of key=>value pairs, where keys are the element ids or element handles, and the values are the things to look for
-	 * @param string $operator Optional. A string indicating the operator to use when looking for the specified values, or an array of operators corresponding to the key value pairs we're looking for.
-	 * @param string $fieldsToReturn Optional. A field name or comma separated set of field names, or * which will be used in the SELECT clause. Defaults to entry_id.
+	 * @param string|array $operator Optional. A string indicating the operator to use for all the specified values, or an array of operators keyed by the same element ids or handles as the values array, which is the recommended way. An array without those keys is matched to the values by position, which can mistake a position for an element id when the values are keyed by id.
+	 * @param string $fieldsToReturn Optional. A field name or comma separated set of field names, or * which will be used in the SELECT clause. The field names are element handles, or metadata fields such as entry_id. Defaults to entry_id.
 	 * @return mixed Returns an array of all entries found, keyed by entry_id if that field is one of the requested fields. Each item in the array contains an array of the requested field values, where the keys are the field names and values are the values. Returns false if no entries were found or the query failed.
+	 * @formulizeElement $values keys
+	 * @formulizeElement $operator keys
+	 * @formulizeElement $fieldsToReturn commas
 	 */
 	function findAllEntriesWithAllValues($values, $operator="=", $fieldsToReturn = "entry_id") {
 		return $this->findEntryOrEntriesWithAllValues($values, $operator, false, $fieldsToReturn);
@@ -618,10 +665,13 @@ class formulizeDataHandler {
 	/**
 	 * This function returns the requested field(s) found for the first entry, or all entries, in the form which match all the specified values for the specified elements
 	 * @param array $values An array of key=>value pairs, where keys are the element ids or element handles, and the values are the things to look for
-	 * @param string $operator Optional. A string indicating the operator to use when looking for the specified values, or an array of operators corresponding to the key value pairs we're looking for.
+	 * @param string|array $operator Optional. A string indicating the operator to use for all the specified values, or an array of operators keyed by the same element ids or handles as the values array, which is the recommended way. An array without those keys is matched to the values by position, which can mistake a position for an element id when the values are keyed by id.
 	 * @param boolean $findFirstOnly Optional. A flag to indicate if only the first entry should be returned.
-	 * @param string $fieldsToReturn Optional. A field name or comma separated set of field names, or * which will be used in the SELECT clause. Defaults to entry_id.
+	 * @param string $fieldsToReturn Optional. A field name or comma separated set of field names, or * which will be used in the SELECT clause. The field names are element handles, or metadata fields such as entry_id. Defaults to entry_id.
 	 * @return array Returns the value of the specified field for the first entry found, or an array of all the field values if more than one requested, where the keys are the field names and values are the values. Returns an array of records if more than the first one is requested, and in this case the array will use the entry ids as keys, as long as entry_id was a requested field. Returns null if nothing was found.  Returns false if the query failed.
+	 * @formulizeElement $values keys
+	 * @formulizeElement $operator keys
+	 * @formulizeElement $fieldsToReturn commas
 	 */
 	function findEntryOrEntriesWithAllValues($values, $operator = "=", $findFirstOnly = true, $fieldsToReturn = "entry_id") {
 		global $xoopsDB;
@@ -791,10 +841,11 @@ class formulizeDataHandler {
 	 * Validates the field name as a SQL identifier and normalizes the operator. Handles
 	 * NULL values, IN/NOT IN lists, LIKE wildcards, and scalar comparisons.
 	 *
-	 * @param string $fieldName The column name (validated as a SQL identifier)
+	 * @param string $fieldName The column name (validated as a SQL identifier) - an element handle, or a metadata field such as entry_id
 	 * @param string $operator  SQL operator (=, !=, LIKE, IN, IS NULL, etc.)
 	 * @param mixed  $value     The comparison value (null, scalar, or comma-delimited string for IN)
 	 * @return string|false SQL fragment like "`field` = 'value'", or false if inputs are invalid
+	 * @formulizeElement $fieldName one
 	 */
 	function buildSafeWhereClause($fieldName, $operator, $value) {
 		$operator = self::normalizeSearchOperator($operator);
@@ -836,8 +887,16 @@ class formulizeDataHandler {
 		return "`$fieldName` $operator $quotedValue";
 	}
 
-	// this function returns the entry ID of all entries found in the form with the specified value in the specified element
-	// use of $scope_uids should only be for when entries by the current user are searched for.  All other group based scopes should be done based on the scope_group_ids.
+	/**
+	 * The entry ids of all the entries in the form with the value in the element.
+	 * @param int|string|object $element_id The element id, handle or object, or a metadata field such as creation_uid.
+	 * @param mixed $value The value to look for.
+	 * @param array $scope_uids Optional. User ids the entries must have been made by. Only for when entries by the current user are searched for. All other group based scopes should use scope_group_ids.
+	 * @param array $scope_group_ids Optional. Group ids the entries must belong to.
+	 * @param string $operator Optional. The comparison to make. Defaults to =.
+	 * @return array|false The entry ids, or false if the element is not found or the query failed.
+	 * @formulizeElement $element_id one
+	 */
 	function findAllEntriesWithValue($element_id, $value, $scope_uids=array(), $scope_group_ids=array(), $operator="=") {
 
 		if(isMetaDataField($element_id)) {
@@ -877,8 +936,14 @@ class formulizeDataHandler {
 		return $entries;
 	}
 
-	// this function returns all the values of a given field, for the entries that are passed to it
-    // prepValues will cause the values to be cleaned up by the prepValues function, which makes them more readable
+	/**
+	 * All the values of a field, for the entries given.
+	 * @param string $handle The element handle, or a metadata field such as creation_uid.
+	 * @param int|array $entries The entry id, or an array of them.
+	 * @param bool $prepValues Optional. Make the values readable, with the prepValues function.
+	 * @return array|false The values, or false if no entries were given.
+	 * @formulizeElement $handle one
+	 */
 	function findAllValuesForEntries($handle, $entries, $prepValues=false) {
 		if(!is_array($entries)) {
 			if(is_numeric($entries)) {
@@ -914,11 +979,16 @@ class formulizeDataHandler {
 		return $resultArray;
 	}
 
-	// this function returns all the values of a given field
-    // sort can be ASC or DESC, if left out then results are in creation order
-    // scope_group_ids can be an array of group ids, which will limit the values to those which are owned by users in the given group(s)
-    // scope_uids can be an array of user ids, which will limit the values to those created by the declared users
-    // usePerGroupFilters will trigger the use of permission filters set for the user's groups
+	/**
+	 * All the values of a field.
+	 * @param string $handle The element handle, or a metadata field such as creation_uid.
+	 * @param string $sort Optional. ASC or DESC. If left out, the values are in the order the entries were made.
+	 * @param array $scope_group_ids Optional. Group ids, which limit the values to those owned by users in the groups.
+	 * @param array $scope_uids Optional. User ids, which limit the values to those made by the users.
+	 * @param bool $usePerGroupFilters Optional. Apply the permission filters set for the user's groups.
+	 * @return array The values.
+	 * @formulizeElement $handle one
+	 */
 	function findAllValuesForField($handle, $sort="", $scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false) {
 		// cache is keyed by fid as well as handle, because metadata handles (creation_uid, mod_uid, etc.)
 		// are not unique across forms, so two forms on one page would otherwise share each other's values
@@ -1133,6 +1203,7 @@ class formulizeDataHandler {
 	 * @param boolean|int $proxyUser Optional. The user id of the user who is to be recorded as creating/updating this entry, or false if the currently active user should be used
 	 * @param boolean $forceUpdate Optional. True/false to indicate if the query should be written even on a GET request. Defaults to false (so data is only written on POST requests)
 	 * @param boolean $update_metadata Optional. True/false to indicate if the metadata of the entry should be updated (is set to false when updating derived values for example).
+	 * @formulizeElement $values keys
 	 */
 	function writeEntry($entry_id, $values, $proxyUser=false, $forceUpdate=false, $update_metadata=true) {
 
@@ -1371,7 +1442,12 @@ class formulizeDataHandler {
 		return $entry_to_return;
 	}
 
-    // check a given field against the dataTypeMap, return true if it contains 'date'
+    /**
+     * Is a field in this form's data table a date?
+     * @param string $key The field's name - an element handle, or a metadata field such as creation_datetime - with or without backticks.
+     * @return bool
+     * @formulizeElement $key one
+     */
     function dataTypeIsDate($key) {
         if(count((array) $this->dataTypeMap)==0) {
             $this->dataTypeMap = $this->gatherDataTypes();
@@ -1383,7 +1459,12 @@ class formulizeDataHandler {
         return false; // no it's not
     }
 
-    // check a given field against the dataTypeMap, return true if it's a numeric type
+    /**
+     * Is a field in this form's data table numeric?
+     * @param string $key The field's name - an element handle, or a metadata field such as creation_uid - with or without backticks.
+     * @return bool
+     * @formulizeElement $key one
+     */
     function dataTypeIsNumeric($key) {
         if(count((array) $this->dataTypeMap)==0) {
             $this->dataTypeMap = $this->gatherDataTypes();
@@ -1429,6 +1510,7 @@ class formulizeDataHandler {
 		 * @param mixed $value The value we're going to try and insert into the DB for the given field
 		 * @param mixed $entry_id Optional. The entry id of the record we're inserting this data to, or 'new' to represent a new entry
 		 * @return string A valid string for using in a SQL query to insert/update the value of the field in the database
+		 * @formulizeElement $field one
 		 */
     function formatValueForQuery($field, $value, $entry_id = null) {
 			if ("{WRITEASNULL}" === $value or null === $value) {
@@ -1463,9 +1545,12 @@ class formulizeDataHandler {
 		$this->getEntryMeta($id, true);
 	}
 
-	// change radio button data to checkbox format
-	// added to handle the situations where the radio button elements are converted to checkboxes
-	// $element can be an id or an object
+	/**
+	 * Change radio button data to checkbox format, for when a radio button element is converted to checkboxes.
+	 * @param int|string|object $element The element id, handle or object.
+	 * @return bool False if the data could not be changed.
+	 * @formulizeElement $element one
+	 */
 	function convertRadioDataToCheckbox($element) {
 		if(!$element = _getElementObject($element)) {
 			return false;
@@ -1491,9 +1576,12 @@ class formulizeDataHandler {
 		return true;
 	}
 
-  // change checkbox data to radio button format
-	// added to handle the situations where the radio button elements are converted to checkboxes
-	// $element can be an id or an object
+	/**
+	 * Change checkbox data to radio button format, for when a checkbox element is converted to radio buttons.
+	 * @param int|string|object $element The element id, handle or object.
+	 * @return bool False if the data could not be changed.
+	 * @formulizeElement $element one
+	 */
 	function convertCheckboxDataToRadio($element) {
 		if(!$element = _getElementObject($element)) {
 			return false;
@@ -1511,50 +1599,48 @@ class formulizeDataHandler {
 		return true;
 	}
 
-	// this method does some operations on the database to convert the values in a field to/from encrypted status
-	// note that $elementHandle is the current value of the ele_handle, and we can't go off the element object's properties, since the element is in the middle of being updated in element_save.php when this method is called
+	/**
+	 * Convert the values in an element's field to or from being encrypted.
+	 * @param string $elementHandle The element's handle as it is in the database now. The element object's properties cannot be gone by, since the element is in the middle of being updated in element_save.php when this is called.
+	 * @param bool $currentEncryptionStatus Whether the values are encrypted now.
+	 * @return bool False if the values could not be converted.
+	 * @formulizeElement $elementHandle one
+	 */
 	function toggleEncryption($elementHandle, $currentEncryptionStatus) {
 		if(!$element = _getElementObject($elementHandle)) {
 			return false;
 		}
-		// 1. rename to the current field
+		// 1. rename the current field out of the way, in the data table and the revisions table both - updateField renames it wherever it is
 		// 2. create a new field to put this data in
 		// 3. run the encrypt/decrypt SQL to populate the new field
 		// 4. drop the old field
+		// Steps 2 to 4 happen in the revisions table too, when the form has one. Otherwise it is left with only the renamed
+		// field, and saving a revision fails, since that copies every field of the data table into it by name.
+		$field = formulizeElement::sanitize_handle_name($elementHandle); // as updateField names fields
+		$temporaryField = $field."qaz";
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		if(!$form_handler->updateField($element, $elementHandle, false, $elementHandle."qaz")) { // false is no datatype change, last param is the new name
+		if(!$form_handler->updateField($element, $elementHandle, false, $temporaryField)) { // false is no datatype change, last param is the new name
 			return false;
 		}
-		if($currentEncryptionStatus) {
-			$dataType = 'text';
-			$aesFunction = 'AES_DECRYPT';
-		} else {
-			$dataType = 'blob';
-			$aesFunction = 'AES_ENCRYPT';
-		}
-		global $xoopsDB;
 		$formObject = $form_handler->get($element->getVar('id_form'));
-		$type_with_default = ("text" == $dataType ? "text" : "$dataType NULL default NULL");
-		$insertFieldSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " ADD `$elementHandle` $type_with_default";
-		if(!$insertFieldRes = $xoopsDB->queryF($insertFieldSQL)) {
-			return false;
-		}
-		$toggleSQL = "UPDATE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " SET `$elementHandle` = ".$aesFunction."(".$elementHandle."qaz, '".getAESPassword()."')";
-		if(!$toggleSQLRes = $xoopsDB->queryF($toggleSQL)) {
-			return false;
+		foreach($form_handler->entryTables($formObject) as $table) {
+			if(!$form_handler->moveFieldValuesThroughEncryption($table, $temporaryField, $field, !$currentEncryptionStatus)) {
+				return false;
+			}
 		}
 		self::recordDataChange($element->getVar('id_form'));
-		$dropSQL = "ALTER TABLE " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " DROP ".$elementHandle."qaz";
-		if(!$dropSQLRes = $xoopsDB->queryF($dropSQL)) {
-			return false;
-		}
 		return true;
 	}
 
-	// this function changes selected options that users have made in radio buttons, checkboxes or selectboxes so that they match new options specified by the user...ie: old first option converted to new first option, etc
-	// newValues is the array that is about to be passed in as the new $ele_value[2], which is the array of options
-	// element_id_or_handle is the element we're working with, cannot pass in object!
-	// this function must be called prior to the new values actually being inserted to the element in the DB, since this function retrieves the current options for the element from the db in order to make a comparison
+	/**
+	 * Change the options users have chosen in radio buttons, checkboxes or selectboxes so that they match the new
+	 * options for the element - the old first option becomes the new first option, and so on. Must be called before
+	 * the new options are saved to the element, since the current options are read from the database to compare.
+	 * @param int|string $element_id_or_handle The element id or handle. Cannot be an element object!
+	 * @param array $newValues The array that is about to be the new options, ele_value[2].
+	 * @return bool False if the options could not be changed.
+	 * @formulizeElement $element_id_or_handle one
+	 */
 	function changeUserSubmittedValues($element_id_or_handle, $newValues) {
 		if(!$element = _getElementObject($element_id_or_handle) AND (!is_array($newValues) OR empty($newValues))) {
 			return false;
@@ -1672,6 +1758,7 @@ class formulizeDataHandler {
  * @param array values - The values array that we're appending to
  * @param int fid - The ID of the form we're getting default values for
  * @return array Returns the passed array with default values added, if any
+ * @formulizeElement $values keys
  */
 function addDefaultValuesToDataToWrite($values, $fid) {
 	$defaultValueMap = getEntryDefaultsInDBFormat($fid, dataToBeWritten: $values);
@@ -1696,6 +1783,7 @@ function addDefaultValuesToDataToWrite($values, $fid) {
  *                                    parseSubmittedConditions) identifying which entries to target. When empty,
  *                                    the entries with no value are targeted.
  * @return int Number of entries updated
+ * @formulizeElement $element one
  */
 function applyDefaultToEntries($element, $conditions = '') {
 	global $xoopsDB;

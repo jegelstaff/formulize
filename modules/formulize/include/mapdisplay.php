@@ -371,6 +371,14 @@ var $js_var_name = $entries_json;
   var savedZoom = $js_saved_zoom;
   window.addEventListener("formulize_pageShown", function() {
     var map = L.map($js_map_id);
+    // Leaflet focuses the map when it is pressed on, so the arrow keys move it, and then puts back the window's
+    // scroll position - but here the page scrolls inside the theme's content area, which it does not put back.
+    // In Chrome that scroll moves the pin out from under the pointer before the button comes up, and the click
+    // that should open its popup is lost. Focusing the map first, without scrolling, leaves Leaflet nothing to do.
+    var mapContainer = map.getContainer();
+    mapContainer.addEventListener("mousedown", function() {
+      mapContainer.focus({preventScroll: true});
+    }, true);
     L.tileLayer($js_tile_url, {
       attribution: $js_tile_attribution,
       maxZoom: $js_tile_max_zoom

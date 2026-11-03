@@ -26,14 +26,16 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
-if(class_exists("formulizeCheckboxLinkedElement")) {
-	return;
-}
-
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/checkboxElement.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectLinkedElement.php"; // shares the linked element property handling
+
+// after the requires, not before: when the parent classes are already loaded, PHP declares the classes below as this
+// file compiles, so the guard is true on the first include too - it may only skip the declarations, never the requires
+if(class_exists("formulizeCheckboxLinkedElement")) {
+	return;
+}
 
 class formulizeCheckboxLinkedElement extends formulizeCheckboxElement {
 
@@ -69,6 +71,29 @@ class formulizeCheckboxLinkedElement extends formulizeCheckboxElement {
 #[AllowDynamicProperties]
 class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHandler {
 
+	/**
+	 * Where linked checkboxes' ele_value refers to other elements - see formulizeElementReferences. They work as a
+	 * linked list's do, under keys of their own for the filters and the sort. The source of the options is reported
+	 * rather than cleaned up when the element it names is deleted, since there is no such thing as linked checkboxes
+	 * with no source; the rest are cleaned up. A rename reaches them all.
+	 */
+	public static $eleValueReferences = array(
+		ELE_VALUE_SELECT_OPTIONS => array('shape' => 'linked_source', 'holds' => 'either', 'on_delete' => 'report',
+			'describe' => 'the element its options come from, which it cannot work without - it needs a new source or it needs deleting'),
+		// cleaned up as a linked list's are: a sort on an element that is gone breaks the query for the options,
+		// and the rest would point at nothing
+		5 => array('shape' => 'conditions', 'holds' => 'either', 'on_delete' => 'remove',
+			'describe' => 'in the conditions that decide which options it offers'),
+		12 => array('shape' => 'value', 'holds' => 'id', 'on_delete' => 'set', 'set_to' => 'none',
+			'describe' => 'the element its options are sorted by'),
+		EV_MULTIPLE_LIST_COLUMNS => array('shape' => 'list', 'holds' => 'either', 'on_delete' => 'remove',
+			'describe' => 'one of the elements shown in place of its options in lists'),
+		EV_MULTIPLE_FORM_COLUMNS => array('shape' => 'list', 'holds' => 'either', 'on_delete' => 'remove',
+			'describe' => 'one of the elements shown in place of its options in forms'),
+		EV_MULTIPLE_SPREADSHEET_COLUMNS => array('shape' => 'list', 'holds' => 'either', 'on_delete' => 'remove',
+			'describe' => 'one of the elements shown in place of its options in exports'),
+	);
+
     function create() {
         return new formulizeCheckboxLinkedElement();
     }
@@ -89,7 +114,7 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 			throw new Exception("You must provide a valid sourceElement property for the linked dropdown list element");
 		}
 		if($sourceElementObject) {
-			$ele_value[ELE_VALUE_SELECT_OPTIONS] = $sourceElementObject->getVar('fid')."#*=:*".$sourceElementObject->getVar('ele_handle'); // by convention all linked elements use ELE_VALUE_SELECT_OPTIONS (2) as the key in ele_value to store the source element reference, so they can all extend this class and use this method
+			$ele_value[ELE_VALUE_SELECT_OPTIONS] = formulize_linkedSourceString($sourceElementObject->getVar('fid'), $sourceElementObject); // by convention all linked elements use ELE_VALUE_SELECT_OPTIONS (2) as the key in ele_value to store the source element reference, so they can all extend this class and use this method
 		}
 		$notes = [];
 		$ele_value = formulizeSelectLinkedElementHandler::applySourceEntryFilter($properties, $ele_value, $elementIdentifier, $formId, $notes);
@@ -175,7 +200,7 @@ class formulizeCheckboxLinkedElementHandler extends formulizeCheckboxElementHand
 		$dependencies = array();
 		foreach($values as $key => $value) {
 			if($key == ELE_VALUE_SELECT_OPTIONS AND is_string($value)) {
-				$linkedMetaDataParts = explode("#*=:*", $value);
+				$linkedMetaDataParts = formulize_linkedSourceParts($value);
 				if(count($linkedMetaDataParts) == 2) {
 					$dependencies[] = trim($linkedMetaDataParts[1]);
 				}

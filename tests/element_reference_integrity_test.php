@@ -35,6 +35,13 @@
  * 3. THE MULTIPAGE PAGE THAT EMPTIES. Deleting the last element on a page leaves the page in place, and
  *    traverseScreenPages() does not carry an empty page through to the form.
  *
+ * 4. CODE AND TEMPLATE FILES. Code files, screens' own template files and mail templates that name the element,
+ *    in the ways a rename rewrites and the ways it leaves for a person: the usage report names each and says which
+ *    a rename would leave, a real rename rewrites them and warns about the same ones, and a cloned screen gets
+ *    copies of its template files. The files are written and removed by name, since a rollback cannot take them.
+ *
+ * 5. RESERVED NAMES. The names Formulize keeps for its own variables in code cannot be element handles.
+ *
  * WHAT THIS DOES NOT COVER
  * The deletion itself - delete() drops a column from the form's data table, which is not transactional and
  * cannot be rolled back, so it has no business running against a system another test may still be reading.
@@ -81,11 +88,12 @@ if (!$element_handler) {
     exit(2);
 }
 
-// findReferencesToElement() is private: the report and the cleanup are its only callers by design. The test
-// reaches in because what it needs to check is the change that would be written, which neither of those
-// two exposes - the report describes it in words, and the cleanup applies it and moves on.
-$scan = new ReflectionMethod('formulizeElementsHandler', 'findReferencesToElement');
-$scan->setAccessible(true);
+// The references themselves, as the report and the cleanup both read them, because what this needs to check is
+// the change that would be written, which neither of those two exposes - the report describes it in words, and
+// the cleanup applies it and moves on.
+$referencesTo = function ($elementObject) {
+    return formulizeElementReferences::forElement($elementObject)->references();
+};
 
 $GLOBALS['__pass'] = 0;
 $GLOBALS['__fail'] = 0;
@@ -219,7 +227,7 @@ foreach ($elementIds as $elementId) {
         ok("element $elementId: section has entries", !empty($section['items']) && is_array($section['items']));
     }
 
-    $references = $scan->invoke($element_handler, $elementObject);
+    $references = $referencesTo($elementObject);
     if ($references) {
         $elementsWithReferences++;
     }
@@ -323,6 +331,17 @@ echo "=====================================================================\n";
 // Declared out here so the checks at the end can see them even if the fixtures throw part way through.
 $otherElementId = 0;
 $elementId = 0;
+// files PART 4 writes, which the rollback cannot take away, so they are removed by name at the end
+$fixtureTemplateRoot = XOOPS_ROOT_PATH . '/modules/formulize/templates/screens/zz_fixture_theme/';
+$fixtureMailTemplate = XOOPS_ROOT_PATH . '/modules/formulize/language/english/mail_template/zz_fixture_reference.tpl';
+$codeDir = XOOPS_ROOT_PATH . '/modules/formulize/code/';
+$fixtureCodeFiles = array(
+    XOOPS_ROOT_PATH . '/modules/formulize/code/derived_zz_fixture_reference_formula.php',
+    XOOPS_ROOT_PATH . '/modules/formulize/code/zz_fixture_reference_code.php',
+    XOOPS_ROOT_PATH . '/modules/formulize/code/on_after_save_zz_fixture_other_form.php',
+    XOOPS_ROOT_PATH . '/modules/formulize/code/application_custom_code_zz_fixture.php',
+    XOOPS_ROOT_PATH . '/modules/formulize/code/number_zz_fixture_default.php',
+);
 
 $xoopsDB->queryF("START TRANSACTION");
 
@@ -407,10 +426,10 @@ try {
         " . $xoopsDB->quoteString(serialize(array($elementId => 'default', 999997 => 'keep'))) . ")");
 
     // Elements of other types whose own settings point at this one. These references live inside ele_value,
-    // and are found by getElementDependencies() like every other kind. What is type specific is putting
-    // ele_value back together without them, which each type does in removeElementFromEleValue() - nothing
-    // outside the type knows that key 12 of a linked list is a single element you blank while key 10 is a
-    // list you splice.
+    // whose meaning is type specific: each type declares its keys in a static $eleValueReferences on its
+    // handler - nothing outside the type knows that key 12 of a linked list is a single element you blank
+    // while key 10 is a list you splice. PART 1 checks those declarations still find everything
+    // getElementDependencies() does.
     $newElement = function ($type, $handle, $eleValue) use ($xoopsDB, $fixtureFid) {
         $xoopsDB->queryF("INSERT INTO " . prefix('formulize') . "
             (id_form, ele_type, ele_caption, ele_handle, ele_order, ele_display, ele_value)
@@ -421,8 +440,9 @@ try {
     $linkedId = $newElement('selectLinked', 'zz_fixture_linked', array(
         ELE_VALUE_SELECT_LINK_SORT => $elementId,                           // a single reference, cleared
         ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS => array(999991, $elementId),  // a list, the entry removed
-        ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS => array(                       // half a pair, reported only
-            array('thisForm' => '{' . $handle . '}', 'sourceForm' => '999990'),
+        ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS => array(                       // the pair naming it goes, a typed value stays
+            array('thisForm' => $elementId, 'sourceForm' => 999990),
+            array('thisForm' => '{' . $handle . '}', 'sourceForm' => 999989),
         ),
     ));
     $gridId = $newElement('grid', 'zz_fixture_grid', array(4 => $elementId));
@@ -439,8 +459,33 @@ try {
             0 => array($elementId), 1 => array('='), 2 => array('v'), 3 => array('all')))) . "
         WHERE ele_id = $otherElementId");
 
+    // Written out by hand rather than from the declaration, so that a reference the declaration misses fails
+    // here: these are the places a review of the declaration found missing from it.
+    // A view sorted by two columns, and offering this element's search box.
+    $xoopsDB->queryF("INSERT INTO " . prefix('formulize_saved_views') . "
+        (sv_name, sv_formframe, sv_mainform, sv_oldcols, sv_quicksearches, sv_sort, sv_order, sv_pubfilters)
+        VALUES ('reference integrity sort fixture', $fixtureFid, 0, 'x', '', 'x,$elementId', 'SORT_ASC,SORT_DESC', '$elementId,x')");
+    $sortViewId = intval($xoopsDB->getInsertId());
+    // an advanced calculation with a filter tied to this element, and a step querying its column by name
+    $xoopsDB->queryF("INSERT INTO " . prefix('formulize_advanced_calculations') . "
+        (fid, name, description, input, output, steps, steptitles, fltr_grps, fltr_grptitles) VALUES ($fixtureFid,
+        'reference integrity calculation', '', '', '', " . $xoopsDB->quoteString(serialize(array(array('description' => '', 'sql' => "SELECT SUM($handle) FROM t", 'preCalculate' => '', 'calculate' => '', 'postCalculate' => '')))) . ", 'a:0:{}',
+        " . $xoopsDB->quoteString(serialize(array(0 => array('form' => (string) $elementId, 'handle' => 'f1'), 1 => array('form' => '999999', 'handle' => 'f2')))) . ", 'a:0:{}')");
+    $calculationId = intval($xoopsDB->getInsertId());
+    // a multipage screen with a custom page of PHP naming this element
+    $customPageSid = $newScreen('zzfixcustom', 'Reference integrity custom page', 'multiPage');
+    $xoopsDB->queryF("INSERT INTO " . prefix('formulize_screen_multipage') . "
+        (sid, pages, pagetitles, conditions, disabledpages, elementdefaults) VALUES ($customPageSid,
+        " . $xoopsDB->quoteString(serialize(array(array('PHP', 'print $' . $handle . ';')))) . ", 'a:0:{}', 'a:0:{}', 'a:0:{}', 'a:0:{}')");
+    // a grid whose row caption shows this element's value
+    $captionGridId = $newElement('grid', 'zz_fixture_caption_grid', array(1 => 'Row {' . $handle . '}', 2 => 'Column', 4 => 'none'));
+
     // ---- the report has to mention all of it, before anything is changed ----
     $report = $element_handler->elementUsageReport($fixture);
+    $inCode = isset($report['references_in_code_that_you_will_need_to_fix']) ? $report['references_in_code_that_you_will_need_to_fix'] : array();
+    ok('the report names the custom page that uses it', count(preg_grep('/Reference integrity custom page/', $inCode)) === 1, implode(' | ', $inCode));
+    ok('the report names the grid caption that shows it', count(preg_grep('/zz_fixture_caption_grid/', $inCode)) === 1, implode(' | ', $inCode));
+    ok('the report names the calculation step that queries it', count(preg_grep('/reference integrity calculation/', $inCode)) === 1, implode(' | ', $inCode));
     $sections = array();
     foreach ($report['cleaned_up_automatically'] as $section) {
         $sections[$section['what']] = $section['items'];
@@ -456,9 +501,9 @@ try {
         count(preg_grep('/zz_fixture_grid.*initial values/', $otherElements)) === 1, implode(' | ', $otherElements));
     ok('the report mentions the subform that shows it',
         count(preg_grep('/zz_fixture_subform.*one of the elements it shows/', $otherElements)) === 1, implode(' | ', $otherElements));
-    ok('the report says the source mapping is being left alone',
-        count(preg_grep('/left in place for you to sort out/', $otherElements)) === 1, implode(' | ', $otherElements));
-    check('the report mentions both saved views', count(isset($sections[_AM_ELE_USAGE_SECTION_SAVED_VIEWS]) ? $sections[_AM_ELE_USAGE_SECTION_SAVED_VIEWS] : array()), 2);
+    ok('the report says the source mapping is removed',
+        count(preg_grep('/a source mapping, which is removed/', $otherElements)) === 1, implode(' | ', $otherElements));
+    check('the report mentions all three saved views', count(isset($sections[_AM_ELE_USAGE_SECTION_SAVED_VIEWS]) ? $sections[_AM_ELE_USAGE_SECTION_SAVED_VIEWS] : array()), 3);
     ok('the report warns that a form screen will be left showing nothing',
         isset($sections[_AM_ELE_USAGE_SECTION_FORM_SCREENS])
         && count(preg_grep('/the only element chosen to appear/', $sections[_AM_ELE_USAGE_SECTION_FORM_SCREENS])) === 1);
@@ -474,6 +519,13 @@ try {
     check('view: the calculations stay in step', $view['sv_calc_calcs'], 'sum/count');
     check('view: the blank settings stay in step', $view['sv_calc_blanks'], 'all/all');
     check('view: the grouping stays in step', $view['sv_calc_grouping'], '/');
+
+    $sortView = fetchOne("SELECT * FROM " . prefix('formulize_saved_views') . " WHERE sv_id = $sortViewId");
+    check('view: of the two columns it sorts by, this one goes, and its direction with it', $sortView['sv_sort'] . '|' . $sortView['sv_order'], 'x|SORT_ASC');
+    check('view: the search box it offered for this element goes', $sortView['sv_pubfilters'], 'x');
+    $calculation = fetchOne("SELECT fltr_grps FROM " . prefix('formulize_advanced_calculations') . " WHERE acid = $calculationId");
+    check('calculation: the filter tied to this element is untied, the other is left', unserialize($calculation['fltr_grps']),
+        array(0 => array('form' => 'none', 'handle' => 'f1'), 1 => array('form' => '999999', 'handle' => 'f2')));
 
     $hiddenView = fetchOne("SELECT * FROM " . prefix('formulize_saved_views') . " WHERE sv_id = $hiddenViewId");
     check('view: a hiddencolumn_ prefixed column is recognised and removed', $hiddenView['sv_oldcols'], 'a,b');
@@ -526,9 +578,9 @@ try {
         $linked[ELE_VALUE_SELECT_LINK_SORT], 'none');
     check('linked list: it is taken out of the alternate list elements, and the other one is left',
         $linked[ELE_VALUE_SELECT_LINK_ALTLISTELEMENTS], array(999991));
-    check('linked list: the source mapping is left exactly as it was, because half a mapping is not a decision this can make',
+    check('linked list: the mapping naming this element goes as a whole, and a typed value that looks like its handle stays',
         $linked[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS],
-        array(array('thisForm' => '{' . $handle . '}', 'sourceForm' => '999990')));
+        array(1 => array('thisForm' => '{' . $handle . '}', 'sourceForm' => 999989)));
 
     $grid = $eleValueOf($gridId);
     check('grid: the element it took its initial values from is cleared', $grid[4], 'none');
@@ -590,6 +642,199 @@ try {
     check('and their titles follow', array_values($compiledTitles), array('keeps', 'after'));
     check('and nothing is logged or raised about the empty one', count($diagnostics), 0);
 
+    echo "\n";
+    echo "=====================================================================\n";
+    echo " PART 4 - code files, screen template files and mail templates, reported and renamed\n";
+    echo "=====================================================================\n";
+
+    // A template screen, a list screen and a multipage screen with template files of their own, a template screen
+    // on a form that cannot see this element, two code files and a mail template. Each names the element both in
+    // the ways a rename rewrites and in ways it must leave for a person, beside a longer handle that starts with
+    // this one, and several already use a variable called by the new handle. The files are removed again below,
+    // whatever happens.
+    $newHandle = 'zz_renamed_fixture';
+    $H = $handle;
+    $N = $newHandle;
+    $templateSid = $newScreen('zzfixtpl', 'Reference integrity template screen', 'template');
+    $listSid = $newScreen('zzfixlist', 'Reference integrity list templates', 'listOfEntries');
+    $formSid = $newScreen('zzfixform', 'Reference integrity form templates', 'multiPage');
+    $xoopsDB->queryF("INSERT INTO " . prefix('formulize_screen_template') . " (sid, donedest, savebuttontext, donebuttontext, viewentryscreen)
+        VALUES ($templateSid, '', '', '', '')");
+    $otherFormRow = fetchOne("SELECT id_form FROM " . prefix('formulize_id') . " WHERE id_form != $fixtureFid ORDER BY id_form ASC LIMIT 1");
+    $otherFid = $otherFormRow ? intval($otherFormRow['id_form']) : 0;
+    $xoopsDB->queryF("INSERT INTO " . prefix('formulize_screen') . " (screen_handle, title, fid, frid, type, rewriteruleElement)
+        VALUES ('zzfixothertpl', 'Reference integrity other template screen', $otherFid, 0, 'template', 0)");
+    $otherTemplateSid = intval($xoopsDB->getInsertId());
+
+    // path => what it holds, what a rename makes of it, and whether a rename leaves some of it for a person
+    $files = array(
+        // the screen's variables are renamed, and a $N of the code's own moves out of the way, the same in both
+        $fixtureTemplateRoot . $templateSid . '/code.php' => array(
+            '<?php $total = $' . $H . ' + $' . $H . '_era + $' . $N . '; print display($entry, \'' . $H . '\'); $row = $templateScreenData[\'' . $H . '\'];',
+            '<?php $total = $' . $N . ' + $' . $H . '_era + $' . $N . '_1; print display($entry, \'' . $N . '\'); $row = $templateScreenData[\'' . $H . '\'];',
+            true),
+        $fixtureTemplateRoot . $templateSid . '/template.html' => array(
+            '{$' . $H . '} and {$' . $H . '_era} and {$' . $N . '}',
+            '{$' . $N . '} and {$' . $H . '_era} and {$' . $N . '_1}',
+            false),
+        // the search box variables and a filter term are renamed, a variable of the template's own is not
+        $fixtureTemplateRoot . $listSid . '/toptemplate.php' => array(
+            '<?php print $quickSearch' . $H . '; print $quickDateRange' . $H . '; print $quickFilter' . $H . '; print $' . $H . '; print $quickSearch' . $H . '_era; print getData("", 1, "' . $H . '/**/x/**/=");',
+            '<?php print $quickSearch' . $N . '; print $quickDateRange' . $N . '; print $quickFilter' . $N . '; print $' . $H . '; print $quickSearch' . $H . '_era; print getData("", 1, "' . $N . '/**/x/**/=");',
+            true),
+        // a screen that gets no variables: only what can only be the element
+        $fixtureTemplateRoot . $formSid . '/elementtemplate1.php' => array(
+            '<?php print displayElement(\'\', \'' . $H . '\'); print $entry[\'' . $H . '\'];',
+            '<?php print displayElement(\'\', \'' . $N . '\'); print $entry[\'' . $H . '\'];',
+            true),
+        // a template screen on a form that cannot see this element: its variable of the same name is its own
+        $fixtureTemplateRoot . $otherTemplateSid . '/code.php' => array(
+            '<?php $' . $H . ' = 1; print display($entry, \'' . $H . '\');',
+            '<?php $' . $H . ' = 1; print display($entry, \'' . $N . '\');',
+            true),
+        // a formula, whose variables are renamed, and whose own $N moves out of the way
+        $fixtureCodeFiles[0] => array(
+            '$value = $' . $H . ' + $' . $N . '; $x = display($entry, \'' . $H . '\');',
+            '$value = $' . $N . ' + $' . $N . '_1; $x = display($entry, \'' . $N . '\');',
+            false),
+        // code that gets no variables: the string given to getValue() only, not its own variable or a column in a query
+        $fixtureCodeFiles[1] => array(
+            '<?php $' . $H . ' = 5; print getValue($e, "' . $H . '"); $q = "SELECT `' . $H . '` FROM t";',
+            '<?php $' . $H . ' = 5; print getValue($e, "' . $N . '"); $q = "SELECT `' . $H . '` FROM t";',
+            true),
+        // another form's procedure, which gets variables for that form's elements only: its own variable of this
+        // name is left, and the handle given to a data handler method is renamed
+        $fixtureCodeFiles[2] => array(
+            '<?php $' . $H . ' = 1; $ids = $dataHandler->findAllEntriesWithValue(\'' . $H . '\', $' . $H . ');',
+            '<?php $' . $H . ' = 1; $ids = $dataHandler->findAllEntriesWithValue(\'' . $N . '\', $' . $H . ');',
+            true),
+        // application code: the handle at every kind of parameter that takes elements, but not in an array made
+        // beforehand and passed in, which may or may not be for one of them
+        $fixtureCodeFiles[3] => array(
+            '<?php formulize_writeEntry(array(\'' . $H . '\' => 1, \'x\' => \'' . $H . '\')); $d = gatherDataset(1, array(1 => array(\'' . $H . '\', \'x\')), sortField: \'x, ' . $H . '\'); $dataHandler->writeEntry(\'new\', [\'' . $H . '\' => 2]); $v = array(\'' . $H . '\' => 3); formulize_writeEntry($v);',
+            '<?php formulize_writeEntry(array(\'' . $N . '\' => 1, \'x\' => \'' . $H . '\')); $d = gatherDataset(1, array(1 => array(\'' . $N . '\', \'x\')), sortField: \'x, ' . $N . '\'); $dataHandler->writeEntry(\'new\', [\'' . $N . '\' => 2]); $v = array(\'' . $H . '\' => 3); formulize_writeEntry($v);',
+            true),
+        // a number element's default value, which names elements by {handle} tokens
+        $fixtureCodeFiles[4] => array(
+            '<?php $default = {' . $H . '} + {' . $H . '_era};',
+            '<?php $default = {' . $N . '} + {' . $H . '_era};',
+            false),
+    );
+    // this form's own procedure, which gets a variable for each of its elements, so $H is this element. The
+    // form is a real one, so only when it has no procedure of that kind already, which the fixture would replace.
+    $fixtureFormObject = xoops_getmodulehandler('forms', 'formulize')->get($fixtureFid);
+    $ownProcedure = $codeDir . 'on_before_save_' . $fixtureFormObject->getVar('form_handle') . '.php';
+    if (!file_exists($ownProcedure)) {
+        $fixtureCodeFiles[] = $ownProcedure;
+        $files[$ownProcedure] = array(
+            '<?php $' . $H . ' = $' . $H . ' . $' . $N . '; formulize_writeEntry(array(\'' . $H . '\' => $' . $H . '), $entry_id);',
+            '<?php $' . $N . ' = $' . $N . ' . $' . $N . '_1; formulize_writeEntry(array(\'' . $N . '\' => $' . $N . '), $entry_id);',
+            false);
+    } else {
+        echo "  (the fixture form already has an on_before_save procedure, so its own procedure is not tried)\n";
+    }
+    // which kinds of code file get variables named after this element's handle, and which name it by tokens
+    $formHandle = $fixtureFormObject->getVar('form_handle');
+    check('code files that name elements in a syntax of their own', array(
+        formulizeElementsHandler::codeFileSyntax('derived_anything.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('on_before_save_' . $formHandle . '.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('on_after_save_' . $formHandle . '.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('on_delete_' . $formHandle . '.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('on_before_save_' . $formHandle . '_more.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('on_after_save_zz_other.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('custom_edit_check_' . $formHandle . '.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('application_custom_code_1.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('custom_code_0_btn_screen.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('number_anything.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('textarea_anything.php', $formHandle),
+    ), array('variable', 'variable', 'variable', 'variable', false, false, false, false, false, 'token', 'token'));
+    foreach ($files as $path => $file) {
+        @mkdir(dirname($path), 0777, true);
+        file_put_contents($path, $file[0]);
+    }
+    $upper = strtoupper($handle);
+    $mailTemplate = 'Hello {ELEMENT_' . $upper . '} {ELEMENT' . $upper . '} {REVISION_ELEMENT_' . $upper . '} {ELEMENT_' . $upper . '_ERA}';
+    file_put_contents($fixtureMailTemplate, $mailTemplate);
+    $shortName = function ($path) {
+        return str_replace(array(XOOPS_ROOT_PATH . '/modules/formulize/templates/screens/', XOOPS_ROOT_PATH . '/modules/formulize/code/'), '', $path);
+    };
+    $namedIn = function ($path, $list) use ($shortName) {
+        return preg_grep('/' . preg_quote("'" . $shortName($path) . "'", '/') . '/', $list);
+    };
+
+    $report = $element_handler->elementUsageReport($fixture);
+    $inCode = isset($report['references_in_code_that_you_will_need_to_fix']) ? $report['references_in_code_that_you_will_need_to_fix'] : array();
+    $left = formulizeElementHandleCode::LEFT_BY_A_RENAME;
+    foreach ($files as $path => $file) {
+        $named = $namedIn($path, $inCode);
+        ok('the report names ' . $shortName($path) . ($file[2] ? ', as left by a rename' : ', as updated by a rename'),
+            count($named) === 1 AND (substr(reset($named), -strlen($left)) === $left) === $file[2], implode(' | ', $inCode));
+    }
+    ok('the report names the mail template', count(preg_grep('/zz_fixture_reference\.tpl/', $inCode)) === 1, implode(' | ', $inCode));
+
+    $fixture->setVar('ele_handle', $newHandle);
+    $leftByTheRename = $element_handler->renameElementResources($fixture, $handle);
+    foreach ($files as $path => $file) {
+        check('renamed: ' . $shortName($path), file_get_contents($path), $file[1]);
+        ok('the rename ' . ($file[2] ? 'warns about ' : 'does not warn about ') . $shortName($path),
+            (count($namedIn($path, $leftByTheRename)) === 1) === $file[2], implode(' | ', $leftByTheRename));
+    }
+    $newUpper = strtoupper($newHandle);
+    check('mail template: every form of the tag is renamed, the longer one is not', file_get_contents($fixtureMailTemplate),
+        'Hello {ELEMENT_' . $newUpper . '} {ELEMENT' . $newUpper . '} {REVISION_ELEMENT_' . $newUpper . '} {ELEMENT_' . $upper . '_ERA}');
+
+    // a clone of a screen has its own copies of the template files, a handle of its own, and no address
+    $xoopsDB->queryF("UPDATE " . prefix('formulize_screen') . " SET rewriteruleAddress = 'zzfix-address' WHERE sid = $templateSid");
+    xoops_getmodulehandler('templateScreen', 'formulize')->cloneScreen($templateSid);
+    $cloneRow = fetchOne("SELECT MAX(sid) AS sid FROM " . prefix('formulize_screen') . " WHERE title LIKE 'Reference integrity template screen%'");
+    $cloneSid = intval($cloneRow['sid']);
+    ok('a template screen is cloned', $cloneSid > $templateSid);
+    check('the clone has a copy of the code', @file_get_contents($fixtureTemplateRoot . $cloneSid . '/code.php'), $files[$fixtureTemplateRoot . $templateSid . '/code.php'][1]);
+    check('and of the template', @file_get_contents($fixtureTemplateRoot . $cloneSid . '/template.html'), $files[$fixtureTemplateRoot . $templateSid . '/template.html'][1]);
+    $clone = fetchOne("SELECT screen_handle, rewriteruleAddress FROM " . prefix('formulize_screen') . " WHERE sid = $cloneSid");
+    ok('the clone has a handle of its own, made from its title', $clone['screen_handle'] !== 'zzfixtpl' AND strpos($clone['screen_handle'], 'reference_integrity_template_screen') === 0, $clone['screen_handle']);
+    $sameHandle = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize_screen') . " WHERE screen_handle = " . $xoopsDB->quoteString($clone['screen_handle']));
+    check('and no other screen has it', intval($sameHandle['c']), 1);
+    check('the clone has no address, which stays the original\'s', $clone['rewriteruleAddress'], '');
+
+    // a clone of a list has its own copies of the code its custom buttons keep in files, under its own handle
+    $realList = fetchOne("SELECT * FROM " . prefix('formulize_screen_listofentries') . " ORDER BY sid LIMIT 1");
+    unset($realList['listofentriesid']);
+    $realList['sid'] = $listSid;
+    $realList['customactions'] = serialize(array(1 => array('handle' => 'zzfixbtn', 'applyto' => 'custom_code', 0 => array('code' => ''))));
+    $xoopsDB->queryF("INSERT INTO " . prefix('formulize_screen_listofentries') . " (`" . implode('`, `', array_keys($realList)) . "`) VALUES ("
+        . implode(', ', array_map(array($xoopsDB, 'quoteString'), array_values($realList))) . ")");
+    $buttonCode = '<?php print "zz fixture button";';
+    $fixtureCodeFiles[] = $codeDir . 'custom_code_0_zzfixbtn_zzfixlist.php';
+    file_put_contents($codeDir . 'custom_code_0_zzfixbtn_zzfixlist.php', $buttonCode);
+    xoops_getmodulehandler('listOfEntriesScreen', 'formulize')->cloneScreen($listSid);
+    $listClone = fetchOne("SELECT screen_handle FROM " . prefix('formulize_screen') . " WHERE sid = (SELECT MAX(sid) FROM " . prefix('formulize_screen') . " WHERE title LIKE 'Reference integrity list templates%')");
+    $fixtureCodeFiles[] = $codeDir . 'custom_code_0_zzfixbtn_' . $listClone['screen_handle'] . '.php';
+    ok('a list is cloned with a handle of its own', $listClone AND $listClone['screen_handle'] !== 'zzfixlist', $listClone ? $listClone['screen_handle'] : 'no clone');
+    check('and its button\'s code is copied under it', @file_get_contents($codeDir . 'custom_code_0_zzfixbtn_' . $listClone['screen_handle'] . '.php'), $buttonCode);
+    check('and the original keeps its own', file_get_contents($codeDir . 'custom_code_0_zzfixbtn_zzfixlist.php'), $buttonCode);
+    // and a list whose handle changes takes its button's code with it
+    $fixtureCodeFiles[] = $codeDir . 'custom_code_0_zzfixbtn_zzfixlist_renamed.php';
+    $list_screen_handler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
+    $fixtureList = $list_screen_handler->get($listSid);
+    $fixtureList->setVar('screen_handle', 'zzfixlist_renamed');
+    ok('a list can be given a new handle', (bool) $list_screen_handler->insert($fixtureList));
+    check('its button\'s code moves to the file named for the new handle', @file_get_contents($codeDir . 'custom_code_0_zzfixbtn_zzfixlist_renamed.php'), $buttonCode);
+    check('and is not left under the old one', file_exists($codeDir . 'custom_code_0_zzfixbtn_zzfixlist.php'), false);
+
+    echo "\n";
+    echo "=====================================================================\n";
+    echo " PART 5 - names Formulize keeps for its own variables are not handles\n";
+    echo "=====================================================================\n";
+
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    foreach (array('value', 'entry', 'entry_id', 'form_id', 'i', 'code_filename', 'this') as $reserved) {
+        check("'$reserved' is not available as a handle", $form_handler->isElementHandleUnique($reserved, '', $fixtureFid), false);
+    }
+    check('a handle that is not kept is available', $form_handler->isElementHandleUnique('zz_fixture_not_kept', '', $fixtureFid), true);
+    ok('asking for a kept name gives a handle with a suffix instead, as a name already taken does',
+        formulizeHandler::enforceUniqueElementHandles('value', $elementId, $fixtureFid) !== 'value');
+
 } catch (Throwable $t) {
     $GLOBALS['__fail']++;
     printf("  FAIL fixtures could not be built or checked\n       %s: %s @ %s:%s\n",
@@ -597,6 +842,17 @@ try {
 }
 
 $xoopsDB->queryF("ROLLBACK");
+foreach ((array) glob($fixtureTemplateRoot . '*/*') as $fixtureFile) {
+    @unlink($fixtureFile);
+}
+foreach ((array) glob($fixtureTemplateRoot . '*', GLOB_ONLYDIR) as $fixtureDir) {
+    @rmdir($fixtureDir);
+}
+@rmdir($fixtureTemplateRoot);
+@unlink($fixtureMailTemplate);
+foreach ($fixtureCodeFiles as $fixtureCodeFile) {
+    @unlink($fixtureCodeFile);
+}
 
 echo "\n";
 echo "=====================================================================\n";
@@ -606,10 +862,11 @@ echo "=====================================================================\n";
 // If this does not hold then everything above wrote to a real system, so it is checked rather than assumed.
 $leftovers = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize') . " WHERE ele_handle LIKE 'zz_fixture%' OR ele_handle = 'zz_reference_integrity_fixture'");
 check('the fixture elements are gone', intval($leftovers['c']), 0);
-$leftovers = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize_screen') . " WHERE screen_handle LIKE 'zzfix%'");
+$leftovers = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize_screen') . " WHERE screen_handle LIKE 'zzfix%' OR title LIKE 'Reference integrity%'");
 check('the fixture screens are gone', intval($leftovers['c']), 0);
 $leftovers = fetchOne("SELECT COUNT(*) AS c FROM " . prefix('formulize_saved_views') . " WHERE sv_name LIKE 'reference integrity%'");
 check('the fixture saved views are gone', intval($leftovers['c']), 0);
+check('the fixture template and code files are gone', is_dir($fixtureTemplateRoot) OR file_exists($fixtureMailTemplate) OR count(array_filter($fixtureCodeFiles, 'file_exists')) > 0, false);
 // Nothing above wrote to a row this test did not create, so there is no borrowed state to restore - the
 // three checks above cover it. Anything still pointing at the fixture element would mean both that the
 // rollback did not take and that a real row had been reached, so it is worth asking even so.

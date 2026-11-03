@@ -125,101 +125,11 @@ class formulizeListOfEntriesScreen extends formulizeScreen {
     }
 
     /**
-     * The column settings that name elements, and are STORED as element ids while being READ as handles.
-     *
-     * Storing ids is what keeps them out of the handle-rename maintenance: an id does not change when an
-     * element is renamed, so there is nothing to keep in step. Handles are what everything that consumes
-     * these settings works in, though - the list rendering, saved views, and the tools all speak handles -
-     * so the translation happens in the accessors below rather than at each of those places.
-     *
-     * advanceview holds the element in position 0 of each column entry; the other two are flat lists.
-     * @return array setting name => true if the setting is a flat list, false if it is an advanceview
+     * advanceview holds the element in position 0 of each column, the other two are flat lists - see
+     * formulizeScreen::elementColumnSettings().
      */
-    private function elementColumnSettings() {
-        return array('advanceview' => false, 'hiddencolumns' => true, 'decolumns' => true);
-    }
-
-    /**
-     * Read a column setting with its elements as handles, whatever is stored.
-     * Values from before this became id-based are already handles and pass straight through, since the
-     * conversion leaves anything that is not an element id alone - which also covers the metadata field
-     * names (creation_uid, mod_datetime, etc) that are valid columns everywhere an element handle is.
-     * Pass the 'n' format to get what is actually stored; insert() uses that to write ids back.
-     */
-    public function getVar($key, $format = 's') {
-        $value = parent::getVar($key, $format);
-        $settings = $this->elementColumnSettings();
-        if(!isset($settings[$key]) OR $format == 'n' OR !is_array($value)) {
-            return $value;
-        }
-        if($settings[$key]) {
-            foreach($value as $index => $reference) {
-                $value[$index] = $this->columnReferenceAsHandle($reference);
-            }
-            return $value;
-        }
-        foreach($value as $index => $column) {
-            if(is_array($column) AND isset($column[0])) {
-                $value[$index][0] = $this->columnReferenceAsHandle($column[0]);
-            }
-        }
-        return $value;
-    }
-
-    /**
-     * Turn one stored column reference into a handle.
-     *
-     * Deliberately not convertElementIdsToElementHandles(): that one works out a single form id from the
-     * first entry and converts the whole set within it, which is wrong here on two counts. A list screen's
-     * columns can come from several forms when a relationship is in effect, and the first column is often a
-     * metadata field, which it cannot resolve a form from - it throws in that case.
-     *
-     * An id that no longer resolves is returned as it is rather than raising. This runs while a list is being
-     * rendered, so one column left over from a deleted element must not take the whole screen down; it simply
-     * will not match a column and is ignored downstream.
-     *
-     * @param mixed $reference An element id, an element handle, or a metadata field name.
-     * @return mixed The handle, or the reference unchanged.
-     */
-    private function columnReferenceAsHandle($reference) {
-        if(!is_numeric($reference)) {
-            return $reference; // already a handle, or a metadata field name
-        }
-        static $handles = array();
-        $reference = intval($reference);
-        if(!isset($handles[$reference])) {
-            $element_handler = xoops_getmodulehandler('elements', 'formulize');
-            $elementObject = $element_handler->get($reference);
-            $handles[$reference] = $elementObject ? $elementObject->getVar('ele_handle') : $reference;
-        }
-        return $handles[$reference];
-    }
-
-    /**
-     * Write a column setting, converting any handles it names to element ids so that ids are what is stored.
-     * Accepts the value as an array or as an already-serialized string, because the admin save handlers pass
-     * one and the upsert apparatus passes the other.
-     */
-    public function setVar($key, $value, $not_gpc = false) {
-        $settings = $this->elementColumnSettings();
-        if(isset($settings[$key])) {
-            $wasSerialized = is_string($value);
-            $columns = $wasSerialized ? @unserialize($value) : $value;
-            if(is_array($columns)) {
-                if($settings[$key]) {
-                    $columns = convertElementHandlesToElementIds($columns);
-                } else {
-                    foreach($columns as $index => $column) {
-                        if(is_array($column) AND isset($column[0])) {
-                            $converted = convertElementHandlesToElementIds(array($column[0]));
-                            $columns[$index][0] = $converted[0];
-                        }
-                    }
-                }
-                $value = $wasSerialized ? serialize($columns) : $columns;
-            }
-        }
-        parent::setVar($key, $value, $not_gpc);
+    protected function elementColumnSettings() {
+        return array('advanceview' => 'rows', 'hiddencolumns' => 'list', 'decolumns' => 'list');
     }
 
 }
@@ -247,10 +157,19 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 
     function insert($screen, $force=false) {
         $update = !$screen->getVar('sid') ? false : true;
+        // the handle the screen has now, since its custom buttons' files are named for it - see carryCustomButtonFiles()
+        $storedHandle = '';
+        if ($update AND $result = $this->db->query("SELECT screen_handle FROM ".$this->db->prefix('formulize_screen')." WHERE sid = ".intval($screen->getVar('sid')))) {
+            $row = $this->db->fetchArray($result);
+            $storedHandle = $row ? (string) $row['screen_handle'] : '';
+        }
         if (!$sid = parent::insert($screen, $force)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
             return false;
         }
         $screen->assignVar('sid', $sid);
+        if ($storedHandle !== '' AND $storedHandle !== $screen->getVar('screen_handle', 'n')) {
+            $this->carryCustomButtonFiles($screen->getVar('customactions'), $storedHandle, $screen->getVar('screen_handle', 'n'), true);
+        }
         if (!$update) {
             $sql = sprintf("INSERT INTO %s (sid,
                 useworkingmsg,
@@ -469,6 +388,64 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         if (!$result) {
             return false;
         }
+
+        $this->copyCustomButtonFiles($sid, $newsid);
+    }
+
+    /**
+     * Give a cloned list copies of the code and HTML its custom buttons keep in files, since the clone has a handle
+     * of its own - see carryCustomButtonFiles().
+     * @param int $sid The list being cloned.
+     * @param int $newsid The clone.
+     * @return void
+     */
+    function copyCustomButtonFiles($sid, $newsid) {
+        $handles = array();
+        $result = $this->db->query("SELECT sid, screen_handle FROM ".$this->db->prefix('formulize_screen')." WHERE sid IN (".intval($sid).", ".intval($newsid).")");
+        while($result AND $row = $this->db->fetchArray($result)) {
+            $handles[intval($row['sid'])] = $row['screen_handle'];
+        }
+        $result = $this->db->query("SELECT customactions FROM ".$this->db->prefix('formulize_screen_listofentries')." WHERE sid = ".intval($sid));
+        $row = $result ? $this->db->fetchArray($result) : false;
+        if($row AND isset($handles[intval($sid)]) AND isset($handles[intval($newsid)])) {
+            $this->carryCustomButtonFiles(unserialize((string) $row['customactions']), $handles[intval($sid)], $handles[intval($newsid)], false);
+        }
+    }
+
+    /**
+     * Carry the files a list's custom buttons keep their code and HTML in over to another screen handle. They are
+     * named for the screen's handle - custom_code_<effect>_<button>_<screen handle>.php and custom_html_... - so a
+     * list whose handle changes needs them moved, and a clone of it needs copies. A file already under the other
+     * handle is left as it is.
+     * @param array $buttons The list's custom buttons, as stored.
+     * @param string $fromHandle The handle the files are named for.
+     * @param string $toHandle The handle they are to be named for.
+     * @param bool $move Whether to move the files, rather than copy them.
+     * @return void
+     */
+    function carryCustomButtonFiles($buttons, $fromHandle, $toHandle, $move) {
+        $buttons = is_string($buttons) ? unserialize($buttons) : $buttons;
+        if(!is_array($buttons) OR $fromHandle === $toHandle) {
+            return;
+        }
+        $codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+        foreach($buttons as $button) {
+            if(!is_array($button) OR !isset($button['handle'])) {
+                continue;
+            }
+            foreach(array_keys($button) as $effectId) {
+                if(!is_numeric($effectId)) {
+                    continue; // effects have numeric keys
+                }
+                foreach(array('custom_code_', 'custom_html_') as $prefix) {
+                    $from = $codeDir.$prefix.$effectId.'_'.$button['handle'].'_'.$fromHandle.'.php';
+                    $to = $codeDir.$prefix.$effectId.'_'.$button['handle'].'_'.$toHandle.'.php';
+                    if(file_exists($from) AND !file_exists($to)) {
+                        $move ? rename($from, $to) : copy($from, $to);
+                    }
+                }
+            }
+        }
     }
 
 
@@ -558,83 +535,6 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 			$defaultListScreen->setVar('fundamental_filters', serialize(array()));
     }
 
-	/**
-	 * Where does a list screen refer to an element, and what does the setting look like once the element is
-	 * gone? Every column this reads is declared by initVar() at the top of this file, which is the reason
-	 * this method lives here: change how one of them is stored, and this is in the same file as the change.
-	 *
-	 * Called by formulizeElementsHandler::findReferencesToElement(), which turns the result into the usage
-	 * report and applies the updates when an element is deleted.
-	 *
-	 * @param object $elementObject The element being asked about.
-	 * @return array The references found.
-	 */
-	public function scanForElementReferences($elementObject) {
-		list($elementId, $handle) = $this->elementIdAndHandle($elementObject);
-		$references = array();
-		$sql = "SELECT s.sid, s.title, l.advanceview, l.hiddencolumns, l.decolumns, l.customactions, l.fundamental_filters
-			FROM ".$this->db->prefix('formulize_screen')." s
-			INNER JOIN ".$this->db->prefix('formulize_screen_listofentries')." l ON l.sid = s.sid";
-		if(!$result = $this->db->query($sql)) {
-			return $references;
-		}
-		while($row = $this->db->fetchArray($result)) {
-			$updates = array();
-			$usedAs = array();
-
-			// advanceview is a row per column: the element, then its search value, sort and search type
-			$newAdvanceview = $this->removeElementFromColumnRows(@unserialize((string) $row['advanceview']), $elementId, $handle);
-			if($newAdvanceview !== false) {
-				$updates['advanceview'] = serialize($newAdvanceview);
-				$usedAs[] = 'a column';
-			}
-
-			foreach(array('hiddencolumns' => 'a hidden value column', 'decolumns' => 'an inline editable column') as $columnSetting => $description) {
-				$newList = $this->removeElementFromList(@unserialize((string) $row[$columnSetting]), $elementId, $handle);
-				if($newList !== false) {
-					$updates[$columnSetting] = serialize($newList);
-					$usedAs[] = $description;
-				}
-			}
-
-			$newFilters = $this->removeElementFromConditions(@unserialize((string) $row['fundamental_filters']), $elementId, $handle);
-			if($newFilters !== false) {
-				$updates['fundamental_filters'] = serialize($newFilters);
-				$usedAs[] = 'a fundamental filter';
-			}
-
-			// custom button effects sit under numeric keys alongside each button's own properties. An effect
-			// naming this element is dropped; the button itself is left, because removing someone's button is
-			// a bigger decision than removing the effect that can no longer run.
-			$customactions = @unserialize((string) $row['customactions']);
-			if(is_array($customactions)) {
-				$changed = false;
-				foreach($customactions as $buttonId => $button) {
-					if(!is_array($button)) { continue; }
-					foreach($button as $key => $effect) {
-						if(is_numeric($key) AND is_array($effect) AND isset($effect['element'])
-							AND $this->referencePointsAtElement($effect['element'], $elementId, $handle)) {
-							unset($customactions[$buttonId][$key]);
-							$changed = true;
-						}
-					}
-				}
-				if($changed) {
-					$updates['customactions'] = serialize($customactions);
-					$usedAs[] = 'the effect of a custom button';
-				}
-			}
-
-			if($usedAs) {
-				$references[] = $this->elementReference(
-					_AM_ELE_USAGE_SECTION_LIST_SCREENS,
-					$this->describeById($row['title'], 'screen', $row['sid']).' - '.implode(', ', $usedAs),
-					'formulize_screen_listofentries', 'sid', $row['sid'], $updates
-				);
-			}
-		}
-		return $references;
-	}
 }
 
 

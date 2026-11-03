@@ -3782,6 +3782,8 @@ Do not use foreign key values with linked elements; use the readable value inste
 			$elementObjectProperties[$key] = $value;
 		}
 
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$element_handler->renameWarnings = array(); // only this save's rename, if it makes one
 		$elementObject = formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, dataType: $data_type, pi: $pi, makeSubformInterface: $makeSubformInterface);
 
 		$returnValue =  [
@@ -3799,6 +3801,13 @@ Do not use foreign key values with linked elements; use the readable value inste
 		];
 		if(!empty($notes)) {
 			$returnValue['notes'] = $notes;
+		}
+		if($element_handler->renameWarnings) {
+			// the handle changed, and these still name the old one in a way that may or may not be this element
+			$returnValue['places_still_naming_the_old_handle'] = array(
+				'about' => 'The handle was changed wherever it clearly references this element. The following places still have the old handle in them, written in a way that may or may not mean this element, so they were left as they are. The user should be advised to check each place, and change it to the new handle where necessary.',
+				'places' => $element_handler->renameWarnings,
+			);
 		}
 
 		// add ui text if there is any

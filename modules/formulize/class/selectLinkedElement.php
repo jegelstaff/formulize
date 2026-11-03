@@ -28,13 +28,15 @@
 
 // There is a corresponding admin template for this element type in the templates/admin folder
 
-if(class_exists("formulizeSelectLinkedElement")) {
-	return;
-}
-
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php"; // you need to make sure the base element class has been read in first!
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
 require_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectElement.php";
+
+// after the requires, not before: when the parent classes are already loaded, PHP declares the classes below as this
+// file compiles, so the guard is true on the first include too - it may only skip the declarations, never the requires
+if(class_exists("formulizeSelectLinkedElement")) {
+	return;
+}
 
 class formulizeSelectLinkedElement extends formulizeSelectElement {
 
@@ -93,7 +95,7 @@ class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler 
 			throw new Exception("You must provide a valid sourceElement property for the linked dropdown list element");
 		}
 		if($sourceElementObject) {
-			$ele_value[ELE_VALUE_SELECT_OPTIONS] = $sourceElementObject->getVar('fid')."#*=:*".$sourceElementObject->getVar('ele_handle'); // by convention all linked elements use ELE_VALUE_SELECT_OPTIONS (2) as the key in ele_value to store the source element reference, so they can all extend this class and use this method
+			$ele_value[ELE_VALUE_SELECT_OPTIONS] = formulize_linkedSourceString($sourceElementObject->getVar('fid'), $sourceElementObject); // by convention all linked elements use ELE_VALUE_SELECT_OPTIONS (2) as the key in ele_value to store the source element reference, so they can all extend this class and use this method
 		}
 		$notes = [];
 		$ele_value = self::applySourceEntryFilter($properties, $ele_value, $elementIdentifier, $formId, $notes);
@@ -119,7 +121,7 @@ class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler 
 		}
 		$elementObject = $elementIdentifier ? _getElementObject($elementIdentifier) : false;
 		$hostFid = $elementObject ? intval($elementObject->getVar('fid')) : intval($formId);
-		$sourceFid = intval(explode("#*=:*", (string) ($ele_value[ELE_VALUE_SELECT_OPTIONS] ?? ''))[0]);
+		$sourceFid = intval(formulize_linkedSourceParts((string) ($ele_value[ELE_VALUE_SELECT_OPTIONS] ?? ''))[0]);
 		$ele_value[ELE_VALUE_SELECT_LINK_FILTERS] = formulizeHandler::buildSourceEntryFilter($properties['sourceEntryFilter'] ?? [], $sourceFid, $hostFid, $notes);
 		return $ele_value;
 	}
@@ -135,7 +137,7 @@ class formulizeSelectLinkedElementHandler extends formulizeSelectElementHandler 
 	 */
 	public static function readPublicAPIProperties($element) {
 		$ele_value = $element['ele_value'] ?? [];
-		$sourceParts = explode("#*=:*", (string) ($ele_value[ELE_VALUE_SELECT_OPTIONS] ?? ''));
+		$sourceParts = formulize_linkedSourceParts((string) ($ele_value[ELE_VALUE_SELECT_OPTIONS] ?? ''));
 		return [
 			'sourceElement' => $sourceParts[1] ?? '',
 			'sourceEntryFilter' => formulizeHandler::readableConditionList($ele_value[ELE_VALUE_SELECT_LINK_FILTERS] ?? []),

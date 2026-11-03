@@ -13,6 +13,18 @@ behaviour. CI runs them *before* the e2e suite, since they have nothing to wait 
 * `normalize_then_escape_test.php`
 * `date_search_test.php`
 * `empty_set_search_test.php`
+* `element_references_test.php` - where an element is referred to, as `formulizeElementReferences` works it
+  out from the declaration in `xoops_version.php` and each element type's `$eleValueReferences`, against an
+  in-memory stand-in for the database. Covers the usage report and the clean up after a deletion, a rename
+  changing only the positions declared to hold a reference (never a condition's term or a search value),
+  old handles becoming ids, tokens and notification tags being renamed, a column declared more than once
+  (a list screen column's element and the {handle} token in its search), and code kept in the database.
+  Also what `formulizeElementHandleCode` rewrites in code: the handle given to a parameter declared to take
+  elements, in each shape (one, commas, list, lists, keys), filter terms, the variables Formulize names after
+  handles (moving one of the author's own out of the way), and what it leaves for a person - an array key, a
+  column in a query, a handle put together at runtime. And the declarations themselves, read by
+  `formulizeElementParameters` from the real source: each names a real parameter and shape, no other method
+  shares a declared method's name, and every function and method known to take elements is declared.
 * `blocked_extensions_sync_test.php` - the list of never-executable script extensions, written out in
   `BLOCKED_EXTENSIONS`, `uploads/.htaccess`, the fallback copy in `uploads_execution_probe.php` and the copy
   in `docs/uploads_not_executable.md`, is the same set everywhere. Fails if any copy drifts from the constant.
@@ -24,8 +36,13 @@ them *after* the e2e suite, when the setup specs have finished building the muse
   actually changes, across every screen, element, saved view and form on the system. Where the museum
   system has no example of a given kind of reference (map screens, calendars, saved views with searches
   and calculations, dynamic default values), it builds fixtures and cleans them up for real, inside a
-  transaction it rolls back. It asserts invariants rather than counts, so adding screens or elements to
-  the setup suite does not break it.
+  transaction it rolls back. Some fixtures are written out by hand rather than from the declaration, so a
+  reference the declaration misses fails here too. It also renames in code files, screens' own template
+  files and the notification mail templates, on files it writes and removes, checking that the usage report
+  and the rename warn about the same places, and that a save or delete procedure's variables are only renamed
+  for its own form's elements; checks that a cloned screen gets copies of its template files;
+  and that the names Formulize keeps for its own variables cannot be handles. It asserts invariants rather than counts, so
+  adding screens or elements to the setup suite does not break it.
 * `saved_views_test.php` - a saved view written, read back by id and by name, changed and deleted through
   `formulizeSavedViewsHandler`. Saved views hold several lists tied to each other only by position, and
   names people typed, so the checks are that everything survives the trip verbatim and in step. Also

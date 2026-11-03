@@ -10,9 +10,11 @@ module.exports = async () => {
   // /formulize-public-api/ requests and hands them to the screens handler, which answers 404.
   //
   // The Public API specs address the endpoint through index.php?apiPath=... directly, so they
-  // pass either way. That is the whole reason this went unnoticed: nothing in the suite
-  // exercises the rewritten URL that the setup instructions actually tell administrators to
-  // configure.
+  // pass either way, which is how this once went unnoticed. 042-public-api-read.spec.js now has
+  // one test that requests the rewritten /formulize-public-api/ URL the setup instructions tell
+  // administrators to configure, and fails without these rules. The survey specs in
+  // 020-data-entry.spec.js report whether /survey reached the survey through the alternate URL
+  // rule, or had to fall back to the screen's own address.
   const htaccessContent = `
 RewriteEngine On
 

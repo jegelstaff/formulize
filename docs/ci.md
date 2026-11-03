@@ -27,9 +27,10 @@ What a run does, in order:
 5. Installs the Playwright dependencies and the Chromium browser.
 6. Runs the **setup specs** — `npx playwright test formulize-core/01-setup --workers=1`. These install Formulize from scratch and build the museum sample system. One worker, in file-name order, because each depends on the last.
 7. Runs the **validate specs** — `npx playwright test formulize-core/02-validate --workers=4 --fully-parallel`. These interrogate the system the setup specs built. This step is why a spec whose tests depend on each other has to say `test.describe.configure({ mode: 'serial' })` — see [Creating Tests](../version_control/testing/creating_tests).
-8. Runs the **appearance specs** — `npx playwright test formulize-core/03-appearance --workers=1`. These test the Lyris theme's looks and the appearance editor, switching the whole site to Lyris and back, so they run after the validate specs, on one worker, not alongside anything else.
-9. Runs the **PHP integrity tests** — element reference scan, saved views round trip, element code files. These need the finished system, so they come last.
-10. Dumps the database and collects the files the run produced, then tears the containers down.
+8. Runs the **sequential validate specs** - `npx playwright test formulize-core/03-validate-sequential --workers=1`. These change things the museum system shares, such as element handles, check that what depends on them still works, and put them back, so they run after the validate specs, on one worker.
+9. Runs the **appearance specs** — `npx playwright test formulize-core/04-appearance --workers=1`. These test the Lyris theme's looks and the appearance editor, switching the whole site to Lyris and back, so they run after the validate specs, on one worker, not alongside anything else.
+10. Runs the **PHP integrity tests** — element reference scan, saved views round trip, element code files. These need the finished system, so they come last.
+11. Dumps the database and collects the files the run produced, then tears the containers down.
 
 Steps 7 to 9 are skipped when the manual run is given a test filter, because a partly built system is not the system they are asking about.
 
