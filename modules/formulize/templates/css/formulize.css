@@ -341,14 +341,16 @@ a.formulize-open-close-link {
   width: auto;
   min-width: 0;
   height: auto;
-  margin: 0 0 0 calc(var(--fz-spacing) * 0.5);
+  /* negative margins above and below, so the icon, bigger than the heading's
+     text, doesn't make the heading's line taller and push its text down */
+  margin: calc(var(--fz-spacing) * -1) 0 calc(var(--fz-spacing) * -1) calc(var(--fz-spacing) * 0.5);
   padding: calc(var(--fz-spacing) * 0.5);
   border: 0;
   border-radius: var(--fz-radius-sm);
   background: none;
   box-shadow: none;
   color: var(--fz-color-text-muted);
-  font-size: inherit;
+  font-size: var(--fz-text-lg, 1.125rem); /* the icon's size: bigger than the heading's text, so it is easy to see and click */
   line-height: 1;
   cursor: pointer;
 }
