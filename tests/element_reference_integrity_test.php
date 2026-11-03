@@ -338,6 +338,9 @@ $codeDir = XOOPS_ROOT_PATH . '/modules/formulize/code/';
 $fixtureCodeFiles = array(
     XOOPS_ROOT_PATH . '/modules/formulize/code/derived_zz_fixture_reference_formula.php',
     XOOPS_ROOT_PATH . '/modules/formulize/code/zz_fixture_reference_code.php',
+    XOOPS_ROOT_PATH . '/modules/formulize/code/on_after_save_zz_fixture_other_form.php',
+    XOOPS_ROOT_PATH . '/modules/formulize/code/application_custom_code_zz_fixture.php',
+    XOOPS_ROOT_PATH . '/modules/formulize/code/number_zz_fixture_default.php',
 );
 
 $xoopsDB->queryF("START TRANSACTION");
@@ -699,7 +702,52 @@ try {
             '<?php $' . $H . ' = 5; print getValue($e, "' . $H . '"); $q = "SELECT `' . $H . '` FROM t";',
             '<?php $' . $H . ' = 5; print getValue($e, "' . $N . '"); $q = "SELECT `' . $H . '` FROM t";',
             true),
+        // another form's procedure, which gets variables for that form's elements only: its own variable of this
+        // name is left, and the handle given to a data handler method is renamed
+        $fixtureCodeFiles[2] => array(
+            '<?php $' . $H . ' = 1; $ids = $dataHandler->findAllEntriesWithValue(\'' . $H . '\', $' . $H . ');',
+            '<?php $' . $H . ' = 1; $ids = $dataHandler->findAllEntriesWithValue(\'' . $N . '\', $' . $H . ');',
+            true),
+        // application code: the handle at every kind of parameter that takes elements, but not in an array made
+        // beforehand and passed in, which may or may not be for one of them
+        $fixtureCodeFiles[3] => array(
+            '<?php formulize_writeEntry(array(\'' . $H . '\' => 1, \'x\' => \'' . $H . '\')); $d = gatherDataset(1, array(1 => array(\'' . $H . '\', \'x\')), sortField: \'x, ' . $H . '\'); $dataHandler->writeEntry(\'new\', [\'' . $H . '\' => 2]); $v = array(\'' . $H . '\' => 3); formulize_writeEntry($v);',
+            '<?php formulize_writeEntry(array(\'' . $N . '\' => 1, \'x\' => \'' . $H . '\')); $d = gatherDataset(1, array(1 => array(\'' . $N . '\', \'x\')), sortField: \'x, ' . $N . '\'); $dataHandler->writeEntry(\'new\', [\'' . $N . '\' => 2]); $v = array(\'' . $H . '\' => 3); formulize_writeEntry($v);',
+            true),
+        // a number element's default value, which names elements by {handle} tokens
+        $fixtureCodeFiles[4] => array(
+            '<?php $default = {' . $H . '} + {' . $H . '_era};',
+            '<?php $default = {' . $N . '} + {' . $H . '_era};',
+            false),
     );
+    // this form's own procedure, which gets a variable for each of its elements, so $H is this element. The
+    // form is a real one, so only when it has no procedure of that kind already, which the fixture would replace.
+    $fixtureFormObject = xoops_getmodulehandler('forms', 'formulize')->get($fixtureFid);
+    $ownProcedure = $codeDir . 'on_before_save_' . $fixtureFormObject->getVar('form_handle') . '.php';
+    if (!file_exists($ownProcedure)) {
+        $fixtureCodeFiles[] = $ownProcedure;
+        $files[$ownProcedure] = array(
+            '<?php $' . $H . ' = $' . $H . ' . $' . $N . '; formulize_writeEntry(array(\'' . $H . '\' => $' . $H . '), $entry_id);',
+            '<?php $' . $N . ' = $' . $N . ' . $' . $N . '_1; formulize_writeEntry(array(\'' . $N . '\' => $' . $N . '), $entry_id);',
+            false);
+    } else {
+        echo "  (the fixture form already has an on_before_save procedure, so its own procedure is not tried)\n";
+    }
+    // which kinds of code file get variables named after this element's handle, and which name it by tokens
+    $formHandle = $fixtureFormObject->getVar('form_handle');
+    check('code files that name elements in a syntax of their own', array(
+        formulizeElementsHandler::codeFileSyntax('derived_anything.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('on_before_save_' . $formHandle . '.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('on_after_save_' . $formHandle . '.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('on_delete_' . $formHandle . '.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('on_before_save_' . $formHandle . '_more.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('on_after_save_zz_other.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('custom_edit_check_' . $formHandle . '.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('application_custom_code_1.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('custom_code_0_btn_screen.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('number_anything.php', $formHandle),
+        formulizeElementsHandler::codeFileSyntax('textarea_anything.php', $formHandle),
+    ), array('variable', 'variable', 'variable', 'variable', false, false, false, false, false, 'token', 'token'));
     foreach ($files as $path => $file) {
         @mkdir(dirname($path), 0777, true);
         file_put_contents($path, $file[0]);
