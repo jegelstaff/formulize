@@ -65,7 +65,13 @@ if($xoTheme) {
     $xoTheme->addStylesheet("/modules/formulize/templates/css/formulize.css?v=".$cssVersion);
     $xoTheme->addScript("/modules/formulize/libraries/formulize.js?v=".$jsVersion);
 }
+// The screen's content, marked so that a form can run in place, replacing just this part of the page
+// when it is submitted, and so that an async request gets just this part back (see
+// formulize_renderAsyncResponse in include/functions.php)
+formulize_noteThemeAssetsBeforeRender();
+print FORMULIZE_CONTENT_START_MARKER;
 include 'initialize.php';
+print FORMULIZE_CONTENT_END_MARKER;
 
 // a declared screen means the page rendering is being included elsewhere, at the point where the screen id is included, so don't call footer otherwise we will output the entire page template, not just the body contents
 if(!isset($formulize_screen_id) OR !is_numeric($formulize_screen_id)) {
