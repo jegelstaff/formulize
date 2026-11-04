@@ -15,7 +15,7 @@
  *
  *   formulize_parseDatePeriodSearchTerm()   is this term a whole month or year, and which days does it span
  *   formulizeDateElementHandler::buildSearchWhereClause()   the range comparison that replaces the single date
- *   formulizeDateElementHandler::prepareLiteralTextForDB()  turning what was typed into the one date that gets compared
+ *   formulizeDateElementHandler::prepareLiteralTextForDB()  turning what was typed into the value that gets compared
  *
  * Four properties matter, and each is why a whole section exists below rather than a couple of happy path checks.
  *
@@ -59,6 +59,9 @@ if (PHP_SAPI !== 'cli') {
 }
 
 date_default_timezone_set('UTC');
+
+// the format the site shows dates in, which is what the language files define for English and French
+define('_SHORTDATESTRING', 'Y-m-d');
 
 $functionsFile = isset($argv[1]) ? $argv[1] : (__DIR__ . '/../modules/formulize/include/functions.php');
 $dateFile      = isset($argv[2]) ? $argv[2] : (__DIR__ . '/../modules/formulize/class/dateElement.php');
@@ -112,7 +115,8 @@ function extractFunctionSource($source, $functionName) {
 
 $functionsSource = file_get_contents($functionsFile);
 foreach (array('formulize_normalizeMonthNameForSearch', 'formulize_monthNamesForSearch',
-               'formulize_datePeriodForMonth', 'formulize_parseDatePeriodSearchTerm') as $name) {
+               'formulize_datePeriodForMonth', 'formulize_parseDatePeriodSearchTerm',
+               'formulize_dateValueAsISO', 'formulize_mysqlDateFormat') as $name) {
     $code = extractFunctionSource($functionsSource, $name);
     if ($code === false) {
         fwrite(STDERR, "Could not extract $name()\n");
@@ -282,12 +286,13 @@ check('no column to compare', $handler->buildSearchWhereClause('x', 'LIKE', "'",
 check('an operator with no meaning here', clauseFor($handler, 'IN'), false);
 
 echo "\nPREPARING A TYPED VALUE - what a term becomes before any of the above is reached:\n";
-// Every date search passes through here first. A term naming a period arrives at buildSearchWhereClause already
-// collapsed to a single day by this method, which is precisely why that method has to read the period back out of
-// $rawTerm rather than out of $term.
+// Every date search passes through here first. A term naming a period is kept as typed, because it is not one day, and
+// strtotime can only make it into one day, which is wrong (2026 is a time of day today, and March is today's date in March).
 check('a single date is unchanged',       $handler->prepareLiteralTextForDB('2026-03-05', null),   '2026-03-05');
-check('a month collapses to day one',     $handler->prepareLiteralTextForDB('October 2026', null), '2026-10-01');
-check('so does a numeric month',          $handler->prepareLiteralTextForDB('2026-10', null),      '2026-10-01');
+check('a month is kept as typed',         $handler->prepareLiteralTextForDB('October 2026', null), 'October 2026');
+check('so is a numeric month',            $handler->prepareLiteralTextForDB('2026-10', null),      '2026-10');
+check('so is a year',                     $handler->prepareLiteralTextForDB('2026', null),         '2026');
+check('a date written out',               $handler->prepareLiteralTextForDB('August 21 2020', null), '2020-08-21');
 check('an operator prefix is left alone', $handler->prepareLiteralTextForDB('>=2026-01-01', null), '>=2026-01-01');
 check('so is a negation prefix',          $handler->prepareLiteralTextForDB('!2026-01-01', null),  '!2026-01-01');
 
@@ -299,11 +304,29 @@ echo "\nPREPARING A TYPED VALUE - blank has to stay blank, so {BLANK} can find e
 // form was given an INNER join and those entries disappeared from the results as well.
 check('empty stays empty',                $handler->prepareLiteralTextForDB('', null),    '');
 check('whitespace only stays as it is',   $handler->prepareLiteralTextForDB('   ', null), '   ');
-// A term that is not a date at all still becomes the epoch. That is left alone deliberately rather than overlooked:
-// returning false would be the honest answer ("nothing can match", which the extraction layer already understands), but
-// this method has callers that do not check for false, so it is a separate change. The quick search path never gets
-// here with junk anyway - it drops unparseable dates before the filter is built.
-check('known quirk: junk is the epoch',   $handler->prepareLiteralTextForDB('bread', null), '1970-01-01');
+// A term that is not a date at all is kept as typed, rather than date() reading strtotime's false as the epoch, so it matches
+// nothing, where 1970-01-01 would find anything acquired that day. Searches of a list reach here with these terms. They used to be
+// dropped before the filter was built, to stop them being turned into an empty search, which all entries would match.
+check('a term that is not a date is kept', $handler->prepareLiteralTextForDB('bread', null), 'bread');
+check('so is one in a partial search',     $handler->prepareLiteralTextForDB('bread', null, true), 'bread');
+
+echo "\nPREPARING A TYPED VALUE - part of a date, when a search can match part of one:\n";
+// strtotime fills in what is missing, which is not what someone looking for part of a date means. Digits and separators that are
+// not a whole date stay as typed, but words are read as dates, because people type things like yesterday into a date search.
+check('digits are kept',                   $handler->prepareLiteralTextForDB('05/03', null, true), '05/03');
+check('so is a month and year',            $handler->prepareLiteralTextForDB('03/2026', null, true), '03/2026');
+check('so is a wildcard term, unreadable', $handler->prepareLiteralTextForDB('%2026-03%', null, true), '%2026-03%');
+check('a whole date is read',              $handler->prepareLiteralTextForDB('August 21 2020', null, true), '2020-08-21');
+check('a whole date in digits is read',    $handler->prepareLiteralTextForDB('05/03/2026', null, true), '2026-05-03');
+check('words are read as a date',          $handler->prepareLiteralTextForDB('Oct 5', null, true), date('Y') . '-10-05');
+check('a relative word is read as a date', $handler->prepareLiteralTextForDB('yesterday', null, true), date('Y-m-d', strtotime('yesterday')));
+check('without a partial search, digits are read', $handler->prepareLiteralTextForDB('05/03', null), date('Y') . '-05-03');
+
+echo "\nA SITE THAT SHOWS DATES ANOTHER WAY:\n";
+check('read in that format',            formulize_dateValueAsISO('05/03/2026', 'd/m/Y'), '2026-03-05');
+check('not a date in that format',      formulize_dateValueAsISO('31/02/2026', 'd/m/Y'), '31/02/2026');
+check('the MySQL format for showing it', formulize_mysqlDateFormat('d/m/Y'), '%d/%m/%Y');
+check('a day with its suffix',          formulize_mysqlDateFormat('jS F Y'), '%D %M %Y');
 
 echo "\n";
 printf("RESULT: %d passed, %d failed\n", $GLOBALS['__pass'], $GLOBALS['__fail']);

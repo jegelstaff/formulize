@@ -317,15 +317,16 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 		// and a LIKE condition matches it as typed, since dates are stored as YYYY-MM-DD.
 		// Anything strtotime can't read is kept as typed too, ie: %2026-03%, rather than date() reading false as 1970-01-01.
 		// A date in the format the site shows dates in is read in that format first, because strtotime reads 05/03/2026 as May 3, even on a site that shows dates as d/m/Y
-		// When the term can be part of a date ($partialMatch, ie: LIKE), it is only read as a date if it names a whole day, because strtotime fills in what's missing,
-		// so 05/03 would become May 3 this year. Part of a date is kept as typed, and matched against the date as stored and as the site shows it.
+		// When the term can be part of a date ($partialMatch, ie: LIKE), digits and separators that don't make up a whole date are kept as typed, because strtotime fills
+		// in what's missing, so 05/03 would become May 3 this year. They are matched against the date as stored and as the site shows it. Words like yesterday are still read as dates.
 		if(!in_array($firstChar, $operators) AND !formulize_parseDatePeriodSearchTerm($value)) {
 			$isoValue = formulize_dateValueAsISO($value);
 			$dateParts = date_parse($value);
 			$namesADay = ($dateParts['error_count'] == 0 AND $dateParts['year'] !== false AND $dateParts['month'] !== false AND $dateParts['day'] !== false);
+			$partOfADate = ($partialMatch AND !$namesADay AND preg_match('/^[\d\s\/.\-]+$/', $value));
 			if(preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $isoValue)) {
 				$value = $isoValue;
-			} elseif((!$partialMatch OR $namesADay) AND ($timestamp = strtotime($value)) !== false) {
+			} elseif(!$partOfADate AND ($timestamp = strtotime($value)) !== false) {
 				$value = date('Y-m-d', $timestamp);
 			}
 		}
@@ -360,6 +361,18 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 
 		$searchPeriod = formulize_parseDatePeriodSearchTerm($rawTerm);
 		if (!$searchPeriod OR !$queryElement) {
+			// Part of a date also matches the date as the site shows it, ie: 03/2026 on a site that shows dates as d/m/Y, because dates are stored as YYYY-MM-DD.
+			// Not needed if the site shows dates as they are stored, then the search carries on the way it would for any other element
+			$searchOperator = trim($operator);
+			$siteDateFormat = formulize_mysqlDateFormat();
+			if ($queryElement AND trim((string) $rawTerm) !== '' AND ($searchOperator == 'LIKE' OR $searchOperator == 'NOT LIKE') AND $siteDateFormat != '%Y-%m-%d') {
+				$storedDate = "'" . $likebits . formulize_db_escape($term) . $likebits . "'";
+				$shownDate = "'" . $likebits . formulize_db_escape($rawTerm) . $likebits . "'";
+				$dateAsShown = "DATE_FORMAT($queryElement,'" . formulize_db_escape($siteDateFormat) . "')";
+				return $searchOperator == 'LIKE'
+					? " ( $queryElement LIKE $storedDate OR $dateAsShown LIKE $shownDate ) "
+					: " ( $queryElement NOT LIKE $storedDate AND $dateAsShown NOT LIKE $shownDate ) ";
+			}
 			return false;
 		}
 		$start = "'" . formulize_db_escape($searchPeriod['start']) . "'";

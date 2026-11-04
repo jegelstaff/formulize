@@ -1,12 +1,18 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
-import { login, saveAdminForm, waitForAdminPageReady, dbQuery, dbPrefix, elementId, ensureMainMenuOpen, leavePage } from '../../utils';
+import {
+	login, saveAdminForm, waitForAdminPageReady, dbQuery, dbPrefix, elementId, ensureMainMenuOpen, leavePage, applyColumnChanges,
+	openAllColumnSections, waitForWorkingMessage,
+} from '../../utils';
 
 /**
  * A condition works when its term is what people type, and not only when it is the value the element stores. Yes or
  * No for a Yes/No element, which stores codes, and a date written out, which is stored as YYYY-MM-DD. The stored values
  * still work as well, since conditions made before now use them. A list of terms with IN works, and a LIKE condition
- * on a date can name just the year.
+ * on a date can name just the year. A negation includes artifacts with nothing in the field, {BLANK} finds them, and
+ * "match all" and "match one or more" conditions work together, including { } references to the collection on screen.
+ *
+ * The same date handling is behind the search boxes on a list, so a date search is checked at the end, on the Artifacts list.
  *
  * The Artifacts subform in the Collections form is limited by each condition in turn, and the Weapons collection must
  * show the right weapons each time. Setup gave Weapons three weapons:
@@ -71,6 +77,23 @@ async function limitSubformTo(page, elementLabel, op, term) {
 	await saveAdminForm(page);
 	await openSubformOptions(page);
 	await expect(page.locator('#filterdiv')).toContainText(`${elementLabel} ${op} ${term}`);
+}
+
+// Limit the subform to artifacts that meet several conditions. Each one is an array of the element, operator and term.
+// The first set of boxes is "match all of these" and the second is "match one or more of these".
+async function limitSubformToConditions(page, matchAll, matchOneOrMore) {
+	await asAdmin(page);
+	await removeConditions(page);
+	for (const [set, conditions] of [['subformfilter', matchAll], ['subformfilter_oom', matchOneOrMore]]) {
+		for (const [elementLabel, op, term] of conditions) {
+			await page.locator(`#new_${set}_element`).selectOption({ label: elementLabel });
+			await page.locator(`#new_${set}_op`).selectOption(op);
+			await page.locator(`#new_${set}_term`).fill(term);
+			await saveAdminForm(page);
+			await openSubformOptions(page);
+			await expect(page.locator('#filterdiv')).toContainText(`${elementLabel} ${op} ${term}`);
+		}
+	}
 }
 
 // Open the Weapons collection as curator1, check which artifacts its subform shows, and leave it without saving
@@ -147,5 +170,73 @@ test.describe.serial('Literal terms in subform conditions', () => {
 	test('Date of acquisition LIKE 2011, just the year, shows only the artifact acquired that year', async ({ page }) => {
 		await limitSubformTo(page, 'Date of acquisition', 'LIKE', '2011');
 		await expectWeaponsSubformToShow(page, [chariot], [sword, musket]);
+	});
+
+	test('Date of acquisition >= 2000, a year with a comparison, is from the start of that year', async ({ page }) => {
+		await limitSubformTo(page, 'Date of acquisition', '>=', '2000');
+		await expectWeaponsSubformToShow(page, [chariot], [sword, musket]);
+	});
+
+	test('Donor != Freeform Solutions includes the artifacts with no donor', async ({ page }) => {
+		await limitSubformTo(page, 'Donor', 'NOT', 'Freeform Solutions');
+		await expectWeaponsSubformToShow(page, [chariot, musket], [sword]);
+	});
+
+	test('Donor = {BLANK} shows the artifacts with no donor', async ({ page }) => {
+		await limitSubformTo(page, 'Donor', '=', '{BLANK}');
+		await expectWeaponsSubformToShow(page, [chariot, musket], [sword]);
+	});
+
+	test('Match all and match one or more together: not donated, and either BCE or acquired in 1993', async ({ page }) => {
+		await limitSubformToConditions(page, [['Donated to museum', '=', 'No']], [['Era', '=', 'BCE'], ['Date of acquisition', 'LIKE', '1993']]);
+		await expectWeaponsSubformToShow(page, [chariot], [sword, musket]);
+	});
+
+	test('Match all with a reference to the collection on screen, and match one or more', async ({ page }) => {
+		await limitSubformToConditions(page, [['Collections', '=', '{collections_name}']], [['Era', '=', 'CE'], ['Donor', '=', '{BLANK}']]);
+		await expectWeaponsSubformToShow(page, [sword, musket], [chariot]);
+	});
+
+	test('Match one or more with a negated reference to the collection on screen', async ({ page }) => {
+		await limitSubformToConditions(page, [], [['Collections', 'NOT', '{collections_name}'], ['Era', '=', 'BCE']]);
+		await expectWeaponsSubformToShow(page, [chariot], [sword, musket]);
+	});
+});
+
+test.describe.serial('Date searches on a list', () => {
+
+	// Search the Artifacts list by date of acquisition, the way a curator does. The column is added for this visit only.
+	async function searchArtifactsByDate(page, term, shown, notShown) {
+		const box = page.locator('input[name="search_artifacts_date_of_acquisition"]');
+		await box.fill(term);
+		await box.press('Enter');
+		await waitForWorkingMessage(page);
+		for (const name of shown) {
+			await expect(page.getByRole('cell', { name, exact: true })).toBeVisible();
+		}
+		for (const name of notShown) {
+			await expect(page.getByRole('cell', { name, exact: true })).toHaveCount(0);
+		}
+	}
+
+	test('a year, a month, and something that is not a date', async ({ page }) => {
+		test.setTimeout(300000);
+		await login(page, 'curator1', '12345');
+		await ensureMainMenuOpen(page);
+		await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
+		const popupPromise = page.context().waitForEvent('page');
+		await page.getByRole('button', { name: 'Change columns' }).click();
+		const columns = await popupPromise;
+		await columns.bringToFront();
+		await openAllColumnSections(columns);
+		await columns.getByRole('checkbox', { name: 'Date of acquisition' }).check();
+		await applyColumnChanges(columns);
+		await expect(page.locator('input[name="search_artifacts_date_of_acquisition"]')).toBeVisible();
+
+		await searchArtifactsByDate(page, '2011', [chariot], [sword, musket]);
+		await searchArtifactsByDate(page, 'August 1993', [sword], [chariot, musket]);
+		await searchArtifactsByDate(page, '>=2020', ['Roman Coin'], [sword, chariot, musket]);
+		await searchArtifactsByDate(page, 'bread', [], [sword, chariot, musket, 'Roman Coin']);
+		await leavePage(page);
 	});
 });

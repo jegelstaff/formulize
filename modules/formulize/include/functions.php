@@ -6411,7 +6411,10 @@ function synchSubformBlankDefaults() {
                     foreach ($subformConditions[1] as $i=>$thisOp) {
                         if ($thisOp == "=" AND $subformConditions[3][$i] != "oom") {
                             $conditionElementObject = $element_handler->get($subformConditions[0][$i]);
-                            $filterValues[$subformConditions[0][$i]] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i], $savedMainFormEntryId);
+                            $conditionValue = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i], $savedMainFormEntryId);
+                            if(formulize_conditionValueCanBeSaved($conditionElementObject, $conditionValue)) {
+                                $filterValues[$subformConditions[0][$i]] = $conditionValue;
+                            }
                         }
                     }
                     if(count((array) $filterValues)>0) {
@@ -8343,11 +8346,8 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
         $extractionQuery = true;
     }
 
-    global $nonLinkedCurlyBracketSelfReference;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
-
-    $nonLinkedCurlyBracketSelfReference = false;
 
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -8509,37 +8509,20 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
 
     }
 
-    $curlyBracketFormconditionsfilter_oom_WHERE = '';
+    // The form that { } terms refer to is joined on just the entry being referred to, so there is one row to read the referenced values from, and no entry in the query is lost by the join.
+    // The conditions go in the WHERE clause along with all the others, so they work with whatever else the query has in its WHERE clause. That matters for a linked element's options,
+    // where the WHERE clause is ( ...conditions... ) OR t1.entry_id IN (the selected options). A condition in the ON clause of an INNER JOIN would remove a selected option before that OR is reached.
+    // Each condition still has AND curlybracketform.`entry_id`=... on the end. If the entry doesn't exist, the join has nothing to read, and that is what makes the condition not match.
+    // ie: comments != {staff_comments} in entry 3 becomes
+    // FROM surveys AS t1 LEFT JOIN staff AS curlybracketform ON curlybracketform.`entry_id`=3 WHERE ... AND ( NOT (...) AND curlybracketform.`entry_id`=3 )
     if($curlyBracketFormFrom) {
+        $curlyBracketEntryQuoted = $curlyBracketEntry == 'new' ? "'new'" : $curlyBracketEntry; // can't put text into the query without quotes!
+        $curlyBracketFormFrom = " LEFT JOIN $curlyBracketFormFrom ON curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
         if($curlyBracketFormconditionsfilter) {
-            $curlyBracketFormFrom = " INNER JOIN $curlyBracketFormFrom ON ($curlyBracketFormconditionsfilter $curlyBracketFormconditionsfilter_oom) ";
-        } elseif($curlyBracketFormconditionsfilter_oom) {
-            // strip out parts of the oom filter that we cannot use in the different clauses -- AND MAYBE WE NEED TO DO THIS FOR THE NON-OOM FILTERS??
-            // IF THIS IS A SELF-REFERENCE, USE ONLY THE ENTRY ID PART IN THE on
-            // OTHERWISE, USE ONLY THE NON-ENTRY ID PART
-            // $nonLinkedCurlyBracketSelfReference is a global set in the building of the conditions...and our big assumption is that all { } references point to the same form, so if we detect that it has some circularity, then that needs to be the case across the board...seems brittle!
-            $entryFilterPos = strpos($curlyBracketFormconditionsfilter_oom, 'AND curlybracketform.`entry_id`=');
-            $nextBracketPos = strpos($curlyBracketFormconditionsfilter_oom, ')', $entryFilterPos);
-            if($nonLinkedCurlyBracketSelfReference) {
-                $curlyBracketFormFrom = " LEFT JOIN $curlyBracketFormFrom ON (".substr($curlyBracketFormconditionsfilter_oom, ($entryFilterPos+4), $nextBracketPos-$entryFilterPos-3); // grab everything up to the ) after the "entry_id =" part
-            } else {
-                $curlyBracketFormFrom = " LEFT JOIN $curlyBracketFormFrom ON ($curlyBracketFormconditionsfilter_oom) ";
-            }
-            // strip out the part of the oom filter that we cannot use in the WHERE clause
-            $searchStartPos = 1;
-            $curlyBracketFormconditionsfilter_oom_WHERE = $curlyBracketFormconditionsfilter_oom;
-            while($searchStartPos <= strlen($curlyBracketFormconditionsfilter_oom_WHERE) AND $entryFilterPos = strpos($curlyBracketFormconditionsfilter_oom_WHERE, 'AND curlybracketform.`entry_id`=', $searchStartPos)) {
-                $nextBracketPos = strpos($curlyBracketFormconditionsfilter_oom_WHERE, ')', $entryFilterPos);
-                $curlyBracketFormconditionsfilter_oom_WHERE = substr($curlyBracketFormconditionsfilter_oom_WHERE, 0, $entryFilterPos).substr($curlyBracketFormconditionsfilter_oom_WHERE, $nextBracketPos);
-                $searchStartPos = $nextBracketPos;
-            }
-            if($conditionsfilter_oom) {
-                $conditionsfilter_oom .= " OR $curlyBracketFormconditionsfilter_oom_WHERE ";
-            } else {
-                $conditionsfilter_oom = " AND ( $curlyBracketFormconditionsfilter_oom_WHERE ";
-            }
-        } else {
-            $curlyBracketFormFrom = ", $curlyBracketFormFrom ";
+            $conditionsfilter .= $conditionsfilter ? " AND $curlyBracketFormconditionsfilter " : " AND ( $curlyBracketFormconditionsfilter ";
+        }
+        if($curlyBracketFormconditionsfilter_oom) {
+            $conditionsfilter_oom .= $conditionsfilter_oom ? " OR $curlyBracketFormconditionsfilter_oom " : " AND ( $curlyBracketFormconditionsfilter_oom ";
         }
     }
 
@@ -8654,7 +8637,7 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
  */
 function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filterElementIds, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
 
-    global $xoopsDB, $nonLinkedCurlyBracketSelfReference;
+    global $xoopsDB;
     $curlyBracketEntryQuoted = $curlyBracketEntry == 'new' ? "'new'" : $curlyBracketEntry; // can't put text into the query without quotes!
     $conditionsFilterComparisonValue = NULL;
     $nullClauseHandled = false; // a NULL comparison is added at most once per condition, see createNullForComparisonValueIfNecessary
@@ -8842,9 +8825,31 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 								$curlyBracketTargetElementEleValue = $curlyBracketElementObject->getVar('ele_value');
 								$curlyBracketTargetElementEleValueProperties = formulize_linkedSourceParts($curlyBracketTargetElementEleValue[2]);
 								$curlyBracketTargetSourceFid = $curlyBracketTargetElementEleValueProperties[0];
-								if ($curlyBracketTargetSourceFid == $targetSourceFid) {
+								$referencedEntryIds = _entryIdsInLinkedValue($dbValueOfTerm);
+								if ($curlyBracketTargetSourceFid == $targetSourceFid AND $linkedNegation AND $referencedEntryIds !== false) {
+									// a negation means none of the referenced values are in the field, and a blank field doesn't have any of them. The values are entry ids in the same source
+									// as the field, so they can be compared directly. A whole condition, because the NULL check has to be bracketed together with the comparisons.
+									// ie: collections != {collections} holding ,4,3, becomes
+									// (( t1.`artifacts_collections` IS NULL OR ( t1.`artifacts_collections` NOT LIKE '%,4,%' AND t1.`artifacts_collections` NOT LIKE '%,3,%' ) ))
+									// and donor != {donors} holding ,1,2, on a field that holds one value becomes (( t1.`artifacts_donor` IS NULL OR t1.`artifacts_donor` NOT IN (1,2) ))
+									if($curlyBracketEntry == 'new' AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+										return array("", ""); // nothing to compare to in a new entry until there's a value, the condition is left out, the same as below
+									}
+									if(empty($referencedEntryIds)) { // nothing is referenced, so not matching it means not being blank
+										list($filterOps[$filterId], $conditionsFilterComparisonValue) = _blankComparisonForConditionsFilterSQL($filterElementObject, $filterElementIds[$filterId], true);
+									} elseif($filterElementObject->canHaveMultipleValues) {
+										$notInField = array();
+										foreach($referencedEntryIds as $referencedEntryId) {
+											$notInField[] = "`$linkedHandle` NOT LIKE '%,$referencedEntryId,%'";
+										}
+										$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<--( `$linkedHandle` IS NULL OR ( ".implode(" AND ", $notInField)." ) )";
+									} else {
+										$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<--( `$linkedHandle` IS NULL OR `$linkedHandle` NOT IN (".implode(",", $referencedEntryIds).") )";
+									}
+									$nullClauseHandled = true;
+								} elseif ($curlyBracketTargetSourceFid == $targetSourceFid) {
 									// a. the right value contains multiple, linked values, that point to the same source as the left side, which accepts multiple values. So we must compare against each possibility, if the match is not exact (ie: if it's LIKE or NOT LIKE)
-									if(($filterOps[$filterId] == 'LIKE' OR $filterOps[$filterId] == 'NOT LIKE') AND strpos(trim($dbValueOfTerm, ","),",") !== false AND $filterElementObject->canHaveMultipleValues) {
+									if($filterOps[$filterId] == 'LIKE' AND strpos(trim($dbValueOfTerm, ","),",") !== false AND $filterElementObject->canHaveMultipleValues) {
 										$conditionsFilterComparisonValue = array();
 										foreach(explode(",",trim($dbValueOfTerm, ",")) as $thisFilterTermPart) {
 											$conditionsFilterComparisonValue[] = " CONCAT('$likebits', ',$thisFilterTermPart,', '$likebits') "; // filterTermToUse will already have , , around it so we don't need them in the two concat'd parts before and after
@@ -8858,12 +8863,16 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 										// find entries where the filter term contains the entry id of any entry that contains the same linked reference to the common underlying source. Ack.
 										$conditionsFilterComparisonValue = " ( SELECT ss.entry_id FROM ".$xoopsDB->prefix('formulize_'.$curlyBracketForm->getVar('form_handle'))." AS ss
 												WHERE ss.`".formulize_db_escape($bareFilterTerm)."` = (
-														SELECT sss.`".formulize_db_escape($bareFilterTerm)."` FROM ".$xoopsDB->prefix('formulize_'.$curlyBracketForm->getVar('form_handle'))." AS sss WHERE sss.`entry_id` = $curlyBracketEntry
+														SELECT sss.`".formulize_db_escape($bareFilterTerm)."` FROM ".$xoopsDB->prefix('formulize_'.$curlyBracketForm->getVar('form_handle'))." AS sss WHERE sss.`entry_id` = $curlyBracketEntryQuoted
 														) ) ";
 										$filterOps[$filterId] = " IN ";
+										if($linkedNegation) {
+											// not one of those entries, and a blank field isn't one of them. A whole condition, so the NULL check is bracketed with the NOT IN, ahead of the entry limit added below
+											// ie: (( t1.`surveys_exhibit` IS NULL OR t1.`surveys_exhibit` NOT IN ( SELECT ss.entry_id ... ) ) AND curlybracketform.`entry_id`=2 )
+											$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<--( `$linkedHandle` IS NULL OR `$linkedHandle` NOT IN".$conditionsFilterComparisonValue.")";
+											$nullClauseHandled = true;
+										}
 								}
-						} elseif($targetSourceFid == $curlyBracketForm->getVar('id_form')) { // self reference to the same form, but with a non-linked element...need to do some funky stuff when parsing this into the ON clause of the join!
-								$nonLinkedCurlyBracketSelfReference = true;
 						}
 						// then neuter these, so they don't screw up the building of the query...note the use of origlikebits so that the higher level part of the query retains that logic if the user asked for it
 						$likebits = "";
@@ -8926,12 +8935,10 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 						}
 				}
 				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
-						// a whole condition must check the entry being referenced is there. In a "one or more" set the form is LEFT JOINed, and where it doesn't join
-						// its fields are NULL, so a subquery looking for them finds nothing, and NOT EXISTS / NOT IN would be true for every entry
+						// the entry limit also goes on a whole condition, after its brackets
 						// ie: donor != {short_name} in entry 1 becomes
-						// ( curlybracketform.`entry_id` IS NOT NULL AND ( t1.`artifacts_donor` IS NULL OR t1.`artifacts_donor` NOT IN (SELECT ss.entry_id FROM donors AS ss
+						// (( t1.`artifacts_donor` IS NULL OR t1.`artifacts_donor` NOT IN (SELECT ss.entry_id FROM donors AS ss
 						//   WHERE ss.`donors_name` <=> curlybracketform.`artifacts_short_name`) ) AND curlybracketform.`entry_id`=1 )
-						$conditionsFilterComparisonValue = str_replace("-->>WHOLECONDITION<<--", "-->>WHOLECONDITION<<-- curlybracketform.`entry_id` IS NOT NULL AND ", $conditionsFilterComparisonValue);
 						$conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
 				}
 		}
@@ -9017,12 +9024,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 					// blank and NULL are the same on both sides of the comparison, so a blank field equals a blank reference, and isn't equal to a reference with a value
 					$filterHandle = is_object($filterElementObject) ? $filterElementObject->getVar('ele_handle') : $filterElementIds[$filterId];
 					if($nullAwareComparison = _nullAwareComparisonWithReference($filterOps[$filterId], $filterHandle, "curlybracketform.`".$bareFilterTerm."`")) {
-							// the entry being referenced must be there. In a "one or more" set the form is LEFT JOINed, and where it doesn't join its fields are NULL, which isn't a blank reference
-							// The field goes inside COALESCE, so this is a whole condition.
+							// The field goes inside COALESCE, so this is a whole condition. The entry limit is what makes it not match if the referenced entry doesn't exist.
 							// ie: first_name != {last_name} in entry 3 becomes
-							// ( curlybracketform.`entry_id` IS NOT NULL AND NOT (COALESCE( t1.`donors_first_name` = curlybracketform.`donors_last_name`, FALSE)
+							// ( NOT (COALESCE( t1.`donors_first_name` = curlybracketform.`donors_last_name`, FALSE)
 							//   OR (COALESCE( t1.`donors_first_name` ,'') = '' AND COALESCE(curlybracketform.`donors_last_name`,'') = '')) AND curlybracketform.`entry_id`=3 )
-							$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<-- curlybracketform.`entry_id` IS NOT NULL AND ".$nullAwareComparison." AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
+							$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<-- ".$nullAwareComparison." AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
 							$nullClauseHandled = true;
 					} elseif ($likebits == "%") {
 							$conditionsFilterComparisonValue = " CONCAT('%',curlybracketform.`".$bareFilterTerm."`,'%') AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
@@ -9085,7 +9091,12 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		// that would let a NULL field match every entry in that form
 		// Not when there is no comparison value either, ie: a { } reference with nothing in it yet on a new entry. That condition is left out
 		// of the query, and adding OR ... IS NULL to nothing would make it "field LIKE OR field IS NULL"
-		if(!$nullClauseHandled AND $conditionsFilterComparisonValue !== "" AND !strstr($conditionsFilterComparisonValue, "curlybracketform")) {
+		// Not on a whole condition, which has its own NULL handling. Those set $nullClauseHandled, but this one can't be left to chance: _appendToCondition doesn't
+		// process the bracket marker that the clause adds to a whole condition, so it would end up in the SQL
+		if(!$nullClauseHandled
+			AND $conditionsFilterComparisonValue !== ""
+			AND !strstr($conditionsFilterComparisonValue, "curlybracketform")
+			AND !strstr($conditionsFilterComparisonValue, "-->>WHOLECONDITION<<--")) {
 			// a metadata field has no element object, its name is its handle
 			$filterHandle = is_object($filterElementObject) ? $filterElementObject->getVar('ele_handle') : $filterElementIds[$filterId];
 			if($nullClause = createNullForComparisonValueIfNecessary($conditionsFilterComparisonValue, $filterOps[$filterId], $filterHandle)) {
@@ -9107,6 +9118,30 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		}
     return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
 
+}
+
+/**
+ * Get the entry ids in the value of a linked element, ie: 4 from one that holds one value, or 4,3 from one that holds ,4,3,
+ *
+ * @param mixed $value The value of the linked element
+ * @return array|false The entry ids, which is an empty array if the value is blank, or false if the value isn't entry ids, ie: a snapshot of the linked text
+ */
+function _entryIdsInLinkedValue($value) {
+	if($value === false OR is_array($value)) {
+		return false;
+	}
+	$value = trim((string) $value, ", ");
+	if($value === '') {
+		return array();
+	}
+	$entryIds = array();
+	foreach(explode(",", $value) as $entryId) {
+		if(!ctype_digit(trim($entryId))) {
+			return false;
+		}
+		$entryIds[] = intval($entryId);
+	}
+	return $entryIds;
 }
 
 /**
@@ -10606,6 +10641,21 @@ function formulize_getCurrentRevisions($fidOrObject, $entryIds) {
 }
 
 /**
+ * Check if the value from an = condition can be saved in the element, when conditions are assigning their values to new entries.
+ * A condition on a date element can name a whole year or month, ie: date = 2026, which is a range of days, not a date that can be written to an entry.
+ *
+ * @param object $elementObject - The element the condition is on
+ * @param mixed $value - The condition's value, from prepareLiteralTextForDB
+ * @return bool True if the value can be saved in the element
+ */
+function formulize_conditionValueCanBeSaved($elementObject, $value) {
+	if(elementTypeIsOrExtends($elementObject, 'date') AND $value !== '' AND $value !== null) {
+		return (is_string($value) AND preg_match('/^\d{4}-\d{2}-\d{2}$/', $value));
+	}
+	return true;
+}
+
+/**
  * Extracts filter values from subform conditions for a specific entry. Reads
  * filter conditions, and returns the appropriate filter values that should be
  * used to enforce values in newly created entries. Used for example with subform
@@ -10649,7 +10699,10 @@ function getFilterValuesForEntry($subformConditions, $curlyBracketEntryid=null) 
 											}
 									}
 									if(!isset($filterValues[$conditionElementFid][$subformConditions[0][$i]])) {
-											$filterValues[$conditionElementFid][$subformConditionElementHandle] = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i], $curlyBracketEntryid);
+											$conditionValue = prepareLiteralTextForDB($conditionElementObject, $subformConditions[2][$i], $curlyBracketEntryid);
+											if(formulize_conditionValueCanBeSaved($conditionElementObject, $conditionValue)) {
+												$filterValues[$conditionElementFid][$subformConditionElementHandle] = $conditionValue;
+											}
 									}
 							}
 					}
@@ -11438,15 +11491,6 @@ function formulize_parseSearchesIntoFilter($searches) {
 				} else {
 					$one_search = "";
 					$operator = "";
-				}
-			} else {
-				// handle alterations to non { } search terms here...
-				if ($ele_type == "date") {
-					$search_date = strtotime($one_search);
-					// only search on a valid date string (otherwise it will be converted to the unix epoch)
-					if (false === $search_date) {
-						continue;
-					}
 				}
 			}
 
