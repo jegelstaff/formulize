@@ -1364,6 +1364,8 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 			}
 		}
 
+		$this->registerSummaryTools();
+
 	}
 
 	/**

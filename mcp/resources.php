@@ -374,7 +374,7 @@ trait resources {
 	 */
 	private function forms_list() {
 
-		// system forms (users, groups) are worked with through their own tools, not as forms
+		// system forms (users, groups, summaries) are worked with through their own tools, not as forms
 		$sql = "SELECT id_form, form_title, singular, plural, form_handle as database_table_name FROM " . $this->db->prefix('formulize_id') . " WHERE COALESCE(lockedform, 0) != " . FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED;
 
 		$result = $this->db->query($sql);

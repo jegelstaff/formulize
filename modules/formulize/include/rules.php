@@ -231,8 +231,11 @@ function formulize_rulesShutdown() {
 			formulize_rulesReleaseClient();
 		}
 		ob_start();
+		$GLOBALS['formulize_inRulesShutdown'] = true;
 		formulize_ruleProcessOutbox(10);
-		ob_end_clean();
+		if (ob_get_level() > 0) { // a summary refresh may have released the client already, which ends the buffers
+			ob_end_clean();
+		}
 	} catch (Throwable $e) {
 		while (ob_get_level() > 0) { ob_end_clean(); }
 		error_log("Formulize rules: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
@@ -1339,7 +1342,8 @@ function formulize_ruleQueueWebhook($context, $url, $payload, $secret = '') {
 }
 
 /**
- * Send webhooks waiting in the outbox: ones created during this request, and ones due for a retry.
+ * Send webhooks, run background rules and refresh summaries waiting in the outbox: ones created during this request,
+ * and ones due for a retry.
  * @param int $limit The most to send in one go
  * @param array $onlyIds Optional. Only these outbox items, whether they are due or not (ie: "send now" in the admin UI)
  * @return array Outbox id => status after trying
@@ -1369,7 +1373,16 @@ function formulize_ruleProcessOutbox($limit = 20, $onlyIds = null) {
 		if ($xoopsDB->getAffectedRows() < 1) {
 			continue;
 		}
-		$results[$outboxId] = formulize_ruleOutboxChannel($outboxId) == 'rule' ? formulize_ruleRunJob($outboxId) : formulize_ruleSendWebhook($outboxId);
+		switch (formulize_ruleOutboxChannel($outboxId)) {
+			case 'rule':
+				$results[$outboxId] = formulize_ruleRunJob($outboxId);
+				break;
+			case 'summary':
+				$results[$outboxId] = formulize_summaryRunJob($outboxId);
+				break;
+			default:
+				$results[$outboxId] = formulize_ruleSendWebhook($outboxId);
+		}
 	}
 	// keep the outbox and the activity log from growing forever
 	if (mt_rand(1, 20) == 1) {
@@ -1380,7 +1393,8 @@ function formulize_ruleProcessOutbox($limit = 20, $onlyIds = null) {
 }
 
 /**
- * Which kind of item in the outbox this is: 'webhook' or 'rule' (a rule queued to run in the background)
+ * Which kind of item in the outbox this is: 'webhook', 'rule' (a rule queued to run in the background) or 'summary' (a
+ * summary waiting to be refreshed, see include/summaries.php)
  * @param int $outboxId
  * @return string
  */

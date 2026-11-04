@@ -91,6 +91,8 @@ $modversion['tables'] = array(
   "formulize_rules",
   "formulize_rule_outbox",
   "formulize_rule_log",
+  "formulize_summary_definitions",
+  "formulize_summaries"
 );
 
 $modversion['formulize_exportable_tables'] = array(

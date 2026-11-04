@@ -14444,3 +14444,4 @@ require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/pwa.php';
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/linked_sources.php';
 // rules: what happens when entries are created, updated, deleted, or custom buttons are clicked
 require_once XOOPS_ROOT_PATH."/modules/formulize/include/rules.php";
+require_once XOOPS_ROOT_PATH."/modules/formulize/include/summaries.php";
