@@ -1232,7 +1232,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                         $drawnSubformBlankHidden[$subform_id] = true;
                     }
 					$col_two .= "</td>\n";
-					$col_two .= drawRowSubformHeaders($headersToDraw, $headingDescriptions);
+					$col_two .= drawRowSubformHeaders($headersToDraw, $headingDescriptions, $subformElementId."-".$subformInstance);
 					$col_two .= $subformSpacerHeaderCell;
 					$col_two .= "</tr>\n";
 					$drawnHeadersOnce = true;
@@ -1373,7 +1373,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                             $col_two .= "<th class='subentry-delete-cell'>$selectAllBox</th>\n";
                         }
                         if($showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) { $col_two .= "<th class='subentry-view-cell'></th>\n"; }
-						$col_two .= drawRowSubformHeaders($headersToDraw, $headingDescriptions);
+						$col_two .= drawRowSubformHeaders($headersToDraw, $headingDescriptions, $subformElementId."-".$subformInstance);
 						$col_two .= $subformSpacerHeaderCell;
 						$col_two .= "</tr>\n";
 						$drawnHeadersOnce = true;
@@ -1633,12 +1633,31 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     return $to_return;
 }
 
-function drawRowSubformHeaders($headersToDraw, $headingDescriptions) {
+/**
+ * The header cells of a subform's table of entries. A column whose element has
+ * help text gets a help button beside its heading, which opens the help text in
+ * a Formulize UI popover (fz-popover): clicking elsewhere or Esc closes it.
+ *
+ * @param array $headersToDraw The headings of the columns
+ * @param array $headingDescriptions The help text of each column's element, by the same keys
+ * @param string $idPrefix Unique to this subform on the page, and the same when it is redrawn, for the popovers' ids
+ * @return string The <th> cells
+ */
+function drawRowSubformHeaders($headersToDraw, $headingDescriptions, $idPrefix = '') {
     $col_two = "";
     foreach($headersToDraw as $i=>$thishead) {
         if($thishead) {
-            $headerHelpLink = $headingDescriptions[$i] ? "<a class='icon-help' href=\"#\" onclick=\"return false;\" alt=\"".strip_tags(htmlspecialchars($headingDescriptions[$i]))."\" title=\"".strip_tags(htmlspecialchars($headingDescriptions[$i]))."\"></a>" : "";
-            $col_two .= "<th><p>$thishead $headerHelpLink</p></th>\n";
+            $headerHelpButton = "";
+            $headerHelpPopover = "";
+            if(!empty($headingDescriptions[$i])) {
+                $popoverId = "formulize-subform-help-$idPrefix-$i";
+                $helpLabel = htmlspecialchars(sprintf(_formulize_SUBFORM_COLUMN_HELP, strip_tags($thishead)), ENT_QUOTES);
+                // the button is inside the heading's <p>, so it sits beside the text; the popover can hold
+                // any HTML, so it is after the <p>, and opens over the page, not in the cell
+                $headerHelpButton = " <button type='button' class='formulize-subform__col-help' popovertarget='$popoverId' style='anchor-name: --$popoverId' aria-label='$helpLabel'><span class='icon-help' aria-hidden='true'></span></button>";
+                $headerHelpPopover = "<div class='fz-popover' id='$popoverId' popover style='position-anchor: --$popoverId'>".html_entity_decode($headingDescriptions[$i], ENT_QUOTES)."</div>";
+            }
+            $col_two .= "<th><p>$thishead$headerHelpButton</p>$headerHelpPopover</th>\n";
         }
     }
     return $col_two;

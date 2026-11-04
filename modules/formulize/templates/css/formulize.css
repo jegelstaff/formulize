@@ -329,6 +329,47 @@ a.formulize-open-close-link {
   border-right: 1px dotted #d1d1df;
 }
 
+/* The help button beside a column's heading, when the column's element has help
+   text: just the icon, which opens the help text in a popover (fz-popover) when
+   clicked. See drawRowSubformHeaders() in subformListingsElement.php. Themes
+   style buttons, so everything a button could get from one is set here. */
+.formulize-subform-table .formulize-subform__col-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  width: auto;
+  min-width: 0;
+  height: auto;
+  /* negative margins above and below, so the icon, bigger than the heading's
+     text, doesn't make the heading's line taller and push its text down */
+  margin: calc(var(--fz-spacing) * -1) 0 calc(var(--fz-spacing) * -1) calc(var(--fz-spacing) * 0.5);
+  padding: calc(var(--fz-spacing) * 0.5);
+  border: 0;
+  border-radius: var(--fz-radius-sm);
+  background: none;
+  box-shadow: none;
+  color: var(--fz-color-text-muted);
+  font-size: var(--fz-text-lg, 1.125rem); /* the icon's size: bigger than the heading's text, so it is easy to see and click */
+  line-height: 1;
+  cursor: pointer;
+}
+.formulize-subform-table .formulize-subform__col-help:hover,
+.formulize-subform-table .formulize-subform__col-help:focus-visible {
+  background: var(--fz-color-surface-3);
+  color: var(--fz-color-accent);
+}
+/* while its help text is open (a rule of its own: a browser that doesn't know
+   :popover-open would drop the whole rule) */
+.formulize-subform-table th:has(> :popover-open) .formulize-subform__col-help {
+  background: var(--fz-color-surface-3);
+  color: var(--fz-color-accent);
+}
+.formulize-subform-table .formulize-subform__col-help:focus-visible {
+  outline: none;
+  box-shadow: var(--fz-focus-ring);
+}
+
 /*=== Formulize Boutons by Francois T ===*/
 /* button, input[type='submit'], input[type='button'], input[type='reset'] {
   background-color: #F4F9FE;
