@@ -8596,6 +8596,16 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
 
 		// if we snuck a field reference into the comparison value, then make sure it is fully qualified
 		$conditionsFilterComparisonValue = str_replace([" $filterElementHandle ", " `$filterElementHandle` "], " $dbSource ", $conditionsFilterComparisonValue);
+		// the comparison value can be the whole condition, marked with -->>WHOLECONDITION<<--, when it can't be written as "field op value". That happens when the field has
+		// to go inside a subquery or a function, or when a NULL check goes alongside a comparison with several parts, and the brackets have to go around particular parts.
+		// The field is still qualified by the replacement above, and the whole condition is put in brackets, but "field op" is not put in front of it.
+		// ie: -->>WHOLECONDITION<<--( `artifacts_donor` IS NULL OR `artifacts_donor` NOT IN (SELECT ...) ) becomes (( t1.`artifacts_donor` IS NULL OR t1.`artifacts_donor` NOT IN (SELECT ...) ))
+		// Each place that builds one has an example of what it looks like.
+		if(strpos($conditionsFilterComparisonValue, '-->>WHOLECONDITION<<--') !== false) {
+			$thiscondition = "(".str_replace('-->>WHOLECONDITION<<--', '', $conditionsFilterComparisonValue).")";
+			$condition .= $thiscondition;
+			return array($condition, $thiscondition);
+		}
 		// setup the condition
 		$thiscondition = "($dbSource $filterOp $conditionsFilterComparisonValue)";
 		// handle any extra bracket funkiness that might be needed
@@ -8647,6 +8657,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     global $xoopsDB, $nonLinkedCurlyBracketSelfReference;
     $curlyBracketEntryQuoted = $curlyBracketEntry == 'new' ? "'new'" : $curlyBracketEntry; // can't put text into the query without quotes!
     $conditionsFilterComparisonValue = NULL;
+    $nullClauseHandled = false; // a NULL comparison is added at most once per condition, see createNullForComparisonValueIfNecessary
     $curlyBracketFormFrom = "";
     $filterTerms[$filterId] = trim($filterTerms[$filterId]);
     $bareFilterTerm = substr($filterTerms[$filterId],1,-1);
@@ -8700,8 +8711,14 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 			$filterTerms[$filterId] = str_replace('{ID}',intval($curlyBracketEntry),$filterTerms[$filterId]);
 		}
 		// IN terms were converted part by part above, and are now wrapped in placeholder quotes and brackets
+		$termAsTyped = $filterTerms[$filterId]; // before it's converted to the value the element stores, for matching part of a date as the site shows it, below
 		if($overrideReturnedOp != "IN") {
 			$filterTerms[$filterId] = _convertLiteralTermForConditionsFilterSQL($filterElementObject, $filterTerms[$filterId], strstr(strtoupper($filterOps[$filterId]), "LIKE") !== false);
+		}
+		// an empty term is a search for blanks, the same as {BLANK}, so both NULL and '' are found, and 0 isn't in a numeric field
+		// LIKE '' and NOT LIKE '' too, which is what they mean when elements are displayed (buildEvaluationCondition)
+		if($filterTerms[$filterId] === '' AND in_array($filterOps[$filterId], array('<=>', '=', '!=', 'LIKE', 'NOT LIKE'))) {
+			$filterTerms[$filterId] = '{BLANK}';
 		}
 
 		if(!isMetaDataField($filterElementIds[$filterId])) {
@@ -8709,22 +8726,46 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				$targetElementEleValue = $targetElementObject->getVar('ele_value'); // get the properties of the source element
 		}
 
-		$nullClauseHandled = false; // a NULL comparison is added at most once per condition, see createNullForComparisonValueIfNecessary
+		// *** A WHOLE YEAR OR MONTH ON A DATE ELEMENT, IE: 2026 OR MARCH, IS A RANGE OF DAYS, THE SAME AS IN A SEARCH OF A LIST OF ENTRIES
+		if(is_object($filterElementObject)
+			AND elementTypeIsOrExtends($filterElementObject, 'date')
+			AND $overrideReturnedOp != "IN"
+			AND (substr($filterTerms[$filterId],0,1) != "{" OR substr($filterTerms[$filterId],-1) != "}")
+			AND $datePeriod = formulize_parseDatePeriodSearchTerm($filterTerms[$filterId])
+			AND $dateRangeComparison = _dateRangeComparisonForConditionsFilterSQL($datePeriod, $filterOps[$filterId], $filterElementObject->getVar('ele_handle'))) {
+			list($filterOps[$filterId], $conditionsFilterComparisonValue) = $dateRangeComparison;
+			$nullClauseHandled = true;
+		}
+
+		// *** PART OF A DATE ON A DATE ELEMENT, WITH LIKE, MATCHES THE DATE AS THE SITE SHOWS IT TOO, IE: LIKE 03/2026 ON A SITE THAT SHOWS DATES AS d/m/Y
+		// Dates are stored as YYYY-MM-DD, so the term is compared with that, and with the date in the site's format, which DATE_FORMAT() makes. Not needed when the
+		// site shows dates as YYYY-MM-DD. The field goes inside DATE_FORMAT(), so this is a whole condition.
+		// ie: date LIKE 03/2026 becomes ( t1.`date` LIKE '%03/2026%' OR DATE_FORMAT( t1.`date` ,'%d/%m/%Y') LIKE '%03/2026%' )
+		// and date NOT LIKE 03/2026 becomes ( t1.`date` IS NULL OR ( t1.`date` NOT LIKE '%03/2026%' AND DATE_FORMAT( t1.`date` ,'%d/%m/%Y') NOT LIKE '%03/2026%' ) )
+		if($conditionsFilterComparisonValue === NULL
+			AND is_object($filterElementObject)
+			AND elementTypeIsOrExtends($filterElementObject, 'date')
+			AND ($filterOps[$filterId] == 'LIKE' OR $filterOps[$filterId] == 'NOT LIKE')
+			AND $filterTerms[$filterId] !== '{BLANK}'
+			AND (substr($filterTerms[$filterId],0,1) != "{" OR substr($filterTerms[$filterId],-1) != "}")
+			AND ($siteDateFormat = formulize_mysqlDateFormat()) != '%Y-%m-%d') {
+			$dateHandle = $filterElementObject->getVar('ele_handle');
+			$storedDateLike = "'".$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits."'";
+			$shownDateLike = "'".$likebits.formulize_db_escape($termAsTyped).$likebits."'";
+			$shownDate = "DATE_FORMAT( `$dateHandle` ,'".formulize_db_escape($siteDateFormat)."')";
+			if($filterOps[$filterId] == 'LIKE') {
+				$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<-- ( `$dateHandle` LIKE $storedDateLike OR $shownDate LIKE $shownDateLike ) ";
+			} else {
+				$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<-- ( `$dateHandle` IS NULL OR ( `$dateHandle` NOT LIKE $storedDateLike AND $shownDate NOT LIKE $shownDateLike ) ) ";
+			}
+			$nullClauseHandled = true;
+		}
 
 		// *** OPTION 1: FILTER TERM IS {BLANK}
     if ($filterTerms[$filterId]=="{BLANK}") {
       $filterTerms[$filterId]="";
       $blankIsNegative = ($filterOps[$filterId] == '!=' OR $filterOps[$filterId] == 'NOT LIKE');
-      // A field is blank if it is empty or NULL, so look for both, the same as a {BLANK} search in a list of entries does
-      // Except in numeric fields, where MySQL treats '' as 0, so 0 would count as blank. Only NULL is blank in those.
-      if(!isMetaDataField($filterElementIds[$filterId]) AND is_object($filterElementObject) AND !$filterElementObject->hasNumericDataType()) {
-        $blankHandle = $filterElementObject->getVar('ele_handle');
-        $filterOps[$filterId] = $blankIsNegative ? '!=' : '=';
-        $conditionsFilterComparisonValue = $blankIsNegative ? "'' AND `$blankHandle` IS NOT NULL " : "'' OR `$blankHandle` IS NULL ";
-      } else {
-        $filterOps[$filterId] = $blankIsNegative ? 'IS NOT' : 'IS';
-        $conditionsFilterComparisonValue = 'NULL';
-      }
+      list($filterOps[$filterId], $conditionsFilterComparisonValue) = _blankComparisonForConditionsFilterSQL($filterElementObject, $filterElementIds[$filterId], $blankIsNegative);
       $nullClauseHandled = true;
 
 		// *** OPTION 2: THE TARGET ELEMENT IS A LINKED FIELD, NON-SNAPSHOT...
@@ -8736,11 +8777,15 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				$targetSourceFormObject = $form_handler->get($targetSourceFid); // get the form object based on that fid (we'll need the form handle later)
 				$targetSourceHandle = $targetElementEleValueProperties[1]; // get the element handle in the source source form
 				// now build a comparison value that contains a subquery on the source source form, instead of a literal match to the source form
+				// a negation (!=, NOT LIKE) means that no linked value matches, so the subquery looks for the matching source entries, and the comparison excludes them
+				$linkedNegation = ($filterOps[$filterId] == '!=' OR $filterOps[$filterId] == 'NOT LIKE');
 				$subQueryOp = $filterOps[$filterId];
 				if($filterOps[$filterId] == '!=' ) {
 						$subQueryOp = '<=>';
-						$overrideReturnedOp = '!=';
+				} elseif($filterOps[$filterId] == 'NOT LIKE') {
+						$subQueryOp = 'LIKE';
 				}
+				$linkedHandle = $targetElementObject->getVar('ele_handle');
 
 				// OPTION 2A: IF THE FILTER TERM IS DYNAMIC, FIGURE OUT THE DB AND LITERAL VALUES FOR THAT ELEMENT IN THE CURRENT ENTRY/CONTEXT
 				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
@@ -8827,15 +8872,18 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				} else {
 						$filterTermToUse = formulize_db_escape($filterTerms[$filterId]);
 						$subQueryWhereClause = "ss.`$targetSourceHandle` ".$subQueryOp.$quotes.$likebits.$filterTermToUse.$likebits.$quotes;
-						if($filterOps[$filterId] === "<=>") {
+						if($filterOps[$filterId] === "<=>" OR $filterOps[$filterId] === "!=") {
 							$targetSourceDataHandler = new formulizeDataHandler($targetSourceFid);
 							$foundEntries = $targetSourceDataHandler->findAllEntriesWithValue($targetSourceHandle, $filterTermToUse, operator: '<=>');
 							if(is_numeric($filterTerms[$filterId]) AND ($foundEntries === false OR count($foundEntries) == 0)) {
 								// the  target is a linked element (already know that from above), and so it has a foreign key in the database, and if the filter term is numeric and the operator is equals then no subquery is necessary, do a direct comparison instead
 								// check first if the subquery would return values. If so, then we stick with that. Otherwise, toss the subquery and go with a straight comparison to the filter term on the assumption it is a foreign key.
-								$conditionsFilterComparisonValue = $filterTerms[$filterId];
+								// for != the field must not be that entry, and a blank field isn't, so a NULL check goes alongside, as a whole condition, so it has its own brackets
+								// ie: donor != 3 becomes ( t1.`artifacts_donor` IS NULL OR t1.`artifacts_donor` != 3 )
+								$conditionsFilterComparisonValue = $filterOps[$filterId] === "!=" ? "-->>WHOLECONDITION<<-- `$linkedHandle` IS NULL OR `$linkedHandle` != ".$filterTerms[$filterId]." " : $filterTerms[$filterId];
+								$nullClauseHandled = $filterOps[$filterId] === "!=";
 								unset($subQueryWhereClause);
-							} elseif(count($foundEntries)>1) {
+							} elseif($filterOps[$filterId] === "<=>" AND count($foundEntries)>1) {
 								// subquery will return more than one row, so the IN operator must be used when constructing the full statement, this gets assigned to the $filterOps[$filterId] below (which has been passed by reference)
 								$overrideReturnedOp = "IN";
 							}
@@ -8845,14 +8893,30 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				// if we didn't jump the gun and set the comparison value already above...
 				if (!$conditionsFilterComparisonValue) {
 						if ($targetElementObject->canHaveMultipleValues) {
-								$conditionsFilterComparisonValue = " CONCAT('%,',(SELECT ss.entry_id FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE ".$subQueryWhereClause."),',%') ";
-								$filterOps[$filterId] = "LIKE";
+								// the field holds ,id,id, so look for a matching source entry that is one of the ids. Several source entries can match, so EXISTS, rather than comparing to a subquery.
+								// a negation is NOT EXISTS: no linked value matches, which takes in fields with nothing selected too
+								// The field goes inside the subquery, so this is a whole condition.
+								// ie: collections != Weapons becomes
+								// ((NOT EXISTS (SELECT 1 FROM collections AS ss WHERE (ss.`collections_name` <=> 'Weapons') AND t1.`artifacts_collections` LIKE CONCAT('%,',ss.entry_id,',%'))))
+								$linkedExistsSQL = "EXISTS (SELECT 1 FROM ".$xoopsDB->prefix("formulize_".$targetSourceFormObject->getVar('form_handle'))." AS ss WHERE (".$subQueryWhereClause.") AND `$linkedHandle` LIKE CONCAT('%,',ss.entry_id,',%'))";
+								$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<--(".($linkedNegation ? "NOT " : "").$linkedExistsSQL.")";
+								$nullClauseHandled = true;
 						// for existing entries, or new entries with no dynamic reference, or new entries with an asynch value set
 						} elseif($curlyBracketEntry != 'new' OR (substr($filterTerms[$filterId],0,1) != "{" AND substr($filterTerms[$filterId],-1)!="}") OR isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
 								// do a subquery against the source of the left side element...
 								$conditionsFilterComparisonValue = " (SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE ".$subQueryWhereClause. ") ";
+								if($linkedNegation) {
+									// not one of the matching source entries, and a blank field isn't one of them. NOT IN rather than != because several source entries can match.
+									// The NULL check and the NOT IN are bracketed together, as a whole condition, because when the term is a { } reference, the entry limit
+									// is added after them below with AND, and AND binds before OR. Without the brackets, ... OR field IS NULL AND curlybracketform.`entry_id`=1
+									// would not limit the NOT IN to the referenced entry.
+									// ie: donor != Freeform Solutions becomes
+									// (( t1.`artifacts_donor` IS NULL OR t1.`artifacts_donor` NOT IN (SELECT ss.entry_id FROM donors AS ss WHERE ss.`donors_name` <=> 'Freeform Solutions') ))
+									$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<--( `$linkedHandle` IS NULL OR `$linkedHandle` NOT IN".$conditionsFilterComparisonValue.")";
+									$nullClauseHandled = true;
+								}
 								// need to change the filterOp being used, so when this is inserted into the main query, we have a different op introducing the subquery
-								if($filterOps[$filterId] == "LIKE" OR $filterOps[$filterId] == "NOT LIKE") {
+								if($filterOps[$filterId] == "LIKE") {
 									$overrideReturnedOp = "IN";
 								}
 								$filterOps[$filterId] = $overrideReturnedOp ? $overrideReturnedOp : '<=>';
@@ -8862,6 +8926,12 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 						}
 				}
 				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+						// a whole condition must check the entry being referenced is there. In a "one or more" set the form is LEFT JOINed, and where it doesn't join
+						// its fields are NULL, so a subquery looking for them finds nothing, and NOT EXISTS / NOT IN would be true for every entry
+						// ie: donor != {short_name} in entry 1 becomes
+						// ( curlybracketform.`entry_id` IS NOT NULL AND ( t1.`artifacts_donor` IS NULL OR t1.`artifacts_donor` NOT IN (SELECT ss.entry_id FROM donors AS ss
+						//   WHERE ss.`donors_name` <=> curlybracketform.`artifacts_short_name`) ) AND curlybracketform.`entry_id`=1 )
+						$conditionsFilterComparisonValue = str_replace("-->>WHOLECONDITION<<--", "-->>WHOLECONDITION<<-- curlybracketform.`entry_id` IS NOT NULL AND ", $conditionsFilterComparisonValue);
 						$conditionsFilterComparisonValue .= "  AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
 				}
 		}
@@ -8900,10 +8970,16 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				}
 
 			// IF THERE'S NO ASYNCH DATA IN API FORMAT AVAILABLE, AND WE'RE USING THE MYSQL NULL SAFE OPERATOR, WORKOUT PLAIN LITERAL AND LITERAL TO DB BASED ON THE CURRENT SAVED VALUE IN DB
-			} elseif($filterOps[$filterId] == "<=>" AND !isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+			// (a new entry has no saved value, so it gets the default value further down, the same as the other operators)
+			} elseif($filterOps[$filterId] == "<=>" AND $curlyBracketEntry != 'new' AND !isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
 				// convert any literal terms (including {} references to linked selectboxes) into the actual DB value...based on current saved value
 				$literalToDBValue = prepareLiteralTextForDB($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId); // prepends checkbox characters and converts yes/nos, {USER}, etc
 				$literalToDBValue = str_replace('{ID}',$curlyBracketEntry,$literalToDBValue);
+				// the referenced field is blank in that entry, so look for blank values, rather than for the { } term itself
+				if($literalToDBValue === '' OR $literalToDBValue === null) {
+					list($filterOps[$filterId], $conditionsFilterComparisonValue) = _blankComparisonForConditionsFilterSQL($filterElementObject, $filterElementIds[$filterId], false);
+					$nullClauseHandled = true;
+				}
 				// if no declared API format value, go look it up
 				if($curlyBracketEntry AND $curlyBracketEntry != 'new') {
 					$preppedFormatValue = prepvalues($literalToDBValue, substr($filterTerms[$filterId],1,-1), $curlyBracketEntry); // will be an array
@@ -8938,7 +9014,17 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				// if the term is from another form, then something a little odd is going on...we don't have relationship data to go on at this point, so we will ignore the curly bracket filter at this point
 				if(in_array($bareFilterTerm, $curlyBracketForm->getVar('elementHandles'))) {
 					$curlyBracketFormFrom = $xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform ";
-					if ($likebits == "%") {
+					// blank and NULL are the same on both sides of the comparison, so a blank field equals a blank reference, and isn't equal to a reference with a value
+					$filterHandle = is_object($filterElementObject) ? $filterElementObject->getVar('ele_handle') : $filterElementIds[$filterId];
+					if($nullAwareComparison = _nullAwareComparisonWithReference($filterOps[$filterId], $filterHandle, "curlybracketform.`".$bareFilterTerm."`")) {
+							// the entry being referenced must be there. In a "one or more" set the form is LEFT JOINed, and where it doesn't join its fields are NULL, which isn't a blank reference
+							// The field goes inside COALESCE, so this is a whole condition.
+							// ie: first_name != {last_name} in entry 3 becomes
+							// ( curlybracketform.`entry_id` IS NOT NULL AND NOT (COALESCE( t1.`donors_first_name` = curlybracketform.`donors_last_name`, FALSE)
+							//   OR (COALESCE( t1.`donors_first_name` ,'') = '' AND COALESCE(curlybracketform.`donors_last_name`,'') = '')) AND curlybracketform.`entry_id`=3 )
+							$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<-- curlybracketform.`entry_id` IS NOT NULL AND ".$nullAwareComparison." AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
+							$nullClauseHandled = true;
+					} elseif ($likebits == "%") {
 							$conditionsFilterComparisonValue = " CONCAT('%',curlybracketform.`".$bareFilterTerm."`,'%') AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
 					} else {
 							$conditionsFilterComparisonValue = " curlybracketform.`".$bareFilterTerm."` AND curlybracketform.`entry_id`=$curlyBracketEntryQuoted ";
@@ -8997,19 +9083,110 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 
 		// Not when the comparison is with an entry in another form, because it ends with AND curlybracketform.`entry_id`=..., so an OR after
 		// that would let a NULL field match every entry in that form
-		if(!$nullClauseHandled AND !strstr($conditionsFilterComparisonValue, "curlybracketform")) {
-			$conditionsFilterComparisonValue .= createNullForComparisonValueIfNecessary($conditionsFilterComparisonValue, $filterOps[$filterId], $filterElementObject->getVar('ele_handle'));
+		// Not when there is no comparison value either, ie: a { } reference with nothing in it yet on a new entry. That condition is left out
+		// of the query, and adding OR ... IS NULL to nothing would make it "field LIKE OR field IS NULL"
+		if(!$nullClauseHandled AND $conditionsFilterComparisonValue !== "" AND !strstr($conditionsFilterComparisonValue, "curlybracketform")) {
+			// a metadata field has no element object, its name is its handle
+			$filterHandle = is_object($filterElementObject) ? $filterElementObject->getVar('ele_handle') : $filterElementIds[$filterId];
+			if($nullClause = createNullForComparisonValueIfNecessary($conditionsFilterComparisonValue, $filterOps[$filterId], $filterHandle)) {
+				// bracket the comparison before the OR, so a comparison with several parts stays together, rather than relying on AND binding before OR
+				// OPENONEEXTRABRACKET puts an opening bracket in front of the field, and the closing one goes here, after the comparison
+				// ie: != on a value shown as 1 and Yes, from a conditional element, becomes ((t1.`flagged` != 1 AND t1.`flagged` != 'Yes') OR t1.`flagged` IS NULL)
+				// and a simple != becomes ((t1.`comments` != 'Great Job') OR t1.`comments` IS NULL)
+				$conditionsFilterComparisonValue = "-->>OPENONEEXTRABRACKET<<--".$conditionsFilterComparisonValue.")".$nullClause;
+			}
 		}
 
 
 		// convert any single quote placeholders we made, if we had to construct them into the filter term (since they don't go through formulize_db_escape cleanly after being put into the filter term)
-		if($curlyBracketINNeedsSingleQuotes) {
+		// a { } IN term with nothing in it yet (a new entry) is left out of the query, rather than becoming IN ()
+		if($curlyBracketINNeedsSingleQuotes AND $conditionsFilterComparisonValue !== "") {
 			$conditionsFilterComparisonValue = "(".str_replace("\',\'","','",$conditionsFilterComparisonValue).")";
 		} else {
 			$conditionsFilterComparisonValue = str_replace('@#.&%$', "'", $conditionsFilterComparisonValue);
 		}
     return array($conditionsFilterComparisonValue, $curlyBracketFormFrom);
 
+}
+
+/**
+ * Build the comparison for a condition looking for blank values, or for values that aren't blank
+ * A field is blank if it is empty or NULL, so look for both, the same as a {BLANK} search in a list of entries does
+ * Except in numeric fields, where MySQL treats '' as 0, so 0 would count as blank. Only NULL is blank in those.
+ *
+ * @param object|false $filterElementObject - The element object the condition is on, or false for a metadata field
+ * @param string $filterElementId - The element id, or the name of the metadata field
+ * @param bool $negative - True to find values that are not blank
+ * @return array The operator and the comparison value to use
+ */
+function _blankComparisonForConditionsFilterSQL($filterElementObject, $filterElementId, $negative) {
+	if(!isMetaDataField($filterElementId) AND is_object($filterElementObject) AND !$filterElementObject->hasNumericDataType()) {
+		$handle = $filterElementObject->getVar('ele_handle');
+		return $negative ? array('!=', "'' AND `$handle` IS NOT NULL ") : array('=', "'' OR `$handle` IS NULL ");
+	}
+	return $negative ? array('IS NOT', 'NULL') : array('IS', 'NULL');
+}
+
+/**
+ * Build a comparison between a field and a reference to another field, ie: curlybracketform.`handle`, that treats NULL and '' as the same, blank
+ * So a blank field equals a blank reference, and is not equal to a reference that has a value. LIKE a blank reference finds blank fields, the same as
+ * a condition with a blank term does when elements are displayed (buildEvaluationCondition).
+ * Returns a whole condition, to be marked with -->>WHOLECONDITION<<-- by the caller. The field is written as ` handle ` so _appendToCondition qualifies it.
+ *
+ * @param string $op - The operator of the condition
+ * @param string $handle - The handle of the field the condition is on
+ * @param string $referenceSQL - The SQL for the field being referenced
+ * @return string|false The SQL for the comparison, or false if the operator isn't one that blanks matter to (> < IN etc are left as they are)
+ */
+function _nullAwareComparisonWithReference($op, $handle, $referenceSQL) {
+	$equal = "(COALESCE( `$handle` = $referenceSQL, FALSE) OR (COALESCE( `$handle` ,'') = '' AND COALESCE($referenceSQL,'') = ''))";
+	$like = "(CASE WHEN COALESCE($referenceSQL,'') = '' THEN COALESCE( `$handle` ,'') = '' ELSE COALESCE( `$handle` LIKE CONCAT('%',$referenceSQL,'%'), FALSE) END)";
+	switch(trim($op)) {
+		case '<=>':
+		case '=':
+			return $equal;
+		case '!=':
+			return "NOT $equal";
+		case 'LIKE':
+			return $like;
+		case 'NOT LIKE':
+			return "NOT $like";
+	}
+	return false;
+}
+
+/**
+ * Build the comparison for a condition on a date element whose term is a whole year or month, ie: 2026 or March, which is a range of days
+ * The same comparisons as a search of a list of entries makes for a period (see dateElement::buildSearchWhereClause)
+ *
+ * @param array $period - The start and end dates of the period, from formulize_parseDatePeriodSearchTerm
+ * @param string $op - The operator of the condition
+ * @param string $handle - The handle of the date element
+ * @return array|false The operator and comparison value to use, or false if the operator doesn't work with a period, ie: IN
+ */
+function _dateRangeComparisonForConditionsFilterSQL($period, $op, $handle) {
+	$start = "'".formulize_db_escape($period['start'])."'";
+	$end = "'".formulize_db_escape($period['end'])."'";
+	switch(trim($op)) {
+		case '<=>':
+		case '=':
+		case 'LIKE':
+			return array('BETWEEN', "$start AND $end");
+		case '!=':
+		case 'NOT LIKE':
+			// a blank date is not in the period, so a NULL check goes alongside the range, and that needs brackets around each part, so it is a whole condition
+			// ie: date != 2026 becomes ( t1.`date` IS NULL OR ( t1.`date` NOT BETWEEN '2026-01-01' AND '2026-12-31' ) )
+			return array('!=', "-->>WHOLECONDITION<<-- `$handle` IS NULL OR ( `$handle` NOT BETWEEN $start AND $end )");
+		case '>':
+			return array('>', $end);
+		case '>=':
+			return array('>=', $start);
+		case '<':
+			return array('<', $start);
+		case '<=':
+			return array('<=', $end);
+	}
+	return false;
 }
 
 /**
@@ -10905,6 +11082,58 @@ function formulize_parseDatePeriodSearchTerm($value) {
 	}
 
 	return false;
+}
+
+/**
+ * Get a date value as YYYY-MM-DD, from the format a dataset shows dates in (_SHORTDATESTRING), or from YYYY-MM-DD with or without a time
+ * Used when conditions are checked against a dataset, so dates are compared the same way the database compares them, whatever the date format is
+ *
+ * @param mixed $value The date value
+ * @param string|null $format Optional. The date format to read the value in, if it isn't YYYY-MM-DD. Defaults to the site's format, _SHORTDATESTRING.
+ * @return mixed The date as YYYY-MM-DD, or the value unchanged if it isn't a date in either format, ie: blank, or a search term like 2026
+ */
+function formulize_dateValueAsISO($value, $format = null) {
+	if(!is_string($value) OR trim($value) === '') {
+		return $value;
+	}
+	$value = trim($value);
+	if(preg_match('/^(\d{4}-\d{2}-\d{2})( |T|$)/', $value, $matches)) {
+		return $matches[1];
+	}
+	$date = DateTime::createFromFormat('!'.($format === null ? _SHORTDATESTRING : $format), $value);
+	$errors = DateTime::getLastErrors();
+	if($date AND (!$errors OR ($errors['warning_count'] == 0 AND $errors['error_count'] == 0))) {
+		return $date->format('Y-m-d');
+	}
+	return $value;
+}
+
+/**
+ * Get the MySQL DATE_FORMAT() format that shows dates the way the site shows them, from a PHP date() format
+ * So a condition can match part of a date as the site shows it, ie: LIKE 03/2026 on a site that shows dates as d/m/Y
+ * Month and day names come out in English from both PHP's date() and MySQL's DATE_FORMAT() (unless lc_time_names is changed), so they match.
+ *
+ * @param string|null $format Optional. The PHP date() format. Defaults to the site's format, _SHORTDATESTRING.
+ * @return string The MySQL DATE_FORMAT() format. Characters with no MySQL equivalent are kept as they are.
+ */
+function formulize_mysqlDateFormat($format = null) {
+	$format = $format === null ? _SHORTDATESTRING : $format;
+	$specifiers = array('Y' => '%Y', 'y' => '%y', 'm' => '%m', 'n' => '%c', 'd' => '%d', 'j' => '%e', 'M' => '%b', 'F' => '%M', 'D' => '%a', 'l' => '%W');
+	$mysqlFormat = '';
+	for($i = 0; $i < strlen($format); $i++) {
+		$character = $format[$i];
+		if($character == '\\' AND $i + 1 < strlen($format)) { // an escaped character in a PHP date format is literal
+			$i++;
+			$mysqlFormat .= $format[$i] == '%' ? '%%' : $format[$i];
+		} elseif($character == 'S' AND in_array(substr($mysqlFormat, -2), array('%e', '%d'))) { // the day with its suffix, ie: 1st, is one specifier in MySQL
+			$mysqlFormat = substr($mysqlFormat, 0, -2).'%D';
+		} elseif(isset($specifiers[$character])) {
+			$mysqlFormat .= $specifiers[$character];
+		} else {
+			$mysqlFormat .= $character == '%' ? '%%' : $character;
+		}
+	}
+	return $mysqlFormat;
 }
 
 /**
@@ -14271,6 +14500,37 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		} else {
 			$compValue = getValue($entryData[0], $filterElements[$i]);
 		}
+
+		// dates are compared as YYYY-MM-DD, whatever format the dataset shows them in, and the term is converted the same way it is for SQL, ie: a date
+		// written out becomes YYYY-MM-DD, and a whole year or month is a range of days (see _dateRangeComparisonForConditionsFilterSQL)
+		// LIKE on a date matches part of the date as stored, YYYY-MM-DD, or as the site shows it, ie: 03/2026 on a site that shows dates as d/m/Y, the same as SQL does
+		$dateExpression = "";
+		if(!is_array($compValue) AND !isMetaDataField($filterElements[$i]) AND ($dateElementObject = $element_handler->get($filterElements[$i])) AND elementTypeIsOrExtends($dateElementObject, 'date')) {
+			$compValue = formulize_dateValueAsISO($compValue);
+			$dateComparisonValue = "'".addslashes($compValue)."'";
+			$dateAsShown = (is_string($compValue) AND preg_match('/^\d{4}-\d{2}-\d{2}$/', $compValue)) ? date(_SHORTDATESTRING, strtotime($compValue)) : '';
+			if($filterTerms[$i] !== '' AND $thisOp != 'IN' AND $datePeriod = formulize_parseDatePeriodSearchTerm($filterTerms[$i])) {
+				$periodStart = "'".addslashes($datePeriod['start'])."'";
+				$periodEnd = "'".addslashes($datePeriod['end'])."'";
+				$inPeriod = "($dateComparisonValue >= $periodStart AND $dateComparisonValue <= $periodEnd)";
+				$dateExpressions = array('==' => $inPeriod, 'LIKE' => $inPeriod, '!=' => "!$inPeriod", 'NOT LIKE' => "!$inPeriod",
+					'>' => "$dateComparisonValue > $periodEnd", '>=' => "$dateComparisonValue >= $periodStart", '<' => "$dateComparisonValue < $periodStart", '<=' => "$dateComparisonValue <= $periodEnd");
+				$dateExpression = isset($dateExpressions[$thisOp]) ? $dateExpressions[$thisOp] : "";
+			} elseif($filterTerms[$i] !== '' AND $thisOp != 'IN') {
+				$dateTermAsTyped = $filterTerms[$i];
+				$isoTerm = formulize_dateValueAsISO($filterTerms[$i]);
+				if(!preg_match('/^\d{4}-\d{2}-\d{2}$/', $isoTerm)) {
+					$dateTypeHandler = xoops_getmodulehandler($dateElementObject->getVar('ele_type')."Element", "formulize");
+					$isoTerm = $dateTypeHandler->prepareLiteralTextForDB($filterTerms[$i], $dateElementObject, ($thisOp == 'LIKE' OR $thisOp == 'NOT LIKE'));
+				}
+				$filterTerms[$i] = $isoTerm;
+				if($thisOp == 'LIKE' OR $thisOp == 'NOT LIKE') {
+					$inDate = "(stristr($dateComparisonValue, '".addslashes($isoTerm)."') !== false OR stristr('".addslashes($dateAsShown)."', '".addslashes($dateTermAsTyped)."') !== false)";
+					$dateExpression = $thisOp == 'LIKE' ? $inDate : "!$inDate";
+				}
+			}
+		}
+
 		if(is_array($compValue)) {
 			if($thisOp == "==") {
 				$thisOp = "LIKE";
@@ -14288,7 +14548,12 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		$filterTermToUse = addslashes($filterTerms[$i]);
 
     // in PHP 8 can't use empty strings for comparison in stristr because it will always give a false positive
-		if($thisOp == "LIKE" AND $filterTermToUse != '') {
+		// a blank value is not less or greater than anything, the same as NULL in SQL, rather than '' coming before every other value when compared as text
+		if(in_array($thisOp, array('<', '<=', '>', '>=')) AND ($compValue === '' OR $compValue === null)) {
+			$evaluationCondition .= 'FALSE';
+		} elseif($dateExpression) {
+			$evaluationCondition .= $dateExpression;
+		} elseif($thisOp == "LIKE" AND $filterTermToUse != '') {
 			$evaluationCondition .= "stristr('".$compValue."', '".$filterTermToUse."')";
 		} elseif($thisOp == "NOT LIKE" AND $filterTermToUse != '') {
 			$evaluationCondition .= "!stristr('".$compValue."', '".$filterTermToUse."')";

@@ -316,8 +316,18 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 		// and March as today's date in March. List searches turn the term as typed into a range (see buildSearchWhereClause),
 		// and a LIKE condition matches it as typed, since dates are stored as YYYY-MM-DD.
 		// Anything strtotime can't read is kept as typed too, ie: %2026-03%, rather than date() reading false as 1970-01-01.
-		if(!in_array($firstChar, $operators) AND !formulize_parseDatePeriodSearchTerm($value) AND ($timestamp = strtotime($value)) !== false) {
-			$value = date('Y-m-d', $timestamp);
+		// A date in the format the site shows dates in is read in that format first, because strtotime reads 05/03/2026 as May 3, even on a site that shows dates as d/m/Y
+		// When the term can be part of a date ($partialMatch, ie: LIKE), it is only read as a date if it names a whole day, because strtotime fills in what's missing,
+		// so 05/03 would become May 3 this year. Part of a date is kept as typed, and matched against the date as stored and as the site shows it.
+		if(!in_array($firstChar, $operators) AND !formulize_parseDatePeriodSearchTerm($value)) {
+			$isoValue = formulize_dateValueAsISO($value);
+			$dateParts = date_parse($value);
+			$namesADay = ($dateParts['error_count'] == 0 AND $dateParts['year'] !== false AND $dateParts['month'] !== false AND $dateParts['day'] !== false);
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $isoValue)) {
+				$value = $isoValue;
+			} elseif((!$partialMatch OR $namesADay) AND ($timestamp = strtotime($value)) !== false) {
+				$value = date('Y-m-d', $timestamp);
+			}
 		}
 		return $value;
 	}
