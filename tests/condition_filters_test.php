@@ -4,6 +4,8 @@
  *
  * Run after the e2e suite, once the setup specs have built the museum system:
  *   php tests/condition_filters_test.php
+ * and again as a site that shows dates as d/m/Y, since how dates are written in conditions depends on that:
+ *   php tests/condition_filters_test.php d/m/Y
  *
  * WHAT THIS COVERS
  * Conditions - a subform's filter, a linked element's options filter, dynamic defaults, a list's fundamental filters - are
@@ -22,15 +24,31 @@
  *   - asynchronous values, the way conditional elements pass them in
  *   - metadata fields
  *
- * Every scenario is checked three ways:
- *   1. The SQL for the conditions finds the same entries as the independent query. All the scenarios are built in order, and
- *      then again in reverse order in the same request, so a condition's SQL cannot depend on what was built before it.
- *   2. The same conditions in extraction mode - the way the extraction layer builds fundamental filters - find the same entries.
+ * Every scenario is checked these ways:
+ *   1. The SQL for the conditions finds the same entries as the independent query, in each of the shapes of query that
+ *      Formulize puts it into:
+ *        - a query on one form, with the form aliased t1, the way dynamic defaults and subform filter values use it
+ *        - a subform's query, with no alias, so the fields are not qualified, and the form aliased subform (subformListingsElement)
+ *        - a linked element's options query, where the conditions sit inside the "safety net" brackets, ( ... ) OR t1.entry_id IN
+ *          (the selected options), and GROUP BY t1.entry_id (selectElement, checkboxElement)
+ *      All the scenarios are built in order, and then again in reverse order in the same request, so a condition's SQL cannot
+ *      depend on what was built before it.
+ *   2. The same conditions as a list's fundamental filters, through gatherDataset(), the real extraction layer.
  *   3. checkConditionsAgainstAnEntry() passes the same entries, so a condition means the same thing when it filters entries
  *      as when it decides whether an element is displayed.
  * Checks 2 and 3 skip scenarios with { } references, asynchronous values or a new entry, because those depend on the
  * context of one particular entry. Check 3 skips the one known difference: a numeric term on a linked element is an entry
- * id in SQL, but the display side compares the linked entry's text.
+ * id in SQL, but the display side compares the linked entry's text. The subform shape skips { } references to a field in the
+ * form being filtered, because without an alias the field names would be ambiguous - a subform's references are to the main
+ * form, and the cross-form scenarios cover those.
+ *
+ * Conditions on forms connected in a relationship are checked through gatherDataset() too, where each condition is also used
+ * on its own, inside the EXISTS subqueries the extraction layer builds for connected forms. The extraction layer only finds a
+ * main form entry through a condition on a connected form if it has a connected entry that meets the condition - a main entry
+ * with no connected entries is not found, even by a negation - so that is what these scenarios expect.
+ *
+ * Also checked directly: reading dates in the site's format (formulize_dateValueAsISO), the MySQL format for showing dates
+ * the way the site does (formulize_mysqlDateFormat), and how a date element reads a term (dateElement::prepareLiteralTextForDB).
  *
  * It asserts that the two ways of finding entries agree, not counts, so adding entries to the setup suite does not break
  * it. A scenario meant to tell entries apart fails if the independent query finds every entry or none, because then it no
@@ -46,6 +64,11 @@
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
     exit;
+}
+
+// Optionally run as a site that shows dates in another format, ie: d/m/Y. The language files only define the format if it isn't already.
+if (isset($argv[1]) AND $argv[1] !== '') {
+    define('_SHORTDATESTRING', $argv[1]);
 }
 
 $_SERVER['REQUEST_METHOD'] = 'GET'; // read only: on anything but POST, icms_core_Security::service() makes query() refuse to write
@@ -177,6 +200,15 @@ $scenarios = array(
     array("numeric: latitude != 0", 'artifacts',
         array(array('artifacts_latitude', 'NOT', '0', 'all')),
         "$latitude != '0'", array('trivial' => true)),
+
+    // < and > never match a blank field, on either side, rather than blank counting as less than everything
+    array("numeric: latitude < 50", 'artifacts', array(array('artifacts_latitude', '<', '50', 'all')), "t1.artifacts_latitude < 50"),
+    array("numeric: latitude >= -90, every artifact with a latitude", 'artifacts', array(array('artifacts_latitude', '>=', '-90', 'all')), "t1.artifacts_latitude >= -90"),
+    array("text: comments < Z", 'surveys', array(array('surveys_staff_comments', '<', 'Z', 'all')), "t1.surveys_staff_comments < 'Z'"),
+    array("text: comments > A", 'surveys', array(array('surveys_staff_comments', '>', 'A', 'all')), "t1.surveys_staff_comments > 'A'"),
+    array("oom: latitude < 0 OR era = BCE", 'artifacts',
+        array(array('artifacts_latitude', '<', '0', 'oom'), array('artifacts_era', '=', 'BCE', 'oom')),
+        "t1.artifacts_latitude < 0 OR t1.artifacts_era = 'BCE'"),
 
     // blanks: {BLANK}, empty terms, and numeric fields
     array("oom: first name = {BLANK} OR email != {BLANK}", 'donors',
@@ -340,6 +372,24 @@ $scenarios = array(
         array(array('artifacts_latitude', 'NOT', '{artifacts_latitude}', 'all')),
         "$latitude != COALESCE((SELECT artifacts_latitude FROM $artifactsTable WHERE entry_id = $romanCoin),'')", array('entry' => $romanCoin)),
 
+    // { } references to a field in an entry in another form, the way a subform's conditions refer to the main form's entry
+    // Artifacts in the Weapons collection: the artifacts' multi value Collections element is linked to the Collections form's Name
+    array("Weapons collection: collections = {collections_name}", 'artifacts',
+        array(array('artifacts_collections', '=', '{collections_name}', 'all')),
+        $inCollection($weapons), array('entry' => $weapons, 'curlyForm' => 'collections')),
+    array("Weapons collection: collections != {collections_name}", 'artifacts',
+        array(array('artifacts_collections', 'NOT', '{collections_name}', 'all')),
+        "NOT " . $inCollection($weapons), array('entry' => $weapons, 'curlyForm' => 'collections')),
+    array("Weapons collection, oom: collections = {collections_name} OR era = BCE", 'artifacts',
+        array(array('artifacts_collections', '=', '{collections_name}', 'oom'), array('artifacts_era', '=', 'BCE', 'oom')),
+        $inCollection($weapons) . " OR t1.artifacts_era = 'BCE'", array('entry' => $weapons, 'curlyForm' => 'collections')),
+    array("Weapons collection, oom: collections != {collections_name} OR short name = Chinese Sword", 'artifacts',
+        array(array('artifacts_collections', 'NOT', '{collections_name}', 'oom'), array('artifacts_short_name', '=', 'Chinese Sword', 'oom')),
+        "NOT " . $inCollection($weapons) . " OR t1.artifacts_short_name = 'Chinese Sword'", array('entry' => $weapons, 'curlyForm' => 'collections')),
+    array("Weapons collection, all: era = CE; oom: collections != {collections_name} OR latitude = {BLANK}", 'artifacts',
+        array(array('artifacts_era', '=', 'CE', 'all'), array('artifacts_collections', 'NOT', '{collections_name}', 'oom'), array('artifacts_latitude', '=', '{BLANK}', 'oom')),
+        "t1.artifacts_era = 'CE' AND (NOT " . $inCollection($weapons) . " OR t1.artifacts_latitude IS NULL)", array('entry' => $weapons, 'curlyForm' => 'collections')),
+
     // { } references in a new entry, which has no value yet, so the condition is left out
     array("new entry: last name = {first name}", 'donors', array(array('donors_last_name', '=', '{donors_first_name}', 'all')), "1", array('entry' => 'new', 'trivial' => true)),
     array("new entry: last name != {first name}", 'donors', array(array('donors_last_name', 'NOT', '{donors_first_name}', 'all')), "1", array('entry' => 'new', 'trivial' => true)),
@@ -358,6 +408,28 @@ $scenarios = array(
         "$comments != 'Great Job' OR t1.surveys_flagged_to_the_staff = 1", array('entry' => 'new', 'async' => array('surveys_staff_comments', 'Great Job', 'Great Job'), 'trivial' => true)),
 );
 
+// Dates written the way a site that shows dates as d/m/Y writes them, when running as one: php tests/condition_filters_test.php d/m/Y
+if (_SHORTDATESTRING === 'd/m/Y') {
+    $acquiredAsShown = "DATE_FORMAT($acquired,'%d/%m/%Y')";
+    $scenarios = array_merge($scenarios, array(
+        array("d/m/Y site: date LIKE 12/2002, part of a date as the site shows it", 'artifacts',
+            array(array('artifacts_date_of_acquisition', 'LIKE', '12/2002', 'all')), "$acquiredAsShown LIKE '%12/2002%'"),
+        array("d/m/Y site: date NOT LIKE 12/2002", 'artifacts',
+            array(array('artifacts_date_of_acquisition', 'NOT LIKE', '12/2002', 'all')), "COALESCE($acquiredAsShown,'') NOT LIKE '%12/2002%'"),
+        array("d/m/Y site: date LIKE 21/08, a day and month", 'artifacts',
+            array(array('artifacts_date_of_acquisition', 'LIKE', '21/08', 'all')), "$acquiredAsShown LIKE '%21/08%'"),
+        array("d/m/Y site: date = 21/08/2020, a whole date as the site shows it, not read as the 8th of the 21st month", 'artifacts',
+            array(array('artifacts_date_of_acquisition', '=', '21/08/2020', 'all')), "$acquired = '2020-08-21'"),
+        array("d/m/Y site: date = 02/12/2002, not read as February 12", 'artifacts',
+            array(array('artifacts_date_of_acquisition', '=', '02/12/2002', 'all')), "$acquired = '2002-12-02'"),
+        array("d/m/Y site: date LIKE 2002-12, part of a date as it is stored, still matches", 'artifacts',
+            array(array('artifacts_date_of_acquisition', 'LIKE', '2002-12', 'all')), "$acquired LIKE '%2002-12%'"),
+        array("d/m/Y site, all: era = BCE; oom: date LIKE 08/2020 OR date NOT LIKE 2002", 'artifacts',
+            array(array('artifacts_era', '=', 'BCE', 'all'), array('artifacts_date_of_acquisition', 'LIKE', '08/2020', 'oom'), array('artifacts_date_of_acquisition', 'NOT LIKE', '2002', 'oom')),
+            "t1.artifacts_era = 'BCE' AND ($acquiredAsShown LIKE '%08/2020%' OR COALESCE(YEAR($acquired),0) != 2002)"),
+    ));
+}
+
 /**
  * Build the conditions for a scenario, in the form buildConditionsFilterSQL() and checkConditionsAgainstAnEntry() take them
  */
@@ -374,33 +446,83 @@ function conditionsFor($scenario) {
 }
 
 /**
- * The entries the SQL for a scenario's conditions finds, as buildConditionsFilterSQL() builds it for one entry's context,
- * or as the extraction layer builds it, when $extractionMode is true
+ * The query shapes that buildConditionsFilterSQL()'s SQL is put into around Formulize
  */
-function entriesFoundBySQL($scenario, $extractionMode = false) {
+const SHAPE_ONE_FORM = 'one form, aliased t1';
+const SHAPE_SUBFORM = 'subform, no alias';
+const SHAPE_LINKED_OPTIONS = 'linked options, in the safety net';
+
+/**
+ * The entry that is always selected in a linked element's options query, so it is always found: the safety net in
+ * prepareLinkedElementSafetyNets(). The highest entry id in the form.
+ */
+function selectedOptionFor($formHandle) {
+    global $xoopsDB;
+    return intval($xoopsDB->fetchRow($xoopsDB->query("SELECT MAX(entry_id) FROM " . $xoopsDB->prefix('formulize_' . $formHandle)))[0]);
+}
+
+/**
+ * The entries the SQL for a scenario's conditions finds, built by buildConditionsFilterSQL() the way the code that uses it
+ * builds it, and put into a query of the same shape
+ */
+function entriesFoundBySQL($scenario, $shape) {
     global $xoopsDB, $form_handler;
     $options = isset($scenario[4]) ? $scenario[4] : array();
     $entry = isset($options['entry']) ? $options['entry'] : null;
     $fid = $form_handler->get($scenario[1])->getVar('id_form');
+    $curlyBracketFid = isset($options['curlyForm']) ? $form_handler->get($options['curlyForm'])->getVar('id_form') : $fid;
     $table = $xoopsDB->prefix('formulize_' . $scenario[1]);
     if (isset($options['async'])) {
         list($handle, $databaseValue, $readableValue) = $options['async'];
         $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry][$handle] = $databaseValue;
         $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$entry][$handle] = $readableValue;
     }
+    $found = "no query of the shape '$shape'";
     try {
-        if ($extractionMode) {
-            list($filter, $oomFilter, $from) = buildConditionsFilterSQL(conditionsFor($scenario), array($fid => 'main'));
-            $found = entryIdsFor("SELECT main.entry_id FROM $table AS main WHERE 1 " . $filter[0] . " " . $oomFilter[0]);
-        } else {
-            list($filter, $oomFilter, $from) = buildConditionsFilterSQL(conditionsFor($scenario), $fid, $entry, null, $fid, 't1');
-            $found = entryIdsFor("SELECT t1.entry_id FROM $table AS t1 $from WHERE 1 $filter $oomFilter");
+        switch ($shape) {
+            case SHAPE_ONE_FORM: // data.php, formdisplay.php, selectElement's options limit
+                list($filter, $oomFilter, $from) = buildConditionsFilterSQL(conditionsFor($scenario), $fid, $entry, null, $curlyBracketFid, 't1');
+                $found = entryIdsFor("SELECT t1.entry_id FROM $table AS t1 $from WHERE 1 $filter $oomFilter");
+                break;
+            case SHAPE_SUBFORM: // subformListingsElement: no alias, and the entries connected to the main entry
+                list($filter, $oomFilter, $from) = buildConditionsFilterSQL(conditionsFor($scenario), $fid, $entry, null, $curlyBracketFid);
+                $connectedEntries = entryIdsFor("SELECT entry_id FROM $table");
+                $found = entryIdsFor("SELECT subform.entry_id FROM $table as subform $from WHERE subform.entry_id IN ($connectedEntries) $filter $oomFilter");
+                break;
+            case SHAPE_LINKED_OPTIONS: // selectElement, checkboxElement, and the linked element filters in functions.php
+                list($filter, $oomFilter, $from) = buildConditionsFilterSQL(conditionsFor($scenario), $fid, $entry, null, $curlyBracketFid, 't1');
+                list($safetyNetStart, $safetyNetEnd) = prepareLinkedElementSafetyNets(array(selectedOptionFor($scenario[1])));
+                $extraClause = prepareLinkedElementExtraClause('', $from, $safetyNetStart);
+                $found = entryIdsFor("SELECT t1.entry_id FROM $table AS t1 $extraClause $filter $oomFilter $safetyNetEnd GROUP BY t1.entry_id");
+                break;
         }
     } catch (Throwable $e) {
         $found = 'EXCEPTION: ' . $e->getMessage() . ' at line ' . $e->getLine();
     }
     unset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'], $GLOBALS['formulize_asynchronousFormDataInAPIFormat']);
     return $found;
+}
+
+/**
+ * The main form entries gatherDataset() returns with a scenario's conditions as fundamental filters
+ */
+function entriesFoundByGatherDataset($scenario, $frid) {
+    global $form_handler;
+    $fid = $form_handler->get($scenario[1])->getVar('id_form');
+    try {
+        $data = gatherDataset($fid, filter: array('fundamental_filters' => conditionsFor($scenario)), frid: $frid, bypassCache: true);
+    } catch (Throwable $e) {
+        return 'EXCEPTION: ' . $e->getMessage() . ' at line ' . $e->getLine();
+    }
+    $ids = array();
+    foreach ((array) $data as $record) {
+        foreach (internalRecordIds($record, $fid) as $id) {
+            $ids[] = intval($id);
+        }
+    }
+    $ids = array_unique($ids);
+    sort($ids, SORT_NUMERIC);
+    return implode(',', $ids);
 }
 
 /**
@@ -413,6 +535,17 @@ function entriesExpected($scenario) {
 }
 
 /**
+ * The expected entries plus another one, sorted, for the linked options query, where the selected option is always found
+ */
+function withEntry($entryIds, $entryId) {
+    $ids = $entryIds === '' ? array() : array_map('intval', explode(',', $entryIds));
+    $ids[] = intval($entryId);
+    $ids = array_unique($ids);
+    sort($ids, SORT_NUMERIC);
+    return implode(',', $ids);
+}
+
+/**
  * True if the scenario depends on one entry's context, ie: it has { } references, asynchronous values, or is a new entry
  */
 function dependsOnEntryContext($scenario) {
@@ -420,29 +553,79 @@ function dependsOnEntryContext($scenario) {
     return isset($options['entry']) OR isset($options['async']);
 }
 
-// 1. each scenario's SQL, in order and then in reverse order in the same request
-print "Building condition SQL for " . count($scenarios) . " scenarios, in order and then in reverse order\n";
-foreach (array('in order' => $scenarios, 'in reverse order' => array_reverse($scenarios)) as $orderLabel => $scenariosInOrder) {
-    foreach ($scenariosInOrder as $scenario) {
-        $expected = entriesExpected($scenario);
-        $options = isset($scenario[4]) ? $scenario[4] : array();
-        if ($orderLabel == 'in order' AND empty($options['trivial'])) {
-            $allEntries = entryIdsFor("SELECT entry_id FROM " . $xoopsDB->prefix('formulize_' . $scenario[1]));
-            if (!check("[{$scenario[1]}] {$scenario[0]}: the museum data tells entries apart", ($expected !== '' AND $expected !== $allEntries), true)) {
-                print "       the independent query finds " . ($expected === '' ? "no entries" : "every entry") . ", so this scenario no longer tests anything - has the museum data changed?\n";
-            }
+/**
+ * True if the scenario has a { } reference to a field in the form it filters. Not possible in a subform's query, which has no alias.
+ */
+function referencesItsOwnForm($scenario) {
+    $options = isset($scenario[4]) ? $scenario[4] : array();
+    return isset($options['entry']) AND $options['entry'] !== 'new' AND !isset($options['async']) AND !isset($options['curlyForm']);
+}
+
+/**
+ * KNOWN GAP: true if the scenario has a "match all" condition with a { } reference to a field in an existing entry. Those conditions go in the ON
+ * clause of an INNER JOIN to the referenced form, so an entry that doesn't meet them is gone before the WHERE clause, and a linked element's safety
+ * net, ( ... ) OR t1.entry_id IN (the selected options), can't bring back a selected option that doesn't meet them. A "one or more" reference uses
+ * a LEFT JOIN, so it doesn't have this problem. Until that changes, the linked options shape expects the selected option to be dropped for these.
+ */
+function selectedOptionDroppedByReference($scenario) {
+    $options = isset($scenario[4]) ? $scenario[4] : array();
+    if (!isset($options['entry']) OR $options['entry'] === 'new' OR isset($options['async'])) {
+        return false;
+    }
+    foreach ($scenario[2] as $condition) {
+        if ($condition[3] == 'all' AND substr($condition[2], 0, 1) == '{' AND substr($condition[2], -1) == '}' AND $condition[2] != '{BLANK}') {
+            return true;
         }
-        check("[{$scenario[1]}] {$scenario[0]} ($orderLabel)", entriesFoundBySQL($scenario), $expected);
+    }
+    return false;
+}
+
+/**
+ * Fail a scenario that is meant to tell entries apart, if its independent query finds every entry or none
+ */
+function checkNotTrivial($scenario, $expected) {
+    global $xoopsDB;
+    $options = isset($scenario[4]) ? $scenario[4] : array();
+    if (!empty($options['trivial'])) {
+        return;
+    }
+    $allEntries = entryIdsFor("SELECT entry_id FROM " . $xoopsDB->prefix('formulize_' . $scenario[1]));
+    if (!check("[{$scenario[1]}] {$scenario[0]}: the museum data tells entries apart", ($expected !== '' AND $expected !== $allEntries), true)) {
+        print "       the independent query finds " . ($expected === '' ? "no entries" : "every entry") . ", so this scenario no longer tests anything - has the museum data changed?\n";
     }
 }
 
-// 2. extraction mode, the way the extraction layer builds a list's fundamental filters
-print "Building the same condition SQL in extraction mode\n";
+print "Dates are shown as " . _SHORTDATESTRING . "\n";
+
+// 1. each scenario's SQL in each shape of query, in order and then in reverse order in the same request
+print "Building condition SQL for " . count($scenarios) . " scenarios, in order and then in reverse order\n";
+foreach ($scenarios as $scenario) {
+    checkNotTrivial($scenario, entriesExpected($scenario));
+}
+foreach (array('in order' => $scenarios, 'in reverse order' => array_reverse($scenarios)) as $orderLabel => $scenariosInOrder) {
+    foreach ($scenariosInOrder as $scenario) {
+        $expected = entriesExpected($scenario);
+        check("[{$scenario[1]}] {$scenario[0]} (" . SHAPE_ONE_FORM . ", $orderLabel)", entriesFoundBySQL($scenario, SHAPE_ONE_FORM), $expected);
+        if (!referencesItsOwnForm($scenario)) {
+            check("[{$scenario[1]}] {$scenario[0]} (" . SHAPE_SUBFORM . ", $orderLabel)", entriesFoundBySQL($scenario, SHAPE_SUBFORM), $expected);
+        }
+        $expectedWithSelected = selectedOptionDroppedByReference($scenario) ? $expected : withEntry($expected, selectedOptionFor($scenario[1]));
+        check("[{$scenario[1]}] {$scenario[0]} (" . SHAPE_LINKED_OPTIONS . ", $orderLabel)", entriesFoundBySQL($scenario, SHAPE_LINKED_OPTIONS), $expectedWithSelected);
+    }
+}
+$droppedSelections = array_filter($scenarios, 'selectedOptionDroppedByReference');
+if (count($droppedSelections) > 0) {
+    print "  NOTE: known gap - in a linked element's options, a \"match all\" { } reference drops a selected option that doesn't meet it, in "
+        . count($droppedSelections) . " scenarios: " . implode('; ', array_map(function($scenario) { return $scenario[0]; }, $droppedSelections)) . "\n";
+}
+
+// 2. as a list's fundamental filters, through the extraction layer, on the form alone
+print "Using the same conditions as fundamental filters in gatherDataset()\n";
 foreach ($scenarios as $scenario) {
     if (dependsOnEntryContext($scenario)) {
         continue;
     }
-    check("[{$scenario[1]}] {$scenario[0]} (extraction mode)", entriesFoundBySQL($scenario, true), entriesExpected($scenario));
+    check("[{$scenario[1]}] {$scenario[0]} (gatherDataset)", entriesFoundByGatherDataset($scenario, 0), entriesExpected($scenario));
 }
 
 // 3. the display side: checkConditionsAgainstAnEntry() passes the same entries
@@ -463,6 +646,70 @@ foreach ($scenarios as $scenario) {
     sort($passed, SORT_NUMERIC);
     check("[{$scenario[1]}] {$scenario[0]} (display side)", implode(',', $passed), entriesExpected($scenario));
 }
+
+// 4. conditions on forms connected in the Primary Relationship, through the extraction layer, which uses each condition in the
+// main query and on its own in the EXISTS subqueries it builds for connected forms. Donors connect to their artifacts through the
+// artifacts' Donor element. A donor is found if they have an artifact that meets the conditions on artifacts - a donor with no
+// artifacts is not found by a condition on artifacts, even a negation, because the extraction layer does not consider a missing
+// connected entry for fundamental filters.
+print "Using conditions on connected forms as fundamental filters in gatherDataset(), through the Primary Relationship\n";
+$artifactOfDonor = "SELECT 1 FROM $artifactsTable AS a WHERE a.artifacts_donor = t1.entry_id";
+$aCollections = "COALESCE(a.artifacts_collections,'')";
+$relationshipScenarios = array(
+    array("artifacts: era = BCE", 'donors',
+        array(array('artifacts_era', '=', 'BCE', 'all')),
+        "EXISTS ($artifactOfDonor AND a.artifacts_era = 'BCE')"),
+    array("artifacts: era != CE", 'donors',
+        array(array('artifacts_era', 'NOT', 'CE', 'all')),
+        "EXISTS ($artifactOfDonor AND COALESCE(a.artifacts_era,'') != 'CE')"),
+    array("artifacts: collections != Weapons (no linked value is Weapons)", 'donors',
+        array(array('artifacts_collections', 'NOT', 'Weapons', 'all')),
+        "EXISTS ($artifactOfDonor AND $aCollections NOT LIKE '%,$weapons,%')"),
+    array("artifacts, all: date != 2002, era = BCE (the same artifact)", 'donors',
+        array(array('artifacts_date_of_acquisition', 'NOT', '2002', 'all'), array('artifacts_era', '=', 'BCE', 'all')),
+        "EXISTS ($artifactOfDonor AND COALESCE(YEAR(a.artifacts_date_of_acquisition),0) != 2002 AND a.artifacts_era = 'BCE')"),
+    array("all: donor first name != {BLANK}, artifacts date = 2002", 'donors',
+        array(array('donors_first_name', 'NOT', '{BLANK}', 'all'), array('artifacts_date_of_acquisition', '=', '2002', 'all')),
+        "$firstName != '' AND EXISTS ($artifactOfDonor AND YEAR(a.artifacts_date_of_acquisition) = 2002)"),
+    array("artifacts, oom: collections = Weapons OR date < 1960", 'donors',
+        array(array('artifacts_collections', '=', 'Weapons', 'oom'), array('artifacts_date_of_acquisition', '<', '1960', 'oom')),
+        "EXISTS ($artifactOfDonor AND ($aCollections LIKE '%,$weapons,%' OR a.artifacts_date_of_acquisition < '1960-01-01'))"),
+    array("all: artifacts era = CE; oom: donor email = {BLANK} OR artifacts collections NOT LIKE ns", 'donors',
+        array(array('artifacts_era', '=', 'CE', 'all'), array('donors_email', '=', '{BLANK}', 'oom'), array('artifacts_collections', 'NOT LIKE', 'ns', 'oom')),
+        "EXISTS ($artifactOfDonor AND a.artifacts_era = 'CE' AND ($email = '' OR ($aCollections NOT LIKE '%,$coins,%' AND $aCollections NOT LIKE '%,$weapons,%')))"),
+);
+foreach ($relationshipScenarios as $scenario) {
+    $expected = entriesExpected($scenario);
+    checkNotTrivial($scenario, $expected);
+    check("[{$scenario[1]}] {$scenario[0]} (gatherDataset, Primary Relationship)", entriesFoundByGatherDataset($scenario, -1), $expected);
+}
+
+// 5. dates: reading a date in the site's format, the MySQL format that shows dates the way the site does, and how a date element reads a term
+print "Checking how dates are read and shown\n";
+check("formulize_dateValueAsISO: 05/03/2026 as d/m/Y", formulize_dateValueAsISO('05/03/2026', 'd/m/Y'), '2026-03-05');
+check("formulize_dateValueAsISO: 05/03/2026 as m/d/Y", formulize_dateValueAsISO('05/03/2026', 'm/d/Y'), '2026-05-03');
+check("formulize_dateValueAsISO: 5 March 2026 as j F Y", formulize_dateValueAsISO('5 March 2026', 'j F Y'), '2026-03-05');
+check("formulize_dateValueAsISO: YYYY-MM-DD with a time", formulize_dateValueAsISO('2026-03-05 10:30:00', 'd/m/Y'), '2026-03-05');
+check("formulize_dateValueAsISO: 31/02/2026 is not a date as d/m/Y", formulize_dateValueAsISO('31/02/2026', 'd/m/Y'), '31/02/2026');
+check("formulize_dateValueAsISO: part of a date is left as it is", formulize_dateValueAsISO('03/2026', 'd/m/Y'), '03/2026');
+check("formulize_dateValueAsISO: blank is left blank", formulize_dateValueAsISO('', 'd/m/Y'), '');
+check("formulize_mysqlDateFormat: d/m/Y", formulize_mysqlDateFormat('d/m/Y'), '%d/%m/%Y');
+check("formulize_mysqlDateFormat: Y-m-d", formulize_mysqlDateFormat('Y-m-d'), '%Y-%m-%d');
+check("formulize_mysqlDateFormat: n/j/y", formulize_mysqlDateFormat('n/j/y'), '%c/%e/%y');
+check("formulize_mysqlDateFormat: D, d M Y", formulize_mysqlDateFormat('D, d M Y'), '%a, %d %b %Y');
+check("formulize_mysqlDateFormat: jS F Y, the day with its suffix", formulize_mysqlDateFormat('jS F Y'), '%D %M %Y');
+check("formulize_mysqlDateFormat: an escaped letter is literal", formulize_mysqlDateFormat('d \o\f F'), '%d of %M');
+check("formulize_mysqlDateFormat: a % is literal", formulize_mysqlDateFormat('d%m'), '%d%%%m');
+$dateElementObject = $element_handler->get('artifacts_date_of_acquisition');
+$dateTypeHandler = xoops_getmodulehandler('dateElement', 'formulize');
+check("date term: 2026 is a year, kept as typed", $dateTypeHandler->prepareLiteralTextForDB('2026', $dateElementObject), '2026');
+check("date term: March is a month, kept as typed", $dateTypeHandler->prepareLiteralTextForDB('March', $dateElementObject), 'March');
+check("date term: something that isn't a date is kept as typed", $dateTypeHandler->prepareLiteralTextForDB('garbage', $dateElementObject), 'garbage');
+check("date term: August 21 2020, written out", $dateTypeHandler->prepareLiteralTextForDB('August 21 2020', $dateElementObject), '2020-08-21');
+check("date term: August 21 2020, written out, when part of a date can be searched for", $dateTypeHandler->prepareLiteralTextForDB('August 21 2020', $dateElementObject, true), '2020-08-21');
+check("date term: Oct 5 when part of a date can be searched for, kept as typed rather than made this year's", $dateTypeHandler->prepareLiteralTextForDB('Oct 5', $dateElementObject, true), 'Oct 5');
+check("date term: 05/03 when part of a date can be searched for, kept as typed", $dateTypeHandler->prepareLiteralTextForDB('05/03', $dateElementObject, true), '05/03');
+check("date term: 05/03/2026 in the site's format", $dateTypeHandler->prepareLiteralTextForDB('05/03/2026', $dateElementObject), _SHORTDATESTRING === 'd/m/Y' ? '2026-03-05' : '2026-05-03');
 
 printf("\n%d passed, %d failed\n", $GLOBALS['__pass'], $GLOBALS['__fail']);
 exit($GLOBALS['__fail'] > 0 ? 1 : 0);

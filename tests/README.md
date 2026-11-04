@@ -59,8 +59,14 @@ them *after* the e2e suite, when the setup specs have finished building the muse
   {BLANK} and empty terms, numeric fields, linked elements single and multi value, checkboxes, Yes/No terms, dates
   written out and whole years or months, { } references in existing and new entries, asynchronous values and
   metadata fields. Every scenario is built in order and again in reverse order, so no condition depends on what was
-  built before it, then in extraction mode, and the same conditions are checked against each entry with
-  `checkConditionsAgainstAnEntry()`, so they mean the same thing when elements are displayed. Read-only.
+  built before it, in each shape of query the SQL is put into (one form aliased `t1`, a subform's query with no
+  alias, and a linked element's options query with its safety net and GROUP BY), then as a list's fundamental
+  filters through `gatherDataset()`, including conditions on connected forms in the Primary Relationship. The same
+  conditions are checked against each entry with `checkConditionsAgainstAnEntry()`, so they mean the same thing when
+  elements are displayed. Also checks reading dates in the site's format and showing them in SQL. Run it a second
+  time with a date format, `php tests/condition_filters_test.php d/m/Y`, to check a site that shows dates that way.
+  It prints a NOTE for a known gap: in a linked element's options, a "match all" `{ }` reference drops a selected
+  option that doesn't meet it. Read-only.
 * `element_code_files_test.php` - the code files that captionedContent, fullWidthContent, text, number,
   textarea and derived elements keep in `modules/formulize/code/`. Saving an element sets `ele_value`
   twice, so each type is checked for both halves of the contract: the file on disk is right, *and* the
