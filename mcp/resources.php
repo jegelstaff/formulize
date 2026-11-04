@@ -328,6 +328,44 @@ trait resources {
 	}
 
 	/**
+	 * Refuse to treat a system form (System Users, System Groups) as an ordinary form. They are
+	 * managed by Formulize itself, and AI assistants work with what they hold through the tools made for that, which
+	 * apply the rules that go with them.
+	 * @param int|string $formIdOrHandle
+	 * @return void
+	 * @throws FormulizeMCPException if the form is a system form
+	 */
+	private function assertNotSystemForm($formIdOrHandle) {
+		if($this->isSystemForm($formIdOrHandle)) {
+			throw new FormulizeMCPException(
+				"There is no form with the id or handle $formIdOrHandle that these tools can work with.",
+				'form_not_found',
+				context: [ 'hint' => 'Users and groups are not worked with as forms. Use list_users, create_users and update_users for users; and list_groups, list_group_members, create_groups, update_groups and update_group_members for groups. Use list_forms to see the forms in this system.' ]
+			);
+		}
+	}
+
+	/**
+	 * Check if a form reference points at a system form. Arguments are not type checked before they reach the tools,
+	 * and the code that uses a reference may cast it to an int, or may hand it to the forms handler, which also accepts
+	 * handles. Both readings are tested here, so that neither one can be used to get around the check.
+	 * @param int|string $formIdOrHandle
+	 * @return bool
+	 */
+	private function isSystemForm($formIdOrHandle) {
+		if(!is_scalar($formIdOrHandle)) {
+			return false;
+		}
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		foreach(array_unique([$formIdOrHandle, intval($formIdOrHandle)]) as $reference) {
+			if(($formObject = $form_handler->get($reference)) AND $formObject->isSystemManagedForm()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * List all forms
 	 * This function retrieves all forms from the Formulize database and returns them sorted by name.
 	 * Includes simple element list, screens list, connections to other forms. Complete data on all forms.
@@ -336,7 +374,8 @@ trait resources {
 	 */
 	private function forms_list() {
 
-		$sql = "SELECT id_form, form_title, singular, plural, form_handle as database_table_name FROM " . $this->db->prefix('formulize_id');
+		// system forms (users, groups) are worked with through their own tools, not as forms
+		$sql = "SELECT id_form, form_title, singular, plural, form_handle as database_table_name FROM " . $this->db->prefix('formulize_id') . " WHERE COALESCE(lockedform, 0) != " . FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED;
 
 		$result = $this->db->query($sql);
 
@@ -400,6 +439,7 @@ trait resources {
 	private function form_schemas($formId)
 	{
 
+		$this->assertNotSystemForm($formId);
 		if(security_check($formId) === false) {
 			throw new FormulizeMCPException(
 				'Permission denied: user does not have access to form ' . intval($formId),
@@ -557,6 +597,7 @@ trait resources {
 	 */
 	private function element_details($identifiers, $formId = 0) {
 
+		$this->assertNotSystemForm($formId);
 		$formId = intval($formId);
 		if($formId AND !security_check($formId)) {
 			throw new FormulizeMCPException(
@@ -586,7 +627,9 @@ trait resources {
 		if(!empty($ids)) { $matchClauses[] = "ele_id IN (".implode(',', $ids).")"; }
 		if(!empty($handles)) { $matchClauses[] = "ele_handle IN (".implode(',', $handles).")"; }
 		$formClause = $formId ? " AND id_form = $formId" : "";
-		$sql = "SELECT * FROM ".$this->db->prefix('formulize')." WHERE (".implode(' OR ', $matchClauses).")$formClause ORDER BY id_form, ele_order";
+		// elements can be asked for without saying which form they are in, so the check on the form above is not enough
+		$notSystemForms = " AND id_form NOT IN (SELECT id_form FROM ".$this->db->prefix('formulize_id')." WHERE lockedform = ".FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED.")";
+		$sql = "SELECT * FROM ".$this->db->prefix('formulize')." WHERE (".implode(' OR ', $matchClauses).")$formClause$notSystemForms ORDER BY id_form, ele_order";
 
 		if(!$result = $this->db->query($sql)) {
 			throw new FormulizeMCPException(
@@ -755,6 +798,7 @@ trait resources {
 	 */
 	private function form_permissions_report($formId, $groupIds = []) {
 
+		$this->assertNotSystemForm($formId);
 		$formId = intval($formId);
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		if(!$formObject = $form_handler->get($formId)) {
@@ -1141,7 +1185,7 @@ One arrangement you will see is a series of groups related to a single entity, s
 
 		// Count forms
 		if(in_array(XOOPS_GROUP_ADMIN, $this->userGroups)) {
-			$formCountSql = "SELECT COUNT(*) as count FROM " . $this->db->prefix('formulize_id');
+			$formCountSql = "SELECT COUNT(*) as count FROM " . $this->db->prefix('formulize_id') . " WHERE COALESCE(lockedform, 0) != " . FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED;
 			$formCountResult = $this->db->query($formCountSql);
 			$formCount = $this->db->fetchArray($formCountResult)['count'];
 		} else {
@@ -1479,6 +1523,9 @@ That makes the template groups the right place to set and change permissions tha
 		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
 		$primaryRelationshipSchema = $framework_handler->formatFrameworksAsRelationships(array($framework_handler->get(-1)), $formId);
 		foreach($primaryRelationshipSchema[0]['content']['links'] as $link) {
+			if($this->isSystemForm($link['form1Id']) OR $this->isSystemForm($link['form2Id'])) {
+				continue;
+			}
 			if(security_check($link['form1Id']) OR security_check($link['form2Id'])) {
 				$connections[] = [
 					'description' => "{$link['each']} {$link['form1']} {$link['has']} {$link['form2']}",
@@ -1637,6 +1684,9 @@ That makes the template groups the right place to set and change permissions tha
 	 * Optionally get a simple list of just the ids and titles
 	 */
 	private function screens_list($formId = null, $screenId = null, $simple = false) {
+		if($formId) {
+			$this->assertNotSystemForm($formId);
+		}
 		if($formId AND !security_check($formId)) {
 			throw new FormulizeMCPException(
 				"Permission denied: user does not have access to form $formId.",
@@ -1654,7 +1704,8 @@ That makes the template groups the right place to set and change permissions tha
 		}
 		$limitScreensByFids = !empty($formIds) ? 'AND fid IN ('.implode(',', array_filter($formIds, 'is_numeric')).')' : '';
 		$limitScreensBySid = $screenId ? 'AND sid = '.intval($screenId) : '';
-		$sql = "SELECT * FROM ".$this->db->prefix('formulize_screen')." WHERE 1 $limitScreensBySid $limitScreensByFids ORDER BY fid,title";
+		$notSystemForms = "AND fid NOT IN (SELECT id_form FROM ".$this->db->prefix('formulize_id')." WHERE lockedform = ".FORMULIZE_LOCKEDFORM_SYSTEM_MANAGED.")";
+		$sql = "SELECT * FROM ".$this->db->prefix('formulize_screen')." WHERE 1 $limitScreensBySid $limitScreensByFids $notSystemForms ORDER BY fid,title";
 		if(!$res = $this->db->query($sql)) {
 			throw new FormulizeMCPException(
 				'Failed to lookup screen data. '.$this->db->error(),

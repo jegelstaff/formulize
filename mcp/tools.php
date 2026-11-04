@@ -1460,6 +1460,7 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 				context: [ 'valid_code_types' => $validTypes ]
 			);
 		}
+		$this->assertNotSystemForm($formId);
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		if(!$formObject = $form_handler->get($formId)) {
 			throw new FormulizeMCPException(
@@ -3844,6 +3845,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 	private function get_entries_from_form($arguments)
 	{
 		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/readentries.php';
+		$this->assertNotSystemForm($arguments['form_id'] ?? 0);
 
 		$options = array(
 			'fields' => $arguments['elements'] ?? array(),
@@ -6482,6 +6484,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 	 */
 	private function create_entries($arguments) {
 		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/fileintake.php';
+		$this->assertNotSystemForm($arguments['form_id'] ?? 0);
 		$stagedFiles = [];
 		try {
 			return $this->writeFormEntries(intval($arguments['form_id']), 'create', $arguments['data'] ?? [], -1, $arguments['proxy_user_id'] ?? null, $stagedFiles);
@@ -6501,6 +6504,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 	 */
 	private function update_entries($arguments) {
 		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/fileintake.php';
+		$this->assertNotSystemForm($arguments['form_id'] ?? 0);
 		$stagedFiles = [];
 		try {
 			return $this->writeFormEntries(intval($arguments['form_id']), 'update', $arguments['data'] ?? [], -1, $arguments['proxy_user_id'] ?? null, $stagedFiles);
