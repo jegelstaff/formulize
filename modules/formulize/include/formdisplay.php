@@ -224,7 +224,9 @@ class formulize_themeForm extends XoopsThemeForm {
             // only this form's own token: every form's token has the same name, and filling in another
             // form's (a drawer opened over this page, the printable view form) gives it this form's token.
             // Whichever form is submitted first then uses it up, and the other one's next save is refused.
-            $js .= "    jQuery(document).on('focusin click touchstart', 'p.auto_multi, input, select, textarea, div', function() {\n";
+            // In the .formulizeRender namespace, as everything a render binds to the document is, so that a
+            // form running in place drops it when it replaces the render (see include/js/form-host.js)
+            $js .= "    jQuery(document).on('focusin.formulizeRender click.formulizeRender touchstart.formulizeRender', 'p.auto_multi, input, select, textarea, div', function() {\n";
             $js .= "        setTimeout(function() {\n";
             $js .= "            jQuery('#".$this->getName()." input[name=\"".$this->tokenName."\"]').val(\"".$this->tokenVal."\");\n";
             $js .= "        }, 269);\n";
@@ -2922,9 +2924,16 @@ window.onbeforeunload = function (e) {
     }
 };
 
-window.addEventListener('pagehide', function() {
+// Leaving the page releases the entries this render locked. A form running in place is not left when
+// it is submitted, so it releases them itself, with formulize_releaseEntryLocks, before it sends the
+// request that replaces this render (see include/js/form-host.js). The listener is in the
+// .formulizeRender namespace, so it goes when this render does.
+jQuery(window).on('pagehide.formulizeRender', function() {
     <?php print formulize_javascriptForRemovingEntryLocks('unload'); ?>
 });
+window.formulize_releaseEntryLocks = function() {
+    <?php print formulize_javascriptForRemovingEntryLocks(); ?>
+};
 
 <?php
 global $codeToIncludejQueryWhenNecessary;
@@ -2997,8 +3006,11 @@ if($entryId != 'new' AND isset($_POST['yposition']) AND
             // other attempt has another go
             restored = container.scrollTop() > 0;
         };
-        window.addEventListener('formulize_pageShown', restore);
-        jQuery(window).on('load', function() { setTimeout(restore, 200); });
+        jQuery(window).on('formulize_pageShown.formulizeRender', restore);
+        jQuery(window).on('load.formulizeRender', function() { setTimeout(restore, 200); });
+        // a form running in place has replaced its render with this one: the page is already shown
+        // and loaded, and the new render is in place and laid out (see include/js/form-host.js)
+        jQuery(window).on('formulize_contentLoaded.formulizeRender', restore);
     })();
     ";
 }
@@ -3530,7 +3542,7 @@ jQuery(document).ready(function() {
     // setup the triggers
     foreach(array_keys($governingElements) as $ge) {
 			$ge = markupNameAttr($ge);
-			$initCode .= "  jQuery(document).on('change', '[name=\"".$ge."\"]', function() {
+			$initCode .= "  jQuery(document).on('change.formulizeRender', '[name=\"".$ge."\"]', function() {
 			callCheckCondition('$ge');
     });\n";
     }

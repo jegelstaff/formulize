@@ -12479,7 +12479,7 @@ function updateAlternateURLIdentifierCode($screen, $entry_id, $settings=array())
 			}
 		}
 		$code = "window.history.replaceState(null, '', ".json_encode(trans($initialURL.$URLAddOn)).");
-		jQuery(window).on('load', function() {
+		jQuery(window).on('load.formulizeRender formulize_contentLoaded.formulizeRender', function() {
 			jQuery('a.navtab:not(:first)').each(function() {
 				jQuery(this).attr('href', '../' + jQuery(this).text());
 			});
@@ -13699,6 +13699,109 @@ function formulize_scriptText($prefix) {
 function formulize_textScriptPath() {
 	$path = '/modules/formulize/libraries/formulize-text.js';
 	return $path . '?v=' . formulize_get_file_version($path);
+}
+
+/**
+ * Markers that index.php prints around what a screen renders. Everything between them is the
+ * screen's content: the part of a page that a form running in place (include/js/form-host.js)
+ * replaces when it submits, and the part an async response is made of. Comments rather than a
+ * wrapping element, so that no theme's styling of its content area is disturbed.
+ */
+define('FORMULIZE_CONTENT_START_MARKER', '<!--formulize-content-->');
+define('FORMULIZE_CONTENT_END_MARKER', '<!--/formulize-content-->');
+
+/**
+ * Is this request from a form running in place, asking for the screen's content rather than a page?
+ *
+ * The form host (include/js/form-host.js) sends X-Formulize-Async with every request it makes. The
+ * request is otherwise exactly the one the form would send if it were submitted normally, and it is
+ * handled the same way; only the response is different (see formulize_renderAsyncResponse).
+ *
+ * @return bool True when the response should be the screen's content alone
+ */
+function formulize_isAsyncRequest() {
+	return isset($_SERVER['HTTP_X_FORMULIZE_ASYNC']) AND $_SERVER['HTTP_X_FORMULIZE_ASYNC'] === '1';
+}
+
+/**
+ * Note which scripts and stylesheets the theme has been given so far, before a screen renders.
+ * Whatever is given to the theme after this, while the screen renders, belongs to what the screen
+ * shows and goes into an async response with it (see formulize_renderAsyncResponse).
+ */
+function formulize_noteThemeAssetsBeforeRender() {
+	global $xoTheme;
+	if(!$xoTheme) {
+		return;
+	}
+	$GLOBALS['formulize_themeAssetsBeforeRender'] = array(
+		'script' => isset($xoTheme->metas['script']) ? array_keys($xoTheme->metas['script']) : array(),
+		'stylesheet' => isset($xoTheme->metas['stylesheet']) ? array_keys($xoTheme->metas['stylesheet']) : array()
+	);
+}
+
+/**
+ * Send the screen's content, in place of the page the theme would draw around it.
+ *
+ * This is the response to a request from a form running in place (see formulize_isAsyncRequest).
+ * It is what the theme would have put in the page, and only that: the screen's content, from
+ * between the markers index.php prints, led by the scripts and stylesheets it needs.
+ *
+ * Every script and stylesheet file the page would load is listed, because the page the content is
+ * going into may not have them all (a list of entries does not load the rich text editor that a form
+ * on it may need), and the form host loads only the ones it does not already have. Scripts written
+ * into the page are another matter: most of them set the page up, and run once. So only those given
+ * to the theme while the screen rendered come along, since they belong to what it shows.
+ *
+ * The page title comes back in a header, as the theme would have written it.
+ *
+ * @param object $xoTheme The theme, which has collected the screen's output and assets
+ */
+function formulize_renderAsyncResponse($xoTheme) {
+	global $xoopsOption, $icmsConfig;
+
+	$content = '';
+	if($xoTheme->contentTemplate) {
+		$content = $xoTheme->template->fetch($xoTheme->contentTemplate, $xoTheme->contentCacheId);
+	}
+	if($xoTheme->bufferOutput) {
+		$content .= ob_get_contents();
+		ob_end_clean();
+	}
+	$start = strpos($content, FORMULIZE_CONTENT_START_MARKER);
+	$end = strrpos($content, FORMULIZE_CONTENT_END_MARKER);
+	if($start !== false AND $end !== false AND $end > $start) {
+		$content = substr($content, $start, $end + strlen(FORMULIZE_CONTENT_END_MARKER) - $start);
+	}
+
+	$before = isset($GLOBALS['formulize_themeAssetsBeforeRender']) ? $GLOBALS['formulize_themeAssetsBeforeRender'] : null;
+	$assets = '';
+	foreach(array('stylesheet', 'script') as $type) {
+		if(empty($xoTheme->metas[$type])) {
+			continue;
+		}
+		$include = array();
+		foreach($xoTheme->metas[$type] as $key=>$attributes) {
+			$isFile = (isset($attributes['src']) OR isset($attributes['href']));
+			if($isFile OR ($before AND !in_array($key, $before[$type], true))) {
+				$include[$key] = $attributes;
+			}
+		}
+		$all = $xoTheme->metas[$type];
+		$xoTheme->metas[$type] = $include;
+		$assets .= $xoTheme->renderMetas($type, true);
+		$xoTheme->metas[$type] = $all;
+	}
+
+	$title = !empty($xoopsOption['xoops_pagetitle']) ? $xoopsOption['xoops_pagetitle'] : $xoTheme->template->get_template_vars('xoops_pagetitle');
+	$title = $title ? $title.' : '.$icmsConfig['sitename'] : $icmsConfig['sitename'];
+
+	if(!headers_sent()) {
+		header('Content-Type: text/html; charset='._CHARSET);
+		header('Cache-Control: private, no-cache');
+		header('X-Formulize-Async-Response: 1');
+		header('X-Formulize-Title: '.rawurlencode(strip_tags(html_entity_decode($title, ENT_QUOTES))));
+	}
+	print $assets.$content;
 }
 
 /**

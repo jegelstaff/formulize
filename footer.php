@@ -131,6 +131,10 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
         $xoTheme->template->assign("masquerade_username", $xoopsUser->vars['uname']['value']);
     }
 
+	// A form running in place asked for the screen's content, not a page (see formulize_isAsyncRequest).
+	// The page it goes into already has everything below that sets a page up, so none of that is added.
+	$formulizeAsyncResponse = function_exists('formulize_isAsyncRequest') && formulize_isAsyncRequest();
+
 	// Formulize AI chat context: activity tracker (admin page/form events) + session queue flush (server-side action events)
 	$xoTheme->addScript(XOOPS_URL . '/modules/formulize/js/activity-tracker.js', array('type' => 'text/javascript'));
 
@@ -139,7 +143,11 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 	// it is published site-wide rather than only on list screens because a theme's
 	// AI assistant link can appear on any page. Its UI strings come from the
 	// language files, with English fallbacks inside the script itself.
-	if (function_exists('formulize_get_file_version')) {
+	if (function_exists('formulize_get_file_version') && !$formulizeAsyncResponse) {
+		// Forms run in place: submitting one replaces the screen's content rather than loading a new
+		// page. Published site-wide, ahead of the drawer, which runs its forms the same way.
+		$formHostJsVersion = formulize_get_file_version('/modules/formulize/include/js/form-host.js');
+		$xoTheme->addScript(XOOPS_URL . '/modules/formulize/include/js/form-host.js?v=' . $formHostJsVersion, array('type' => 'text/javascript'));
 		$drawerStrings = array();
 		if (defined('_formulize_SAVE')) { $drawerStrings['save'] = _formulize_SAVE; }
 		if (defined('_CANCEL')) { $drawerStrings['cancel'] = _CANCEL; }
@@ -183,9 +191,12 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 	// where the site can be installed, the manifest, title bar colour, icon and service worker. Here,
 	// once the whole page has been built, because the title bar takes the colour of the look this
 	// page's screen is drawn with.
-	formulize_addAppHeadTags();
-
-    $xoTheme->render();
+	if ($formulizeAsyncResponse) {
+		formulize_renderAsyncResponse($xoTheme);
+	} else {
+		formulize_addAppHeadTags();
+		$xoTheme->render();
+	}
 }
 
 icms::$logger->stopTime();
