@@ -1205,6 +1205,10 @@
 .fz-callout--success { --fz-tone: var(--fz-color-success); --fz-tone-soft: var(--fz-color-success-soft); }
 .fz-callout--warning { --fz-tone: var(--fz-color-warning); --fz-tone-soft: var(--fz-color-warning-soft); }
 .fz-callout--danger  { --fz-tone: var(--fz-color-danger);  --fz-tone-soft: var(--fz-color-danger-soft); }
+/* A ghost button in a callout, such as one that dismisses it, hovers in a deeper
+   tint of the callout's own tone: the usual hover grey barely shows against the
+   callout's tint. */
+.fz-callout .fz-btn--ghost:hover { background: color-mix(in srgb, var(--fz-tone) 20%, transparent); }
 
 /* ---- Toolbar ----------------------------------------------------------------
    A row with a group at each end, such as a heading and its buttons, wrapping

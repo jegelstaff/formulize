@@ -2021,60 +2021,17 @@ a.main-menu__item-link--active::before {
    Session timeout warning
    ============================================================ */
 
+/* The look is Formulize UI's (a warning callout, see session-timeout-warning.html);
+   this only pins it to the corner. It sets no display of its own: the hidden
+   attribute keeps it out of sight until the script shows it, even before this
+   stylesheet has loaded. */
 #session-timeout-warning {
   position: fixed;
   bottom: calc(calc(var(--fz-spacing) * 5) + var(--lyris-masquerade-height));
   right: calc(var(--fz-spacing) * 5);
   max-width: 21.25rem;
-  background: var(--fz-color-surface);
-  border: 1px solid var(--fz-color-border-strong);
-  border-radius: var(--fz-radius-lg);
-  box-shadow: var(--fz-shadow-lg);
-  padding: calc(var(--fz-spacing) * 4) calc(var(--fz-spacing) * 5);
   z-index: 50;
   font-size: var(--fz-text-xs-plus);
-  line-height: var(--fz-leading-normal);
-  display: none; /* shown via JS */
-}
-
-#session-timeout-warning p {
-  margin: 0;
-  color: var(--fz-color-text-muted);
-}
-
-.session-timeout-warning-body {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: calc(var(--fz-spacing) * 2);
-}
-
-.session-timeout-warning-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  display: block;
-  color: var(--fz-color-warning);
-  flex: none;
-}
-
-.session-timeout-warning-close {
-  float: right;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin: calc(calc(var(--fz-spacing) * 1) * -1) calc(calc(var(--fz-spacing) * 1) * -1) 0 calc(var(--fz-spacing) * 2);
-  padding: calc(var(--fz-spacing) * 1);
-  border: 0;
-  background: transparent;
-  border-radius: var(--fz-radius-md);
-  color: var(--fz-color-text-subtle);
-  cursor: pointer;
-  transition: color var(--fz-duration-fast) var(--fz-ease-out), background var(--fz-duration-fast) var(--fz-ease-out);
-}
-
-.session-timeout-warning-close:hover {
-  color: var(--fz-color-text);
-  background: var(--fz-color-surface-3);
 }
 
 /* ============================================================
@@ -2114,7 +2071,8 @@ body:has(#formulize-masquerade-block) {
   right: 0;
   height: var(--lyris-masquerade-height);
   background: var(--fz-color-warning);
-  color: #fff;
+  /* the text colour, not white: the warning colour is a light orange */
+  color: var(--fz-color-text);
   padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 4);
   font-size: var(--fz-text-xs-plus);
   font-weight: 500;
