@@ -473,6 +473,24 @@ $scenarios = array(
     array("new entry: last name LIKE {first name}", 'donors', array(array('donors_last_name', 'LIKE', '{donors_first_name}', 'all')), "1", array('entry' => 'new', 'trivial' => true)),
     array("new entry: last name IN {first name}", 'donors', array(array('donors_last_name', 'IN', '{donors_first_name}', 'all')), "1", array('entry' => 'new', 'trivial' => true)),
 
+    // other markers for an entry that isn't saved yet, which work the same as 'new', rather than going into the SQL as if they were an entry id
+    array("proxy entry: last name = {first name}", 'donors', array(array('donors_last_name', '=', '{donors_first_name}', 'all')), "1", array('entry' => 'proxy', 'trivial' => true)),
+    array("proxy entry: last name != {first name}", 'donors', array(array('donors_last_name', 'NOT', '{donors_first_name}', 'all')), "1", array('entry' => 'proxy', 'trivial' => true)),
+    array("proxy entry: last name LIKE {first name}", 'donors', array(array('donors_last_name', 'LIKE', '{donors_first_name}', 'all')), "1", array('entry' => 'proxy', 'trivial' => true)),
+    array("proxy entry: donor = {short name}, on a linked element", 'artifacts', array(array('artifacts_donor', '=', '{artifacts_short_name}', 'all')), "1", array('entry' => 'proxy', 'trivial' => true)),
+    array("new_0 entry: last name = {first name}", 'donors', array(array('donors_last_name', '=', '{donors_first_name}', 'all')), "1", array('entry' => 'new_0', 'trivial' => true)),
+    array("new_0 entry: last name IN {first name}", 'donors', array(array('donors_last_name', 'IN', '{donors_first_name}', 'all')), "1", array('entry' => 'new_0', 'trivial' => true)),
+    array("new_0 entry, oom: last name != {first name} OR email = formulize@freeform.ca", 'donors',
+        array(array('donors_last_name', 'NOT', '{donors_first_name}', 'oom'), array('donors_email', '=', 'formulize@freeform.ca', 'oom')),
+        "t1.donors_email = 'formulize@freeform.ca'", array('entry' => 'new_0')),
+    array("blank entry: last name = {first name}", 'donors', array(array('donors_last_name', '=', '{donors_first_name}', 'all')), "1", array('entry' => '', 'trivial' => true)),
+    array("async on a proxy entry: flagged != {flagged}, which is Yes on screen, so the values under proxy are found", 'surveys',
+        array(array('surveys_flagged_to_the_staff', 'NOT', '{surveys_flagged_to_the_staff}', 'all')),
+        "t1.surveys_flagged_to_the_staff != 1", array('entry' => 'proxy', 'async' => array('surveys_flagged_to_the_staff', 1, 'Yes'))),
+    array("async on a new_0 entry: collections != {collections}, which is Weapons and Coins on screen", 'artifacts',
+        array(array('artifacts_collections', 'NOT', '{artifacts_collections}', 'all')),
+        $inNoneOfCollections(array($weapons, $coins)), array('entry' => 'new_0', 'async' => array('artifacts_collections', ",$weapons,$coins,", array('Weapons', 'Coins')))),
+
     // asynchronous values on linked and checkbox elements
     array("async: collections != {collections}, which is Weapons and Coins on screen, so neither", 'artifacts',
         array(array('artifacts_collections', 'NOT', '{artifacts_collections}', 'all')),

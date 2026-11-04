@@ -2572,7 +2572,7 @@ function formulize_tryDelegatedSearchWhere($eleType, $term, $operator, $quotes, 
 
 	$typeHandler = xoops_getmodulehandler($eleType . 'Element', 'formulize');
 	if ($typeHandler && method_exists($typeHandler, 'buildSearchWhereClause')) {
-		$rawTerm = $term; // kept aside for handlers (currently just dateElement) that need the term as originally typed, before it is collapsed below
+		$rawTerm = $term; // kept aside for handlers (currently just dateElement) that need the term as originally typed, before it is converted below
 		$isPartial = ($normalizedOperator === 'LIKE' || $normalizedOperator === 'NOT LIKE');
 		$term = $typeHandler->prepareLiteralTextForDB($term, null, $isPartial);
 

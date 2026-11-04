@@ -8336,6 +8336,14 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
         return;
     }
 
+    // { } terms refer to one entry, so they can only ever read one row of the form they refer to. Anything that isn't an entry id means there is no saved entry to read,
+    // which is 'new', and the other markers for that, ie: 'proxy', or 'new_0' from code that makes several entries at once. Those all work like 'new' from here on, otherwise
+    // they would go into the SQL as if they were an id. Asynchronous values stay under the key they came with, because they are saved under whatever the page passed in.
+    $asynchronousDataKey = $curlyBracketEntry;
+    if($curlyBracketEntry !== null) {
+        $curlyBracketEntry = is_numeric($curlyBracketEntry) ? intval($curlyBracketEntry) : 'new';
+    }
+
     // if we've been sent an array for the target form, then we're preparing a query for the extraction layer
     // in this case all the dynamic references are dependent on the particular record being evaluated by the database during the query
     // so lots of things are done differently from when we're just looking things up relative to a single known entry
@@ -8411,7 +8419,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
                                     $curlyBracketForm = $form_handler->get($curlyBracketForm);
                             }
                             if(!in_array($bareFilterTerm,$curlyBracketForm->getVar('elementHandles'))
-                                    AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])
+                                    AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$asynchronousDataKey][$bareFilterTerm])
                                     AND $bareFilterTerm != 'USER'
                                     AND $bareFilterTerm != 'USER_ID'
                                     AND $bareFilterTerm != 'USERID'
@@ -8473,7 +8481,7 @@ function buildConditionsFilterSQL($conditions, $targetFormId, $curlyBracketEntry
             }
             $targetAlias .= ($targetAlias AND substr($targetAlias, -1) != '.') ? "." : ""; // add a period to the end of the alias, if there is an alias and if it doesn't have a dot, so it will work in the sql statement
 
-            list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler);
+            list($conditionsFilterComparisonValue, $thisCurlyBracketFormFrom) =  _buildConditionsFilterSQL($filterId, $filterOps, $filterTerms, $filterElementIds, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler, $asynchronousDataKey);
 
             // regular conditions
             if ($filterTypes[$filterId] != "oom" AND !strstr($conditionsFilterComparisonValue, "curlybracketform")) {
@@ -8633,9 +8641,10 @@ function _appendToCondition($condition, $andor, $needIntroBoolean, $targetAlias,
  * @param object $curlyBracketForm - The form object for the form that any { } references in the term would be referring to
  * @param object $element_handler - The XOOPS/ICMS element handler
  * @param object $form_handler - The XOOPS/ICMS form handler
+ * @param int|string $asynchronousDataKey - The key that any asynchronous values for the entry are under, which is what the page passed in as the entry
  * @return array retturns an array with two elements: 0 - the comparison value that should be used in the SQL query, 1 - any additional join clause that is necessary if the term involves a reference to another form
  */
-function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filterElementIds, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler) {
+function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filterElementIds, $curlyBracketEntry, $userComparisonId, $curlyBracketForm, $element_handler, $form_handler, $asynchronousDataKey) {
 
     global $xoopsDB;
     $curlyBracketEntryQuoted = $curlyBracketEntry == 'new' ? "'new'" : $curlyBracketEntry; // can't put text into the query without quotes!
@@ -8773,8 +8782,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				// OPTION 2A: IF THE FILTER TERM IS DYNAMIC, FIGURE OUT THE DB AND LITERAL VALUES FOR THAT ELEMENT IN THE CURRENT ENTRY/CONTEXT
 				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
 						$quotes = '';
-						if (isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
-								$dbValueOfTerm = formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm]);
+						if (isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$asynchronousDataKey][$bareFilterTerm])) {
+								$dbValueOfTerm = formulize_db_escape($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$asynchronousDataKey][$bareFilterTerm]);
 								$filterTermToUse = "'".$dbValueOfTerm."'";
 						} else {
 								$filterTermToUse = " curlybracketform.`".formulize_db_escape($bareFilterTerm)."` ";
@@ -8783,8 +8792,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 								$dbValueOfTerm = prepareLiteralTextForDB($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId);
 						}
 						// establish the literal (human readable) value
-						if (isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
-								$literalTermToUse = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm];
+						if (isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$asynchronousDataKey][$bareFilterTerm])) {
+								$literalTermToUse = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$asynchronousDataKey][$bareFilterTerm];
 						} elseif($curlyBracketEntry != 'new') {
 								$preppedFormatValue = prepvalues($dbValueOfTerm, $bareFilterTerm, $curlyBracketEntry); // will be an array
 								if(is_array($preppedFormatValue) AND count((array) $preppedFormatValue)==1) {
@@ -8832,7 +8841,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 									// ie: collections != {collections} holding ,4,3, becomes
 									// (( t1.`artifacts_collections` IS NULL OR ( t1.`artifacts_collections` NOT LIKE '%,4,%' AND t1.`artifacts_collections` NOT LIKE '%,3,%' ) ))
 									// and donor != {donors} holding ,1,2, on a field that holds one value becomes (( t1.`artifacts_donor` IS NULL OR t1.`artifacts_donor` NOT IN (1,2) ))
-									if($curlyBracketEntry == 'new' AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+									if($curlyBracketEntry == 'new' AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$asynchronousDataKey][$bareFilterTerm])) {
 										return array("", ""); // nothing to compare to in a new entry until there's a value, the condition is left out, the same as below
 									}
 									if(empty($referencedEntryIds)) { // nothing is referenced, so not matching it means not being blank
@@ -8911,7 +8920,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 								$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<--(".($linkedNegation ? "NOT " : "").$linkedExistsSQL.")";
 								$nullClauseHandled = true;
 						// for existing entries, or new entries with no dynamic reference, or new entries with an asynch value set
-						} elseif($curlyBracketEntry != 'new' OR (substr($filterTerms[$filterId],0,1) != "{" AND substr($filterTerms[$filterId],-1)!="}") OR isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+						} elseif($curlyBracketEntry != 'new' OR (substr($filterTerms[$filterId],0,1) != "{" AND substr($filterTerms[$filterId],-1)!="}") OR isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$asynchronousDataKey][$bareFilterTerm])) {
 								// do a subquery against the source of the left side element...
 								$conditionsFilterComparisonValue = " (SELECT ss.entry_id FROM " . $xoopsDB->prefix("formulize_" . $targetSourceFormObject->getVar('form_handle')) . " AS ss WHERE ".$subQueryWhereClause. ") ";
 								if($linkedNegation) {
@@ -8934,7 +8943,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 								return array("", "");
 						}
 				}
-				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$asynchronousDataKey][$bareFilterTerm])) {
 						// the entry limit also goes on a whole condition, after its brackets
 						// ie: donor != {short_name} in entry 1 becomes
 						// (( t1.`artifacts_donor` IS NULL OR t1.`artifacts_donor` NOT IN (SELECT ss.entry_id FROM donors AS ss
@@ -8950,11 +8959,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND (isMetaDataField($filterElementIds[$filterId]) OR !$targetElementObject->isLinked)) {
 
 			// ASYNCHRONOUS VALUES ARE AVAILABLE... WORKOUT THE PLAIN LITERAL VALUE AND THE DB VERSION OF THE LITERAL VALUE
-			if (isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+			if (isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$asynchronousDataKey][$bareFilterTerm])) {
 				// get the literal value based on the passed in database ready format
-				$literalToDBValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$curlyBracketEntry][$bareFilterTerm];
+				$literalToDBValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$asynchronousDataKey][$bareFilterTerm];
 				// use the already declared API format value (determined when conditional elements are generated for example)
-				$plainLiteralValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm];
+				$plainLiteralValue = $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$asynchronousDataKey][$bareFilterTerm];
 				// if the $bareFilterTerm is a linked element that points to the element we're querying against, then switch to the value of that element as found in the entry with entry id matching the asynch literal DB value. Bewildering but works.
 				$curlyBracketElementObject = $element_handler->get($bareFilterTerm);
 				if ($curlyBracketElementObject->isLinked) {
@@ -8978,7 +8987,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 
 			// IF THERE'S NO ASYNCH DATA IN API FORMAT AVAILABLE, AND WE'RE USING THE MYSQL NULL SAFE OPERATOR, WORKOUT PLAIN LITERAL AND LITERAL TO DB BASED ON THE CURRENT SAVED VALUE IN DB
 			// (a new entry has no saved value, so it gets the default value further down, the same as the other operators)
-			} elseif($filterOps[$filterId] == "<=>" AND $curlyBracketEntry != 'new' AND !isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$curlyBracketEntry][$bareFilterTerm])) {
+			} elseif($filterOps[$filterId] == "<=>" AND $curlyBracketEntry != 'new' AND !isset($GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$asynchronousDataKey][$bareFilterTerm])) {
 				// convert any literal terms (including {} references to linked selectboxes) into the actual DB value...based on current saved value
 				$literalToDBValue = prepareLiteralTextForDB($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $userComparisonId); // prepends checkbox characters and converts yes/nos, {USER}, etc
 				$literalToDBValue = str_replace('{ID}',$curlyBracketEntry,$literalToDBValue);

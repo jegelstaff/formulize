@@ -337,24 +337,25 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	 * Turn a search for a whole month or year into a range, so that "October" finds every day in October rather than the
 	 * one day strtotime would collapse it to (which is today's date in October - not a reading anybody intends).
 	 *
-	 * Only partial dates are handled here. Anything else returns false, which sends the term back to the ordinary date
-	 * handling in the extraction layer completely untouched.
+	 * The other thing handled here is part of a date with LIKE, on a site that shows dates differently than they are stored,
+	 * so that it also matches the date as the site shows it. Anything else returns false, which sends the term back to the
+	 * ordinary date handling in the extraction layer completely untouched.
 	 *
-	 * $rawTerm carries the period, not $term: by the time prepareLiteralTextForDB has run, "October" is already collapsed
-	 * to a single day (every other caller of that method wants one date, not a range), so the range has to be recovered
-	 * from the original text instead. This is deliberately a parameter rather than something prepareLiteralTextForDB
-	 * records on $this for this method to read back - prepareLiteralTextForDB is called from many places that have
-	 * nothing to do with searching, and a value stashed on the handler instance between two calls would depend on
-	 * nothing else using that same shared instance in between, which is not something this method can guarantee.
+	 * $rawTerm carries what was typed, and $term carries the value prepareLiteralTextForDB made of it: a whole date written
+	 * out becomes YYYY-MM-DD, but matching it the way the site shows dates needs the original. This is deliberately a
+	 * parameter rather than something prepareLiteralTextForDB records on $this for this method to read back -
+	 * prepareLiteralTextForDB is called from many places that have nothing to do with searching, and a value stashed on the
+	 * handler instance between two calls would depend on nothing else using that same shared instance in between, which is
+	 * not something this method can guarantee.
 	 *
 	 * @param string $term The search term, already passed through prepareLiteralTextForDB by the caller
 	 * @param string $operator The normalized operator
 	 * @param string $quotes Unused here, the range is quoted as dates regardless
-	 * @param string $likebits Unused here, a range is never a substring match
+	 * @param string $likebits The wildcards for a partial match, used when matching the date as the site shows it. A range is never a substring match.
 	 * @param int $fid The form id
 	 * @param string $tableAlias Unused here, the column reference below is already qualified
 	 * @param string $queryElement The fully qualified column being searched
-	 * @param string $rawTerm The search term as originally typed, before prepareLiteralTextForDB collapsed it to one date
+	 * @param string $rawTerm The search term as originally typed, before prepareLiteralTextForDB converted it
 	 * @return string|false The where clause, or false to leave this term to the ordinary handling
 	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main', $queryElement = '', $rawTerm = '') {
