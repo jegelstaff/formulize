@@ -3267,7 +3267,7 @@ function $actionFunctionName"."() {
 ?>
 
 // Open a sub entry in the right slide-out drawer. This is the subform interface's
-// "view entries in a drawer" setting (ele_value[3] of 2 or 3), which used to be a
+// "open entries in the drawer" setting (see formulize_subformOpensInDrawer), which used to be a
 // jQuery UI modal dialog. The drawer component (modules/formulize/include/js/drawer.js,
 // published site-wide by footer.php) owns the panel, the form load, the footer
 // controls, validation, saving, entry locks and any deeper subform drill-down - the

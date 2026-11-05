@@ -4195,24 +4195,42 @@ function resolveEffectiveSingle($singleArray, $userGroups=null) {
 }
 
 /**
- * Where a subform element shows the entries users add through it. This is the element's setting for new entries:
- * ele_value[3] when it shows View buttons (1 and 2 open new entries the way the View buttons open entries, 3 and 4
- * add them as rows), and new_entry_mode when it does not. The full screen form and the drawer both go by it.
+ * Whether a subform element opens entries in the drawer, rather than full screen. This is the element's own setting,
+ * ele_value['open_in_drawer'], and it covers both the entries users open with the View buttons and the new entries
+ * that open rather than showing up as rows. Elements saved before that setting existed opened entries in a dialog,
+ * now the drawer, when ele_value[3] was 2 or 3, and some unreleased versions stored new_entry_mode 'drawer' when
+ * there were no View buttons, so those are read as the drawer too.
+ * @param array $ele_value The subform element's ele_value
+ * @return bool True if entries open in the drawer
+ */
+function formulize_subformOpensInDrawer($ele_value) {
+	if(isset($ele_value['open_in_drawer'])) {
+		return intval($ele_value['open_in_drawer']) == 1;
+	}
+	$showViewButtons = intval($ele_value[3] ?? 0);
+	return ($showViewButtons == 2 OR $showViewButtons == 3 OR (!$showViewButtons AND ($ele_value['new_entry_mode'] ?? '') == 'drawer'));
+}
+
+/**
+ * Where a subform element shows the entries users add through it. New entries either open, or show up as rows. That is
+ * ele_value[3] when the element shows View buttons (1 opens them, 4 adds them as rows, and the older 2 and 3 do the same
+ * as 1 and 4, in the drawer), and new_entry_mode when it does not ('full_screen' opens them, 'row' adds them as rows).
+ * New entries that open, open in the drawer when formulize_subformOpensInDrawer says so. The full screen form and the
+ * drawer both go by this.
  * @param array $ele_value The subform element's ele_value
  * @return string 'drawer', 'full_screen' or 'row'
  */
 function formulize_subformNewEntryMode($ele_value) {
-	switch(intval($ele_value[3] ?? 0)) {
-		case 1:
-			return 'full_screen';
-		case 2:
-			return 'drawer';
-		case 0:
-			$newEntryMode = $ele_value['new_entry_mode'] ?? 'row';
-			return in_array($newEntryMode, array('drawer', 'full_screen'), true) ? $newEntryMode : 'row';
-		default:
-			return 'row';
+	$showViewButtons = intval($ele_value[3] ?? 0);
+	if($showViewButtons) {
+		$opensNewEntries = ($showViewButtons == 1 OR $showViewButtons == 2);
+	} else {
+		$opensNewEntries = in_array($ele_value['new_entry_mode'] ?? 'row', array('drawer', 'full_screen'), true);
 	}
+	if(!$opensNewEntries) {
+		return 'row';
+	}
+	return formulize_subformOpensInDrawer($ele_value) ? 'drawer' : 'full_screen';
 }
 
 /**
