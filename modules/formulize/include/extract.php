@@ -2805,6 +2805,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 
 				// SECOND: HANDLE ANY METADATA FILTER TERMS
 			} elseif ($ifParts[0] == "creation_uid" or $ifParts[0]  == "mod_uid" or $ifParts[0]  == "creation_datetime" or $ifParts[0]  == "mod_datetime") {
+				$metadataDateClause = false;
 				// if this is a user id field, then treat it specially
 				if (($ifParts[0] == "creation_uid" or $ifParts[0] == "mod_uid") and !is_numeric($ifParts[1]) and $ifParts[1] !== "") { // blank term must NOT come here (it would match users whose uname/name is empty, eg the admin); it falls through to the else so {BLANK} compares on the column itself
 					// subquery the user table for the username or full name
@@ -2826,9 +2827,13 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					$likebits = "";
 					$ifParts[1] = formulize_db_escape($ifParts[1]);
 				} else { // a date field, or a blank uid term ({BLANK} -> creation_uid = '' / IS NULL): escape and compare on the column directly. (text uid searches were escaped already in the subquery above)
+					// metadata dates work the same as date elements for whole years and months, and terms that aren't dates. DATE() because the column has a time as well, and a period is whole days
+					if ($ifParts[0] == "creation_datetime" or $ifParts[0] == "mod_datetime") {
+						$metadataDateClause = formulize_tryDelegatedSearchWhere('date', $ifParts[1], $operator, $quotes, $likebits, $fid, 'main', "DATE(main." . $ifParts[0] . ")");
+					}
 					$ifParts[1] = formulize_db_escape($ifParts[1]);
 				}
-				$newWhereClause = " main." . $ifParts[0] . " $operator $quotes$likebits" . $ifParts[1] . "$likebits$quotes ";
+				$newWhereClause = $metadataDateClause ? $metadataDateClause : " main." . $ifParts[0] . " $operator $quotes$likebits" . $ifParts[1] . "$likebits$quotes ";
 				$mappedForm = $fid;
 			} elseif ($ifParts[0] == "creator_email") {
 				$formFieldFilterMap['creator_email'] = true;

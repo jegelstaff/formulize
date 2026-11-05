@@ -374,7 +374,7 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 					? " ( $queryElement LIKE $storedDate OR $dateAsShown LIKE $shownDate ) "
 					: " ( $queryElement NOT LIKE $storedDate AND $dateAsShown NOT LIKE $shownDate ) ";
 			}
-			return false;
+			return $this->buildClauseForTermThatIsNotADate($term, $searchOperator, $queryElement);
 		}
 		$start = "'" . formulize_db_escape($searchPeriod['start']) . "'";
 		$end   = "'" . formulize_db_escape($searchPeriod['end']) . "'";
@@ -399,6 +399,49 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 				return " ( $queryElement >= $start AND $queryElement <= $end ) ";
 		}
 		return false;
+	}
+
+	/**
+	 * Decide what a comparison means when the term isn't a date, instead of putting it in the SQL, because MySQL gives an error if a date is compared with text, where MariaDB
+	 * doesn't. LIKE and NOT LIKE are not affected, they treat the date as text. So a blank term finds blank dates, and no date is equal to a term that isn't a date, or before
+	 * or after it. Every date is not equal to it, and searches of a list leave out entries with no date when a term is negated, the same as for other elements.
+	 *
+	 * @param string $term The term, already passed through prepareLiteralTextForDB. An IN list is ('a','b').
+	 * @param string $operator The normalized operator
+	 * @param string $queryElement The fully qualified column being searched
+	 * @return string|false The clause to use, or false if the term can be compared with a date, so the search carries on as normal
+	 */
+	function buildClauseForTermThatIsNotADate($term, $operator, $queryElement) {
+		if(!$queryElement) {
+			return false;
+		}
+		if($operator == 'IN' OR $operator == 'NOT IN') {
+			// only the dates in the list stay in the list
+			preg_match_all("/'([^']*)'/", (string) $term, $listItems);
+			$dates = array_filter($listItems[1], 'formulize_termIsADate');
+			if(count($dates) == count($listItems[1])) {
+				return false;
+			}
+			if(empty($dates)) {
+				return $operator == 'IN' ? " 1=0 " : " $queryElement IS NOT NULL ";
+			}
+			return " $queryElement $operator ('".implode("','", $dates)."') ";
+		}
+		if(!in_array($operator, array('=', '<=>', '!=', '<>', '<', '<=', '>', '>='))) {
+			return false;
+		}
+		$isNegation = ($operator == '!=' OR $operator == '<>');
+		if(trim((string) $term) === '') {
+			$earliestDate = "'".FORMULIZE_EARLIEST_DATE."'";
+			if($isNegation) {
+				return " $queryElement >= $earliestDate ";
+			}
+			return ($operator == '=' OR $operator == '<=>') ? " ( $queryElement < $earliestDate OR $queryElement IS NULL ) " : " 1=0 ";
+		}
+		if(formulize_termIsADate($term)) {
+			return false;
+		}
+		return $isNegation ? " $queryElement IS NOT NULL " : " 1=0 ";
 	}
 
 	// this method will format a dataset value for display on screen when a list of entries is prepared

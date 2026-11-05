@@ -62,6 +62,7 @@ date_default_timezone_set('UTC');
 
 // the format the site shows dates in, which is what the language files define for English and French
 define('_SHORTDATESTRING', 'Y-m-d');
+define('FORMULIZE_EARLIEST_DATE', '0001-01-01');
 
 $functionsFile = isset($argv[1]) ? $argv[1] : (__DIR__ . '/../modules/formulize/include/functions.php');
 $dateFile      = isset($argv[2]) ? $argv[2] : (__DIR__ . '/../modules/formulize/class/dateElement.php');
@@ -116,7 +117,7 @@ function extractFunctionSource($source, $functionName) {
 $functionsSource = file_get_contents($functionsFile);
 foreach (array('formulize_normalizeMonthNameForSearch', 'formulize_monthNamesForSearch',
                'formulize_datePeriodForMonth', 'formulize_parseDatePeriodSearchTerm',
-               'formulize_dateValueAsISO', 'formulize_mysqlDateFormat') as $name) {
+               'formulize_dateValueAsISO', 'formulize_mysqlDateFormat', 'formulize_termIsADate') as $name) {
     $code = extractFunctionSource($functionsSource, $name);
     if ($code === false) {
         fwrite(STDERR, "Could not extract $name()\n");
@@ -130,7 +131,7 @@ foreach (array('formulize_normalizeMonthNameForSearch', 'formulize_monthNamesFor
 // methods themselves; if that ever stops being true, this stops compiling rather than quietly testing something different.
 $dateSource = file_get_contents($dateFile);
 $methodSources = '';
-foreach (array('buildSearchWhereClause', 'prepareLiteralTextForDB') as $name) {
+foreach (array('buildSearchWhereClause', 'prepareLiteralTextForDB', 'buildClauseForTermThatIsNotADate') as $name) {
     $code = extractFunctionSource($dateSource, $name);
     if ($code === false) {
         fwrite(STDERR, "Could not extract $name() from $dateFile\n");
@@ -321,6 +322,27 @@ check('a whole date in digits is read',    $handler->prepareLiteralTextForDB('05
 check('words are read as a date',          $handler->prepareLiteralTextForDB('Oct 5', null, true), date('Y') . '-10-05');
 check('a relative word is read as a date', $handler->prepareLiteralTextForDB('yesterday', null, true), date('Y-m-d', strtotime('yesterday')));
 check('without a partial search, digits are read', $handler->prepareLiteralTextForDB('05/03', null), date('Y') . '-05-03');
+
+echo "\nCOMPARING A DATE WITH SOMETHING THAT ISN'T ONE - decided here, because MySQL gives an error for it, where MariaDB doesn't:\n";
+$notADate = function($term, $operator) use ($handler) { return $handler->buildClauseForTermThatIsNotADate($term, $operator, 'main.`when`'); };
+check('a real date carries on as normal',  $notADate('2026-03-05', '='), false);
+check('so does a date and time',           $notADate('2026-03-05 10:30:00', '>'), false);
+check('nothing equals a word',             $notADate('bread', '='), ' 1=0 ');
+check('nothing is before a word',          $notADate('bread', '<'), ' 1=0 ');
+check('nothing is after a word',           $notADate('bread', '>='), ' 1=0 ');
+check('a date with no such day is a word', $notADate('2026-13-45', '='), ' 1=0 ');
+check('every date is not equal to a word', $notADate('bread', '!='), ' main.`when` IS NOT NULL ');
+check('LIKE is not affected',              $notADate('bread', 'LIKE'), false);
+check('blank finds blank dates',           $notADate('', '='), " ( main.`when` < '0001-01-01' OR main.`when` IS NULL ) ");
+check('not blank finds real dates',        $notADate('', '!='), " main.`when` >= '0001-01-01' ");
+check('nothing is before a blank',         $notADate('', '<'), ' 1=0 ');
+check('a list of dates carries on',        $notADate("('2026-03-05','2026-03-06')", 'IN'), false);
+check('only the dates stay in a list',     $notADate("('2026-03-05','bread')", 'IN'), " main.`when` IN ('2026-03-05') ");
+check('a list with no dates finds nothing', $notADate("('bread')", 'IN'), ' 1=0 ');
+check('not in a list with no dates',       $notADate("('bread')", 'NOT IN'), ' main.`when` IS NOT NULL ');
+check('a real date is a date',             formulize_termIsADate('2024-02-29'), true);
+check('that date is not real in 2026',     formulize_termIsADate('2026-02-29'), false);
+check('an empty date is not a date',       formulize_termIsADate('0000-00-00'), false);
 
 echo "\nA SITE THAT SHOWS DATES ANOTHER WAY:\n";
 check('read in that format',            formulize_dateValueAsISO('05/03/2026', 'd/m/Y'), '2026-03-05');

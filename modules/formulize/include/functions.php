@@ -8654,6 +8654,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     $filterTerms[$filterId] = trim($filterTerms[$filterId]);
     $bareFilterTerm = substr($filterTerms[$filterId],1,-1);
     $filterElementObject = $element_handler->get($filterElementIds[$filterId]);
+    $filterIsOnADate = _conditionIsOnADate($filterElementObject, $filterElementIds[$filterId] ?? '');
+    $filterHandle = is_object($filterElementObject) ? $filterElementObject->getVar('ele_handle') : ($filterElementIds[$filterId] ?? '');
     if ($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
     $likebits = "";
     $origlikebits = "";
@@ -8675,6 +8677,10 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				}
 				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
 					$curlyBracketINNeedsSingleQuotes = true;
+				} elseif($filterIsOnADate AND !$filterTermParts = array_values(array_filter($filterTermParts, 'formulize_termIsADate'))) {
+					// no date can be in a list with no dates in it. Terms that aren't dates are removed from the list, because MySQL gives an error if a date is compared with text
+					$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<-- 1=0 ";
+					$nullClauseHandled = true;
 				} else {
 				// use @#.&%$ to stand in for single quote, because the filter term is escaped below, and we need to add single quotes back in later so they aren't mangled by the escaping
 					$filterTerms[$filterId] = "(@#.&%$".implode("@#.&%$,@#.&%$",$filterTermParts)."@#.&%$)";
@@ -8707,6 +8713,16 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		if($overrideReturnedOp != "IN") {
 			$filterTerms[$filterId] = _convertLiteralTermForConditionsFilterSQL($filterElementObject, $filterTerms[$filterId], strstr(strtoupper($filterOps[$filterId]), "LIKE") !== false);
 		}
+		// metadata dates are not elements, so nothing above has read a date written out, ie: August 21 2020. A date and time is left as it is, because the column holds both
+		if($filterIsOnADate
+			AND !is_object($filterElementObject)
+			AND $overrideReturnedOp != "IN"
+			AND $filterTerms[$filterId] !== ''
+			AND (substr($filterTerms[$filterId],0,1) != "{" OR substr($filterTerms[$filterId],-1) != "}")
+			AND !formulize_termIsADate($filterTerms[$filterId])) {
+			$dateTypeHandler = xoops_getmodulehandler('dateElement', 'formulize');
+			$filterTerms[$filterId] = $dateTypeHandler->prepareLiteralTextForDB($filterTerms[$filterId], null, strstr(strtoupper($filterOps[$filterId]), "LIKE") !== false);
+		}
 		// an empty term is a search for blanks, the same as {BLANK}, so both NULL and '' are found, and 0 isn't in a numeric field
 		// LIKE '' and NOT LIKE '' too, which is what they mean when elements are displayed (buildEvaluationCondition)
 		if($filterTerms[$filterId] === '' AND in_array($filterOps[$filterId], array('<=>', '=', '!=', 'LIKE', 'NOT LIKE'))) {
@@ -8718,15 +8734,18 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				$targetElementEleValue = $targetElementObject->getVar('ele_value'); // get the properties of the source element
 		}
 
-		// *** A WHOLE YEAR OR MONTH ON A DATE ELEMENT, IE: 2026 OR MARCH, IS A RANGE OF DAYS, THE SAME AS IN A SEARCH OF A LIST OF ENTRIES
-		if(is_object($filterElementObject)
-			AND elementTypeIsOrExtends($filterElementObject, 'date')
+		// *** A WHOLE YEAR OR MONTH ON A DATE, IE: 2026 OR MARCH, IS A RANGE OF DAYS, THE SAME AS IN A SEARCH OF A LIST OF ENTRIES
+		if($filterIsOnADate
 			AND $overrideReturnedOp != "IN"
 			AND (substr($filterTerms[$filterId],0,1) != "{" OR substr($filterTerms[$filterId],-1) != "}")
-			AND $datePeriod = formulize_parseDatePeriodSearchTerm($filterTerms[$filterId])
-			AND $dateRangeComparison = _dateRangeComparisonForConditionsFilterSQL($datePeriod, $filterOps[$filterId], $filterElementObject->getVar('ele_handle'))) {
-			list($filterOps[$filterId], $conditionsFilterComparisonValue) = $dateRangeComparison;
-			$nullClauseHandled = true;
+			AND $datePeriod = formulize_parseDatePeriodSearchTerm($filterTerms[$filterId])) {
+			if(!is_object($filterElementObject)) {
+				$datePeriod['end'] .= ' 23:59:59'; // metadata dates have a time too, and the last day of the period is all of that day
+			}
+			if($dateRangeComparison = _dateRangeComparisonForConditionsFilterSQL($datePeriod, $filterOps[$filterId], $filterHandle)) {
+				list($filterOps[$filterId], $conditionsFilterComparisonValue) = $dateRangeComparison;
+				$nullClauseHandled = true;
+			}
 		}
 
 		// *** PART OF A DATE ON A DATE ELEMENT, WITH LIKE, MATCHES THE DATE AS THE SITE SHOWS IT TOO, IE: LIKE 03/2026 ON A SITE THAT SHOWS DATES AS d/m/Y
@@ -8735,13 +8754,12 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		// ie: date LIKE 03/2026 becomes ( t1.`date` LIKE '%03/2026%' OR DATE_FORMAT( t1.`date` ,'%d/%m/%Y') LIKE '%03/2026%' )
 		// and date NOT LIKE 03/2026 becomes ( t1.`date` IS NULL OR ( t1.`date` NOT LIKE '%03/2026%' AND DATE_FORMAT( t1.`date` ,'%d/%m/%Y') NOT LIKE '%03/2026%' ) )
 		if($conditionsFilterComparisonValue === NULL
-			AND is_object($filterElementObject)
-			AND elementTypeIsOrExtends($filterElementObject, 'date')
+			AND $filterIsOnADate
 			AND ($filterOps[$filterId] == 'LIKE' OR $filterOps[$filterId] == 'NOT LIKE')
 			AND $filterTerms[$filterId] !== '{BLANK}'
 			AND (substr($filterTerms[$filterId],0,1) != "{" OR substr($filterTerms[$filterId],-1) != "}")
 			AND ($siteDateFormat = formulize_mysqlDateFormat()) != '%Y-%m-%d') {
-			$dateHandle = $filterElementObject->getVar('ele_handle');
+			$dateHandle = $filterHandle;
 			$storedDateLike = "'".$likebits.formulize_db_escape($filterTerms[$filterId]).$likebits."'";
 			$shownDateLike = "'".$likebits.formulize_db_escape($termAsTyped).$likebits."'";
 			$shownDate = "DATE_FORMAT( `$dateHandle` ,'".formulize_db_escape($siteDateFormat)."')";
@@ -8750,6 +8768,23 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 			} else {
 				$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<-- ( `$dateHandle` IS NULL OR ( `$dateHandle` NOT LIKE $storedDateLike AND $shownDate NOT LIKE $shownDateLike ) ) ";
 			}
+			$nullClauseHandled = true;
+		}
+
+		// *** ANY OTHER TERM ON A DATE THAT ISN'T A DATE, IE: BREAD, CAN'T BE COMPARED WITH ONE
+		// So no date is equal to it, or before it, or after it, and every entry is not equal to it. That's decided here, instead of being put in the SQL, because MySQL gives
+		// an error if a date is compared with text, where MariaDB doesn't. LIKE and NOT LIKE are fine in both, they treat the date as text. A { } term is resolved further down.
+		// This doesn't need a whole condition for any reason except that "field op value" has no way to say this.
+		// ie: date != bread becomes (1=1 ) and date > bread becomes (1=0 )
+		if($conditionsFilterComparisonValue === NULL
+			AND $filterIsOnADate
+			AND $overrideReturnedOp != "IN"
+			AND $filterOps[$filterId] != 'LIKE'
+			AND $filterOps[$filterId] != 'NOT LIKE'
+			AND $filterTerms[$filterId] !== '{BLANK}'
+			AND (substr($filterTerms[$filterId],0,1) != "{" OR substr($filterTerms[$filterId],-1) != "}")
+			AND !formulize_termIsADate($filterTerms[$filterId])) {
+			$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<-- ".($filterOps[$filterId] == '!=' ? "1=1" : "1=0")." ";
 			$nullClauseHandled = true;
 		}
 
@@ -9031,7 +9066,6 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				if(in_array($bareFilterTerm, $curlyBracketForm->getVar('elementHandles'))) {
 					$curlyBracketFormFrom = $xoopsDB->prefix("formulize_".$curlyBracketForm->getVar('form_handle'))." AS curlybracketform ";
 					// blank and NULL are the same on both sides of the comparison, so a blank field equals a blank reference, and isn't equal to a reference with a value
-					$filterHandle = is_object($filterElementObject) ? $filterElementObject->getVar('ele_handle') : $filterElementIds[$filterId];
 					if($nullAwareComparison = _nullAwareComparisonWithReference($filterOps[$filterId], $filterHandle, "curlybracketform.`".$bareFilterTerm."`")) {
 							// The field goes inside COALESCE, so this is a whole condition. The entry limit is what makes it not match if the referenced entry doesn't exist.
 							// ie: first_name != {last_name} in entry 3 becomes
@@ -9052,8 +9086,23 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		}
 
 		// SWAP IN THE PLAIN LITERAL AND LITERAL-TO-DB-VALUE IF APPLICABLE, REDETERMINE QUOTES
-		$plainLiteralValue = $plainLiteralValue != $literalToDBValue ? $plainLiteralValue : "";
+		// not for dates, where the readable value is only the same date in the site's format, which is text. MySQL gives an error if a date is compared with text
+		$plainLiteralValue = ($plainLiteralValue != $literalToDBValue AND !$filterIsOnADate) ? $plainLiteralValue : "";
 		$filterTerms[$filterId] = $literalToDBValue ? $literalToDBValue : $filterTerms[$filterId];
+		// a date with a blank on screen value still has its { } term at this point. A date can't be compared with that, it is a search for blanks if the operator can be
+		if($filterIsOnADate
+			AND $conditionsFilterComparisonValue === NULL
+			AND $overrideReturnedOp != "IN"
+			AND substr($filterTerms[$filterId],0,1) == "{"
+			AND substr($filterTerms[$filterId],-1) == "}") {
+			if(in_array($filterOps[$filterId], array('<=>', '=', '!=', 'LIKE', 'NOT LIKE'))) {
+				$blankIsNegative = ($filterOps[$filterId] == '!=' OR $filterOps[$filterId] == 'NOT LIKE');
+				list($filterOps[$filterId], $conditionsFilterComparisonValue) = _blankComparisonForConditionsFilterSQL($filterElementObject, $filterElementIds[$filterId], $blankIsNegative);
+			} else {
+				$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<-- 1=0 "; // nothing is before or after a blank
+			}
+			$nullClauseHandled = true;
+		}
 		// a literal IN list is already in brackets with placeholder quotes around each item, so it must not be quoted as a whole
 		// a { } IN term does need the quotes, they're fixed up into a list at the end
 		$quotes = ((is_numeric($filterTerms[$filterId]) AND !$likebits) OR ($overrideReturnedOp == "IN" AND !$curlyBracketINNeedsSingleQuotes)) ? "" : "'";
@@ -9106,8 +9155,6 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 			AND $conditionsFilterComparisonValue !== ""
 			AND !strstr($conditionsFilterComparisonValue, "curlybracketform")
 			AND !strstr($conditionsFilterComparisonValue, "-->>WHOLECONDITION<<--")) {
-			// a metadata field has no element object, its name is its handle
-			$filterHandle = is_object($filterElementObject) ? $filterElementObject->getVar('ele_handle') : $filterElementIds[$filterId];
 			if($nullClause = createNullForComparisonValueIfNecessary($conditionsFilterComparisonValue, $filterOps[$filterId], $filterHandle)) {
 				// bracket the comparison before the OR, so a comparison with several parts stays together, rather than relying on AND binding before OR
 				// OPENONEEXTRABRACKET puts an opening bracket in front of the field, and the closing one goes here, after the comparison
@@ -9154,9 +9201,30 @@ function _entryIdsInLinkedValue($value) {
 }
 
 /**
+ * The earliest date. A date column can't be compared with '' in MySQL, it gives an error, so a date that is empty is found by comparing it with this date instead, which
+ * works in MySQL and MariaDB. NULL is the usual empty date, this is for the empty dates that old data can have, ie: 0000-00-00, which Formulize treats as blank.
+ */
+define('FORMULIZE_EARLIEST_DATE', '0001-01-01');
+
+/**
+ * Check if a condition is on a date, either a date element, or the metadata for when an entry was made or modified
+ *
+ * @param object|false $filterElementObject - The element object the condition is on, or false for a metadata field
+ * @param string $filterElementId - The element id, or the name of the metadata field
+ * @return bool True if the condition is on a date
+ */
+function _conditionIsOnADate($filterElementObject, $filterElementId) {
+	if(is_object($filterElementObject)) {
+		return elementTypeIsOrExtends($filterElementObject, 'date');
+	}
+	return ($filterElementId === 'creation_datetime' OR $filterElementId === 'mod_datetime');
+}
+
+/**
  * Build the comparison for a condition looking for blank values, or for values that aren't blank
  * A field is blank if it is empty or NULL, so look for both, the same as a {BLANK} search in a list of entries does
  * Except in numeric fields, where MySQL treats '' as 0, so 0 would count as blank. Only NULL is blank in those.
+ * And in dates, which can't be compared with '', see FORMULIZE_EARLIEST_DATE. A date before the earliest date is an empty one, ie: 0000-00-00 from old data.
  *
  * @param object|false $filterElementObject - The element object the condition is on, or false for a metadata field
  * @param string $filterElementId - The element id, or the name of the metadata field
@@ -9164,6 +9232,10 @@ function _entryIdsInLinkedValue($value) {
  * @return array The operator and the comparison value to use
  */
 function _blankComparisonForConditionsFilterSQL($filterElementObject, $filterElementId, $negative) {
+	if(_conditionIsOnADate($filterElementObject, $filterElementId)) {
+		$handle = is_object($filterElementObject) ? $filterElementObject->getVar('ele_handle') : $filterElementId;
+		return $negative ? array('>=', "'".FORMULIZE_EARLIEST_DATE."'") : array('<', "'".FORMULIZE_EARLIEST_DATE."' OR `$handle` IS NULL ");
+	}
 	if(!isMetaDataField($filterElementId) AND is_object($filterElementObject) AND !$filterElementObject->hasNumericDataType()) {
 		$handle = $filterElementObject->getVar('ele_handle');
 		return $negative ? array('!=', "'' AND `$handle` IS NOT NULL ") : array('=', "'' OR `$handle` IS NULL ");
@@ -10659,7 +10731,7 @@ function formulize_getCurrentRevisions($fidOrObject, $entryIds) {
  */
 function formulize_conditionValueCanBeSaved($elementObject, $value) {
 	if(elementTypeIsOrExtends($elementObject, 'date') AND $value !== '' AND $value !== null) {
-		return (is_string($value) AND preg_match('/^\d{4}-\d{2}-\d{2}$/', $value));
+		return formulize_termIsADate($value);
 	}
 	return true;
 }
@@ -11171,6 +11243,20 @@ function formulize_dateValueAsISO($value, $format = null) {
 }
 
 /**
+ * Check if a term is a real date, in the format the database stores dates in, YYYY-MM-DD, with or without a time
+ * A date in the database can only be compared with one of these. MySQL gives an error for anything else, where MariaDB compares them as text.
+ *
+ * @param mixed $term The term
+ * @return bool True if the term is a real date
+ */
+function formulize_termIsADate($term) {
+	if(!is_string($term) OR !preg_match('/^(\d{4})-(\d{2})-(\d{2})( \d{2}:\d{2}(:\d{2})?)?$/', $term, $parts)) {
+		return false;
+	}
+	return checkdate(intval($parts[2]), intval($parts[3]), intval($parts[1]));
+}
+
+/**
  * Get the MySQL DATE_FORMAT() format that shows dates the way the site shows them, from a PHP date() format
  * So a condition can match part of a date as the site shows it, ie: LIKE 03/2026 on a site that shows dates as d/m/Y
  * Month and day names come out in English from both PHP's date() and MySQL's DATE_FORMAT() (unless lc_time_names is changed), so they match.
@@ -11486,7 +11572,13 @@ function formulize_parseSearchesIntoFilter($searches) {
 						$blankOp1 = "=";
 						$blankOp2 = " IS NULL ";
 					}
-					$one_search = "/**/$blankOp1][$key/**//**/$blankOp2";
+					// a date can't be compared with '', so the first half of the pair compares it with the earliest date instead
+					$blankTerm = "";
+					if (elementTypeIsOrExtends($ele_type, 'date')) {
+						$blankTerm = FORMULIZE_EARLIEST_DATE;
+						$blankOp1 = $blankOp1 == "=" ? "<" : ">=";
+					}
+					$one_search = "$blankTerm/**/$blankOp1][$key/**//**/$blankOp2";
 					$operator = ""; // don't use an operator, we've specially constructed the one_search string to have all the info we need
 				} elseif ($searchgetkey == "PERGROUPFILTER") {
 					$one_search = $searchgetkey;
@@ -14560,6 +14652,9 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		$dateExpression = "";
 		if(!is_array($compValue) AND !isMetaDataField($filterElements[$i]) AND ($dateElementObject = $element_handler->get($filterElements[$i])) AND elementTypeIsOrExtends($dateElementObject, 'date')) {
 			$compValue = formulize_dateValueAsISO($compValue);
+			if(!formulize_termIsADate($compValue)) {
+				$compValue = ""; // an empty date from old data, 0000-00-00, shows up in a dataset as something that isn't a date, and it is blank, the same as in SQL
+			}
 			$dateComparisonValue = "'".addslashes($compValue)."'";
 			$dateAsShown = (is_string($compValue) AND preg_match('/^\d{4}-\d{2}-\d{2}$/', $compValue)) ? date(_SHORTDATESTRING, strtotime($compValue)) : '';
 			if($filterTerms[$i] !== '' AND $thisOp != 'IN' AND $datePeriod = formulize_parseDatePeriodSearchTerm($filterTerms[$i])) {
@@ -14580,6 +14675,9 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 				if($thisOp == 'LIKE' OR $thisOp == 'NOT LIKE') {
 					$inDate = "(stristr($dateComparisonValue, '".addslashes($isoTerm)."') !== false OR stristr('".addslashes($dateAsShown)."', '".addslashes($dateTermAsTyped)."') !== false)";
 					$dateExpression = $thisOp == 'LIKE' ? $inDate : "!$inDate";
+				} elseif(!formulize_termIsADate($isoTerm)) {
+					// a term that isn't a date, ie: bread, can't be compared with a date, the same as SQL. Every date is not equal to it, and it is not before or after anything
+					$dateExpression = $thisOp == '!=' ? 'TRUE' : 'FALSE';
 				}
 			}
 		}

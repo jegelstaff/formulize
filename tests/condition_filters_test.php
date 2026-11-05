@@ -62,6 +62,9 @@
  * it. A scenario meant to tell entries apart fails if the independent query finds every entry or none, because then it no
  * longer tests anything, and the museum data it relied on has changed.
  *
+ * Dates are compared in ways that work in MariaDB and MySQL. MySQL gives an error if a date is compared with text, and this test
+ * finds that if it is run against a copy of the museum in MySQL, as long as blank dates are added to the copy to exercise them.
+ *
  * Read-only: the request is a GET, so the database layer refuses any write.
  *
  * @package Formulize
@@ -176,6 +179,7 @@ $romanCoinDonor = linkedIdsInMuseumEntry('artifacts', 'artifacts_donor', $romanC
 $wonderArtifacts = implode(',', linkedIdsInMuseumEntry('exhibits', 'exhibits_artifacts', $ancientWonders));
 
 $artifactsTable = $xoopsDB->prefix('formulize_artifacts');
+$artifactsCreationYear = $xoopsDB->fetchRow($xoopsDB->query("SELECT YEAR(MIN(creation_datetime)) FROM $artifactsTable"))[0];
 $comments = "COALESCE(t1.surveys_staff_comments,'')";
 $firstName = "COALESCE(t1.donors_first_name,'')";
 $lastName = "COALESCE(t1.donors_last_name,'')";
@@ -186,6 +190,9 @@ $donor = "COALESCE(t1.artifacts_donor,0)";
 $collections = "COALESCE(t1.artifacts_collections,'')";
 $latitude = "COALESCE(t1.artifacts_latitude,'')";
 $acquired = "t1.artifacts_date_of_acquisition";
+// a date is blank if it is NULL, or an empty date from old data, 0000-00-00. The museum has neither, but a site's data can, and this test can be run on a copy that does
+$dateIsBlank = "($acquired IS NULL OR $acquired < '0001-01-01')";
+$dateIsNotBlank = "$acquired >= '0001-01-01'";
 $hasAudience = function($item) use ($audience) { return "($audience LIKE '%*=+*:$item*=+*:%' OR $audience LIKE '%*=+*:$item')"; };
 $inCollection = function($id) use ($collections) { return "$collections LIKE '%,$id,%'"; };
 $inNoneOfCollections = function($ids) use ($inCollection) { return "(NOT " . implode(" AND NOT ", array_map($inCollection, $ids)) . ")"; };
@@ -318,6 +325,44 @@ $scenarios = array(
     array("range: date >= 1950, date <= 2002-12-02", 'artifacts',
         array(array('artifacts_date_of_acquisition', '>=', '1950', 'all'), array('artifacts_date_of_acquisition', '<=', '2002-12-02', 'all')),
         "$acquired BETWEEN '1950-01-01' AND '2002-12-02'"),
+
+    // dates compared with things that aren't dates, which is an error in MySQL, so what they mean is decided before the SQL is written
+    array("date = {BLANK}, which no artifact is", 'artifacts', array(array('artifacts_date_of_acquisition', '=', '{BLANK}', 'all')), $dateIsBlank, array('trivial' => true)),
+    array("date != {BLANK}, which every artifact is", 'artifacts', array(array('artifacts_date_of_acquisition', 'NOT', '{BLANK}', 'all')), $dateIsNotBlank, array('trivial' => true)),
+    array("date = ''", 'artifacts', array(array('artifacts_date_of_acquisition', '=', '', 'all')), $dateIsBlank, array('trivial' => true)),
+    array("date LIKE ''", 'artifacts', array(array('artifacts_date_of_acquisition', 'LIKE', '', 'all')), $dateIsBlank, array('trivial' => true)),
+    array("date NOT LIKE ''", 'artifacts', array(array('artifacts_date_of_acquisition', 'NOT LIKE', '', 'all')), $dateIsNotBlank, array('trivial' => true)),
+    array("date = bread", 'artifacts', array(array('artifacts_date_of_acquisition', '=', 'bread', 'all')), "0", array('trivial' => true)),
+    array("date != bread, every entry is not bread", 'artifacts', array(array('artifacts_date_of_acquisition', 'NOT', 'bread', 'all')), "1", array('trivial' => true)),
+    array("date > bread", 'artifacts', array(array('artifacts_date_of_acquisition', '>', 'bread', 'all')), "0", array('trivial' => true)),
+    array("date <= bread", 'artifacts', array(array('artifacts_date_of_acquisition', '<=', 'bread', 'all')), "0", array('trivial' => true)),
+    array("date = 2026-13-45, not a real date", 'artifacts', array(array('artifacts_date_of_acquisition', '=', '2026-13-45', 'all')), "0", array('trivial' => true)),
+    array("date LIKE bread", 'artifacts', array(array('artifacts_date_of_acquisition', 'LIKE', 'bread', 'all')), "0", array('trivial' => true)),
+    array("date IN bread, nothing in the list is a date", 'artifacts', array(array('artifacts_date_of_acquisition', 'IN', 'bread', 'all')), "0", array('trivial' => true)),
+    array("date IN 2020-08-21, bread, 2002-12-02, only the dates count", 'artifacts', array(array('artifacts_date_of_acquisition', 'IN', '2020-08-21, bread, 2002-12-02', 'all')), "$acquired IN ('2020-08-21','2002-12-02')"),
+    array("all: era = BCE; oom: date = bread OR date > 2020", 'artifacts',
+        array(array('artifacts_era', '=', 'BCE', 'all'), array('artifacts_date_of_acquisition', '=', 'bread', 'oom'), array('artifacts_date_of_acquisition', '>', '2020', 'oom')),
+        "t1.artifacts_era = 'BCE' AND $acquired > '2020-12-31'", array('trivial' => true)),
+    array("async: date = {date}, which is blank on screen", 'artifacts', array(array('artifacts_date_of_acquisition', '=', '{artifacts_date_of_acquisition}', 'all')),
+        $dateIsBlank, array('entry' => 'new', 'async' => array('artifacts_date_of_acquisition', '', ''), 'trivial' => true)),
+    array("async: date != {date}, which is blank on screen", 'artifacts', array(array('artifacts_date_of_acquisition', 'NOT', '{artifacts_date_of_acquisition}', 'all')),
+        $dateIsNotBlank, array('entry' => 'new', 'async' => array('artifacts_date_of_acquisition', '', ''), 'trivial' => true)),
+    array("async: date > {date}, which is blank on screen", 'artifacts', array(array('artifacts_date_of_acquisition', '>', '{artifacts_date_of_acquisition}', 'all')),
+        "0", array('entry' => 'new', 'async' => array('artifacts_date_of_acquisition', '', ''), 'trivial' => true)),
+    array("async: date = {date}, a date on screen, readable in the site's format", 'artifacts', array(array('artifacts_date_of_acquisition', '=', '{artifacts_date_of_acquisition}', 'all')),
+        "$acquired = '2020-08-21'", array('entry' => 'new', 'async' => array('artifacts_date_of_acquisition', '2020-08-21', '21/08/2020'))),
+    array("async: date != {date}, a date on screen, readable in the site's format", 'artifacts', array(array('artifacts_date_of_acquisition', 'NOT', '{artifacts_date_of_acquisition}', 'all')),
+        "($acquired IS NULL OR $acquired != '2020-08-21')", array('entry' => 'new', 'async' => array('artifacts_date_of_acquisition', '2020-08-21', '21/08/2020'))),
+
+    // dates in the metadata, which have a time as well. These are checked in SQL, the display side doesn't treat them as dates
+    array("metadata: creation_datetime = {BLANK}", 'artifacts', array(array('creation_datetime', '=', '{BLANK}', 'all')), "t1.creation_datetime IS NULL", array('trivial' => true, 'displayGap' => true)),
+    array("metadata: creation_datetime != {BLANK}", 'artifacts', array(array('creation_datetime', 'NOT', '{BLANK}', 'all')), "t1.creation_datetime IS NOT NULL", array('trivial' => true, 'displayGap' => true)),
+    array("metadata: creation_datetime = bread", 'artifacts', array(array('creation_datetime', '=', 'bread', 'all')), "0", array('trivial' => true, 'displayGap' => true)),
+    array("metadata: creation_datetime != bread", 'artifacts', array(array('creation_datetime', 'NOT', 'bread', 'all')), "1", array('trivial' => true, 'displayGap' => true)),
+    array("metadata: creation_datetime LIKE bread", 'artifacts', array(array('creation_datetime', 'LIKE', 'bread', 'all')), "0", array('trivial' => true, 'displayGap' => true)),
+    array("metadata: creation_datetime >= 2000, a year", 'artifacts', array(array('creation_datetime', '>=', '2000', 'all')), "t1.creation_datetime >= '2000-01-01'", array('trivial' => true, 'displayGap' => true)),
+    array("metadata: creation_datetime = this year's creation year, all of it, to the last second", 'artifacts', array(array('creation_datetime', '=', $artifactsCreationYear, 'all')), "YEAR(t1.creation_datetime) = $artifactsCreationYear", array('trivial' => true, 'displayGap' => true)),
+    array("metadata: creation_datetime = August 21 2020, written out", 'artifacts', array(array('creation_datetime', '=', 'August 21 2020', 'all')), "t1.creation_datetime = '2020-08-21'", array('trivial' => true, 'displayGap' => true)),
 
     // combinations of all and oom, with blanks, negations, linked elements, checkboxes and dates
     array("all: flagged = No; oom: comments LIKE Great OR comments = ''", 'surveys',
@@ -796,6 +841,20 @@ $dateSearches = array(
     array("on or after a year", array('artifacts_date_of_acquisition' => '>=2020'), "$acquired >= '2020-01-01'"),
     array("not in a year", array('artifacts_date_of_acquisition' => '!2002'), "YEAR($acquired) != 2002"),
     array("between two dates", array('artifacts_date_of_acquisition' => 'between 1950-01-01 and 2002-12-02'), "$acquired BETWEEN '1950-01-01' AND '2002-12-02'"),
+    // comparing a date with something that isn't one is an error in MySQL
+    array("{BLANK} on a date", array('artifacts_date_of_acquisition' => '{BLANK}'), $dateIsBlank, true),
+    array("not {BLANK} on a date", array('artifacts_date_of_acquisition' => '!{BLANK}'), $dateIsNotBlank, true),
+    array("= a term that can't be a date", array('artifacts_date_of_acquisition' => '=bread'), "0", true),
+    array("!= a term that can't be a date", array('artifacts_date_of_acquisition' => '!=bread'), "$acquired IS NOT NULL", true),
+    array("> a term that can't be a date", array('artifacts_date_of_acquisition' => '>bread'), "0", true),
+    array("not a term that can't be a date", array('artifacts_date_of_acquisition' => '!bread'), "$acquired IS NOT NULL", true),
+    array("{BLANK} on the metadata date", array('creation_datetime' => '{BLANK}'), "t1.creation_datetime IS NULL", true),
+    array("not {BLANK} on the metadata date", array('creation_datetime' => '!{BLANK}'), "t1.creation_datetime IS NOT NULL", true),
+    array("= a term that can't be a date on the metadata date", array('creation_datetime' => '=bread'), "0", true),
+    array("> a term that can't be a date on the metadata date", array('creation_datetime' => '>bread'), "0", true),
+    array("!= a term that can't be a date on the metadata date", array('creation_datetime' => '!=bread'), "t1.creation_datetime IS NOT NULL", true),
+    array("the metadata date in a year, which is all of it", array('creation_datetime' => "=$artifactsCreationYear"), "YEAR(t1.creation_datetime) = $artifactsCreationYear", true),
+    array("the metadata date after a year", array('creation_datetime' => ">2000"), "t1.creation_datetime > '2000-12-31 23:59:59'", true),
     // a global search puts one term on every column, ORed together. This is why terms that weren't dates used to be dropped: they became empty searches, which match everything
     array("global: a word in another column finds it, and the date column isn't a match for everything", array('artifacts_short_name' => 'ORRoman', 'artifacts_date_of_acquisition' => 'ORRoman'), "$shortName LIKE '%Roman%'"),
     array("global: a word in no column finds nothing", array('artifacts_short_name' => 'ORzzz', 'artifacts_date_of_acquisition' => 'ORzzz'), "0", true),
