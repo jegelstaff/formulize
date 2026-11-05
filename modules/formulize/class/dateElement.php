@@ -404,7 +404,7 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	/**
 	 * Decide what a comparison means when the term isn't a date, instead of putting it in the SQL, because MySQL gives an error if a date is compared with text, where MariaDB
 	 * doesn't. LIKE and NOT LIKE are not affected, they treat the date as text. So a blank term finds blank dates, and no date is equal to a term that isn't a date, or before
-	 * or after it. Every date is not equal to it, and searches of a list leave out entries with no date when a term is negated, the same as for other elements.
+	 * or after it. Every date is not equal to it, including entries with no date, the same as any other negative search.
 	 *
 	 * @param string $term The term, already passed through prepareLiteralTextForDB. An IN list is ('a','b').
 	 * @param string $operator The normalized operator
@@ -423,7 +423,7 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 				return false;
 			}
 			if(empty($dates)) {
-				return $operator == 'IN' ? " 1=0 " : " $queryElement IS NOT NULL ";
+				return $operator == 'IN' ? " 1=0 " : " 1=1 ";
 			}
 			return " $queryElement $operator ('".implode("','", $dates)."') ";
 		}
@@ -441,7 +441,7 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 		if(formulize_termIsADate($term)) {
 			return false;
 		}
-		return $isNegation ? " $queryElement IS NOT NULL " : " 1=0 ";
+		return $isNegation ? " 1=1 " : " 1=0 ";
 	}
 
 	// this method will format a dataset value for display on screen when a list of entries is prepared
