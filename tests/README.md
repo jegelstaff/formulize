@@ -64,7 +64,8 @@ them *after* the e2e suite, when the setup specs have finished building the muse
   BY, which must always keep the selected option), then as a list's fundamental filters through `gatherDataset()`,
   including conditions on connected forms in the Primary Relationship and EMPTYSET conditions. The same conditions
   are checked against each entry with `checkConditionsAgainstAnEntry()`, so they mean the same thing when elements
-  are displayed. Also covers date searches through the real search parser, including global searches, which values
+  are displayed. Also covers date searches and negative searches through the real search parser, including global
+  searches and blank fields, which values
   from = conditions can be assigned to new entries, and reading dates in the site's format and showing them in SQL.
   Run it a second time with a date format, `php tests/condition_filters_test.php d/m/Y`, to check a site that shows
   dates that way. Read-only.

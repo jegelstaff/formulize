@@ -47,7 +47,8 @@
  *
  * The same term handling is used when a list is searched, so date searches go through the real search parser and the
  * extraction layer as well, including the way a global search puts one term on every column, where a term that can't be a
- * date must not stop the other columns being searched.
+ * date must not stop the other columns being searched. So do negative searches, ie: !Emilie, which are everything except
+ * that, including entries with nothing in the field, on every kind of element, the same as negative conditions.
  *
  * Conditions with = also assign their value to new entries, so that is checked too: a whole year or month is a range of
  * days, not a value that can be saved in a date element.
@@ -176,6 +177,8 @@ function linkedIdsInMuseumEntry($formHandle, $field, $entryId) {
 }
 $swordCollections = linkedIdsInMuseumEntry('artifacts', 'artifacts_collections', $chineseSword);
 $romanCoinDonor = linkedIdsInMuseumEntry('artifacts', 'artifacts_donor', $romanCoin)[0];
+$persianNecklace = museumEntryId('artifacts', 'artifacts_short_name', 'Persian necklace');
+$necklaceCollections = linkedIdsInMuseumEntry('artifacts', 'artifacts_collections', $persianNecklace);
 $wonderArtifacts = implode(',', linkedIdsInMuseumEntry('exhibits', 'exhibits_artifacts', $ancientWonders));
 
 $artifactsTable = $xoopsDB->prefix('formulize_artifacts');
@@ -446,6 +449,45 @@ $scenarios = array(
         array(array('artifacts_latitude', 'NOT', '{artifacts_latitude}', 'all')),
         "$latitude != COALESCE((SELECT artifacts_latitude FROM $artifactsTable WHERE entry_id = $romanCoin),'')", array('entry' => $romanCoin)),
 
+    // { } references on a checkbox, compared value by value, not as stored text
+    array("Coins: audience = {audience}, one value", 'collections', array(array('collections_suitable_audience', '=', '{collections_suitable_audience}', 'all')),
+        $hasAudience('Adults'), array('entry' => $coins, 'trivial' => true)),
+    array("Coins: audience != {audience}, one value, the opposite of =", 'collections', array(array('collections_suitable_audience', 'NOT', '{collections_suitable_audience}', 'all')),
+        "NOT " . $hasAudience('Adults'), array('entry' => $coins, 'trivial' => true)),
+    array("Coins: audience LIKE {audience}, one value", 'collections', array(array('collections_suitable_audience', 'LIKE', '{collections_suitable_audience}', 'all')),
+        $hasAudience('Adults'), array('entry' => $coins, 'trivial' => true)),
+    array("Coins: audience NOT LIKE {audience}, one value", 'collections', array(array('collections_suitable_audience', 'NOT LIKE', '{collections_suitable_audience}', 'all')),
+        "NOT " . $hasAudience('Adults'), array('entry' => $coins, 'trivial' => true)),
+    array("Weapons: audience = {audience}, two values, so any of them", 'collections', array(array('collections_suitable_audience', '=', '{collections_suitable_audience}', 'all')),
+        "(" . $hasAudience('Children') . " OR " . $hasAudience('Adults') . ")", array('entry' => $weapons, 'trivial' => true)),
+    array("Weapons: audience != {audience}, two values, so none of them", 'collections', array(array('collections_suitable_audience', 'NOT', '{collections_suitable_audience}', 'all')),
+        "NOT (" . $hasAudience('Children') . " OR " . $hasAudience('Adults') . ")", array('entry' => $weapons, 'trivial' => true)),
+    array("Weapons: audience LIKE {audience}, two values, so any of them", 'collections', array(array('collections_suitable_audience', 'LIKE', '{collections_suitable_audience}', 'all')),
+        "(" . $hasAudience('Children') . " OR " . $hasAudience('Adults') . ")", array('entry' => $weapons, 'trivial' => true)),
+    array("Weapons: audience NOT LIKE {audience}, two values, so none of them", 'collections', array(array('collections_suitable_audience', 'NOT LIKE', '{collections_suitable_audience}', 'all')),
+        "NOT (" . $hasAudience('Children') . " OR " . $hasAudience('Adults') . ")", array('entry' => $weapons, 'trivial' => true)),
+    array("Weapons, all: audience = {audience}; oom: name = Coins OR name = Weapons", 'collections',
+        array(array('collections_suitable_audience', '=', '{collections_suitable_audience}', 'all'), array('collections_name', '=', 'Coins', 'oom'), array('collections_name', '=', 'Weapons', 'oom')),
+        "(" . $hasAudience('Children') . " OR " . $hasAudience('Adults') . ") AND t1.collections_name IN ('Coins','Weapons')", array('entry' => $weapons)),
+    array("an entry that doesn't exist: audience != {audience}", 'collections', array(array('collections_suitable_audience', 'NOT', '{collections_suitable_audience}', 'all')),
+        "0", array('entry' => 99999999, 'trivial' => true)),
+    array("new entry: audience = {audience}, which has no value yet", 'collections', array(array('collections_suitable_audience', '=', '{collections_suitable_audience}', 'all')),
+        "1", array('entry' => 'new', 'trivial' => true)),
+    array("async: audience = {audience}, Children ticked on screen", 'collections', array(array('collections_suitable_audience', '=', '{collections_suitable_audience}', 'all')),
+        $hasAudience('Children'), array('entry' => 'new', 'async' => array('collections_suitable_audience', '*=+*:Children', 'Children'))),
+    array("async: audience = {audience}, two boxes ticked on screen, either", 'collections', array(array('collections_suitable_audience', '=', '{collections_suitable_audience}', 'all')),
+        $hasAudience('Children'), array('entry' => 'new', 'async' => array('collections_suitable_audience', '*=+*:Children*=+*:Teens', array('Children', 'Teens')))),
+    array("async: audience != {audience}, two boxes ticked on screen, neither", 'collections', array(array('collections_suitable_audience', 'NOT', '{collections_suitable_audience}', 'all')),
+        "NOT " . $hasAudience('Children'), array('entry' => 'new', 'async' => array('collections_suitable_audience', '*=+*:Children*=+*:Teens', array('Children', 'Teens')))),
+    array("async: audience LIKE {audience}, two boxes ticked on screen, either", 'collections', array(array('collections_suitable_audience', 'LIKE', '{collections_suitable_audience}', 'all')),
+        $hasAudience('Children'), array('entry' => 'new', 'async' => array('collections_suitable_audience', '*=+*:Children*=+*:Teens', array('Children', 'Teens')))),
+    array("async: audience NOT LIKE {audience}, two boxes ticked on screen, neither", 'collections', array(array('collections_suitable_audience', 'NOT LIKE', '{collections_suitable_audience}', 'all')),
+        "NOT " . $hasAudience('Children'), array('entry' => 'new', 'async' => array('collections_suitable_audience', '*=+*:Children*=+*:Teens', array('Children', 'Teens')))),
+    array("async: audience = {audience}, nothing ticked on screen", 'collections', array(array('collections_suitable_audience', '=', '{collections_suitable_audience}', 'all')),
+        "$audience = ''", array('entry' => 'new', 'async' => array('collections_suitable_audience', '', ''), 'trivial' => true)),
+    array("async: audience != {audience}, nothing ticked on screen", 'collections', array(array('collections_suitable_audience', 'NOT', '{collections_suitable_audience}', 'all')),
+        "$audience != ''", array('entry' => 'new', 'async' => array('collections_suitable_audience', '', ''), 'trivial' => true)),
+
     // { } references to a field in an entry in another form, the way a subform's conditions refer to the main form's entry
     // Artifacts in the Weapons collection: the artifacts' multi value Collections element is linked to the Collections form's Name
     array("Weapons collection: collections = {collections_name}", 'artifacts',
@@ -465,6 +507,27 @@ $scenarios = array(
         "t1.artifacts_era = 'CE' AND (NOT " . $inCollection($weapons) . " OR t1.artifacts_latitude IS NULL)", array('entry' => $weapons, 'curlyForm' => 'collections')),
 
     // { } references to linked values from the same source as the linked field. A negation means none of the values are in the field
+    array("Chinese Sword: collections = {collections}, which has several, so any of them, whatever else an artifact has", 'artifacts',
+        array(array('artifacts_collections', '=', '{artifacts_collections}', 'all')),
+        $inAnyOfCollections($swordCollections), array('entry' => $chineseSword, 'trivial' => true)),
+    array("Persian necklace: collections = {collections}, which has one, the same as typing it", 'artifacts',
+        array(array('artifacts_collections', '=', '{artifacts_collections}', 'all')),
+        $inAnyOfCollections($necklaceCollections), array('entry' => $persianNecklace)),
+    array("Persian necklace: collections != {collections}, the opposite of =", 'artifacts',
+        array(array('artifacts_collections', 'NOT', '{artifacts_collections}', 'all')),
+        $inNoneOfCollections($necklaceCollections), array('entry' => $persianNecklace)),
+    array("Roman Coin: donor = {donor}, one value in a field with one value", 'artifacts',
+        array(array('artifacts_donor', '=', '{artifacts_donor}', 'all')),
+        "t1.artifacts_donor = $romanCoinDonor", array('entry' => $romanCoin)),
+    array("Egyptian Chariot: donor = {donor}, which is blank there", 'artifacts',
+        array(array('artifacts_donor', '=', '{artifacts_donor}', 'all')),
+        "t1.artifacts_donor IS NULL", array('entry' => $egyptianChariot)),
+    array("Egyptian Chariot, all: era = BCE; oom: donor = {donor} OR short name = Roman Coin", 'artifacts',
+        array(array('artifacts_era', '=', 'BCE', 'all'), array('artifacts_donor', '=', '{artifacts_donor}', 'oom'), array('artifacts_short_name', '=', 'Roman Coin', 'oom')),
+        "t1.artifacts_era = 'BCE' AND (t1.artifacts_donor IS NULL OR t1.artifacts_short_name = 'Roman Coin')", array('entry' => $egyptianChariot)),
+    array("Ancient Wonders: favourite artifact = {exhibits_artifacts}, several values, a field with one value", 'surveys',
+        array(array('surveys_favourite_artifact', '=', '{exhibits_artifacts}', 'all')),
+        "t1.surveys_favourite_artifact IN ($wonderArtifacts)", array('entry' => $ancientWonders, 'curlyForm' => 'exhibits')),
     array("Chinese Sword: collections != {collections}, which has several, so none of them", 'artifacts',
         array(array('artifacts_collections', 'NOT', '{artifacts_collections}', 'all')),
         $inNoneOfCollections($swordCollections), array('entry' => $chineseSword)),
@@ -537,6 +600,15 @@ $scenarios = array(
         $inNoneOfCollections(array($weapons, $coins)), array('entry' => 'new_0', 'async' => array('artifacts_collections', ",$weapons,$coins,", array('Weapons', 'Coins')))),
 
     // asynchronous values on linked and checkbox elements
+    array("async: collections = {collections}, which is Weapons and Coins on screen, so either", 'artifacts',
+        array(array('artifacts_collections', '=', '{artifacts_collections}', 'all')),
+        $inAnyOfCollections(array($weapons, $coins)), array('entry' => 'new', 'async' => array('artifacts_collections', ",$weapons,$coins,", array('Weapons', 'Coins')))),
+    array("async: collections = {collections}, the same values in the other order, so the order doesn't matter", 'artifacts',
+        array(array('artifacts_collections', '=', '{artifacts_collections}', 'all')),
+        $inAnyOfCollections(array($weapons, $coins)), array('entry' => 'new', 'async' => array('artifacts_collections', ",$coins,$weapons,", array('Coins', 'Weapons')))),
+    array("async: collections = {collections}, which is blank on screen", 'artifacts',
+        array(array('artifacts_collections', '=', '{artifacts_collections}', 'all')),
+        "$collections = ''", array('entry' => 'new', 'async' => array('artifacts_collections', '', ''), 'trivial' => true)),
     array("async: collections != {collections}, which is Weapons and Coins on screen, so neither", 'artifacts',
         array(array('artifacts_collections', 'NOT', '{artifacts_collections}', 'all')),
         $inNoneOfCollections(array($weapons, $coins)), array('entry' => 'new', 'async' => array('artifacts_collections', ",$weapons,$coins,", array('Weapons', 'Coins')))),
@@ -839,20 +911,20 @@ $dateSearches = array(
     array("part of a date", array('artifacts_date_of_acquisition' => '05'), "$acquired LIKE '%05%'"),
     array("after a year", array('artifacts_date_of_acquisition' => '>2020'), "$acquired > '2020-12-31'"),
     array("on or after a year", array('artifacts_date_of_acquisition' => '>=2020'), "$acquired >= '2020-01-01'"),
-    array("not in a year", array('artifacts_date_of_acquisition' => '!2002'), "YEAR($acquired) != 2002"),
+    array("not in a year", array('artifacts_date_of_acquisition' => '!2002'), "COALESCE(YEAR($acquired),0) != 2002"),
     array("between two dates", array('artifacts_date_of_acquisition' => 'between 1950-01-01 and 2002-12-02'), "$acquired BETWEEN '1950-01-01' AND '2002-12-02'"),
     // comparing a date with something that isn't one is an error in MySQL
     array("{BLANK} on a date", array('artifacts_date_of_acquisition' => '{BLANK}'), $dateIsBlank, true),
     array("not {BLANK} on a date", array('artifacts_date_of_acquisition' => '!{BLANK}'), $dateIsNotBlank, true),
     array("= a term that can't be a date", array('artifacts_date_of_acquisition' => '=bread'), "0", true),
-    array("!= a term that can't be a date", array('artifacts_date_of_acquisition' => '!=bread'), "$acquired IS NOT NULL", true),
+    array("!= a term that can't be a date", array('artifacts_date_of_acquisition' => '!=bread'), "1", true),
     array("> a term that can't be a date", array('artifacts_date_of_acquisition' => '>bread'), "0", true),
-    array("not a term that can't be a date", array('artifacts_date_of_acquisition' => '!bread'), "$acquired IS NOT NULL", true),
+    array("not a term that can't be a date", array('artifacts_date_of_acquisition' => '!bread'), "1", true),
     array("{BLANK} on the metadata date", array('creation_datetime' => '{BLANK}'), "t1.creation_datetime IS NULL", true),
     array("not {BLANK} on the metadata date", array('creation_datetime' => '!{BLANK}'), "t1.creation_datetime IS NOT NULL", true),
     array("= a term that can't be a date on the metadata date", array('creation_datetime' => '=bread'), "0", true),
     array("> a term that can't be a date on the metadata date", array('creation_datetime' => '>bread'), "0", true),
-    array("!= a term that can't be a date on the metadata date", array('creation_datetime' => '!=bread'), "t1.creation_datetime IS NOT NULL", true),
+    array("!= a term that can't be a date on the metadata date", array('creation_datetime' => '!=bread'), "1", true),
     array("the metadata date in a year, which is all of it", array('creation_datetime' => "=$artifactsCreationYear"), "YEAR(t1.creation_datetime) = $artifactsCreationYear", true),
     array("the metadata date after a year", array('creation_datetime' => ">2000"), "t1.creation_datetime > '2000-12-31 23:59:59'", true),
     // a global search puts one term on every column, ORed together. This is why terms that weren't dates used to be dropped: they became empty searches, which match everything
@@ -863,7 +935,7 @@ $dateSearches = array(
 if (_SHORTDATESTRING === 'd/m/Y') {
     $dateSearches[] = array("d/m/Y site: part of a date as the site shows it", array('artifacts_date_of_acquisition' => '12/2002'), "DATE_FORMAT($acquired,'%d/%m/%Y') LIKE '%12/2002%'");
     $dateSearches[] = array("d/m/Y site: a whole date as the site shows it", array('artifacts_date_of_acquisition' => '02/12/2002'), "$acquired = '2002-12-02'");
-    $dateSearches[] = array("d/m/Y site: not part of a date as the site shows it", array('artifacts_date_of_acquisition' => '!12/2002'), "DATE_FORMAT($acquired,'%d/%m/%Y') NOT LIKE '%12/2002%'");
+    $dateSearches[] = array("d/m/Y site: not part of a date as the site shows it", array('artifacts_date_of_acquisition' => '!12/2002'), "COALESCE(DATE_FORMAT($acquired,'%d/%m/%Y'),'') NOT LIKE '%12/2002%'");
 }
 $artifactsFid = $form_handler->get('artifacts')->getVar('id_form');
 foreach ($dateSearches as $search) {
@@ -889,6 +961,82 @@ foreach ($dateSearches as $search) {
     check("[artifacts] search: $label", $found, $expected);
 }
 
+// a negative search is everything except that, which includes entries with nothing in the field, the same as a condition, whichever way the blank is stored
+print "Searching lists with negative terms, through the search parser and gatherDataset()\n";
+$provinces = xoops_getmodulehandler('provinceListElement', 'formulize')->getProvinceList();
+$provinceIds = function($text) use ($provinces) {
+    return implode(',', array_keys(array_filter($provinces, function($name) use ($text) { return stripos($name, $text) !== false; })));
+};
+$comments = "COALESCE(t1.surveys_staff_comments,'')";
+$surveysFlagged = "t1.surveys_flagged_to_the_staff";
+$donorProvince = "COALESCE(t1.donors_province,0)";
+$aDonorCollections = "COALESCE(a.artifacts_collections,'')";
+// label, form, searches, expected WHERE clause, relationship, and true if every entry or none is a right answer
+$negativeSearches = array(
+    array("text: first name !Emilie", 'donors', array('donors_first_name' => '!Emilie'), "$firstName NOT LIKE '%Emilie%'"),
+    array("text: first name !=Emilie", 'donors', array('donors_first_name' => '!=Emilie'), "$firstName != 'Emilie'"),
+    array("text: email !freeform, blank stored as an empty string", 'donors', array('donors_email' => '!freeform'), "$email NOT LIKE '%freeform%'"),
+    array("textarea: comments !Great", 'surveys', array('surveys_staff_comments' => '!Great'), "$comments NOT LIKE '%Great%'"),
+    array("number: latitude !=41.9028", 'artifacts', array('artifacts_latitude' => '!=41.9028'), "$latitude != '41.9028'"),
+    array("radio: anonymous !No", 'donors', array('donors_anonymous' => '!No'), "$anonymous NOT LIKE '%No%'"),
+    array("Yes/No: flagged !=Yes", 'surveys', array('surveys_flagged_to_the_staff' => '!=Yes'), "COALESCE($surveysFlagged,0) != 1"),
+    array("Yes/No: flagged !=maybe, which isn't a value, so every entry is not it", 'surveys', array('surveys_flagged_to_the_staff' => '!=maybe'), "1", 0, true),
+    array("province: !Yukon", 'donors', array('donors_province' => '!Yukon'), "$donorProvince NOT IN (" . $provinceIds('Yukon') . ")", 0, true),
+    array("province: !a, which matches several provinces, so none of them", 'donors', array('donors_province' => '!a'), "$donorProvince NOT IN (" . $provinceIds('a') . ")", 0, true),
+    array("checkbox: audience !=Children", 'collections', array('collections_suitable_audience' => '!=Children'), "NOT " . $hasAudience('Children')),
+    array("checkbox: audience !Child", 'collections', array('collections_suitable_audience' => '!Child'), "$audience NOT LIKE '%Child%'"),
+    array("single linked: donor !Freeform", 'artifacts', array('artifacts_donor' => '!Freeform'), "$donor != $freeform"),
+    array("single linked: donor !=Freeform Solutions", 'artifacts', array('artifacts_donor' => '!=Freeform Solutions'), "$donor != $freeform"),
+    array("multi linked: collections !Weapons, so an artifact in Weapons and another collection is left out", 'artifacts', array('artifacts_collections' => '!Weapons'), "NOT " . $inCollection($weapons)),
+    array("multi linked: collections !=Weapons", 'artifacts', array('artifacts_collections' => '!=Weapons'), "NOT " . $inCollection($weapons)),
+    array("multi linked: collections !ns, which matches two collections, so neither of them", 'artifacts', array('artifacts_collections' => '!ns'), "NOT " . $inCollection($coins) . " AND NOT " . $inCollection($weapons)),
+    array("multi linked: collections != the Weapons entry id", 'artifacts', array('artifacts_collections' => "!=$weapons"), "NOT " . $inCollection($weapons)),
+    array("not blank is not a negative search for a value: first name !{BLANK}", 'donors', array('donors_first_name' => '!{BLANK}'), "$firstName != ''"),
+    array("not blank on a number: latitude !{BLANK}", 'artifacts', array('artifacts_latitude' => '!{BLANK}'), "t1.artifacts_latitude IS NOT NULL"),
+    array("not blank on a linked element: donor !{BLANK}", 'artifacts', array('artifacts_donor' => '!{BLANK}'), "t1.artifacts_donor IS NOT NULL"),
+    array("positive searches are not affected: first name Emilie", 'donors', array('donors_first_name' => 'Emilie'), "t1.donors_first_name LIKE '%Emilie%'"),
+    array("two boxes: first name !Emilie, email !freeform", 'donors', array('donors_first_name' => '!Emilie', 'donors_email' => '!freeform'), "$firstName NOT LIKE '%Emilie%' AND $email NOT LIKE '%freeform%'"),
+    array("two boxes: donor !Freeform, era CE", 'artifacts', array('artifacts_donor' => '!Freeform', 'artifacts_era' => '=CE'), "$donor != $freeform AND t1.artifacts_era = 'CE'"),
+    array("two terms in a box: first name !Emilie AND !Fran", 'donors', array('donors_first_name' => '!Emilie AND !Fran'), "$firstName NOT LIKE '%Emilie%' AND $firstName NOT LIKE '%Fran%'"),
+    array("OR terms in different boxes: first name OR!Emilie, last name ORArouet", 'donors', array('donors_first_name' => 'OR!Emilie', 'donors_last_name' => 'ORArouet'), "$firstName NOT LIKE '%Emilie%' OR t1.donors_last_name LIKE '%Arouet%'"),
+    // a search on a connected form finds a main entry through its connected entries. A main entry with nothing connected is not found, that is a separate question from a blank field
+    array("connected form: donors whose artifacts include one not in Weapons, not a donor with no artifacts", 'donors', array('artifacts_collections' => '!Weapons'),
+        "EXISTS ($artifactOfDonor AND $aDonorCollections NOT LIKE '%,$weapons,%')", -1),
+    array("connected form: donors with an artifact with no latitude, or not at this latitude", 'donors', array('artifacts_latitude' => '!=41.9028'),
+        "EXISTS ($artifactOfDonor AND COALESCE(a.artifacts_latitude,'') != '41.9028')", -1),
+);
+foreach ($negativeSearches as $search) {
+    list($label, $formHandle, $searches, $expectedWhere) = $search;
+    $searchFrid = isset($search[4]) ? $search[4] : 0;
+    $table = $xoopsDB->prefix('formulize_' . $formHandle);
+    $expected = entryIdsFor("SELECT t1.entry_id FROM $table AS t1 WHERE $expectedWhere");
+    if (empty($search[5])) {
+        checkNotTrivial(array($label, $formHandle), $expected);
+    }
+    $searchFid = $form_handler->get($formHandle)->getVar('id_form');
+    $found = array();
+    try {
+        $data = gatherDataset($searchFid, filter: formulize_parseSearchesIntoFilter($searches), frid: $searchFrid, bypassCache: true);
+        foreach ((array) $data as $record) {
+            foreach (internalRecordIds($record, $searchFid) as $id) {
+                $found[] = intval($id);
+            }
+        }
+        $found = array_unique($found);
+        sort($found, SORT_NUMERIC);
+        $found = implode(',', $found);
+    } catch (Throwable $e) {
+        $found = 'EXCEPTION: ' . $e->getMessage();
+    }
+    check("[$formHandle] search: $label", $found, $expected);
+}
+$found = array();
+$data = gatherDataset($form_handler->get('donors')->getVar('id_form'), filter: "donors_first_name/**/Emilie/**/NOT IN", frid: 0, bypassCache: true);
+foreach ((array) $data as $record) {
+    $found[] = getValue($record, 'donors_first_name');
+}
+check("[donors] search: NOT IN includes blanks", count($found), intval($xoopsDB->fetchRow($xoopsDB->query("SELECT COUNT(*) FROM " . $xoopsDB->prefix('formulize_donors') . " AS t1 WHERE $firstName != 'Emilie'"))[0]));
+
 // 6. saving: an = condition's value is assigned to new entries, which only works if it is a value the element can hold
 print "Checking which condition values are assigned to new entries\n";
 $dateElementId = $element_handler->get('artifacts_date_of_acquisition')->getVar('ele_id');
@@ -902,6 +1050,21 @@ check("not saved: a year, which is a range of days", $valuesFor($dateElementId, 
 check("not saved: a month, which is a range of days", $valuesFor($dateElementId, 'March'), array());
 check("not saved: a term that can't be a date", $valuesFor($dateElementId, 'bread'), array());
 check("saved: Yes on a Yes/No element, as its code", $valuesFor($yesNoElementId, 'Yes'), array($artifactsFid => array('artifacts_donated_to_museum' => 1)));
+
+// the display side, with a reference that holds several values, which is the same as SQL: = and LIKE are any of them, != and NOT LIKE are none of them
+print "Checking references that hold several values against an entry, the way elements are displayed\n";
+$displayChecks = array(
+    array("=", 1), array("NOT", 0), array("LIKE", 1), array("NOT LIKE", 0),
+);
+foreach ($displayChecks as $displayCheck) {
+    list($op, $want) = $displayCheck;
+    $collectionsCondition = array(array($element_handler->get('artifacts_collections')->getVar('ele_id')), array($op), array('{artifacts_collections}'), array('all'));
+    check("display: the Chinese Sword's collections $op themselves", checkConditionsAgainstAnEntry($collectionsCondition, $artifactsFid, $chineseSword, cacheId: 'condition_filters_test'), $want);
+    $audienceCondition = array(array($element_handler->get('collections_suitable_audience')->getVar('ele_id')), array($op), array('{collections_suitable_audience}'), array('all'));
+    check("display: the Weapons audience $op itself", checkConditionsAgainstAnEntry($audienceCondition, $form_handler->get('collections')->getVar('id_form'), $weapons, cacheId: 'condition_filters_test'), $want);
+    $differentCondition = array(array($element_handler->get('exhibits_collections')->getVar('ele_id')), array($op), array('{exhibits_artifacts}'), array('all'));
+    check("display: an exhibit's collections $op its artifacts, which have nothing in common", checkConditionsAgainstAnEntry($differentCondition, $form_handler->get('exhibits')->getVar('id_form'), $ancientWonders, cacheId: 'condition_filters_test'), 1 - $want);
+}
 
 // 7. dates: reading a date in the site's format, the MySQL format that shows dates the way the site does, and how a date element reads a term
 print "Checking how dates are read and shown\n";

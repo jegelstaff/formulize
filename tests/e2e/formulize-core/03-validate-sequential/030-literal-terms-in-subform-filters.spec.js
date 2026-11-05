@@ -193,8 +193,8 @@ test.describe.serial('Literal terms in subform conditions', () => {
 	});
 
 	test('Match all with a reference to the collection on screen, and match one or more', async ({ page }) => {
-		await limitSubformToConditions(page, [['Collections', '=', '{collections_name}']], [['Era', '=', 'CE'], ['Donor', '=', '{BLANK}']]);
-		await expectWeaponsSubformToShow(page, [sword, musket], [chariot]);
+		await limitSubformToConditions(page, [['Collections', '=', '{collections_name}']], [['Era', '=', 'BCE'], ['Donor', '=', 'Freeform Solutions']]);
+		await expectWeaponsSubformToShow(page, [sword, chariot], [musket]);
 	});
 
 	test('Match one or more with a negated reference to the collection on screen', async ({ page }) => {
