@@ -83,7 +83,7 @@ function setPublicApi(enabled) {
 
 test.beforeAll(() => {
 	setPublicApi(true);
-	// A key for the admin user. Test 030 already covers creating one through the admin UI;
+	// A key for the admin user. 03-validate-sequential/040 already covers creating one through the admin UI;
 	// what matters here is that the API accepts it, so this goes straight into the table.
 	apiKey = createApiKeyFor('admin');
 	// And one for ahstaff, from test 005: Ancient History Staff, and so a member of All Staff,

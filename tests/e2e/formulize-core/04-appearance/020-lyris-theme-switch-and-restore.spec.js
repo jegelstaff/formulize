@@ -59,6 +59,24 @@ async function expectTheme(page, theme) {
 	}
 }
 
+// Which theme the offline page is in, which says which worker is in charge: each worker keeps the
+// offline page as it was when the worker was made
+async function expectOfflineTheme(page, theme) {
+	await page.context().setOffline(true);
+	try {
+		await page.goto('/modules/formulize/application.php');
+		await expect(page.locator('.fz-empty__title')).toHaveText("You're offline");
+		await expect(page.locator(`link[rel="stylesheet"][href*="/themes/${theme}/"]`).first()).toBeAttached();
+	} finally {
+		await page.context().setOffline(false);
+	}
+}
+
+// The worker waiting to take over, if there is one
+async function workerIsWaiting(page) {
+	return page.evaluate(async () => !!(await navigator.serviceWorker.getRegistration()).waiting);
+}
+
 async function signIn(browser, username, password) {
 	const page = await browser.newPage({ baseURL: E2E_TEST_BASE_URL });
 	await login(page, username, password);
@@ -84,6 +102,32 @@ test.describe('Switching the site to Lyris and back', () => {
 		await chooseThemes(admin, 'Anari', 'Anari');
 		await expectTheme(admin, 'Anari');
 		await expectTheme(curator, 'Anari');
+	});
+
+	// A change of theme makes a new service worker, which waits until the site has been closed. Pages come
+	// from the server all the while, so someone with the site open sees the new theme as soon as they load a
+	// page. Only the offline page is out of date until then.
+	test('A person with the site open gets the new theme at once, and the new offline page once they close the site', async ({ browser }) => {
+		test.setTimeout(300000);
+		const context = await browser.newContext({ baseURL: E2E_TEST_BASE_URL });
+		const admin = await context.newPage();
+		await login(admin, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+		await chooseThemes(admin, 'Anari', 'Anari');
+		await expectTheme(admin, 'Anari');
+		await admin.evaluate(() => navigator.serviceWorker.ready);
+
+		await chooseThemes(admin, 'Lyris', 'Lyris');
+		await expectTheme(admin, 'Lyris');
+		await expect.poll(() => workerIsWaiting(admin), { timeout: 60000 }).toBe(true);
+		await expectTheme(admin, 'Lyris');
+		expect(await workerIsWaiting(admin)).toBe(true);
+		await expectOfflineTheme(admin, 'Anari');
+
+		await admin.close();
+		const back = await context.newPage();
+		await expectTheme(back, 'Lyris');
+		await expect.poll(() => workerIsWaiting(back), { timeout: 60000 }).toBe(false);
+		await expectOfflineTheme(back, 'Lyris');
 	});
 
 	test('Admin > Appearance > Settings puts the site back on the theme it was on', async ({ browser }) => {

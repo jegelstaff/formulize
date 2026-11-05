@@ -1,5 +1,5 @@
 const { test, expect, devices } = require('@playwright/test');
-import { getSystemConfig, setSystemConfig, login } from '../../utils';
+import { login } from '../../utils';
 import { E2E_TEST_BASE_URL, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
 
 // The site installed as an app (a progressive web app): the manifest, the head tags that make a page
@@ -12,9 +12,9 @@ import { E2E_TEST_BASE_URL, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } f
 //
 // localhost counts as a secure context, so all of this works over plain http here.
 //
-// The last test turns the app off, and back on again, so the tests must run in order in the same worker.
-// CI runs the validate suite with --workers=4 --fully-parallel, which overrides the serial defaults in
-// playwright.config.js.
+// Turning the app off is tested in 03-validate-sequential/050-installable-app-turned-off.spec.js, since it
+// affects everyone on the site. CI runs the validate suite with --workers=4 --fully-parallel, which overrides
+// the serial defaults in playwright.config.js, so these are kept together in one worker.
 test.describe.configure({ mode: 'serial' });
 
 const OFFLINE_PAGE = '/modules/formulize/pwa/offline';
@@ -219,27 +219,6 @@ test.describe('Installing the site as an app', () => {
 			expect(await page.locator('[role="progressbar"]:not([hidden])').count()).toBe(0);
 		} finally {
 			await context.close();
-		}
-	});
-
-	test('turned off, the installed worker removes itself and what it kept', async ({ page, request }) => {
-		await page.goto('/');
-		await waitForWorker(page);
-		await page.reload();
-		const original = getSystemConfig('formulizePWAEnabled');
-		try {
-			setSystemConfig('formulizePWAEnabled', 0);
-			expect((await request.get('/modules/formulize/pwa/manifest.php')).status()).toBe(404);
-			// the page no longer registers a worker; the installed one checks for itself, finds the one
-			// that removes itself, and that one takes over
-			await page.reload();
-			expect(await page.locator('link[rel="manifest"]').count()).toBe(0);
-			await expect.poll(async () => {
-				await page.reload();
-				return page.evaluate(async () => (await navigator.serviceWorker.getRegistrations()).length + (await caches.keys()).length);
-			}, { timeout: 30000 }).toBe(0);
-		} finally {
-			setSystemConfig('formulizePWAEnabled', original === null ? 1 : original);
 		}
 	});
 });

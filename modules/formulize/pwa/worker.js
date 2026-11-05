@@ -26,6 +26,11 @@
 	var config = self.formulizeApp;
 	var cacheName = config.cachePrefix + config.version;
 
+	// A new worker waits for the site to be closed before it takes over, which is what browsers do unless
+	// told otherwise. Pages come from the server whichever worker is in charge, so waiting only means an
+	// offline page in the old look until then. Taking over at once is not worth that: a page being loaded
+	// through the old worker at that moment can be left hanging, and a change to the Appearance page
+	// makes a new worker. remove-worker.js is the exception, since it has nothing to wait for.
 	self.addEventListener('install', function (event) {
 		event.waitUntil(caches.open(cacheName).then(function (cache) {
 			var offlinePage = new Response(config.offlineHtml, {
@@ -35,10 +40,6 @@
 				cache.put(config.offlineUrl, offlinePage),
 				cache.addAll(config.stylesheets)
 			]);
-		}).then(function () {
-			// An installed app can stay open for days, and the old worker would stay with it: take
-			// over at once. Nothing about how pages behave depends on which version is in charge.
-			return self.skipWaiting();
 		}));
 	});
 
@@ -54,8 +55,6 @@
 			if (self.registration.navigationPreload) {
 				return self.registration.navigationPreload.enable();
 			}
-		}).then(function () {
-			return self.clients.claim();
 		}));
 	});
 

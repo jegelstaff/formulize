@@ -134,7 +134,7 @@ Run the one file, headed, with the timeout off:
 
 ```
 cd tests/e2e
-npx playwright test formulize-core/02-validate/030-mcp-working.spec.js --headed --timeout=0
+npx playwright test formulize-core/03-validate-sequential/040-mcp-working.spec.js --headed --timeout=0
 ```
 
 Failures keep a trace and a video. The trace viewer shows the DOM, the network and the console at every step, and is almost always faster than adding `console.log`:

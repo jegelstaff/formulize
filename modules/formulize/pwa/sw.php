@@ -13,8 +13,8 @@
 // Browsers fetch this again whenever a page of the site is opened, and install it again whenever any
 // byte of it differs. So everything the worker keeps is written into it here: the offline page itself,
 // and the list of stylesheets it is drawn with, whose addresses carry their own versions. A change to
-// any of them, such as a colour on the Appearance page, makes a new worker, and the installed apps
-// pick it up on their next visit. The cache it keeps them in is named after all of that too.
+// any of them, such as a colour on the Appearance page, makes a new worker, which takes over once the
+// site has been closed on that device. The cache it keeps them in is named after all of that too.
 //
 // When an administrator turns the app off, this serves remove-worker.js instead, which deletes the
 // worker's cache and unregisters the worker on every device that opens a page of the site again. That

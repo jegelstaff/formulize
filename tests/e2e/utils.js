@@ -356,18 +356,12 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 		opacityTarget, // Pass the selector as an argument
   	{ timeout }
 	);
-	// The opacity restore is a ~1ms fadeTo animation, so Playwright's opacity polling
-	// can resolve the down/up cycle without ever waiting for the real save — the save
-	// then POSTs each admin tab to save.php sequentially (some returning a reload, and
-	// screen/template saves run an async PHP syntax-check BEFORE saving), and that
-	// trailing work can still be in flight. So wait for the network to go idle before
-	// returning, otherwise the save is silently lost when the test proceeds/ends (the
-	// root cause of the intermittent menu/filter/label save losses).
-	// On normal pages the network is already idle here, so this settles in ~1ms and
-	// adds nothing; it only really waits for the saves where the opacity check resolved
-	// too fast. The 30s bound is generous enough for long multi-template syntax checks
-	// without slowing normal saves; the .catch() handles the rare admin page that has a
-	// continuous background poll (the exception) so it can't hang the helper.
+	// The opacity is what says the save is finished. The page stays faded until the code check and every
+	// tab's POST to save.php have come back (see runSaveEvent() in ui.html), and if the save asked for a
+	// reload it stays faded until that reload replaces the page.
+	// This wait adds nothing when the save stays on the same page: networkidle fires once per page, and this
+	// page has already had it. It counts after a reload, when it lets the new page finish loading. The
+	// .catch() is for a page that never goes quiet, which shouldn't stop the test.
 	await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
 }
 
@@ -607,8 +601,6 @@ export async function conditionalElementReady(page, handle, triggerAction) {
 
 	// Clean up the marker
 	await page.evaluate(() => delete window._stableCheckStart);
-
-	await page.waitForLoadState('networkidle');
 
 }
 

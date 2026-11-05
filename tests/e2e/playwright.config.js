@@ -28,14 +28,18 @@ module.exports = defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
 	reporter: process.env.GITHUB_ACTIONS ?
 		[['list'], ['github'], ['html', { outputFolder: './test-report' }], ['./php-error-reporter.js']] : [['list'], ['html', { outputFolder: './test-report' }], ['./php-error-reporter.js']],
-	/* Adjust the timeout for slow tests */
-	timeout: 120000,
+	/* Adjust the timeout for slow tests. E2E_TEST_TIMEOUT in .env overrides it, for slow machines. */
+	timeout: Number(process.env.E2E_TEST_TIMEOUT) || 120000,
   retries: 0,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. Follows the port
        Docker published the site on. See base-url.js. */
     baseURL: resolveBaseUrl(),
+
+    /* A page that never finishes loading fails here, saying so, rather than using up the whole test and
+       showing as net::ERR_ABORTED when the test closes it. E2E_NAVIGATION_TIMEOUT in .env overrides it. */
+    navigationTimeout: Number(process.env.E2E_NAVIGATION_TIMEOUT) || 60000,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'retain-on-failure',

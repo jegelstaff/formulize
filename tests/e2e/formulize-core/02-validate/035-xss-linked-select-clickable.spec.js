@@ -92,13 +92,16 @@ test.describe.serial('T2.10 - clickable linked select renders an escaped link', 
 		await page.getByRole('textbox', { name: 'ID *' }).fill('TGT035');
 		await page.getByLabel('Linked Value').selectOption({ index: 1 });
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click();
 		// "Save and Close" releases the entry lock via async AJAX and then navigates itself (a POST-based
-		// screen reload, not a plain redirect) - both in flight after the click resolves. Unlike 034/036,
-		// which end their test right here and let the next test start a fresh page, this test keeps going
-		// on the SAME page - so the explicit goto below can fire while that navigation is still in progress
-		// and get net::ERR_ABORTED when the click's own navigation wins the race. Let it settle first.
-		await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
+		// screen reload, not a plain redirect), so the navigation hasn't started when the click resolves.
+		// Unlike 034/036, which end their test right here and let the next test start a fresh page, this
+		// test keeps going on the SAME page - so wait for that navigation, or the explicit goto below can
+		// fire while it is in progress and get net::ERR_ABORTED. Listening before the click means it can't
+		// be missed. waitForLoadState wouldn't do: it fires once per page, and this page already has.
+		await Promise.all([
+			page.waitForNavigation({ waitUntil: 'networkidle', timeout: 120000 }),
+			page.getByRole('link', { name: 'Save and Close' }).click(),
+		]);
 
 		// view the target list, reveal the linked column
 		await page.goto(`/modules/formulize/index.php?fid=${targetFid}`);

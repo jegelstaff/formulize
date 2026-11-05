@@ -99,11 +99,9 @@ test('Renaming an element handle updates its $handle reference in derived value 
 		// scans and rewrites every derived-value code file, plus several extra DB updates), so give it
 		// more headroom than saveAdminForm()'s default before treating a slow admin-ui fade as a hang.
 		await saveAdminForm(page, 'regular', 180000);
-		// The save can kick off a trailing async redirect/reload (see runSaveEvent() in ui.html)
-		// that is not yet in flight when saveAdminForm() returns (it only waits for the admin-ui
-		// opacity to settle, not for that follow-up work). Let it finish before the caller fires
-		// off its own page.goto(), otherwise that navigation can race the tail end of this one and
-		// get cancelled with net::ERR_ABORTED.
+		// Only matters if the save reloads the page and that load takes more than the 30 seconds
+		// saveAdminForm() gives it: its wait gives up quietly, and this one doesn't. Otherwise the
+		// page has already gone quiet and this returns at once.
 		await page.waitForLoadState('networkidle');
 	};
 

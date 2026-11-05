@@ -100,7 +100,6 @@ test('The survey form shows the value the static content code computes', async (
 	try {
 		await page.goto('/survey');
 		await page.waitForLoadState('networkidle');
-		await page.waitForLoadState('domcontentloaded');
 		loaded = await page.locator('.formulize-label-surveys_your_name').count() > 0;
 	} catch {
 		loaded = false;

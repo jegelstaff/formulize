@@ -588,7 +588,6 @@ test.describe('Data entry for Survey', () => {
 				try {
 					await page.goto('/survey');
 					await page.waitForLoadState('networkidle');
-					await page.waitForLoadState('domcontentloaded');
 					rewriteWorks = await page.locator('.formulize-label-surveys_your_name').count() > 0;
 				} catch {
 					rewriteWorks = false;

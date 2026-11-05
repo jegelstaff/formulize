@@ -223,7 +223,7 @@ test.beforeAll(async ({ browser }) => {
 	// A run that was interrupted before its afterAll could leave forms behind
 	await deleteForms(browser, formsMadeByThisFile());
 
-	// Straight into the database, as test 042 does for the Public API. Test 030 covers turning the MCP
+	// Straight into the database, as test 042 does for the Public API. 03-validate-sequential/040 covers turning the MCP
 	// server on through the admin UI; this file only needs it on.
 	mcpServerWasEnabled = getSystemConfig('formulizeMCPServerEnabled');
 	setSystemConfig('formulizeMCPServerEnabled', 1);
