@@ -634,6 +634,16 @@ define("_AM_ELE_SUBFORM_ADD_PARENT", "Yes, only if the user can add entries in t
 define("_AM_ELE_SUBFORM_EDITICONSTYLE", "Which icon should the <i>View</i> button use?");
 define("_AM_ELE_SUBFORM_EDITICONSTYLE_PEN", "Pen icon");
 define("_AM_ELE_SUBFORM_EDITICONSTYLE_MAGNIFIER", "Magnifying glass icon");
+define("_AM_ELE_SUBFORM_EDITICONSTYLE_HELP", "The <i>View</i> button lets users open an entry and see all of it, not just the elements shown in its row. Choose None to leave the button out, so users cannot open existing entries from this subform.");
+define("_AM_ELE_SUBFORM_OPENINDRAWER", "Where should entries open?");
+define("_AM_ELE_SUBFORM_OPENINDRAWER_NO", "Full screen, in place of the main form");
+define("_AM_ELE_SUBFORM_OPENINDRAWER_YES", "In a drawer that slides out from the side, with the main form still open behind it");
+define("_AM_ELE_SUBFORM_OPENINDRAWER_HELP", "This applies to entries users open with the <i>View</i> button, and to new entries when they are set to open (see below). It has no effect if there is no <i>View</i> button and new entries are added as rows. When the main form is itself shown in a drawer, entries open as the next screen in that drawer, whichever you choose here.");
+define("_AM_ELE_SUBFORM_NEWENTRIES", "What should happen when users add an entry?");
+define("_AM_ELE_SUBFORM_NEWENTRIES_OPEN_FULLSCREEN", "Open the new entry full screen, so users can fill it in right away");
+define("_AM_ELE_SUBFORM_NEWENTRIES_OPEN_DRAWER", "Open the new entry in the drawer, so users can fill it in right away");
+define("_AM_ELE_SUBFORM_NEWENTRIES_ROW", "Add it as a new row in this subform, and stay on the main form");
+define("_AM_ELE_SUBFORM_NEWENTRIES_HELP", "An entry that opens shows all of its elements, using the screen set under <i>Screen for displaying each entry</i>. Whether it opens full screen or in the drawer depends on the setting above. Opening full screen only works when that screen is a Multi-page screen; with a Single Page screen, new entries are added as rows instead. Opening in the drawer works with either kind of screen. If users add several entries at once, the first one opens.");
 
 
 // grids
