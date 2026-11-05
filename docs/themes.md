@@ -441,29 +441,40 @@ The buttons at the bottom of a form screen are laid out by your theme's multiPag
 button where you put its variable: `$previousPageButton`, `$savePageButton`, `$closePageButton` and
 `$nextPageButton`. Without a template of your own, the order is previous, save, close, next.
 
-The drawer, where entries open over a list, gets its buttons from your theme's drawer template,
-`modules/formulize/templates/screens/<Theme>/default/drawer/bottomtemplate.php`, in the same way.
-Put the variables inside an element with the class `formulize-drawer-buttons`. The drawer moves the
-buttons from there into its footer, in the order you printed them. Each variable is empty when the
-form doesn't have that button. Lyris puts Save last, at the right:
+The drawer, where entries open over a list, uses the same template. It shows its buttons in the
+order your multiPage `bottomtemplate.php` prints them, so when you change the order there, the
+drawer changes with it. (If a screen has its own bottom template, the drawer follows that one.)
+Lyris puts Save last, at the right, on both.
+
+The drawer has two buttons that the full screen bar doesn't. The printable view button opens the
+printable view, and comes first. The save and leave button saves the entry and closes the drawer.
+It only appears where there is no previous page button, such as on the first page of a form, and
+it goes where your template puts `$previousPageButton`.
+
+### Give the drawer its own order
+
+If you want the drawer's buttons in a different order from the full screen bar, print them in your
+theme's drawer template,
+`modules/formulize/templates/screens/<Theme>/default/drawer/bottomtemplate.php`. Put the variables
+inside an element with the class `formulize-drawer-buttons`, and the drawer uses that order instead.
+The variables are `$printableViewButton`, `$saveAndLeaveButton`, `$previousPageButton`,
+`$savePageButton`, `$closePageButton` and `$nextPageButton`. Each one is empty when the form doesn't
+have that button. For example:
 
 ```php
 print "
+<div style='clear: both;'></div>
 </div>
 <div class='formulize-drawer-buttons'>
-$printableViewButton $saveAndLeaveButton $previousPageButton $closePageButton $nextPageButton $savePageButton
+$printableViewButton $saveAndLeaveButton $savePageButton $previousPageButton $closePageButton $nextPageButton
 </div>
 ";
 ```
 
-The drawer has two buttons that the full screen bar doesn't. `$printableViewButton` opens the
-printable view. `$saveAndLeaveButton` saves the entry and closes the drawer. On the first page of a
-form it takes the place of the previous page button, so the two never appear together.
-
-Without a drawer template of your own, the order is printable view, save and leave, previous, save,
-close, next. Copy `modules/formulize/templates/screens/default/drawer/bottomtemplate.php` to start
-from. If your theme already has a drawer bottom template without `formulize-drawer-buttons` in it,
-the drawer puts the buttons in that default order.
+The drawer template also closes the container that the drawer's `toptemplate.php` opens. Start from
+`modules/formulize/templates/screens/default/drawer/bottomtemplate.php`, or from your theme's copy if
+it has one. If your drawer template doesn't print any of the button variables, the drawer follows
+the form's template.
 
 ## Checking your theme
 

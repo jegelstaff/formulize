@@ -325,7 +325,7 @@ $subformStubsJs = "<script type='text/javascript'>
 // The render prints as it goes, deep in displayForm() and the screen handlers, so it is caught here
 // to go into the response with the rest
 ob_start();
-// Which form the drawer asked for. The drawer's bottomtemplate draws the buttons of this form
+// Which form the drawer asked for. The drawer shows the buttons of this form
 // alone, so a subform rendered inside it cannot answer for it (see
 // formulize_drawerButtonTemplateVariables in formdisplay.php).
 $GLOBALS['formulize_elementsOnly_buttonMetaKey'] = formulize_elementsOnlyButtonMetaKey($screen, $fid);

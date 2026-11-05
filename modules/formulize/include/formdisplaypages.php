@@ -463,7 +463,7 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 		);
 		print "\n<script type=\"application/json\" class=\"formulize-multipage-nav\">".json_encode($navMeta)."</script>\n";
 
-		// The drawer's buttons for this page, recorded for its bottomtemplate (see
+		// The drawer's buttons for this page, recorded for its footer (see
 		// formulize_drawerButtonTemplateVariables in formdisplay.php). Recorded rather than
 		// printed so only the form the drawer actually asked for gets them, and recorded
 		// before displayForm runs, which is what makes this the version the drawer sees for

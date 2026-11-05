@@ -642,15 +642,15 @@ class formulize_elementsOnlyForm extends formulize_themeForm {
 		list($ret, $hidden) = $this->_drawElements($this->getElements(), $ret, $hidden);
 
         if($wrapperTop) {
-            // the drawer's bottomtemplate lays out the drawer's buttons, as the multiPage
-            // bottomtemplate lays out the full screen bar
             $wrapperVariables = $wrapperType == 'drawer' ? formulize_drawerButtonTemplateVariables() : array();
             if($wrapperBottom = getDefaultTemplate('bottomtemplate', $wrapperType)) {
                 $ret .= $this->processTemplate($wrapperBottom, $wrapperVariables);
-                // a theme's drawer bottomtemplate from before it laid out the buttons still
-                // gets them, in the default order (the order of the variables)
-                if($wrapperType == 'drawer' AND strpos($wrapperBottom, 'formulize-drawer-buttons') === false) {
-                    $ret .= "<div class='formulize-drawer-buttons'>".implode(' ', $wrapperVariables)."</div>";
+                // The drawer's buttons go in the order the form's own bottomtemplate puts them
+                // in on the full screen bar, so a change to that template shows up in the
+                // drawer too. A theme can override that with a drawer bottomtemplate that prints
+                // the button variables itself, in a .formulize-drawer-buttons container.
+                if($wrapperType == 'drawer' AND !formulize_templateVariableOrder($wrapperBottom, array_keys($wrapperVariables))) {
+                    $ret .= formulize_drawerButtonsInFormOrder($wrapperVariables, $this->getTemplate('bottomtemplate'));
                 }
             }
         } elseif($elementsInTable) {
@@ -1639,7 +1639,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 			$form = addSubmitButton($form, _formulize_SAVE, $go_back, $currentURL, $button_text, $settings, $entry, $fids, $formframe, $mainform, $entry, $elements_allowed, $allDoneOverride, $printall, $screen);
     } else {
 			// Elements-only renders draw no button tray. Record the button configuration
-			// instead, so the right slide-out drawer's bottomtemplate presents the same
+			// instead, so the right slide-out drawer presents the same
 			// buttons, with the same configured text, as the full screen form would.
 			// Multipage screens record their own, richer version of this first, in
 			// formdisplaypages.php.
@@ -1968,10 +1968,10 @@ function formulize_requestedElementsOnlyButtonMeta() {
 	return ($key AND isset($GLOBALS['formulize_elementsOnlyButtonMeta'][$key])) ? $GLOBALS['formulize_elementsOnlyButtonMeta'][$key] : null;
 }
 
-// The drawer's buttons, as variables for the theme's drawer bottomtemplate, which lays them
-// out in a .formulize-drawer-buttons container in whatever order the theme likes, just as its
-// multiPage bottomtemplate lays out the full screen bar. The drawer moves them into its
-// footer and gives each one its action by its name:
+// The drawer's buttons, as template variables. By default they are put in the order the
+// form's bottomtemplate prints them (formulize_drawerButtonsInFormOrder). A theme's drawer
+// bottomtemplate can instead print them itself, in a .formulize-drawer-buttons container.
+// The drawer moves them into its footer and gives each one its action by its name:
 //
 //   printableViewButton  printbutton  open the printable view
 //   saveAndLeaveButton   leave        save and close the drawer
@@ -2012,6 +2012,61 @@ function formulize_drawerButtonTemplateVariables() {
 		}
 	}
 	return $variables;
+}
+
+// The drawer's buttons in a .formulize-drawer-buttons container, in the order the form's
+// bottomtemplate prints them full screen. That is the screen's own bottomtemplate, or the
+// theme's multiPage one when the screen's doesn't print any form buttons (or there is no
+// screen). The order is read from where the button variables appear in the template's code,
+// not counting comments.
+//
+// The full screen bar has no printable view or save and leave button. Save and leave is what
+// the bar's previous page button is on a form's first page (the two never appear together),
+// so it goes where the template puts that button. Otherwise, unless the template places them,
+// they lead, as they do in the default order. Any other button the template leaves out goes
+// at the end, so the drawer never loses a button. Empty when there are no buttons, which is
+// the case for subform entries rendered inline in the drawer.
+function formulize_drawerButtonsInFormOrder($variables, $formTemplate) {
+	if(!implode('', $variables)) {
+		return '';
+	}
+	$templateOrder = formulize_templateVariableOrder($formTemplate, array_keys($variables));
+	if(!$templateOrder) {
+		$templateOrder = formulize_templateVariableOrder(getDefaultTemplate('bottomtemplate', 'multiPage'), array_keys($variables));
+	}
+	if(!in_array('saveAndLeaveButton', $templateOrder) AND ($previousAt = array_search('previousPageButton', $templateOrder)) !== false) {
+		array_splice($templateOrder, $previousAt, 0, 'saveAndLeaveButton');
+	}
+	$leading = array_diff(array('printableViewButton', 'saveAndLeaveButton'), $templateOrder);
+	$order = array_unique(array_merge($leading, $templateOrder, array_keys($variables)));
+	$buttons = array();
+	foreach($order as $variable) {
+		if($variables[$variable]) {
+			$buttons[] = $variables[$variable];
+		}
+	}
+	return "<div class='formulize-drawer-buttons'>".implode(' ', $buttons)."</div>";
+}
+
+// Which of the named variables a template's code uses, in the order it first uses them.
+// Comments don't count.
+function formulize_templateVariableOrder($templateCode, $names) {
+	$templateCode = (string) $templateCode;
+	if(substr($templateCode, 0, 5) != '<?php') {
+		$templateCode = "<?php\n".$templateCode;
+	}
+	$found = array();
+	if(function_exists('token_get_all')) {
+		foreach(token_get_all($templateCode) as $token) {
+			if(is_array($token) AND $token[0] == T_VARIABLE) {
+				$found[] = substr($token[1], 1);
+			}
+		}
+	} else {
+		preg_match_all('/\$([a-zA-Z_][a-zA-Z0-9_]*)/', $templateCode, $matches);
+		$found = $matches[1];
+	}
+	return array_values(array_unique(array_intersect($found, $names)));
 }
 
 // The JSON block the elements-only endpoint emits with what the printable view button posts,

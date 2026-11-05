@@ -691,10 +691,11 @@
 
     // ---- Footer ----------------------------------------------------------------
 
-    // The footer's buttons come from the theme's drawer bottomtemplate, as the full screen
-    // bar's come from its multiPage bottomtemplate: the server decides which buttons the
-    // form has and what each says, the template puts them in the theme's order, and the
-    // drawer moves them into the footer and gives each one its action (renderEntryFooter).
+    // The footer's buttons come from the server: it decides which buttons the form has and
+    // what each says, and puts them in the order the form's bottomtemplate prints them on
+    // the full screen bar (or the order a theme's drawer bottomtemplate gives them, when it
+    // overrides that). The drawer moves them into the footer and gives each one its action
+    // (renderEntryFooter).
     // formulize-multipage-nav carries the paging state the actions and the tab strip need.
     //
     // Draw the multi-page tab strip, mirroring the full screen form's tabs: one tab per
@@ -791,13 +792,13 @@
             footEl.appendChild(indicator);
         }
 
-        // Then the buttons, in the order the theme's drawer bottomtemplate printed them.
+        // Then the buttons, in the order the server printed them.
         // They are `<input type="button" class="formulize-form-submit-button">` named for
         // what they do, the same element the full screen bar uses, so everything visual
         // comes from the rules the themes already apply to that bar, including the role
-        // colours keyed off the name (Lyris paints `[name^="save"]` accent). Subform entries
-        // rendered inline in the form print the template too, with no buttons in it, so
-        // every container goes once its buttons are out.
+        // colours keyed off the name (Lyris paints `[name^="save"]` accent). A theme's drawer
+        // bottomtemplate also prints an empty container for each subform entry rendered
+        // inline in the form, so every container goes once its buttons are out.
         Array.prototype.slice.call(bodyEl.querySelectorAll('.formulize-drawer-buttons')).forEach(function (container) {
             Array.prototype.slice.call(container.querySelectorAll('.formulize-form-submit-button')).forEach(function (btn) {
                 btn.addEventListener('click', footerAction(btn.name, nav, inSub));
