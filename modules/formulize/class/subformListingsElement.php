@@ -1018,11 +1018,11 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     // in formdisplay.php - but the token is left as-is because it also travels over the
     // wire as target_sub_open_modal, which existing custom code may post.
     $viewType = ($showViewButtons == 2 OR $showViewButtons == 3) ? 'Modal' : '';
-    $addViewType = ($showViewButtons == 2) ? 'Modal' : '';
-    // without View buttons, the element's new_entry_mode says whether new entries open in the drawer
-    if(!$showViewButtons AND $subform_element_object AND isset($subform_element_object->ele_value['new_entry_mode']) AND $subform_element_object->ele_value['new_entry_mode'] == 'drawer') {
-        $addViewType = 'Modal';
-    }
+    // new entries open in the drawer only when the element's setting for new entries says so (see formulize_subformNewEntryMode)
+    $addViewType = formulize_subformNewEntryMode(array(
+        3 => $showViewButtons,
+        'new_entry_mode' => ($subform_element_object AND isset($subform_element_object->ele_value['new_entry_mode'])) ? $subform_element_object->ele_value['new_entry_mode'] : 'row'
+    )) == 'drawer' ? 'Modal' : '';
 
     // A subform is drawn in a frame of its own (.formulize-subform), like a small list: a header holding the caption
     // and the add and filter controls, a selection bar that covers the header while entries are checked (so the delete
