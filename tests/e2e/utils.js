@@ -237,8 +237,8 @@ export async function saveFormulizeForm(page, buttonText = 'Save', timeout = 120
     const element = document.getElementById('savingmessage');
     return element && window.getComputedStyle(element).display === 'none';
   }, { timeout: 120000 });
-	// Ensure the data submitted error does not occurr
-	await expect(page.getByText('Error: the data you submitted')).not.toBeVisible({ timeout: 10000 });
+	// Ensure the save was not refused
+	await expect(page.getByText('Your changes were not saved.')).not.toBeVisible({ timeout: 10000 });
 }
 
 /**
@@ -263,8 +263,8 @@ export async function waitForWorkingMessage(page) {
 		return !element || window.getComputedStyle(element).display === 'none';
 	}, { timeout: 120000 }).catch(() => {});
 	await page.waitForLoadState('networkidle').catch(() => {});
-	// Ensure the data submitted error does not occurr
-	await expect(page.getByText('Error: the data you submitted')).not.toBeVisible({ timeout: 10000 });
+	// Ensure the save was not refused
+	await expect(page.getByText('Your changes were not saved.')).not.toBeVisible({ timeout: 10000 });
 }
 
 /**

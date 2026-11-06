@@ -620,9 +620,9 @@ function mergeUsersCompositeData($data, $systemFid) {
 		if ($view_globalscope) {
 			$eauScope = "";
 		} elseif ($view_groupscope) {
-			$eauScope = buildScope("group", $xoopsUser, $eauFid);
+			list($eauScope) = buildScope("group", $xoopsUser, $eauFid);
 		} else {
-			$eauScope = buildScope("mine", $xoopsUser, $eauFid);
+			list($eauScope) = buildScope("mine", $xoopsUser, $eauFid);
 		}
 
 		// Query the EAU form's data table to find entries matching our UIDs
