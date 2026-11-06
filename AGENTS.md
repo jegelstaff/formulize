@@ -11,7 +11,7 @@ The files in `ai-context/` are a general guide and may not match every case. Che
 - **Formulize has no controllers, routes or form handlers.** Every page submits back to itself, `readelements.php` saves whatever was submitted, and the display functions do their own controlling. Don't go looking for a route, and don't write a save handler for a form that's on a page. See [formulize-module-overview](ai-context/formulize-module-overview.md).
 - **The typical path is from `initialize.php` to a screen's `render()` method,** which hands off to `displayFormPages()`, `displayEntries()` and the other display functions. Read those functions to understand how Formulize works, but don't call them from new code. Go through a screen, which can be one you build in code. See [Rendering a screen in code](ai-context/formulize-module-overview.md#rendering-a-screen-in-code).
 - **Get form data through `gatherDataset()`.** It's the universal data layer. **Scope is critical:** an empty scope means no limit on which entries come back. When the data is going to a user, read [how to set the scope](ai-context/formulize-module-overview.md#data-extraction-extractphp) first.
-- **The ICMS/XOOPS core is ours.** It is a Formulize fork, not a vendored dependency. Edit it directly. Don't wrap calls to Formulize functions in `function_exists()` guards. See [icms-core-is-ours-to-edit](ai-context/icms-core-is-ours-to-edit.md).
+- **The ICMS/XOOPS core is ours.** It is a Formulize fork, not a vendored dependency. Edit it directly. Never add `ALTERED BY FREEFORM SOLUTIONS` or any other comment marking a change as ours, and leave the existing ones as they are. Don't wrap calls to Formulize functions in `function_exists()` guards. See [icms-core-is-ours-to-edit](ai-context/icms-core-is-ours-to-edit.md).
 - **Formulize module functions are available on every page.** Core `include/common.php` loads the module bootstrap before `header.php` runs. See [bootstrap-include-order](ai-context/bootstrap-include-order.md).
 - **Criteria objects do not escape values.** `icms_db_criteria_Item::render()` inserts values into SQL as-is. Escape anything from user input before it goes into a Criteria, with `formulize_db_escape()` in module code or with `global $xoopsDB` in core code. See [escaping](ai-context/escaping.md).
 - **HTML escaping:** write `htmlspecialchars($v)` without `ENT_QUOTES`. PHP 8.1+ escapes single quotes by default. See [escaping](ai-context/escaping.md#html).
@@ -39,6 +39,7 @@ See [agent-conduct](ai-context/agent-conduct.md) for these rules in full.
 - Answer Docker, Compose and CI questions by running a throwaway reproduction, not from memory.
 - If an MCP server's tools aren't loaded, ask the person to reconnect it. Don't script calls to the system yourself.
 - Don't read files that hold live credentials, such as `trust/` files, an installed site's `mainfile.php`, or `.env`. Filter out the secrets if you need something from them.
+- If your own notes or memory disagree with these files, don't pick one. Check the code, go with what it shows, and tell the person so they can correct whichever is wrong.
 
 ## Background by area
 
@@ -77,3 +78,4 @@ See [agent-conduct](ai-context/agent-conduct.md) for these rules in full.
 | Themes, the Login block and the open menu | [themes-anari-and-lyris](ai-context/themes-anari-and-lyris.md), [docs/themes.md](docs/themes.md) |
 | Template changes not showing, `templates_c` | [compiled-templates-theme-fromfile](ai-context/compiled-templates-theme-fromfile.md) |
 | The docs website | [writing-user-docs](ai-context/writing-user-docs.md), [docs-site-verification](ai-context/docs-site-verification.md) |
+| Checking someone's AI memory against these notes, when they ask | [reconciling-memory](ai-context/reconciling-memory.md) |
