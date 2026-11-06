@@ -27,8 +27,10 @@
 //   target_sub_subformelement / numsubents
 //             - after the optional formulize_save, create new sub entries linked to the
 //               parent entry (same core helpers the full-page flow uses), then render the
-//               first new sub entry through the subform's display screen. The host swaps
-//               this response in as the current form (drawer "Add" flow).
+//               first new sub entry through the subform's display screen, which the host
+//               swaps in as the current form (drawer "Add" flow). When the subform element
+//               says new entries show up as rows, render the requested parent again instead,
+//               with the new rows in its subform (the meta's newSubEntriesAsRows is true).
 //   deletesubsflag / clonesubsflag + delbox* checkboxes
 //             - handled inside displayForm() during the re-render; no code here.
 
@@ -130,6 +132,7 @@ if(isset($_POST['formulize_save']) AND $_POST['formulize_save']) {
 // which is skipped for elements-only renders), then switch the render target to the first
 // new sub entry so the host can swap it in as the current form.
 $parentEntryResolved = 0;
+$newSubEntriesAsRows = false;
 $targetSub = (isset($_POST['target_sub']) AND intval($_POST['target_sub'])) ? intval($_POST['target_sub']) : 0;
 if($targetSub) {
     global $xoopsUser;
@@ -161,23 +164,38 @@ if($targetSub) {
             $newSubEntryId = intval($subEntriesWritten[0]);
         }
     }
-    // switch the render target to the new sub entry (blank new entry in the uid-link
-    // case where writeNewEntry creates nothing — linking then happens on save, as core does)
-    $fid = $targetSub;
-    $entry_id = $newSubEntryId ? $newSubEntryId : "";
-    $sid = 0;
-    if($subformElementObject AND $resolvedSid = get_display_screen_for_subform($subformElementObject)) {
-        $sid = intval($resolvedSid);
+    // The subform element's setting for new entries decides whether the new sub entry opens
+    // or shows up as a row, the same as on a full screen form: 'drawer' opens it, 'full_screen'
+    // opens it when its screen is a multipage screen (displayForm only jumps into those), and
+    // anything else adds a row to the subform. In the drawer, opening means showing it as the
+    // drawer's current form, with Back returning to the parent.
+    $subSid = $subformElementObject ? intval(get_display_screen_for_subform($subformElementObject)) : 0;
+    $subScreen = $subSid ? $screen_handler->get($subSid) : false;
+    $newEntryMode = $subformElementObject ? formulize_subformNewEntryMode($subformElementObject->getVar('ele_value')) : 'drawer';
+    $openNewSubEntry = ($newEntryMode == 'drawer' OR ($newEntryMode == 'full_screen' AND $subScreen AND $subScreen->getVar('type') == 'multiPage'));
+    // a row needs an entry to show, so in the uid-link case, where writeNewEntry creates nothing
+    // and linking happens on save, the blank new entry opens instead, as it always has
+    $newSubEntriesAsRows = (!$openNewSubEntry AND $newSubEntryId);
+    if($newSubEntriesAsRows) {
+        // render the parent again, as requested, so its subform shows the new rows. If the save
+        // above created the parent, show the entry it created.
+        if(!$entry_id AND $parentEntryResolved) {
+            $entry_id = $parentEntryResolved;
+        }
+    } else {
+        // switch the render target to the new sub entry
+        $fid = $targetSub;
+        $entry_id = $newSubEntryId ? $newSubEntryId : "";
+        $sid = $subSid;
+        if($screen = $subScreen) {
+            $fid  = $screen->getVar('fid');
+            $frid = $screen->getVar('frid');
+        }
+        // page state posted along with the parent's fields belongs to the parent, not the sub
+        unset($_POST['formulize_currentPage'], $_POST['formulize_prevPage']);
+        $targetPage = 0;
+        $prevPage = 0;
     }
-    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-    if($screen = ($sid ? $screen_handler->get($sid) : false)) {
-        $fid  = $screen->getVar('fid');
-        $frid = $screen->getVar('frid');
-    }
-    // page state posted along with the parent's fields belongs to the parent, not the sub
-    unset($_POST['formulize_currentPage'], $_POST['formulize_prevPage']);
-    $targetPage = 0;
-    $prevPage = 0;
 }
 
 if($screen AND $targetPage > 0) {
@@ -261,11 +279,14 @@ if($screen) {
 // entryId/fid let the host track what is actually loaded (the add-new flow renders a
 // just-created sub entry the client has never seen); parentEntryId reports the resolved
 // parent id so a host that opened a brand-new parent can fix up its navigation state.
+// newSubEntriesAsRows says the add-new flow rendered the parent again, with the new sub
+// entries as rows in its subform, rather than the first new sub entry.
 $drawerMeta = "<script type=\"application/json\" class=\"formulize-drawer-meta\">".json_encode(array(
     'title' => $drawerTitle,
     'fid' => intval($fid),
     'entryId' => $entry_id ? intval($entry_id) : 'new',
     'parentEntryId' => $parentEntryResolved ? $parentEntryResolved : null,
+    'newSubEntriesAsRows' => $newSubEntriesAsRows ? true : false,
 ))."</script>\n";
 
 // Subform interaction stubs. The subform element's markup hardcodes onclick calls to
