@@ -51,27 +51,35 @@ git clone {{ site.github.repository_url }}.git .
 git checkout -b my-formulize-branch
 ```
 
-### Important: block web access to the .git folder
+### Important: block web access to .git and other hidden files
 
 __Do this before you run the installer, and before your site is public.__
 
-Cloning puts a ```.git``` folder in the root of your website. It holds a complete copy of your site's files and their history, including anything you commit to your branch later. If it can be reached through a web browser, anyone can download it.
+Cloning puts a ```.git``` folder in the root of your website. It holds a complete copy of your site's files and their history, including anything you commit to your branch later. If it can be reached through a web browser, anyone can download it. Other files and folders with names that start with a dot, such as ```.github```, don't belong on the web either, and the ```tests``` folder is only for development, so block those too.
 
-On an Apache server, add this line to the ```.htaccess``` file in the root of your website. Create the file if it isn't there.
-
-```
-RedirectMatch 404 /\.git
-```
-
-On an nginx server, add this inside the ```server``` block for your site, then reload nginx:
+On an Apache server, add these lines to the ```.htaccess``` file in the root of your website, above any other rewrite rules. Create the file if it isn't there. If it already has ```RewriteEngine On```, you don't need to add that line again.
 
 ```
-location ~ /\.git {
+RewriteEngine On
+RewriteRule ^tests(/|$) - [R=404,L]
+RedirectMatch 404 /\.(?!well-known)
+```
+
+On an nginx server, add this inside the ```server``` block for your site, then reload nginx. If your website is in a subfolder of its domain, add the subfolder to the second rule, such as ```^/system/tests(/|$)```.
+
+```
+location ~ /\.(?!well-known) {
+    return 404;
+}
+
+location ~ ^/tests(/|$) {
     return 404;
 }
 ```
 
-To check that it worked, go to ```https://www.mysite.com/.git/config``` in a web browser (use your own site's address). You should see a "Not Found" page. If the browser shows or downloads a file instead, the ```.git``` folder is still accessible, so check the setting above before going any further.
+Both leave the ```.well-known``` folder open, because services that issue security certificates need to reach it.
+
+To check that it worked, go to ```https://www.mysite.com/.git/config``` and ```https://www.mysite.com/tests/README.md``` in a web browser (use your own site's address). You should see a "Not Found" page for both. If the browser shows or downloads a file instead, those files are still accessible, so check the settings above before going any further.
 
 ### Important: make sure the uploads folder can't run files
 

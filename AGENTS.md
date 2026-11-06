@@ -38,6 +38,7 @@ See [agent-conduct](ai-context/agent-conduct.md) for these rules in full.
 - Don't claim "the only caller" or "never runs" based on a search that excluded some results.
 - Answer Docker, Compose and CI questions by running a throwaway reproduction, not from memory.
 - If an MCP server's tools aren't loaded, ask the person to reconnect it. Don't script calls to the system yourself.
+- Don't read files that hold live credentials, such as `trust/` files, an installed site's `mainfile.php`, or `.env`. Filter out the secrets if you need something from them.
 
 ## Background by area
 

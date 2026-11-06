@@ -47,3 +47,9 @@ When a question has a testable yes/no answer and Docker is available, build a mi
 ## Use the real tools
 
 If an MCP server's tools are missing or out of date, ask the person to reconnect it, or to restart. Don't work around it by writing a script that calls the system with credentials from a configuration file. A diagnostic that uses the server's own local tools is fine.
+
+## Keep credentials out of the conversation
+
+Don't read a file that holds live credentials, such as anything in a site's `trust/` folder, an installed site's `mainfile.php`, a `.env` file, or a settings file with API keys. Whatever a tool prints goes into the conversation unredacted, is sent again with every later request, and stays in the transcript. Once a secret is there, the only remedy is to replace it.
+
+If you need something from one of these files, filter it: use `grep` for the one line you need, or `grep -v` to drop lines with passwords, salts, tokens and keys, or mask the values with `sed`. Tell any subagent to do the same. Don't copy a credential into a note, commit, log or report. The local Docker setup's test logins aren't secrets.

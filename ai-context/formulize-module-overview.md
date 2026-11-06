@@ -134,6 +134,7 @@ $screen_handler->render($screen, '', '');
 - **Include `readelements.php` before rendering.** `initialize.php` does this for ordinary pages, and on your own page nothing is saved without it.
 - **The defaults come from `setDefaultListScreenVars($screen, $viewEntryScreenId, $formObject)` and `setDefaultFormScreenVars($screen, $formObject)`.** They're what a new form's default screens are set up with, so read them to see what's available to change.
 - **A form screen's defaults are one empty page,** so set `pages` and `pagetitles` as well.
+- **Template screens are the exception.** Their code may call `displayForm()` directly, and `templateScreen.php` allows for that, but a screen's `render()` method is preferred.
 - **`render()` takes different parameters for each type.** A list takes `($screen, $entry, $loadThisView)`, and a form takes `($screen, $entry, $settings, $elements_only)`.
 
 ---

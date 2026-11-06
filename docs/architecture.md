@@ -101,11 +101,13 @@ every Formulize element on the page, wherever they appeared, and checks the secu
 writes the entries the user is allowed to edit, updates derived values, and sends notifications.
 
 This is why a form in a page doesn't need a handler of its own. To save entries from your own code
-instead, use `writeEntry()` on the data handler:
+instead, use [`formulize_writeEntry()`](../functions/formulize_writeEntry/). It records the groups
+that own a new entry, which the data handler's own `writeEntry()` doesn't do. It doesn't check
+permissions or update derived values, so do those yourself:
 
 ```php
-$dataHandler = new formulizeDataHandler($fid);
-$entryId = $dataHandler->writeEntry('new', array('first_name' => 'Ada'));
+$entryId = formulize_writeEntry(array('first_name' => 'Ada'), 'new');
+formulize_updateDerivedValues($entryId, $fid);
 ```
 
 ## Reading data
@@ -144,7 +146,7 @@ where to do it:
 | Change how a list or form is laid out | The screen's [templates](../templates/). They're PHP, and the values for the page are available as ordinary variables. |
 | Change how the whole site looks | The [Appearance editor](../appearance_editor/), or [your own theme](../themes/). |
 | Style anything users see | The [Formulize UI](../formulize_ui/) classes and tokens. Templates and themes are built with them. |
-| Build a page that isn't a list or a form | A template screen. It's yours to fill with whatever you need, and it can call `displayForm()` and the other display functions. |
+| Build a page that isn't a list or a form | A template screen. It's yours to fill with whatever you need. To show a form or list inside it, call a screen's `render()` method. Template screens may also call `displayForm()` directly, but `render()` is preferred. |
 | Calculate a value from other values | A derived value element. |
 | Run code when an entry is saved | The form's custom code that runs before and after saving. |
 | Add a new kind of field | [Your own element class](../custom_form_elements/). |
