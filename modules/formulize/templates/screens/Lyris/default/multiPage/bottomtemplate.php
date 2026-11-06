@@ -6,9 +6,8 @@
 // visual order all agree — the alignment itself is done in the theme's CSS
 // (`#multipage-controls`), not by reversing the flex direction here.
 //
-// Save is the last button in the bar (issue #1055), so the primary action sits at
-// the far right. The right drawer's footer (drawer.js renderEntryFooter) puts it
-// last too, so the two surfaces keep the same order.
+// Save comes last, at the far right. The drawer takes its button order from
+// this template too, so the two surfaces match.
 
 print "
 <div style='clear: both;'></div>

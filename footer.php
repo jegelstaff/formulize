@@ -141,8 +141,6 @@ if (isset($xoopsOption['theme_use_smarty']) && $xoopsOption['theme_use_smarty'] 
 	// language files, with English fallbacks inside the script itself.
 	if (function_exists('formulize_get_file_version')) {
 		$drawerStrings = array();
-		if (defined('_formulize_SAVE')) { $drawerStrings['save'] = _formulize_SAVE; }
-		if (defined('_CANCEL')) { $drawerStrings['cancel'] = _CANCEL; }
 		if (defined('_BACK')) { $drawerStrings['back'] = _BACK; }
 		if (defined('_formulize_CONFIRM_DISCARD_CHANGES')) { $drawerStrings['discardChanges'] = _formulize_CONFIRM_DISCARD_CHANGES; }
 		if ($drawerStrings) {
