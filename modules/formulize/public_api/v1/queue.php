@@ -54,6 +54,10 @@ switch($method) {
 		$queue = ($id AND $id != 'all') ? $queue_handler->get($id) : null;
 		ob_start();
 		$files = $queue_handler->process($queue);
+		// processing all the queues also sends webhooks, and runs background rules, that are due
+		if(!$queue) {
+			formulize_ruleProcessOutbox(50);
+		}
 		ob_end_clean();
 		print json_encode($files);
 		break;

@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 26,
+	'dbversion' => 28,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -87,7 +87,12 @@ $modversion['tables'] = array(
   "formulize_digest_data",
   "formulize_passcodes",
   "tfa_codes",
-  "formulize_ai_keys"
+  "formulize_ai_keys",
+  "formulize_rules",
+  "formulize_rule_outbox",
+  "formulize_rule_log",
+  "formulize_summary_definitions",
+  "formulize_summaries"
 );
 
 $modversion['formulize_exportable_tables'] = array(
@@ -798,6 +803,18 @@ $modversion['templates'][] = array(
 	'file' => 'admin/form_advanced_calculations.html',
 	'description' => '');
 $modversion['templates'][] = array(
+	'file' => 'admin/form_rules.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/rule.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/rule_activity.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/rule_values.html',
+	'description' => '');
+$modversion['templates'][] = array(
 	'file' => 'admin/application_relationships.html',
 	'description' => '');
 $modversion['templates'][] = array(
@@ -1407,6 +1424,15 @@ $modversion['config'][] = array(
 	'valuetype' => 'array',
 	'default' => array(1),
 );
+// AI in rules: the "Ask AI" step, using the site-wide provider, model and key (see include/rules.php)
+$modversion['config'][] = array(
+	'name' => 'formulizeAIRulesEnabled',
+	'title' => '_MI_formulize_AIRULESENABLED',
+	'description' => '_MI_formulize_AIRULESENABLED_DESC',
+	'formtype' => 'yesno',
+	'valuetype' => 'int',
+	'default' => 0,
+);
 $modversion['config'][] = array(
 	'name' => 'formulizeMCPServerEnabled',
 	'title' => '_MI_formulize_MCPSERVERENABLED',
@@ -1785,3 +1811,12 @@ if(isset($GLOBALS['formulize_notificationSubjectOverride'])) {
 	$modversion['notification']['event'][2]['mail_subject'] = $GLOBALS['formulize_notificationSubjectOverride'];
 	$modversion['notification']['event'][3]['mail_subject'] = $GLOBALS['formulize_notificationSubjectOverride'];
 }
+
+// every 5 minutes, send webhooks and run background rules that are waiting or due to be retried (see include/rules.php)
+$modversion['autotasks'][] = array(
+	'enabled' => '1',
+	'repeat' => '0',
+	'interval' => '5',
+	'onfinish' => '0',
+	'name' => 'Formulize rules: webhooks and background work',
+	'code' => 'include/rules_autotask.php');

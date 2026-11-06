@@ -286,6 +286,8 @@ class formulizeDataHandler {
         foreach($ids as $id) {
             $existing_values = $formObject->onDeletePrep($id);
         }
+		// rules for deletes check their conditions, and keep a copy of the entries, before the rows are gone (see include/rules.php)
+		formulize_rulesPrepareDelete($this->fid, $ids);
 		$sql = "DELETE FROM " .$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . implode(" OR entry_id = ", $ids);
 		if(!$deleteSuccess = $xoopsDB->query($sql)) {
 			return false;
@@ -294,6 +296,8 @@ class formulizeDataHandler {
         foreach($ids as $id) {
             $existing_values = $formObject->onDelete($id);
         }
+		formulize_rulesRecordDelete($this->fid, $ids);
+		formulize_summariesRecordChange($this->fid);
 		$sql = "DELETE FROM " . $xoopsDB->prefix("formulize_entry_owner_groups") . " WHERE fid=".formulize_db_escape($this->fid)." AND (entry_id = " . implode(" OR entry_id = ", array_filter($ids, 'is_numeric')) . ")";
 		if(!$deleteOwernshipSuccess = $xoopsDB->query($sql)) {
 			print "Error: could not delete entry ownership information for form ". formulize_db_escape($this->fid) . ", entries: " . implode(", ", array_filter($ids, 'is_numeric')) . ". Check the DB queries debug info for details.";
@@ -1436,6 +1440,11 @@ class formulizeDataHandler {
 			}
 			$formulize_existingValues[$this->fid][$entry_id]['after_save'] = $clean_element_values;
 		}
+
+		// let the rules know about this write, so they run for it at the latest by the end of the request (see include/rules.php),
+		// and the summaries that cover this form, so they are refreshed once things are quiet (see include/summaries.php)
+		formulize_rulesRecordWrite($this->fid, $entry_to_return, ($entry_id == "new"), $existing_values);
+		formulize_summariesRecordChange($this->fid);
 
 		$formObject->onAfterSave($entry_to_return, $clean_element_values, $existing_values, $entry_id); // last param, original entry id, will be 'new' if new save
 

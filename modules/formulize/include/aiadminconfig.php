@@ -299,6 +299,8 @@ function formulizeAI_toolSets() {
         // lookup/inspection tools live in formInspect below instead, even when they read
         // form/screen/group/user structure rather than entry data, because Manage forms
         // is meant to be additive to Read/Write, not a grab-bag of "everything else".
+        // The summary tools are registered last of all (mcp/summaries.php): the ones that
+        // set up and write summaries are here, and the ones that read them are in formInspect.
         'formMgmt' => array(
             'change_form_screen_page_order', 'change_menu_item_order',
             'create_derived_value_element', 'create_form', 'create_form_screen',
@@ -306,19 +308,20 @@ function formulizeAI_toolSets() {
             'create_list_screen', 'create_menu_item', 'create_selector_element',
             'create_static_content_element', 'create_subform_interface',
             'create_table_of_elements', 'create_text_box_element', 'create_user_list_element',
-            'create_users',
-            'delete_element',
+            'create_summary', 'create_users',
+            'delete_element', 'delete_summary',
             'get_custom_code', 'get_documentation', 'get_form_permissions_by_group',
             'query_the_database_directly',
-            'read_system_activity_log',
+            'read_system_activity_log', 'refresh_summary',
             'set_form_permission_inheritance', 'set_form_permissions',
             'update_application_code', 'update_application_forms',
             'update_derived_value_element', 'update_form', 'update_form_code',
             'update_form_screen', 'update_group_members', 'update_groups',
             'update_linked_list_element', 'update_list_element', 'update_list_screen',
             'update_menu_item', 'update_selector_element', 'update_static_content_element',
-            'update_subform_interface', 'update_table_of_elements',
+            'update_subform_interface', 'update_summary', 'update_table_of_elements',
             'update_text_box_element', 'update_user_list_element', 'update_users',
+            'write_summary',
         ),
 
         // Everything the MCP registry defines *up to and including* test_connection (see
@@ -328,10 +331,10 @@ function formulizeAI_toolSets() {
         // formulizeAI_toolCategoryNames().
         'formInspect' => array(
             'get_application_details', 'get_element_details', 'get_entries_from_form',
-            'get_form_details', 'get_screen_details',
+            'get_form_details', 'get_screen_details', 'get_summary',
             'list_a_users_groups', 'list_applications', 'list_form_connections',
             'list_forms', 'list_group_members', 'list_groups', 'list_menu_items',
-            'list_screens', 'list_users',
+            'list_screens', 'list_summaries', 'list_users',
             'prepare_database_values_for_human_readability', 'test_connection',
         ),
 

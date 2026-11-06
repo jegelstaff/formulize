@@ -518,3 +518,98 @@ CREATE TABLE formulize_ai_keys (
   PRIMARY KEY (uid, provider)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+
+CREATE TABLE formulize_rules (
+  rule_id int(11) unsigned NOT NULL auto_increment,
+  fid int(11) NOT NULL default 0,
+  name varchar(255) NOT NULL default '',
+  trigger_type varchar(50) NOT NULL default '',
+  trigger_settings text NULL,
+  conditions text NULL,
+  steps mediumtext NULL,
+  active tinyint(1) NOT NULL default 1,
+  weight int(11) NOT NULL default 0,
+  PRIMARY KEY (`rule_id`),
+  INDEX i_fid_trigger (`fid`, `trigger_type`)
+) ENGINE=InnoDB;
+
+CREATE TABLE formulize_rule_outbox (
+  outbox_id int(11) unsigned NOT NULL auto_increment,
+  rule_id int(11) NOT NULL default 0,
+  fid int(11) NOT NULL default 0,
+  entry_id int(11) NOT NULL default 0,
+  event varchar(50) NOT NULL default '',
+  channel varchar(20) NOT NULL default 'webhook',
+  target varchar(2000) NOT NULL default '',
+  payload mediumtext NULL,
+  status varchar(20) NOT NULL default 'pending',
+  attempts int(11) NOT NULL default 0,
+  response_code int(11) NOT NULL default 0,
+  last_error text NULL,
+  created_at datetime NULL default NULL,
+  next_attempt_at datetime NULL default NULL,
+  delivered_at datetime NULL default NULL,
+  PRIMARY KEY (`outbox_id`),
+  INDEX i_status_next (`status`, `next_attempt_at`),
+  INDEX i_rule_id (`rule_id`),
+  INDEX i_fid (`fid`)
+) ENGINE=InnoDB;
+
+CREATE TABLE formulize_rule_log (
+  log_id int(11) unsigned NOT NULL auto_increment,
+  rule_id int(11) NOT NULL default 0,
+  fid int(11) NOT NULL default 0,
+  entry_id int(11) NOT NULL default 0,
+  event varchar(50) NOT NULL default '',
+  uid int(11) NOT NULL default 0,
+  outcome text NULL,
+  created_at datetime NULL default NULL,
+  PRIMARY KEY (`log_id`),
+  INDEX i_rule_id (`rule_id`),
+  INDEX i_created_at (`created_at`)
+) ENGINE=InnoDB;
+
+CREATE TABLE formulize_summary_definitions (
+  summary_id int(11) unsigned NOT NULL auto_increment,
+  name varchar(255) NOT NULL default '',
+  form_id int(11) NOT NULL default 0,
+  include_connected_forms tinyint(1) NOT NULL default 0,
+  only_entries_where text NULL,
+  level varchar(20) NOT NULL default 'whole_scope',
+  group_by varchar(255) NOT NULL default '',
+  built_from_summary_id int(11) NOT NULL default 0,
+  instructions text NULL,
+  written_by varchar(20) NOT NULL default 'server_ai',
+  keep_current varchar(20) NOT NULL default 'on_change',
+  wait_minutes int(11) NOT NULL default 10,
+  refresh_every_minutes int(11) NOT NULL default 1440,
+  readable_by_groups text NULL,
+  all_scope_viewers tinyint(1) NOT NULL default 1,
+  max_length int(11) NOT NULL default 2000,
+  active tinyint(1) NOT NULL default 1,
+  created_uid int(11) NOT NULL default 0,
+  created_at datetime NULL default NULL,
+  updated_at datetime NULL default NULL,
+  PRIMARY KEY (`summary_id`),
+  INDEX i_form_id (`form_id`)
+) ENGINE=InnoDB;
+
+CREATE TABLE formulize_summaries (
+  text_id int(11) unsigned NOT NULL auto_increment,
+  summary_id int(11) NOT NULL default 0,
+  summary_name varchar(255) NOT NULL default '',
+  form_id int(11) NOT NULL default 0,
+  entry_id int(11) NOT NULL default 0,
+  group_value varchar(255) NOT NULL default '',
+  summary_text mediumtext NULL,
+  as_of datetime NULL default NULL,
+  covers mediumtext NULL,
+  written_by varchar(255) NOT NULL default '',
+  written_uid int(11) NOT NULL default 0,
+  is_current tinyint(1) NOT NULL default 1,
+  created_at datetime NULL default NULL,
+  PRIMARY KEY (`text_id`),
+  INDEX i_summary_piece (`summary_id`, `entry_id`, `group_value`(100), `is_current`),
+  INDEX i_form_id (`form_id`)
+) ENGINE=InnoDB;
+

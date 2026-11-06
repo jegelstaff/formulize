@@ -575,6 +575,8 @@ function formulize_resolveConfigView($subject, $requestedView) {
  *   single condition  — assoc array with a 'name' key
  *   AND list          — indexed array of conditions (default, op='all')
  *   OR wrapper        — array('op'=>'any', 'conditions'=>[...])
+ * A list may also contain a nested wrapper (with 'conditions' and no 'name'), evaluated as
+ * one condition, so "(A or B) and C" can be written. Only use one level of nesting.
  * Each condition's 'value' may be a scalar or an array. A condition may also carry
  * its own 'op' of '=' (the default) or '!=', which inverts that one condition:
  * with an array of values, '!=' means none of them match.
@@ -606,6 +608,13 @@ function formulize_normalizeConfigConditions($showWhen, $defaultScope) {
     }
     $conditions = array();
     foreach ($rawList as $cond) {
+        // a nested group, ie: an 'any' wrapper inside an AND list, for "(A or B) and C"
+        if (is_array($cond) && !isset($cond['name']) && isset($cond['conditions'])) {
+            if ($group = formulize_normalizeConfigConditions($cond, $defaultScope)) {
+                $conditions[] = array('group' => $group, 'negate' => false);
+            }
+            continue;
+        }
         if (!is_array($cond) || !isset($cond['name'])) {
             continue;
         }
@@ -640,6 +649,16 @@ function formulize_configConditionsPass($wrapper) {
     }
     $anyMode = (isset($wrapper['op']) && $wrapper['op'] === 'any');
     foreach ($wrapper['conditions'] as $cond) {
+        if (isset($cond['group'])) {
+            $hit = formulize_configConditionsPass($cond['group']);
+            if ($anyMode && $hit) {
+                return true;
+            }
+            if (!$anyMode && !$hit) {
+                return false;
+            }
+            continue;
+        }
         $ctrl = formulize_resolveConfigItem($cond['name'], $cond['scope']);
         $current = $ctrl ? $ctrl->getConfValueForOutput() : null;
         $hit = false;
@@ -766,9 +785,16 @@ function formulize_configSettingsScriptBlock() {
         var conditions = wrapper.conditions || [];
         for(var i=0; i<conditions.length; i++){
             var cond = conditions[i];
+            var hit = false;
+            if(cond.group){
+                // a nested group - must match formulize_configConditionsPass()
+                hit = fzConditionsPass(cond.group);
+                if(anyMode && hit){ return true; }
+                if(!anyMode && !hit){ return false; }
+                continue;
+            }
             var current = fzGetSettingValue(cond.name);
             var values = cond.values || [];
-            var hit = false;
             if(current && current.constructor === Array){
                 for(var a=0; a<current.length; a++){
                     for(var b=0; b<values.length; b++){
