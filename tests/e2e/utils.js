@@ -237,8 +237,8 @@ export async function saveFormulizeForm(page, buttonText = 'Save', timeout = 120
     const element = document.getElementById('savingmessage');
     return element && window.getComputedStyle(element).display === 'none';
   }, { timeout: 120000 });
-	// Ensure the data submitted error does not occurr
-	await expect(page.getByText('Error: the data you submitted')).not.toBeVisible({ timeout: 10000 });
+	// Ensure the save was not refused
+	await expect(page.getByText('Your changes were not saved.')).not.toBeVisible({ timeout: 10000 });
 }
 
 /**
@@ -263,8 +263,8 @@ export async function waitForWorkingMessage(page) {
 		return !element || window.getComputedStyle(element).display === 'none';
 	}, { timeout: 120000 }).catch(() => {});
 	await page.waitForLoadState('networkidle').catch(() => {});
-	// Ensure the data submitted error does not occurr
-	await expect(page.getByText('Error: the data you submitted')).not.toBeVisible({ timeout: 10000 });
+	// Ensure the save was not refused
+	await expect(page.getByText('Your changes were not saved.')).not.toBeVisible({ timeout: 10000 });
 }
 
 /**
@@ -535,7 +535,7 @@ export async function waitForAdminPageReady(page) {
  * Waits for a conditional element to appear or be updated after a trigger action
  * Does not work for conditional elements that disappear on a trigger action - will need a different function for that
  * @param {Page} page - Playwright page object
- * @param {string} className - The class name of the conditional element (without the dot)
+ * @param {string} handle - The element handle of the conditional element, not of the element the action changes
  * @param {Function} triggerAction - An async function that triggers the conditional behavior
  */
 export async function conditionalElementReady(page, handle, triggerAction) {
@@ -590,7 +590,7 @@ export async function conditionalElementReady(page, handle, triggerAction) {
 			if (!window._stableCheckStart) {
 				window._stableCheckStart = Date.now();
 			}
-			// Check if it's been stable for 300ms
+			// Check if it's been stable for a second
 			return Date.now() - window._stableCheckStart > 1000;
 		} else {
 			// Reset the timer if it goes back to busy

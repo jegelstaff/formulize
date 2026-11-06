@@ -25,7 +25,7 @@ title: Updating Formulize
    git stash pop
    ```
 
-   If you use ```git``` on your website, make sure web access to the ```.git``` folder is blocked. Go to ```https://www.mysite.com/.git/config``` (use your own site's address). You should see a "Not Found" page. If you don't, [block access to the .git folder](/deploying_a_website/#important-block-web-access-to-the-git-folder) now.
+   If you use ```git``` on your website, make sure web access to hidden files is blocked. Go to ```https://www.mysite.com/.git/config``` and ```https://www.mysite.com/.github/workflows/e2e-test.yml``` (use your own site's address). You should see a "Not Found" page for both. If either one is accessible, see [blocking web access to .git and other hidden files](/documentation/deploying_a_website/#important-block-web-access-to-git-and-other-hidden-files).
 
 3. Make sure [the folders that need to be writable](../writable_folders) are writable by the web server
 
