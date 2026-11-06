@@ -12,11 +12,11 @@ if (!defined('XOOPS_ROOT_PATH')) {
 //
 // A new site gets these from sql/mysql.sql.
 //
-// Gated to run once, when the stored dbversion is below 25.
+// Gated to run once, when the stored dbversion is below 28.
 function formulize_patch_015_rules($prev_dbversion, $required_dbversion) {
     global $xoopsDB;
 
-    if ($prev_dbversion >= 25) {
+    if ($prev_dbversion >= 28) {
         return true; // already applied
     }
 
