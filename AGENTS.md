@@ -2,7 +2,11 @@
 
 Formulize is a platform for creating data-driven applications. It is written primarily in PHP. It runs as a module (`modules/formulize/`) inside a fork of the ImpressCMS/XOOPS CMS, which lives in the same repository (`libraries/icms/`, `kernel/`, `class/`, `include/`). The database is MariaDB, but it is also compatible with MySQL. The core ICMS system uses Smarty for templating. Formulize's screen templates are plain PHP.
 
-This file holds the rules that apply to almost every change. Background on specific parts of the system is in [`ai-context/`](ai-context/). Unless a change is small and self-contained, start with [architecture-overview](ai-context/architecture-overview.md) for how the whole system fits together, then [formulize-module-overview](ai-context/formulize-module-overview.md) for how it behaves. Read the relevant file before working in any area. The developer documentation in [`docs/`](docs/) covers more, and [`docs/developer.html`](docs/developer.html) lists its pages.
+This file holds the rules that apply to almost every change. Background on specific parts of the system is in [`ai-context/`](ai-context/). The developer documentation in [`docs/`](docs/) covers more, and [`docs/developer.html`](docs/developer.html) lists its pages.
+
+**Before you start on a feature, a code change, or a question** about how Formulize works or how to build something, find relevant topics in the table below, then open and read the files for them. A search of these notes isn't enough, because it only finds lines using your words and misses the explanation around them.
+
+If nothing in the table matches, or the question spans several topics, or you don't know where something lives, start with [architecture-overview](ai-context/architecture-overview.md) for how the whole system fits together, then [formulize-module-overview](ai-context/formulize-module-overview.md) for how it behaves.
 
 The files in `ai-context/` are a general guide and may not match every case. Check them against the code when implementing features. When you change them, keep each topic in one file and link to it from the others, so copies can't drift apart.
 
@@ -29,28 +33,45 @@ The files in `ai-context/` are a general guide and may not match every case. Che
 - **Don't build on one theme's internals.** Anari was introduced for Formulize 7. Lyris was introduced with Formulize 8.30 and is intended as the standard theme into the future; use Formulize-level contracts. See [themes-anari-and-lyris](ai-context/themes-anari-and-lyris.md).
 - **Front-facing markup and styling follow Formulize UI.** Read its reference before writing HTML or CSS for anything users see, use only the `fz-` classes and tokens it lists, and say in your report that you followed it. See [formulize-ui](ai-context/formulize-ui.md).
 
+## Writing a change
+
+- Read [coding-guidelines](ai-context/coding-guidelines.md) before you write any code. It's short enough to read every time, and it applies to every change.
+- Read the existing code first, and match its patterns and style. Don't introduce a new pattern unless you have to.
+- Use handlers, not direct SQL. If the handler that owns a table lacks what you need, add a method to it.
+- Validate anything that comes from a user, and check permissions before acting on it.
+
+## Before you finish a change
+
+- Try it as an anonymous visitor, a regular user and an admin, and with invalid input, missing parameters and ids that don't exist.
+- Check that input is validated, output is escaped, permissions are checked, and errors are handled.
+- Leave no debug code behind, such as `var_dump`, `print_r`, `die` or stray `error_log()` calls.
+- Put tests in the same branch as the code they cover. Work in a branch off `master`, with one feature or fix per branch. See [Version Control](ai-context/coding-guidelines.md#version-control).
+
 ## How to work safely
 
 See [agent-conduct](ai-context/agent-conduct.md) for these rules in full.
 
 - To check whether a guard holds, test that the action is refused. Don't run the destructive operation and rely on restoring afterwards.
+- Before running anything that could change data, take a database dump, because a transaction won't undo everything. Never aim a destructive test at a system group or a real account.
 - Test auth, 2FA and permission flows against a disposable user, never a real account.
 - Don't claim "the only caller" or "never runs" based on a search that excluded some results.
 - Answer Docker, Compose and CI questions by running a throwaway reproduction, not from memory.
+- Search the current files before git history. Keep a history search to a path, and don't use `--all`. `git log -S` across every branch can run for minutes here.
 - If an MCP server's tools aren't loaded, ask the person to reconnect it. Don't script calls to the system yourself.
 - Don't read files that hold live credentials, such as `trust/` files, an installed site's `mainfile.php`, or `.env`. Filter out the secrets if you need something from them.
 - If your own notes or memory disagree with these files, don't pick one. Check the code, go with what it shows, and tell the person so they can correct whichever is wrong.
 
-## Background by area
+## Background by topic
 
-| Working on | Read |
+| Topic or question | Read |
 |---|---|
 | Overall architecture, file layout, request flow | [architecture-overview](ai-context/architecture-overview.md), [docs/code_flow.md](docs/code_flow.md) |
 | How pages save and draw, screens, permissions | [formulize-module-overview](ai-context/formulize-module-overview.md) |
+| The ICMS / XOOPS core, its services, objects, bootstrapping, etc | [architecture-overview](ai-context/architecture-overview.md), [icms-core-is-ours-to-edit](ai-context/icms-core-is-ours-to-edit.md) |
 | Handlers, objects, `getVar` formats, writing entries | [database-patterns](ai-context/database-patterns.md), [docs/functions.md](docs/functions.md) |
 | Schema changes, new settings, the module update | [update-patches](ai-context/update-patches.md) |
 | Derived values, form procedures, code in elements | [derived-values-and-custom-code](ai-context/derived-values-and-custom-code.md) |
-| Code style, admin pages and saves, debugging, version control | [coding-guidelines](ai-context/coding-guidelines.md) |
+| Any code change. Also admin pages and saves, debugging, version control | [coding-guidelines](ai-context/coding-guidelines.md) |
 | Relationships between forms, linked elements | [relationships](ai-context/relationships.md) |
 | Entries-are-users, entries-are-groups, template groups, enforced memberships | [entries-are-users-and-groups](ai-context/entries-are-users-and-groups.md) |
 | Conditions and the filter UI | [conditions](ai-context/conditions.md) |

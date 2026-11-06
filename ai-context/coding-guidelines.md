@@ -319,16 +319,7 @@ $forms = $form_handler->getAllForms(false, $form_ids);
 
 To test a change, use the application. See [testing-through-the-application](testing-through-the-application.md). When adding a feature, try it as an anonymous visitor, a regular user and an admin, and with invalid input, missing parameters and ids that don't exist.
 
-Before committing, check that:
-
-1. All user input is sanitized
-2. All output is escaped
-3. Permissions are checked
-4. Error cases are handled
-5. Database queries use handlers or proper escaping
-6. There are no PHP closing tags (`?>`) at the end of files
-7. It follows the existing code style
-8. There is no debug code left in (`var_dump`, `print_r`, `die` statements, stray `error_log()` calls)
+For what to check before you finish, see [Before you finish a change](../AGENTS.md#before-you-finish-a-change).
 
 ---
 

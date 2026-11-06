@@ -44,6 +44,14 @@ When a question has a testable yes/no answer and Docker is available, build a mi
 
 **Why:** precedence rules like `pull_policy: missing` are easy to state wrongly from memory. In one review of Docker changes, running tiny compose files caught a subtlety that memory alone would have missed: Compose falls back to building when a brand-new tag can't be pulled.
 
+## Keep git history searches narrow
+
+The history is large, with thousands of commits, and a clone can have hundreds of branches. A search across all of it can run for minutes.
+
+- **Start with the current files.** `grep`, or `git grep` with no branch names, usually answers the question, and it's instant.
+- **Limit a history search to a path:** `git log --oneline -S some_term -- tests`. That took under a second here, while the same search with `--all` was still running after 90 seconds.
+- **Don't use `--all`, or list branches for `git grep`,** unless you really need to know about a branch that isn't merged. Then name the branch.
+
 ## Use the real tools
 
 If an MCP server's tools are missing or out of date, ask the person to reconnect it, or to restart. Don't work around it by writing a script that calls the system with credentials from a configuration file. A diagnostic that uses the server's own local tools is fine.
