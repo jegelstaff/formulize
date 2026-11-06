@@ -535,7 +535,7 @@ export async function waitForAdminPageReady(page) {
  * Waits for a conditional element to appear or be updated after a trigger action
  * Does not work for conditional elements that disappear on a trigger action - will need a different function for that
  * @param {Page} page - Playwright page object
- * @param {string} className - The class name of the conditional element (without the dot)
+ * @param {string} handle - The element handle of the conditional element, not of the element the action changes
  * @param {Function} triggerAction - An async function that triggers the conditional behavior
  */
 export async function conditionalElementReady(page, handle, triggerAction) {
@@ -590,7 +590,7 @@ export async function conditionalElementReady(page, handle, triggerAction) {
 			if (!window._stableCheckStart) {
 				window._stableCheckStart = Date.now();
 			}
-			// Check if it's been stable for 300ms
+			// Check if it's been stable for a second
 			return Date.now() - window._stableCheckStart > 1000;
 		} else {
 			// Reset the timer if it goes back to busy
