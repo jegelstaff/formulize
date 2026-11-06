@@ -66,6 +66,7 @@ The ones you will want first:
 | `saveFormulizeForm(page, buttonText)` | Save a data-entry form: waits for the form token, watches the saving animation appear and disappear, and asserts that the save was not refused ("Your changes were not saved") |
 | `saveAdminForm(page, type)` | The same for the admin UI, which saves differently |
 | `waitForWorkingMessage(page)` | Wait out an in-page list action — search, sort, paging, changing view |
+| `conditionalElementReady(page, handle, triggerAction)` | Run an action that makes a conditional element appear or change, and wait for the redraw, the fade and any further conditional checks to finish. Pass the action in, rather than doing it first |
 | `waitForAdminPageReady(page)` | Wait for the admin UI wrapper, which starts hidden and is revealed on window load |
 | `applyColumnChanges(popup)` | Submit the "Change columns" popup, tolerating the fact that the popup destroys itself as a result of the click |
 | `addElementForm(page, type)`, `openElementAccordion`, `deleteElement` | Build and edit elements without re-deriving the admin UI's markup |

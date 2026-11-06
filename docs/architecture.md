@@ -47,15 +47,15 @@ So a complete working application needs one address:
 /modules/formulize/index.php?sid=10
 ```
 
-That's screen 10, with saving, searching, permissions and navigation all working. If you want a form
-in a page of your own, this is the whole page:
+That's screen 10, with saving, searching, permissions and navigation all working. If you want a
+screen in a page of your own, this is the whole page:
 
 ```php
 <?php
 include "mainfile.php";
-include XOOPS_ROOT_PATH . "/header.php";
 
-displayForm(12);
+$formulize_screen_id = 10;
+include XOOPS_ROOT_PATH . "/modules/formulize/index.php";
 
 include XOOPS_ROOT_PATH . "/footer.php";
 ```
@@ -76,19 +76,23 @@ functions. `displayEntries()`, which draws a list, also checks whether the reque
 an entry, or is coming back from saving one. If it needs to, it hands off to a form screen or
 `displayForm()`.
 
-```
-index.php             Starts the system and the theme
-  initialize.php      Works out which screen to use, and checks access
-    readelements.php  Saves anything that was submitted
-    render()          The screen's settings become parameters for a display function
-      displayEntries(), displayFormPages(), displayForm() and others
-                      Gather the data and work out the values for the page
-        Templates     Turn those values into markup
-footer.php            Puts the page in the theme and sends it
-```
+1. **`index.php`** starts the system and the theme, and includes `initialize.php`.
+2. **`initialize.php`** works out which screen to use, and checks access.
+3. **`readelements.php`** saves anything that was submitted.
+4. **The screen's `render()` method** turns the screen's settings into parameters for a display function.
+5. **The display functions**, such as `displayEntries()`, `displayFormPages()` and `displayForm()`,
+   gather the data and work out the values for the page.
+6. **The templates** turn those values into markup.
+7. **`footer.php`** puts the page in the theme and sends it.
 
 When you're working out why a page behaves as it does, look in the display functions in
 `modules/formulize/include/`, and in `readelements.php` in the same folder.
+
+Reading those functions is the way to understand how Formulize works, but don't call them from your
+own code. They're what a screen hands off to, so go through a screen. It doesn't have to be a saved
+one: you can create a screen object in code, set it up with the default settings, change the ones
+you want, and call its `render()` method. Formulize's own pages for managing users and groups do
+this, in `modules/formulize/users.php` and `groups.php`.
 
 ## Saving data
 
