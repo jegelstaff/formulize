@@ -348,9 +348,9 @@ page again — it now carries a `style` that sets the width whether or not the s
 Formulize it was in a frame, and the address in the iframe is missing `?formulize_embed=1`. Copy the
 code from the screen's settings page again — it includes the parameter.
 
-**The form displays but will not submit**, and the visitor sees *Error: the data you submitted could
-not be saved in the database.* The browser is not keeping any cookie for the screen. Check these in
-order:
+**The form displays but will not submit**, and the visitor sees *Your changes were not saved. This
+can happen when a page has been open for a long time. Reload the page and try again.* If reloading
+doesn't help, the browser is not keeping any cookie for the screen. Check these in order:
 
 1. **Is your Formulize site `https`?** The cookie that lets an anonymous visitor submit from inside a
    frame cannot be set over plain `http` — browsers require it to be marked secure, and they only
