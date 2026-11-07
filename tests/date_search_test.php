@@ -61,11 +61,21 @@ if (PHP_SAPI !== 'cli') {
 date_default_timezone_set('UTC');
 
 // the format the site shows dates in, which is what the language files define for English and French
-define('_SHORTDATESTRING', 'Y-m-d');
+// Run it as a site that shows dates another way with --date-format, ie: php tests/date_search_test.php --date-format=d/m/Y
+$arguments = array_slice(isset($argv) ? $argv : array(), 1);
+$siteDateFormat = 'Y-m-d';
+foreach ($arguments as $i => $argument) {
+    if (strpos($argument, '--date-format=') === 0) {
+        $siteDateFormat = substr($argument, strlen('--date-format='));
+        unset($arguments[$i]);
+    }
+}
+$arguments = array_values($arguments);
+define('_SHORTDATESTRING', $siteDateFormat);
 define('FORMULIZE_EARLIEST_DATE', '0001-01-01');
 
-$functionsFile = isset($argv[1]) ? $argv[1] : (__DIR__ . '/../modules/formulize/include/functions.php');
-$dateFile      = isset($argv[2]) ? $argv[2] : (__DIR__ . '/../modules/formulize/class/dateElement.php');
+$functionsFile = isset($arguments[0]) ? $arguments[0] : (__DIR__ . '/../modules/formulize/include/functions.php');
+$dateFile      = isset($arguments[1]) ? $arguments[1] : (__DIR__ . '/../modules/formulize/class/dateElement.php');
 foreach (array('functions.php' => $functionsFile, 'dateElement.php' => $dateFile) as $label => $path) {
     if (!is_file($path)) {
         fwrite(STDERR, "Cannot find $label at: $path\n");
@@ -282,7 +292,8 @@ check('not like is outside',  clauseFor($handler, 'NOT LIKE'), "( main.`when` < 
 
 echo "\nOPERATORS - anything that is not a period is handed back to the ordinary handling:\n";
 // Returning false is what keeps every existing date search on exactly the path it took before this feature.
-check('no period recorded',   clauseFor($handler, 'LIKE', 'not a period'), false);
+// a site that shows dates some other way also looks for the term in the date as it's shown, so the method has something to do
+check('no period recorded',   clauseFor($handler, 'LIKE', 'not a period'), _SHORTDATESTRING === 'Y-m-d' ? false : "( main.`when` LIKE 'ignored' OR DATE_FORMAT(main.`when`,'" . formulize_mysqlDateFormat() . "') LIKE 'not a period' )");
 check('no column to compare', $handler->buildSearchWhereClause('x', 'LIKE', "'", '', 1, 'main', '', 'October 2026'), false);
 check('an operator with no meaning here', clauseFor($handler, 'IN'), false);
 
@@ -318,7 +329,7 @@ check('digits are kept',                   $handler->prepareLiteralTextForDB('05
 check('so is a month and year',            $handler->prepareLiteralTextForDB('03/2026', null, true), '03/2026');
 check('so is a wildcard term, unreadable', $handler->prepareLiteralTextForDB('%2026-03%', null, true), '%2026-03%');
 check('a whole date is read',              $handler->prepareLiteralTextForDB('August 21 2020', null, true), '2020-08-21');
-check('a whole date in digits is read',    $handler->prepareLiteralTextForDB('05/03/2026', null, true), '2026-05-03');
+check('a whole date in digits is read',    $handler->prepareLiteralTextForDB('05/03/2026', null, true), _SHORTDATESTRING === 'd/m/Y' ? '2026-03-05' : '2026-05-03');
 check('words are read as a date',          $handler->prepareLiteralTextForDB('Oct 5', null, true), date('Y') . '-10-05');
 check('a relative word is read as a date', $handler->prepareLiteralTextForDB('yesterday', null, true), date('Y-m-d', strtotime('yesterday')));
 check('without a partial search, digits are read', $handler->prepareLiteralTextForDB('05/03', null), date('Y') . '-05-03');
@@ -349,6 +360,27 @@ check('read in that format',            formulize_dateValueAsISO('05/03/2026', '
 check('not a date in that format',      formulize_dateValueAsISO('31/02/2026', 'd/m/Y'), '31/02/2026');
 check('the MySQL format for showing it', formulize_mysqlDateFormat('d/m/Y'), '%d/%m/%Y');
 check('a day with its suffix',          formulize_mysqlDateFormat('jS F Y'), '%D %M %Y');
+check('read as month first',            formulize_dateValueAsISO('05/03/2026', 'm/d/Y'), '2026-05-03');
+check('read with the month written out', formulize_dateValueAsISO('5 March 2026', 'j F Y'), '2026-03-05');
+check('the stored format with a time',  formulize_dateValueAsISO('2026-03-05 10:30:00', 'd/m/Y'), '2026-03-05');
+check('part of a date is left as it is', formulize_dateValueAsISO('03/2026', 'd/m/Y'), '03/2026');
+check('blank is left blank',            formulize_dateValueAsISO('', 'd/m/Y'), '');
+check('the stored format needs nothing', formulize_mysqlDateFormat('Y-m-d'), '%Y-%m-%d');
+check('short numbers',                  formulize_mysqlDateFormat('n/j/y'), '%c/%e/%y');
+check('short names',                    formulize_mysqlDateFormat('D, d M Y'), '%a, %d %b %Y');
+check('an escaped letter is literal',   formulize_mysqlDateFormat('d \\o\\f F'), '%d of %M');
+check('a percent sign is literal',      formulize_mysqlDateFormat('d%m'), '%d%%%m');
+
+if (_SHORTDATESTRING === 'd/m/Y') {
+    echo "\nTHIS SITE SHOWS DATES AS d/m/Y:\n";
+    check('the format for showing dates',   formulize_mysqlDateFormat(), '%d/%m/%Y');
+    check('a date is read day first',       $handler->prepareLiteralTextForDB('02/12/2002', null), '2002-12-02');
+    check('so a day past the 12th is a date', $handler->prepareLiteralTextForDB('21/08/2020', null), '2020-08-21');
+    check('the stored format still works',  $handler->prepareLiteralTextForDB('2002-12-02', null), '2002-12-02');
+    check('part of a date is kept as typed', $handler->prepareLiteralTextForDB('12/2002', null, true), '12/2002');
+    check('and is looked for as shown',     clauseFor($handler, 'LIKE', '12/2002'), "( main.`when` LIKE 'ignored' OR DATE_FORMAT(main.`when`,'%d/%m/%Y') LIKE '12/2002' )");
+    check('and not, with NOT LIKE',         clauseFor($handler, 'NOT LIKE', '12/2002'), "( main.`when` NOT LIKE 'ignored' AND DATE_FORMAT(main.`when`,'%d/%m/%Y') NOT LIKE '12/2002' )");
+}
 
 echo "\n";
 printf("RESULT: %d passed, %d failed\n", $GLOBALS['__pass'], $GLOBALS['__fail']);

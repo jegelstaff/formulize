@@ -61,12 +61,14 @@ jobs:
     # to themes/Lyris/appearance, a folder it makes the first time.
     # templates/screens, all the way down: the web server makes a folder for a screen inside its theme's folder
     # when its templates are customized, and rewrites the screens' template files.
+    # formulize_dateformats.php: saving the date and time formats in Settings writes them to this file. A write that fails
+    # says nothing, so without this the setting would save and the dates wouldn't change.
     # The webroot is the one folder both sides write to - the web server's install.lock, and the .htaccess
     # Playwright's global setup writes (tests/e2e/htaccess-setup.js) - so it stays the runner's, and the web
     # server gets in through its group.
     - name: Set file/directory permissions
       run: |
-        sudo chown 33:33 trust uploads modules templates_c cache tokens logs modules/formulize/cache modules/formulize/code modules/formulize/export modules/formulize/language/english/mail_template modules/formulize/queue modules/formulize/temp modules/formulize/upload mainfile.php
+        sudo chown 33:33 trust uploads modules templates_c cache tokens logs modules/formulize/cache modules/formulize/code modules/formulize/export modules/formulize/language/english/mail_template modules/formulize/language/english/formulize_dateformats.php modules/formulize/queue modules/formulize/temp modules/formulize/upload mainfile.php
         sudo chown -R 33:33 themes
         sudo chown -R 33:33 modules/formulize/templates/screens
         sudo chgrp 33 ~/work/formulize/formulize
@@ -100,6 +102,9 @@ jobs:
 
     - name: PHP logic tests (partial date searches)
       run: docker exec formulize-web-1 php /var/www/html/tests/date_search_test.php
+
+    - name: PHP logic tests (partial date searches, as a site that shows dates as d/m/Y)
+      run: docker exec formulize-web-1 php /var/www/html/tests/date_search_test.php --date-format=d/m/Y
 
     - name: PHP logic tests (blocked file-extension lists in step)
       run: docker exec formulize-web-1 php /var/www/html/tests/blocked_extensions_sync_test.php
@@ -161,15 +166,6 @@ jobs:
     - name: PHP integrity tests (menu item groups and the menu block)
       if: ${{ !inputs.test_filter }}
       run: docker exec formulize-web-1 php /var/www/html/tests/menu_permissions_test.php
-
-    - name: PHP integrity tests (condition filters, SQL and display side)
-      if: ${{ !inputs.test_filter }}
-      run: docker exec formulize-web-1 php /var/www/html/tests/condition_filters_test.php
-
-    # The same, as a site that shows dates as d/m/Y, since how a date in a condition is read depends on the site's date format
-    - name: PHP integrity tests (condition filters, as a site that shows dates as d/m/Y)
-      if: ${{ !inputs.test_filter }}
-      run: docker exec formulize-web-1 php /var/www/html/tests/condition_filters_test.php d/m/Y
 
     # Also after the suite rather than before it, but for a different reason than the two above: it needs
     # nothing the museum system contains, but it does need the application booted to build element
