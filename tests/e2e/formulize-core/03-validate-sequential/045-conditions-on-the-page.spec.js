@@ -1,24 +1,30 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, leavePage, saveAdminForm, waitForAdminPageReady, conditionalChecksFinished, elementId, dbQuery, dbPrefix, sqlEscape } from '../../utils';
+import {
+	login, leavePage, saveAdminForm, waitForAdminPageReady, conditionalChecksFinished, elementId, dbQuery, dbPrefix, sqlEscape, ensureMainMenuOpen,
+	waitForWorkingMessage, applyColumnChanges, openAllColumnSections,
+} from '../../utils';
 import {
 	casesFor, howToCheck, namesIn, conditionsFor, expectedNames, namesOnPage, searchesFor, searchList, disagreementIn, checkRow,
 	ARTIFACT_ELEMENTS, DONOR_ELEMENTS, COLLECTION_ELEMENTS, LOAN_ELEMENTS,
 } from '../condition-cases';
 
-// Conditions as a person meets them. Each row of conditions-and-searches.md is a setting and what should then be on the page,
-// so this sets the condition with MCP, opens the page as curator1, and compares what's there with the row. That file says
-// where to look in each section, and which names can show there.
+// Conditions and searches as a person meets them. Each row of conditions-and-searches.md is a setting and what should then be on
+// the page, so this sets the condition with MCP, or types the search into the list, opens the page as curator1, and compares
+// what's there with the row. That file says where to look in each section, and which names can show there.
 //
 // Conditions take two paths, SQL for finding entries and an evaluation of one entry for displaying elements (see
-// ai-context/conditions.md), and sections 1 to 4 and 6 are the first and section 5 is the second.
+// ai-context/conditions.md), and sections 1 to 4 and 6 are the first and section 5 is the second. Section 7 is the search boxes
+// on a list, which go through formulize_parseFilter(), different code again, so a fix to one doesn't fix the others. Section 8
+// makes conditions in the admin UI, the way a webmaster does, and some of its cases are written here rather than in that file.
 //
 // How a section is built:
 //   - Each row sets its condition, opens the page and compares. A row that disagrees is recorded, and the section carries on.
 //     So is a row that can't be checked, ie: MCP refuses its setting or the page doesn't draw, with any PHP error logged
 //     while it ran. See checkRow in condition-cases.js.
-//   - The last test fails with every disagreement, by row, because maxFailures stops a run at the first failure, and one run
-//     on GitHub should show all of them. A test only fails sooner if something is really wrong outside the rows.
+//   - The last test fails with every disagreement, by row. maxFailures stops a run at the first failure, and one run on GitHub
+//     should show every condition and search, so they're all in this spec and nothing else fails on a disagreement. A test
+//     only fails sooner if something is really wrong outside the rows.
 //   - A row that should find nothing is loaded again to prove the query ran. A query that fails is treated as finding no
 //     entries, and nothing is logged, so it looks the same. See provingConditions below.
 //
@@ -47,6 +53,48 @@ const DONOR_OPTIONS = 'loans_donor';
 const COLLECTION_OPTIONS = 'loans_collections';
 const SET_OPTIONS = 'artifacts_part_of_set';
 const DISPLAYED_ELEMENT = 'artifacts_curator_note';
+const WEAPONS_SUBFORM = 'collections_subform_artifacts';
+const WEAPONS_SUBFORM_DELETE_LINKS = '#filterdiv > a.conditionsdelete';
+
+const sword = 'Chinese Sword';
+const chariot = 'Egyptian Chariot';
+const musket = 'French Musket';
+const WEAPONS = [sword, chariot, musket];
+
+// Conditions typed into the filter boxes of the Artifacts subform in the Collections form, and which of the Weapons collection's
+// artifacts it should then show. Setup gave Weapons three:
+//   Chinese Sword     donated       CE    acquired 1993-08-10
+//   Egyptian Chariot  not donated   BCE   acquired 2011-09-19
+//   French Musket     not donated   CE    acquired 1927-03-04
+// A term works when it's what people type, and not only when it's the value the element stores: Yes or No for a Yes/No element,
+// which stores codes, and a date written out, which is stored as YYYY-MM-DD. The stored values still work too, since conditions
+// made before now use them. A condition is [caption, operator, term] as the boxes take them. all is "match all of these", and
+// any is "match one or more of these".
+const TYPED_IN_THE_ADMIN_UI = [
+	{ title: 'with no conditions, the Weapons collection shows all its artifacts', all: [], any: [], shows: [sword, chariot, musket] },
+	{ title: 'Donated to museum = Yes shows only the donated artifacts', all: [['Donated to museum', '=', 'Yes']], any: [], shows: [sword] },
+	{ title: 'Donated to museum = No shows only the artifacts that were not donated', all: [['Donated to museum', '=', 'No']], any: [], shows: [chariot, musket] },
+	{ title: 'Donated to museum LIKE %yes%, with wildcards typed around it, shows only the donated artifacts', all: [['Donated to museum', 'LIKE', '%yes%']], any: [], shows: [sword] },
+	{ title: 'Donated to museum = 1, the code for Yes, still shows only the donated artifacts', all: [['Donated to museum', '=', '1']], any: [], shows: [sword] },
+	{ title: 'Era IN BCE, a list of one, shows only the BCE artifacts', all: [['Era', 'IN', 'BCE']], any: [], shows: [chariot] },
+	{ title: 'Date of acquisition = August 10 1993, written out, shows only the artifact acquired that day', all: [['Date of acquisition', '=', 'August 10 1993']], any: [], shows: [sword] },
+	{ title: 'Date of acquisition LIKE 2011, just the year, shows only the artifact acquired that year', all: [['Date of acquisition', 'LIKE', '2011']], any: [], shows: [chariot] },
+	{ title: 'Date of acquisition >= 2000, a year with a comparison, is from the start of that year', all: [['Date of acquisition', '>=', '2000']], any: [], shows: [chariot] },
+	{ title: 'Donor != Freeform Solutions includes the artifacts with no donor', all: [['Donor', 'NOT', 'Freeform Solutions']], any: [], shows: [chariot, musket] },
+	{ title: 'Donor = {BLANK} shows the artifacts with no donor', all: [['Donor', '=', '{BLANK}']], any: [], shows: [chariot, musket] },
+	{ title: 'Match all and match one or more together: not donated, and either BCE or acquired in 1993', all: [['Donated to museum', '=', 'No']], any: [['Era', '=', 'BCE'], ['Date of acquisition', 'LIKE', '1993']], shows: [chariot] },
+	{ title: 'Match all with a reference to the collection on screen, and match one or more', all: [['Collections', '=', '{collections_name}']], any: [['Era', '=', 'BCE'], ['Donor', '=', 'Freeform Solutions']], shows: [sword, chariot] },
+	{ title: 'Match one or more with a negated reference to the collection on screen', all: [], any: [['Collections', 'NOT', '{collections_name}'], ['Era', '=', 'BCE']], shows: [chariot] },
+];
+
+// Searches typed into the Date of acquisition box on the Artifacts list, which has the same date handling as conditions. Only the
+// artifacts named in shows and hides are looked at. The list doesn't have the column, so it's added for the visit.
+const DATE_SEARCHES = [
+	{ term: '2011', shows: [chariot], hides: [sword, musket] },
+	{ term: 'August 1993', shows: [sword], hides: [chariot, musket] },
+	{ term: '>=2020', shows: ['Roman Coin'], hides: [sword, chariot, musket] },
+	{ term: 'bread', shows: [], hides: [sword, chariot, musket, 'Roman Coin'] },
+];
 
 const LISTS = {
 	'Catalogue': { handle: 'artifact_catalogue', names: 'Artifact', elements: ARTIFACT_ELEMENTS },
@@ -73,6 +121,8 @@ let requestId = 0;
 let loanRequestsToStart;
 let keepInSyncToStart;
 let shortDateFormatToRestore = null; // set while section 9 has the site showing dates another way
+let weaponsSubformToStart = null; // the Weapons subform's settings, once anything an interrupted run left is taken away
+let weaponsSubformMayHaveConditions = false; // set while section 8 is typing conditions into it
 const disagreements = [];
 
 function formId(title) {
@@ -256,6 +306,77 @@ async function removeConditions(page, handle, tab, deleteLinks) {
 	}
 }
 
+async function asAdmin(page) {
+	await page.goto('/user.php?op=logout');
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+}
+
+async function asCurator(page) {
+	await page.goto('/user.php?op=logout');
+	await login(page, 'curator1', '12345');
+}
+
+function weaponsSubformSettings() {
+	return dbQuery(`SELECT ele_value FROM ${dbPrefix()}_formulize WHERE ele_id = ${elementId(WEAPONS_SUBFORM)}`)[0][0];
+}
+
+async function openWeaponsSubformOptions(page) {
+	await openElementSettings(page, WEAPONS_SUBFORM, 'Options');
+	await expect(page.locator('#new_subformfilter_element')).toBeVisible();
+}
+
+// Type conditions into the subform's two sets of boxes, as a webmaster does, once the ones there are taken away. Each is saved,
+// and must then be in the list of conditions.
+async function limitWeaponsSubform(page, all, any) {
+	await asAdmin(page);
+	await removeConditions(page, WEAPONS_SUBFORM, 'Options', WEAPONS_SUBFORM_DELETE_LINKS);
+	await openWeaponsSubformOptions(page);
+	for (const [set, conditions] of [['subformfilter', all], ['subformfilter_oom', any]]) {
+		for (const [caption, op, term] of conditions) {
+			await page.locator(`#new_${set}_element`).selectOption({ label: caption });
+			await page.locator(`#new_${set}_op`).selectOption(op);
+			await page.locator(`#new_${set}_term`).fill(term);
+			await saveAdminForm(page);
+			await openWeaponsSubformOptions(page);
+			await expect(page.locator('#filterdiv')).toContainText(`${caption} ${op} ${term}`);
+		}
+	}
+}
+
+// Open the Weapons collection as curator1, and which of its artifacts the subform shows. It's left without saving.
+async function weaponsShown(page) {
+	await asCurator(page);
+	await ensureMainMenuOpen(page);
+	await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
+	await page.getByRole('row', { name: 'Weapons' }).getByRole('link').first().click();
+	const subform = page.locator('.formulize-subform-table');
+	await expect(subform).toBeVisible();
+	const shown = [];
+	for (const name of WEAPONS) {
+		if (await subform.getByText(name, { exact: true }).count() > 0) {
+			shown.push(name);
+		}
+	}
+	await leavePage(page); // releases the entry lock
+	await expect(subform).not.toBeVisible();
+	return shown;
+}
+
+// The Artifacts list, with the Date of acquisition column added for this visit
+async function openArtifactsListWithDates(page) {
+	await page.goto('/modules/formulize/');
+	await ensureMainMenuOpen(page);
+	await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
+	const popupPromise = page.context().waitForEvent('page');
+	await page.getByRole('button', { name: 'Change columns' }).click();
+	const columns = await popupPromise;
+	await columns.bringToFront();
+	await openAllColumnSections(columns);
+	await columns.getByRole('checkbox', { name: 'Date of acquisition' }).check();
+	await applyColumnChanges(columns);
+	await expect(page.locator('input[name="search_artifacts_date_of_acquisition"]')).toBeVisible();
+}
+
 test.beforeAll(async ({ browser, playwright }) => {
 	api = await playwright.request.newContext({ baseURL: E2E_TEST_BASE_URL });
 	const page = await browser.newPage({ baseURL: E2E_TEST_BASE_URL });
@@ -271,12 +392,18 @@ test.beforeAll(async ({ browser, playwright }) => {
 
 test.afterAll(async ({ browser }) => {
 	if (disagreements.length > 0) {
-		console.log(`Rows that disagree with conditions-and-searches.md:\n${disagreements.join('\n')}`);
+		console.log(`Conditions and searches that don't show what they should:\n${disagreements.join('\n')}`);
 	}
 	if (shortDateFormatToRestore !== null) {
 		const page = await browser.newPage({ baseURL: E2E_TEST_BASE_URL });
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		await setShortDateFormat(page, shortDateFormatToRestore);
+		await page.close();
+	}
+	if (weaponsSubformMayHaveConditions) {
+		const page = await browser.newPage({ baseURL: E2E_TEST_BASE_URL });
+		await asAdmin(page);
+		await removeConditions(page, WEAPONS_SUBFORM, 'Options', WEAPONS_SUBFORM_DELETE_LINKS);
 		await page.close();
 	}
 	await putSettingsBack();
@@ -511,6 +638,60 @@ test('Section 6: fundamental filters', async ({ page }) => {
 	}
 });
 
+// Every row is one search, on a fresh load of the list. Nothing is changed, so this could run anywhere, but it's here so that a
+// search that disagrees doesn't stop the conditions from being checked.
+test('Section 7: searches on a list', async ({ page }) => {
+	const rows = casesFor('B');
+	test.setTimeout(rows.length * SECONDS_PER_ROW * 1000);
+	const { selector } = howToCheck('B');
+	const listUrls = {};
+	for (const [name, list] of Object.entries(LISTS)) {
+		listUrls[name] = `/modules/formulize/index.php?sid=${screenId(list.handle)}`;
+	}
+
+	await login(page, 'curator1', '12345');
+	for (const row of rows) {
+		await checkRow(page, row['Row'], disagreements, async () => {
+			const list = LISTS[row['List']];
+			const everything = namesIn(list.names);
+			await searchList(page, listUrls[row['List']], searchesFor(row, list.elements));
+			compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
+		});
+	}
+	await leavePage(page);
+});
+
+test('Section 7: date searches on the Artifacts list', async ({ page }) => {
+	test.setTimeout(300000);
+	const box = page.locator('input[name="search_artifacts_date_of_acquisition"]');
+
+	await login(page, 'curator1', '12345');
+	for (const search of DATE_SEARCHES) {
+		const rowId = `Artifacts list, Date of acquisition: \`${search.term}\``;
+		await checkRow(page, rowId, disagreements, async () => {
+			if (!(await box.isVisible())) {
+				await openArtifactsListWithDates(page); // the first time, and again if a search before this one had to leave the list
+			}
+			await box.fill(search.term);
+			await box.press('Enter');
+			await waitForWorkingMessage(page);
+			await expect(page.getByText(/Showing entries:|No entries were found/).first()).toBeVisible();
+			await expect(box).toHaveValue(search.term);
+			const shown = [];
+			for (const name of [...search.shows, ...search.hides]) {
+				if (await page.getByRole('cell', { name, exact: true }).count() > 0) {
+					shown.push(name);
+				}
+			}
+			const disagreement = disagreementIn(rowId, search.shows, shown);
+			if (disagreement) {
+				disagreements.push(disagreement);
+			}
+		});
+	}
+	await leavePage(page);
+});
+
 test('Section 8: a disabled condition, made in the admin UI', async ({ page }) => {
 	test.setTimeout(300000);
 	const endDateCanBeEdited = async borrower => {
@@ -595,6 +776,32 @@ test('Section 8: a dynamic default, made in the admin UI', async ({ page }) => {
 	await expect(page.locator('select[name="elements-ele_dynamicdefault_source"]')).toHaveJSProperty('selectedIndex', 0);
 });
 
+// The conditions are typed into the boxes as a webmaster types them, and removed with each one's X, so the subform's settings end
+// up exactly as setup left them. Weapons is only looked at, never saved.
+test('Section 8: conditions typed in the admin UI, on the Artifacts subform of a collection', async ({ page }) => {
+	test.setTimeout(TYPED_IN_THE_ADMIN_UI.length * 300000);
+	weaponsSubformMayHaveConditions = true;
+	await asAdmin(page);
+	await removeConditions(page, WEAPONS_SUBFORM, 'Options', WEAPONS_SUBFORM_DELETE_LINKS); // anything an interrupted run left
+	weaponsSubformToStart = weaponsSubformSettings();
+
+	for (const typed of TYPED_IN_THE_ADMIN_UI) {
+		const rowId = `Weapons collection: ${typed.title}`;
+		await checkRow(page, rowId, disagreements, async () => {
+			await limitWeaponsSubform(page, typed.all, typed.any);
+			const disagreement = disagreementIn(rowId, typed.shows, await weaponsShown(page));
+			if (disagreement) {
+				disagreements.push(disagreement);
+			}
+		});
+	}
+
+	await asAdmin(page);
+	await removeConditions(page, WEAPONS_SUBFORM, 'Options', WEAPONS_SUBFORM_DELETE_LINKS);
+	weaponsSubformMayHaveConditions = false;
+	await leavePage(page, '/user.php?op=logout');
+});
+
 test('Section 9: a site that shows dates as d/m/Y', async ({ page }) => {
 	const conditionRows = casesFor('T');
 	const displayRows = casesFor('W');
@@ -649,6 +856,9 @@ test('Section 9: a site that shows dates as d/m/Y', async ({ page }) => {
 test('Everything is put back', async ({ page }) => {
 	await putSettingsBack();
 	expect(loanRequests(), 'nothing here should have changed a Loan Request').toEqual(loanRequestsToStart);
+	if (weaponsSubformToStart !== null) {
+		expect(weaponsSubformSettings(), 'the Artifacts subform in Collections should have the settings setup gave it').toBe(weaponsSubformToStart);
+	}
 	const everything = namesIn('Artifact');
 	await login(page, 'curator1', '12345');
 	await openEntry(page, formId('Locations'), entryId('locations', 'locations_name', 'Main Vault'));
@@ -657,6 +867,7 @@ test('Everything is put back', async ({ page }) => {
 	await leavePage(page);
 });
 
-test('Every row shows what conditions-and-searches.md says it should', () => {
+// The only test that fails on a disagreement, after every condition and search has been checked
+test('Every condition and search shows what it should', () => {
 	expect(disagreements, disagreements.join('\n')).toEqual([]);
 });

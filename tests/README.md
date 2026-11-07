@@ -85,7 +85,7 @@ When writing your own tests for your site/application place them in an appropria
 
 ### Conditions and searches
 
-[`formulize-core/conditions-and-searches.md`](e2e/formulize-core/conditions-and-searches.md) lists what a condition or a search should show, as a table of rows and the names on the page for each one, and says what each section looks at. The specs read that file, so a row is a test: `03-validate-sequential/045-conditions-on-the-page.spec.js` sets each condition with MCP and looks at the page, and `02-validate/049-searches-on-lists.spec.js` types each search into a list. To add a case, add a row.
+[`formulize-core/conditions-and-searches.md`](e2e/formulize-core/conditions-and-searches.md) lists what a condition or a search should show, as a table of rows and the names on the page for each one, and says what each section looks at. The specs read that file, so a row is a test: `03-validate-sequential/045-conditions-on-the-page.spec.js` sets each condition with MCP, or types each search into a list, and looks at the page. It checks every row before it fails, and then lists every row that disagrees. To add a case, add a row.
 
 ### Running tests in CI
 
