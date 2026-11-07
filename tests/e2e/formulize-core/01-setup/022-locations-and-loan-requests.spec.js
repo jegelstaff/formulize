@@ -176,6 +176,8 @@ async function expectElementsOnPage(page, screenUrl, pageTitle, elements) {
 		await page.getByRole('link', { name: pageTitle, exact: true }).click();
 	}
 	await page.getByRole('link', { name: 'Edit this page' }).click();
+	// allTextContents() doesn't wait for the popup's contents, which arrive all at once
+	await expect(page.getByText('Title for page number')).toBeVisible();
 	const selected = await page.getByLabel('Form elements to display on').locator('option:checked').allTextContents();
 	expect(selected.map(label => label.trim()).sort()).toEqual([...elements].sort());
 }
