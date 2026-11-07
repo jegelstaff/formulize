@@ -546,6 +546,26 @@ export async function editScreenPage(page, title) {
 }
 
 /**
+ * Show some groups' permissions on a form's Permissions tab. "Show permissions for these groups" saves the page, which then
+ * reloads with those groups' panels, so this waits for the reload, and for each group's panel to be there. The button only
+ * works once the script at the end of the page has run, so this waits for the page to be ready first.
+ * @param {import('@playwright/test').Page} page
+ * @param {string[]} groups - The names of the groups, as the list shows them
+ */
+export async function showPermissionsFor(page, groups) {
+	await waitForAdminPageReady(page);
+	await page.locator('#groups').selectOption(groups.map(label => ({ label })));
+	await Promise.all([
+		page.waitForEvent('load', { timeout: 60000 }),
+		page.getByRole('button', { name: 'Show permissions for these' }).click(),
+	]);
+	await waitForAdminPageReady(page);
+	for (const group of groups) {
+		await expect(page.getByRole('group', { name: group }).locator('legend')).toBeVisible();
+	}
+}
+
+/**
  * Wait for conditionalCheckInProgress to be stable at 0, because we might have cascading deferred conditional checks :(
  * Use it after the check has come back, for an action that might leave the conditional element exactly as it was,
  * which conditionalElementReady() can't wait for.

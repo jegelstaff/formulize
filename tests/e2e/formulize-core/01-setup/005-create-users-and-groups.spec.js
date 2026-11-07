@@ -19,6 +19,7 @@ import {
 	getFidFromListPage,
 	leavePage,
 	ensureMainMenuOpen,
+	showPermissionsFor,
 } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
@@ -376,9 +377,7 @@ test.describe('F. Set Staff form permissions (Webmasters + All Curators)', () =>
 		// The permissions admin uses #groups (a multi-select listbox) to
 		// pick the groups whose perms we want to edit, then a button shows
 		// their permission panels.
-		await page.locator('#groups').selectOption(['Webmasters', 'All Curators']);
-		await page.getByRole('button', { name: /Show permissions for these/i }).click();
-		await waitForAdminPageReady(page);
+		await showPermissionsFor(page, ['Webmasters', 'All Curators']);
 
 		// Within the All Curators group panel, check the view_form,
 		// add_own_entry, edit_own_entry, and view_private_elements
