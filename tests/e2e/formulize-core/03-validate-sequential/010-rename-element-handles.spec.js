@@ -227,13 +227,14 @@ test.describe.serial('Renaming element handles', () => {
 		test.setTimeout(300000);
 		const ancient = ['Roman Coin', 'Persian necklace', 'Chinese Sword', 'Egyptian Chariot', 'Babylonian Spoon'];
 		const modern = ['Florentine Book', 'French Musket', 'Japanese Coin', 'American Bicycle', 'Polynesian Canoe', 'Viking Silver Armband'];
-		// A new exhibit of Ancient History offers only its artifacts, as filtered by the {exhibits_collections} term
-		const expectExhibitToOfferItsCollectionsArtifacts = async () => {
+		// A new exhibit of Ancient History offers only its artifacts, as filtered by the {exhibits_collections} term.
+		// The Collections box is found by its element's handle, which is whatever it has been renamed to at the time.
+		const expectExhibitToOfferItsCollectionsArtifacts = async collectionsHandle => {
 			await asCurator(page);
 			await page.locator('#burger-and-logo').getByRole('link').first().click();
 			await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
 			await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
-			await autocompleteBox(page, 'exhibits_collections').fill('an');
+			await autocompleteBox(page, collectionsHandle).fill('an');
 			await conditionalElementReady(page, 'exhibits_artifacts', () => page.getByText('Ancient History', { exact: true }).click());
 			await autocompleteBox(page, 'exhibits_artifacts').fill('roman');
 			await expect(page.getByText('Roman Coin')).toBeVisible();
@@ -267,7 +268,7 @@ test.describe.serial('Renaming element handles', () => {
 		expect(await renameElementHandle(page, 'surveys_exhibit', 'surveys_exhibit_seen')).toBeNull();
 		expect(eleValueOf('surveys_favourite_artifact')).toContain('{surveys_exhibit_seen}');
 		expect(eleValueOf('surveys_favourite_artifact')).not.toContain('{surveys_exhibit}');
-		await expectExhibitToOfferItsCollectionsArtifacts();
+		await expectExhibitToOfferItsCollectionsArtifacts('exhibits_collection_list');
 		await expectSurveyToOfferTheExhibitsArtifacts();
 		// and back
 		await asAdmin(page);
@@ -275,7 +276,7 @@ test.describe.serial('Renaming element handles', () => {
 		expect(await renameElementHandle(page, 'surveys_exhibit_seen', 'surveys_exhibit')).toBeNull();
 		expect(eleValueOf('exhibits_artifacts')).toContain('{exhibits_collections}');
 		expect(eleValueOf('surveys_favourite_artifact')).toContain('{surveys_exhibit}');
-		await expectExhibitToOfferItsCollectionsArtifacts();
+		await expectExhibitToOfferItsCollectionsArtifacts('exhibits_collections');
 		await expectSurveyToOfferTheExhibitsArtifacts();
 	});
 

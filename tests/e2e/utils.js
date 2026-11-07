@@ -546,6 +546,26 @@ export async function editScreenPage(page, title) {
 }
 
 /**
+ * Show some groups' permissions on a form's Permissions tab. "Show permissions for these groups" saves the page, which then
+ * reloads with those groups' panels, so this waits for the reload, and for each group's panel to be there. The button only
+ * works once the script at the end of the page has run, so this waits for the page to be ready first.
+ * @param {import('@playwright/test').Page} page
+ * @param {string[]} groups - The names of the groups, as the list shows them
+ */
+export async function showPermissionsFor(page, groups) {
+	await waitForAdminPageReady(page);
+	await page.locator('#groups').selectOption(groups.map(label => ({ label })));
+	await Promise.all([
+		page.waitForEvent('load', { timeout: 60000 }),
+		page.getByRole('button', { name: 'Show permissions for these' }).click(),
+	]);
+	await waitForAdminPageReady(page);
+	for (const group of groups) {
+		await expect(page.getByRole('group', { name: group }).locator('legend')).toBeVisible();
+	}
+}
+
+/**
  * Waits for a conditional element to appear or be updated after a trigger action
  * Does not work for conditional elements that disappear on a trigger action - will need a different function for that
  * @param {Page} page - Playwright page object
