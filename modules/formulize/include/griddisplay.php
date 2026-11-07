@@ -249,7 +249,8 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 				$isDisabled = false;
 			}
 			if(is_object($form_ele)) {
-				print $form_ele->render();
+				$renderedCell = $form_ele->render();
+				print formulize_gridCellLabel($elementInGridId, $renderedCell).$renderedCell;
 			}
 			print "</div>\n";
 			catalogueGridElement($elementInGridId, $entry_id, $elementObject, $form_ele, $prevEntry, $screen);
@@ -475,4 +476,38 @@ function nonNullGridRowCaps($var) {
     } else {
         return false;
     }
+}
+
+/**
+ * A label for the box in a grid cell, hidden on screen and read by screen readers. The cell has no label of its own, so without
+ * this the boxes in a grid all sound the same, and there's nothing to tell them apart but their position. The label is the
+ * element's caption, which is what it's called everywhere else. A grid's column headings can be blank, so they won't do.
+ * Only for a single box, a list or a text area: radio buttons and checkboxes already have a label for each option.
+ *
+ * @param int $elementId The element in the cell
+ * @param string $renderedCell What the cell shows, which has the box in it
+ * @return string The label, or nothing if there's no single box to label, ie: the element is shown as text because it's disabled
+ */
+function formulize_gridCellLabel($elementId, $renderedCell) {
+	if(!$elementObject = _getElementObject($elementId)) {
+		return '';
+	}
+	if(!preg_match_all('/<(input|select|textarea)\b([^>]*)>/i', $renderedCell, $fields, PREG_SET_ORDER)) {
+		return '';
+	}
+	foreach($fields as $field) {
+		$type = preg_match('/\btype\s*=\s*[\'"]?([a-z]+)/i', $field[2], $typeMatch) ? strtolower($typeMatch[1]) : '';
+		if(strtolower($field[1]) == 'input' AND in_array($type, array('hidden', 'radio', 'checkbox', 'button', 'submit', 'reset', 'image'))) {
+			continue;
+		}
+		if(!preg_match('/\bid\s*=\s*[\'"]([^\'"]+)[\'"]/i', $field[2], $idMatch)) {
+			return '';
+		}
+		$caption = trim(strip_tags(html_entity_decode((string) $elementObject->getVar('ele_caption'), ENT_QUOTES, 'UTF-8')));
+		if($caption === '') {
+			return '';
+		}
+		return "<label class=\"fz-sr-only\" for=\"".htmlspecialchars($idMatch[1])."\">".htmlspecialchars($caption)."</label>";
+	}
+	return '';
 }

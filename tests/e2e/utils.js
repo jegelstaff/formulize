@@ -574,8 +574,18 @@ export async function conditionalElementReady(page, handle, triggerAction) {
 	// Wait for the child to fade in
 	await expect(page.locator(childSelector)).toHaveCSS('opacity', '1');
 
-	// Wait for conditionalCheckInProgress to be stable at 0
-	// Because we might have cascading deferred conditional checks :(
+	await conditionalChecksFinished(page);
+}
+
+/**
+ * Wait for conditionalCheckInProgress to be stable at 0, because we might have cascading deferred conditional checks :(
+ * conditionalElementReady() does this. Use it directly, after the check has come back, for an action that might leave the
+ * conditional element exactly as it was, which conditionalElementReady() can't wait for.
+ * @param {Page} page - Playwright page object
+ */
+export async function conditionalChecksFinished(page) {
+	// a page stays open across checks, so the timer from the last check doesn't count for this one
+	await page.evaluate(() => { window._stableCheckStart = null; });
 	await page.waitForFunction(() => {
 		// Store the stable check start time on window object
 		if (!window._stableCheckStart) {
@@ -1079,6 +1089,24 @@ export async function setMenuEntryGroups(page, appName, accordionName, groupsSel
 	throw new Error(
 		`setMenuEntryGroups: "${accordionName}" did not persist groups ${JSON.stringify(groupLabels)} ` +
 		`after ${retries} attempts; last persisted selection was ${JSON.stringify(lastSelected)}`);
+}
+
+/**
+ * An element's row on a form, found by its handle, so a field can be found inside it rather than by counting fields on the page
+ * @param {import('@playwright/test').Page} page
+ * @param {string} handle - The element's handle
+ */
+export function elementRow(page, handle) {
+	return page.locator(`.form-row:has(.formulize-label-${handle})`);
+}
+
+/**
+ * The box to type in, of an autocomplete element. Its row also has hidden inputs that hold what was chosen.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} handle - The element's handle
+ */
+export function autocompleteBox(page, handle) {
+	return elementRow(page, handle).locator('input.formulize_autocomplete');
 }
 
 /**

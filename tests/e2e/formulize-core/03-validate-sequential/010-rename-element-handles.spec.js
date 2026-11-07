@@ -5,7 +5,7 @@ import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
 import {
 	login, saveFormulizeForm, saveAdminForm, waitForAdminPageReady, dbQuery, dbPrefix, renameElementHandle, elementId,
 	openArtifactOriginsMap, expectArtifactOriginsMap, loadSavedView, expectCoinsByName, expectArtifactOriginsList,
-	conditionalElementReady, leavePage, setCodeMirrorValue,
+	conditionalElementReady, leavePage, setCodeMirrorValue, autocompleteBox,
 } from '../../utils';
 
 /**
@@ -54,7 +54,7 @@ async function openArtifact(page, idNumber) {
 async function expectYearEraToFollowTheYear(page) {
 	await asCurator(page);
 	await openArtifact(page, 'M001');
-	const year = page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0);
+	const year = page.getByRole('spinbutton', { name: 'Year', exact: true });
 	await year.fill('151');
 	await saveFormulizeForm(page);
 	await expect.poll(() => rowOf('formulize_artifacts', 'entry_id', 1, 'artifacts_year_era')[0]).toBe('151BCE');
@@ -121,11 +121,10 @@ async function expectANewArtifactToGetItsIdNumber(page, handle) {
 	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 	await page.getByRole('button', { name: 'Add Artifact', exact: true }).click();
 	await page.getByRole('textbox', { name: 'Short name *' }).fill(shortName);
-	const dimensions = page.locator('.formulize-grid').nth(0).locator('input[type="number"]');
-	await dimensions.nth(0).fill('1.0'); // height
-	await dimensions.nth(1).fill('1.0'); // width
-	await dimensions.nth(2).fill('1.0'); // depth
-	await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1900'); // year
+	await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('1.0'); // height
+	await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('1.0'); // width
+	await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('1.0'); // depth
+	await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1900'); // year
 	await page.getByRole('radio', { name: 'CE', exact: true }).check();
 	await saveFormulizeForm(page);
 	await expect.poll(() => added().map(([entryId, idNumber]) => idNumber === 'M' + entryId.padStart(3, '0'))).toEqual([true]);
@@ -234,11 +233,11 @@ test.describe.serial('Renaming element handles', () => {
 			await page.locator('#burger-and-logo').getByRole('link').first().click();
 			await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
 			await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
-			await page.locator('input[type=text]').nth(1).fill('an');
+			await autocompleteBox(page, 'exhibits_collections').fill('an');
 			await conditionalElementReady(page, 'exhibits_artifacts', () => page.getByText('Ancient History', { exact: true }).click());
-			await page.locator('input[type=text]').nth(2).fill('roman');
+			await autocompleteBox(page, 'exhibits_artifacts').fill('roman');
 			await expect(page.getByText('Roman Coin')).toBeVisible();
-			await page.locator('input[type=text]').nth(2).fill('flor');
+			await autocompleteBox(page, 'exhibits_artifacts').fill('flor');
 			await expect(page.getByText('No match found')).toBeVisible();
 			await leaveWithoutSaving(page);
 		};

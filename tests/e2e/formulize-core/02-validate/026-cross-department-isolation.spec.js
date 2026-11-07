@@ -39,14 +39,14 @@ test.describe('Cross-department isolation (Artifacts)', () => {
 		await expect(page.getByText('Roman Coin', { exact: true }).first()).toBeVisible();
 		// ...but not Modern History data owned by mhstaff.
 		await expect(page.getByText('Florentine Book', { exact: true })).not.toBeVisible();
-		await expect(page.getByText('Showing entries: 1 to 6 of 6')).toBeVisible();
+		await expect(page.getByText('Showing entries: 1 to 8 of 8')).toBeVisible();
 	});
 
 	test('mhstaff sees only Modern History artifacts', async ({ page }) => {
 		await openArtifactsList(page, 'mhstaff');
 		await expect(page.getByText('Florentine Book', { exact: true }).first()).toBeVisible();
 		await expect(page.getByText('Roman Coin', { exact: true })).not.toBeVisible();
-		await expect(page.getByText('Showing entries: 1 to 7 of 7')).toBeVisible();
+		await expect(page.getByText('Showing entries: 1 to 8 of 8')).toBeVisible();
 	});
 
 	test('curator1 sees artifacts from both departments', async ({ page }) => {
@@ -55,6 +55,6 @@ test.describe('Cross-department isolation (Artifacts)', () => {
 		// so both departments' artifacts are visible.
 		await expect(page.getByText('Roman Coin', { exact: true }).first()).toBeVisible();
 		await expect(page.getByText('Florentine Book', { exact: true }).first()).toBeVisible();
-		await expect(page.getByText('of 13')).toBeVisible();
+		await expect(page.getByText('of 16')).toBeVisible();
 	});
 });

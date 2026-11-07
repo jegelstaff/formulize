@@ -327,6 +327,12 @@ class formulizeYnElementHandler extends formulizeRadioElementHandler {
 	// if literal text that users type can be used as is to interact with the database, simply return the $value
 	// LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
+		// when searching, the user may type % wildcards around the term, ie: %Yes%, so convert the text between them and keep the wildcards
+		// only when searching, so a value with % in it is never saved as a code with % around it
+		if ($partialMatch AND is_string($value) AND preg_match('/^(%*)(.+?)(%*)$/s', $value, $valueParts) AND ($valueParts[1] OR $valueParts[3])) {
+			$convertedValue = $this->prepareLiteralTextForDB($valueParts[2], $element);
+			return $convertedValue === false ? false : $valueParts[1].$convertedValue.$valueParts[3];
+		}
 		// since we're matching based on even a single character match between the query and the yes/no language constants, if the current language has the same letters or letter combinations in yes and no, then sometimes only Yes may be searched for
 		if (($value AND strstr(strtoupper(_YES), strtoupper($value))) OR strtoupper($value) == "YES") {
 			$value = formulizeYnElement::YES_DB_VALUE;

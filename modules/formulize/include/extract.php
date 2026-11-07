@@ -2572,7 +2572,7 @@ function formulize_tryDelegatedSearchWhere($eleType, $term, $operator, $quotes, 
 
 	$typeHandler = xoops_getmodulehandler($eleType . 'Element', 'formulize');
 	if ($typeHandler && method_exists($typeHandler, 'buildSearchWhereClause')) {
-		$rawTerm = $term; // kept aside for handlers (currently just dateElement) that need the term as originally typed, before it is collapsed below
+		$rawTerm = $term; // kept aside for handlers (currently just dateElement) that need the term as originally typed, before it is converted below
 		$isPartial = ($normalizedOperator === 'LIKE' || $normalizedOperator === 'NOT LIKE');
 		$term = $typeHandler->prepareLiteralTextForDB($term, null, $isPartial);
 
@@ -2805,6 +2805,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 
 				// SECOND: HANDLE ANY METADATA FILTER TERMS
 			} elseif ($ifParts[0] == "creation_uid" or $ifParts[0]  == "mod_uid" or $ifParts[0]  == "creation_datetime" or $ifParts[0]  == "mod_datetime") {
+				$metadataDateClause = false;
 				// if this is a user id field, then treat it specially
 				if (($ifParts[0] == "creation_uid" or $ifParts[0] == "mod_uid") and !is_numeric($ifParts[1]) and $ifParts[1] !== "") { // blank term must NOT come here (it would match users whose uname/name is empty, eg the admin); it falls through to the else so {BLANK} compares on the column itself
 					// subquery the user table for the username or full name
@@ -2826,9 +2827,16 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					$likebits = "";
 					$ifParts[1] = formulize_db_escape($ifParts[1]);
 				} else { // a date field, or a blank uid term ({BLANK} -> creation_uid = '' / IS NULL): escape and compare on the column directly. (text uid searches were escaped already in the subquery above)
+					// metadata dates work the same as date elements for whole years and months, and terms that aren't dates. DATE() because the column has a time as well, and a period is whole days
+					if ($ifParts[0] == "creation_datetime" or $ifParts[0] == "mod_datetime") {
+						$metadataDateClause = formulize_tryDelegatedSearchWhere('date', $ifParts[1], $operator, $quotes, $likebits, $fid, 'main', "DATE(main." . $ifParts[0] . ")");
+					}
 					$ifParts[1] = formulize_db_escape($ifParts[1]);
 				}
-				$newWhereClause = " main." . $ifParts[0] . " $operator $quotes$likebits" . $ifParts[1] . "$likebits$quotes ";
+				$newWhereClause = $metadataDateClause ? $metadataDateClause : " main." . $ifParts[0] . " $operator $quotes$likebits" . $ifParts[1] . "$likebits$quotes ";
+				if (($ifParts[0] == "creation_datetime" or $ifParts[0] == "mod_datetime") and formulize_negativeSearchIncludesBlanks($operator, $ifParts[1])) {
+					$newWhereClause = "( $newWhereClause OR main." . $ifParts[0] . " IS NULL )";
+				}
 				$mappedForm = $fid;
 			} elseif ($ifParts[0] == "creator_email") {
 				$formFieldFilterMap['creator_email'] = true;
@@ -2906,6 +2914,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 			} else {
 
 				list($ifParts[0], $formFieldFilterMap, $mappedForm, $element_id, $elementPrefix, $queryElement) = prepareElementMetaData($frid, $fid, $linkfids, $ifParts[0], $formFieldFilterMap);
+
+				// a negative search, ie: !Emilie, is everything except that, which includes entries with nothing in the field. Worked out now because the branches below change the operator
+				$searchIncludesBlanks = formulize_negativeSearchIncludesBlanks($operator, $ifParts[1]);
 
 				// build the where clause....
 
@@ -3039,6 +3050,15 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 							$queryElementMetaData = formulize_getElementMetaData($ifParts[0], true);
 							$ele_value = unserialize($queryElementMetaData['ele_value']);
 							$cleanSearchTerm = convertStringToUseSpecialCharsToMatchDB($ifParts[1]);
+							// A negative search means no linked value matches, so look for the source entries that do match, and make sure the element isn't pointing at them.
+							// ie: NOT EXISTS (... AND source.name LIKE '%Weapons%'). The other way around, EXISTS (... AND source.name NOT LIKE '%Weapons%'), finds an entry that has Weapons and
+							// something else, and doesn't find an entry with nothing selected, because then there are no source entries to look at.
+							// (NOT IN stays as it is. IN and NOT IN don't work on linked elements yet, and this code path isn't what's needed to make them work.)
+							$linkedNegation = (formulize_operatorIsNegation($operator) AND trim($operator) !== 'NOT IN');
+							$linkedExists = $linkedNegation ? " NOT EXISTS" : " EXISTS";
+							if ($linkedNegation) {
+								$operator = trim($operator) == 'NOT LIKE' ? " LIKE " : " = ";
+							}
 							// if any linked checkbox
 							// or if any select type (which will necessarily be only linked ones since we're in a linked if statement from above), that supports multiple selections [1], and (number of rows is greater than 1 [0] or it is an autocomplete element [8])
 							if (elementTypeIsOrExtends($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], 'checkboxLinked')
@@ -3055,9 +3075,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 									$likebits = "";
 									$search_column = "source.`entry_id`";
 								}
-								$newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE ($queryElement = source.entry_id OR $queryElement LIKE CONCAT('%,',source.entry_id,',%')) AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($cleanSearchTerm) . $likebits . $quotes . ")";
+								$newWhereClause = $linkedExists . " (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE ($queryElement = source.entry_id OR $queryElement LIKE CONCAT('%,',source.entry_id,',%')) AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($cleanSearchTerm) . $likebits . $quotes . ")";
 							} else {
-								$newWhereClause = " EXISTS (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement = source.entry_id AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($cleanSearchTerm) . $likebits . $quotes . ")";
+								$newWhereClause = $linkedExists . " (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement = source.entry_id AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($cleanSearchTerm) . $likebits . $quotes . ")";
 							}
 						}
 					}
@@ -3099,6 +3119,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				// need it to name the right table, and $queryElement is already qualified with it for the ones that do not.
 				} elseif ($delegatedWhereClause = formulize_tryDelegatedSearchWhere($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], $ifParts[1], $operator, $quotes, $likebits, $fid, $elementPrefix, $queryElement)) {
 					$newWhereClause = $delegatedWhereClause;
+					// the other elements that build their own clause are about things stored elsewhere, there's no column of their own in the form to check for blanks
+					$searchIncludesBlanks = ($searchIncludesBlanks AND elementTypeIsOrExtends($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], 'date'));
 
 					// HANDLE IN / NOT IN ON A PLAIN ELEMENT
 				} elseif (trim($operator) === 'IN' || trim($operator) === 'NOT IN') {
@@ -3119,7 +3141,8 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 							$start = true;
 							foreach ($searchTerm as $thisTerm) {
 								if (!$start) {
-									$searchTermToUse .= " OR ";
+									// a negative search is not any of these values, so it has to be not this one and not that one. Every value is not one or the other.
+									$searchTermToUse .= formulize_operatorIsNegation($operator) ? " AND " : " OR ";
 								}
 								$searchTermToUse .= " $queryElement $operator $quotes$likebits" . formulize_db_escape($thisTerm) . "$likebits$quotes ";
 								$start = false;
@@ -3157,8 +3180,15 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 
 						// impossible condition, since no values were found that match the user's states search terms (false must have been passed back from the prepareLiteralTextForDB method, or some other processing)
 					} else {
-						$newWhereClause = "($queryElement = 1 AND $queryElement = 2)";
+						// except a negative search, where every entry is not the value that doesn't exist
+						$newWhereClause = $searchIncludesBlanks ? "1=1" : "($queryElement = 1 AND $queryElement = 2)";
 					}
+				}
+
+				// The comparison in a negative search isn't true when a field is NULL, so those entries are added here. All the ways of building the clause above end up here.
+				// In brackets, so this isn't mistaken for a clause that ends in IS NULL, which means something else: a main form entry with no connected entry also matches (see $termMatchesMissingEntry)
+				if ($searchIncludesBlanks) {
+					$newWhereClause = "( $newWhereClause OR $queryElement IS NULL )";
 				}
 			}
 
@@ -3331,6 +3361,18 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 function formulize_operatorIsNegation($operator) {
 	$operator = strtoupper(trim($operator));
 	return in_array($operator, array('!=', '<>', 'NOT', 'NOT LIKE', 'NOT IN', 'IS NOT NULL'), true);
+}
+
+/**
+ * Check if a search is a negative one that should also find entries with nothing in the field, ie: !Emilie is everything except Emilie, and a blank field isn't Emilie.
+ * SQL doesn't do that on its own, because a comparison with NULL isn't true. A search for things that aren't blank, ie: !{BLANK}, has no term, and is not one of these.
+ *
+ * @param string $operator The operator of the search
+ * @param string $term The term of the search
+ * @return bool True if entries with NULL in the field should be included
+ */
+function formulize_negativeSearchIncludesBlanks($operator, $term) {
+	return (formulize_operatorIsNegation($operator) AND strtoupper(trim($operator)) !== 'IS NOT NULL' AND $term !== '');
 }
 
 /**

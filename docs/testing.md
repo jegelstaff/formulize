@@ -27,6 +27,8 @@ The specs in `tests/e2e/formulize-core/02-validate/` run afterwards, and in para
 
 The specs in `tests/e2e/formulize-core/03-validate-sequential/` run next, one at a time. They change things the museum system shares - such as renaming the elements its screens, saved views and notifications use - check that everything that depends on them still works, and put them back.
 
+What conditions and searches should show is listed in `tests/e2e/formulize-core/conditions-and-searches.md`, one row per case, with the names that should be on the page. It also says where on the page each section looks. The specs read that file, so to add a case, add a row.
+
 The specs in `tests/e2e/formulize-core/04-appearance/` run last, one at a time. They test the Lyris theme's looks and the appearance editor, and they switch the whole site to Lyris while they do, so they can't share the system with anything else that is running. Each one puts the site back as it found it.
 
 This is why the four folders are run as four separate steps rather than as one suite. The setup specs depend on each other and on their order; the validate specs depend only on the finished system; the sequential validate specs and the appearance specs need the finished system to themselves. The folders are numbered in the order they run.
@@ -94,7 +96,7 @@ There are two kinds, and the difference is what they need to exist first:
 * `password_hashing_test.php`
 * `reference_binding_test.php`
 * `normalize_then_escape_test.php`
-* `date_search_test.php`
+* `date_search_test.php` — run a second time with `--date-format=d/m/Y`, as a site that shows dates that way.
 * `empty_set_search_test.php`
 
 **Integrity tests against a built system** boot the application and read the live database, so CI runs them after the e2e suite, once the setup specs have finished building the museum system.

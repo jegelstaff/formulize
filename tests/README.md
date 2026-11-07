@@ -11,7 +11,8 @@ behaviour. CI runs them *before* the e2e suite, since they have nothing to wait 
 * `password_hashing_test.php`
 * `reference_binding_test.php`
 * `normalize_then_escape_test.php`
-* `date_search_test.php`
+* `date_search_test.php` - run it a second time with a date format, `php tests/date_search_test.php --date-format=d/m/Y`,
+  to check how a site that shows dates that way reads them.
 * `empty_set_search_test.php`
 * `element_references_test.php` - where an element is referred to, as `formulizeElementReferences` works it
   out from the declaration in `xoops_version.php` and each element type's `$eleValueReferences`, against an
@@ -81,6 +82,10 @@ We use the [Playwright](https://playwright.dev/) framework for configuring and e
 Core formulize e2e test are located in the `/tests/e2e/formulize-core` directory.
 
 When writing your own tests for your site/application place them in an appropriately named directory inside `/tests/e2e`.
+
+### Conditions and searches
+
+[`formulize-core/conditions-and-searches.md`](e2e/formulize-core/conditions-and-searches.md) lists what a condition or a search should show, as a table of rows and the names on the page for each one, and says what each section looks at. The specs read that file, so a row is a test: `03-validate-sequential/045-conditions-on-the-page.spec.js` sets each condition with MCP and looks at the page, and `02-validate/049-searches-on-lists.spec.js` types each search into a list. To add a case, add a row.
 
 ### Running tests in CI
 
