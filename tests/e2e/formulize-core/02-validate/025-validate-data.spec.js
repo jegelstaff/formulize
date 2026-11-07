@@ -25,6 +25,7 @@ test.describe('Validate Data', () => {
 		await page3.getByRole('checkbox', { name: 'Year', exact: true }).check();
 		await page3.getByRole('checkbox', { name: 'Era', exact: true }).check();
 		await page3.getByRole('checkbox', { name: 'Condition' }).check();
+		await page3.getByRole('checkbox', { name: 'Storage', exact: true }).check();
 		await page3.getByRole('checkbox', { name: 'Donor', exact: true }).check();
 		await page3.getByRole('checkbox', { name: 'Donated to museum' }).check();
 		await page3.getByRole('checkbox', { name: 'Type of donor' }).check();
@@ -42,7 +43,7 @@ test.describe('Validate Data', () => {
 		await page3.getByRole('checkbox', { name: 'Backgrounder / Resume' }).check();
 		await page3.getByRole('checkbox', { name: 'Suitable audience' }).check();
 		await page3.getByRole('group', { name: 'Exhibits', exact: true }).getByLabel('Name').check();
-		await page3.getByRole('checkbox', { name: 'Curator' }).check();
+		await page3.getByRole('checkbox', { name: 'Curator', exact: true }).check();
 		await page3.getByRole('group', { name: 'Exhibits', exact: true }).getByLabel('Collections').check();
 		await page3.getByRole('checkbox', { name: 'Artifacts' }).check();
 		await page3.getByRole('checkbox', { name: 'Respondent name' }).check();
@@ -69,28 +70,29 @@ test.describe('Validate Data', () => {
 		await expect(page.locator('#celladdress_2_18')).toContainText('François-Marie Arouet');
 		await expect(page.locator('#celladdress_2_19')).toContainText('8');
 		await expect(page.locator('#celladdress_2_20')).toContainText('Ancient HistoryCoins');
-		await expect(page.locator('#celladdress_2_21')).toContainText('Individual');
-		await expect(page.locator('#celladdress_2_22')).toContainText('François-Marie');
-		await expect(page.locator('#celladdress_2_23')).toContainText('Arouet');
-		await expect(page.locator('#celladdress_2_24')).toContainText('');
-		await expect(page.locator('#celladdress_2_25')).toContainText('François-Marie Arouet');
-		await expect(page.locator('#celladdress_2_26')).toContainText('169-422-1778');
-		await expect(page.locator('#celladdress_2_27')).toContainText('voltaire@enlightenment.org');
-		await expect(page.locator('#celladdress_2_28')).toContainText('Château de Cirey');
-		await expect(page.locator('#celladdress_2_29')).toContainText('Quebec');
-		await expect(page.locator('#celladdress_2_30')).toContainText('G1A 0A2');
-		await expect(page.locator('#celladdress_2_31')).toContainText('#6c2d2d');
-		await expect(page.locator('#celladdress_2_32')).toContainText('');
-		await expect(page.locator('#celladdress_2_33')).toContainText('Ancient HistoryCoins');
-		await expect(page.locator('#celladdress_2_34')).toContainText('ChildrenAdultsAdults');
-		await expect(page.locator('#celladdress_2_35')).toContainText('History through the AgesAncient WondersPennies from the Past');
-		await expect(page.locator('#celladdress_2_36')).toContainText('Curator OneCurator OneCurator Two');
-		await expect(page.locator('#celladdress_2_37')).toContainText('Modern HistoryAncient HistoryAncient HistoryCoins');
-		await expect(page.locator('#celladdress_2_38')).toContainText('M001 | Roman CoinM002 | Persian necklaceM003 | Chinese SwordM004 | Egyptian ChariotM005 | Babylonian SpoonM006 | Florentine BookM007 | French MusketM008 | Japanese CoinM009 | American BicycleM010 | Polynesian CanoeM011 | Viking Silver ArmbandM001 | Roman CoinM002 | Persian necklaceM003 | Chinese SwordM004 | Egyptian ChariotM005 | Babylonian SpoonM001 | Roman CoinM008 | Japanese Coin');
-		await expect(page.locator('#celladdress_2_39')).toContainText('Ebanezer Scrooge');
-		await expect(page.locator('#celladdress_2_40')).toContainText('Pennies from the Past');
-		await expect(page.locator('#celladdress_2_41')).toContainText('M001 | Roman Coin');
-		await expect(page.locator('#celladdress_2_42')).toContainText('Disappointing');
+		await expect(page.locator('#celladdress_2_21')).toContainText('Climate controlled'); // what people see, the database has 11
+		await expect(page.locator('#celladdress_2_22')).toContainText('Individual');
+		await expect(page.locator('#celladdress_2_23')).toContainText('François-Marie');
+		await expect(page.locator('#celladdress_2_24')).toContainText('Arouet');
+		await expect(page.locator('#celladdress_2_25')).toContainText('');
+		await expect(page.locator('#celladdress_2_26')).toContainText('François-Marie Arouet');
+		await expect(page.locator('#celladdress_2_27')).toContainText('169-422-1778');
+		await expect(page.locator('#celladdress_2_28')).toContainText('voltaire@enlightenment.org');
+		await expect(page.locator('#celladdress_2_29')).toContainText('Château de Cirey');
+		await expect(page.locator('#celladdress_2_30')).toContainText('Quebec');
+		await expect(page.locator('#celladdress_2_31')).toContainText('G1A 0A2');
+		await expect(page.locator('#celladdress_2_32')).toContainText('#6c2d2d');
+		await expect(page.locator('#celladdress_2_33')).toContainText('');
+		await expect(page.locator('#celladdress_2_34')).toContainText('Ancient HistoryCoins');
+		await expect(page.locator('#celladdress_2_35')).toContainText('ChildrenAdultsAdults');
+		await expect(page.locator('#celladdress_2_36')).toContainText('History through the AgesAncient WondersPennies from the Past');
+		await expect(page.locator('#celladdress_2_37')).toContainText('Curator OneCurator OneCurator Two');
+		await expect(page.locator('#celladdress_2_38')).toContainText('Modern HistoryAncient HistoryAncient HistoryCoins');
+		await expect(page.locator('#celladdress_2_39')).toContainText('M001 | Roman CoinM002 | Persian necklaceM003 | Chinese SwordM004 | Egyptian ChariotM005 | Babylonian SpoonM006 | Florentine BookM007 | French MusketM008 | Japanese CoinM009 | American BicycleM010 | Polynesian CanoeM011 | Viking Silver ArmbandM001 | Roman CoinM002 | Persian necklaceM003 | Chinese SwordM004 | Egyptian ChariotM005 | Babylonian SpoonM001 | Roman CoinM008 | Japanese Coin');
+		await expect(page.locator('#celladdress_2_40')).toContainText('Ebanezer Scrooge');
+		await expect(page.locator('#celladdress_2_41')).toContainText('Pennies from the Past');
+		await expect(page.locator('#celladdress_2_42')).toContainText('M001 | Roman Coin');
+		await expect(page.locator('#celladdress_2_43')).toContainText('Disappointing');
 
 	}),
 	test('Search for specific collection data', async ({ page }) => {

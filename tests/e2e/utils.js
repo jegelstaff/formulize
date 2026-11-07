@@ -532,6 +532,56 @@ export async function waitForAdminPageReady(page) {
 }
 
 /**
+ * Open the settings popup of a page of a multi-page screen, from the Pages tab. The page's drawer has to be closed, because
+ * clicking an open drawer closes it. A drawer that's closing and one that's opening are both on the page for a moment, so
+ * "Edit this page" on its own can match two links. This uses the one in the page's own drawer, so a click that the accordion
+ * ignored because it was still moving can't end up editing a different page.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} title - The title of the page, as it shows on its drawer
+ */
+export async function editScreenPage(page, title) {
+	const drawer = page.locator('[id^="drawer-"]').filter({ has: page.getByRole('link', { name: title, exact: true }) });
+	await drawer.getByRole('link', { name: title, exact: true }).click();
+	await drawer.getByRole('link', { name: 'Edit this page' }).click();
+}
+
+/**
+ * Wait for conditionalCheckInProgress to be stable at 0, because we might have cascading deferred conditional checks :(
+ * Use it after the check has come back, for an action that might leave the conditional element exactly as it was,
+ * which conditionalElementReady() can't wait for.
+ * @param {Page} page - Playwright page object
+ */
+export async function conditionalChecksFinished(page) {
+	// a page stays open across checks, so the timer from the last check doesn't count for this one
+	await page.evaluate(() => { window._stableCheckStart = null; });
+	await page.waitForFunction(() => {
+		// Store the stable check start time on window object
+		if (!window._stableCheckStart) {
+			window._stableCheckStart = null;
+		}
+
+		const isReady = typeof window.conditionalCheckInProgress === 'undefined' ||
+		                window.conditionalCheckInProgress === 0;
+
+		if (isReady) {
+			// Start/continue the stability timer
+			if (!window._stableCheckStart) {
+				window._stableCheckStart = Date.now();
+			}
+			// Check if it's been stable for a second
+			return Date.now() - window._stableCheckStart > 1000;
+		} else {
+			// Reset the timer if it goes back to busy
+			window._stableCheckStart = null;
+			return false;
+		}
+	}, {}, { timeout: 30000 });
+
+	// Clean up the marker
+	await page.evaluate(() => delete window._stableCheckStart);
+}
+
+/**
  * Waits for a conditional element to appear or be updated after a trigger action
  * Does not work for conditional elements that disappear on a trigger action - will need a different function for that
  * @param {Page} page - Playwright page object
