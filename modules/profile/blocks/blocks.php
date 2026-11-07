@@ -32,9 +32,6 @@ function b_profile_friends_show($options) {
 			$i++;
 		}
 		if (isset($block['friends']) && count($block['friends']) > 0) usort($block['friends'], 'sortFriendsArray');
-
-		// adding PM javascript, $xoTheme cannot be used in this place because jQuery is not yet loaded
-		if (count($block['friends']) > 0) $block['jQuery'] = 'jQuery(document).ready(function(){jQuery("a.block-profile-pm").colorbox({width:600, height:395, iframe:true});});';
 	}
 
 	return $block;

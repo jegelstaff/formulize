@@ -127,7 +127,9 @@ function extractFunctionSource($source, $functionName) {
 $functionsSource = file_get_contents($functionsFile);
 foreach (array('formulize_normalizeMonthNameForSearch', 'formulize_monthNamesForSearch',
                'formulize_datePeriodForMonth', 'formulize_parseDatePeriodSearchTerm',
-               'formulize_dateValueAsISO', 'formulize_mysqlDateFormat', 'formulize_termIsADate') as $name) {
+               'formulize_dateValueAsISO', 'formulize_mysqlDateFormat', 'formulize_termIsADate', 'formulize_dateSpanInTerm',
+               'formulize_dateSpanComparison', 'formulize_dateLikeComparison', 'formulize_dateComparedWithTermThatIsNotADate',
+               'formulize_blankDateComparison') as $name) {
     $code = extractFunctionSource($functionsSource, $name);
     if ($code === false) {
         fwrite(STDERR, "Could not extract $name()\n");
@@ -285,8 +287,8 @@ check('no operator (LIKE)', clauseFor($handler, 'LIKE'), "( main.`when` >= '2026
 check('equals is the month', clauseFor($handler, '='),   "( main.`when` >= '2026-10-01' AND main.`when` <= '2026-10-31' )");
 check('on or after the 1st', clauseFor($handler, '>='),  "main.`when` >= '2026-10-01'");
 check('after the whole month', clauseFor($handler, '>'), "main.`when` > '2026-10-31'");
-check('on or before the 31st', clauseFor($handler, '<='),"main.`when` <= '2026-10-31'");
-check('before the whole month', clauseFor($handler, '<'),"main.`when` < '2026-10-01'");
+check('on or before the 31st', clauseFor($handler, '<='),"( main.`when` <= '2026-10-31' AND main.`when` >= '0001-01-01' )");
+check('before the whole month', clauseFor($handler, '<'),"( main.`when` < '2026-10-01' AND main.`when` >= '0001-01-01' )");
 check('not equal is outside', clauseFor($handler, '!='), "( main.`when` < '2026-10-01' OR main.`when` > '2026-10-31' )");
 check('not like is outside',  clauseFor($handler, 'NOT LIKE'), "( main.`when` < '2026-10-01' OR main.`when` > '2026-10-31' )");
 
@@ -338,6 +340,7 @@ echo "\nCOMPARING A DATE WITH SOMETHING THAT ISN'T ONE - decided here, because M
 $notADate = function($term, $operator) use ($handler) { return $handler->buildClauseForTermThatIsNotADate($term, $operator, 'main.`when`'); };
 check('a real date carries on as normal',  $notADate('2026-03-05', '='), false);
 check('so does a date and time',           $notADate('2026-03-05 10:30:00', '>'), false);
+check('before a date leaves out empty dates', $notADate('2026-03-05', '<'), " ( main.`when` < '2026-03-05' AND main.`when` >= '0001-01-01' ) ");
 check('nothing equals a word',             $notADate('bread', '='), ' 1=0 ');
 check('nothing is before a word',          $notADate('bread', '<'), ' 1=0 ');
 check('nothing is after a word',           $notADate('bread', '>='), ' 1=0 ');

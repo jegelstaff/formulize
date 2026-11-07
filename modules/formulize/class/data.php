@@ -1808,9 +1808,7 @@ function applyDefaultToEntries($element, $conditions = '') {
 		// If the column doesn't exist yet (brand-new element), all entries are candidates
 		$sql = "SELECT `entry_id` FROM `$table`";
 	} else {
-		// a date can't be compared with '', see FORMULIZE_EARLIEST_DATE
-		$blankValueCheck = elementTypeIsOrExtends($element, 'date') ? "`$eleHandle` < '".FORMULIZE_EARLIEST_DATE."'" : "`$eleHandle` = ''";
-		$sql = "SELECT `entry_id` FROM `$table` WHERE `$eleHandle` IS NULL OR $blankValueCheck";
+		$sql = "SELECT `entry_id` FROM `$table` WHERE ".formulize_blankValueComparison($element, $eleHandle, "`$eleHandle`", false);
 	}
 	if(!$result = $xoopsDB->query($sql)) {
 		return 0;

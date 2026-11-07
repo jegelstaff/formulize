@@ -58,6 +58,22 @@ await conditionalElementReady(
 - **Only use it when the element will change.** If the action leaves the element's HTML as it was, the wait for a change times out.
 - **It doesn't work for an element that disappears.** For that, use `await expect(locator).not.toBeVisible()`, which retries through the fade.
 
+### Reads that don't wait
+
+`count()`, `isVisible()`, `isHidden()`, `all()`, `allTextContents()`, `allInnerTexts()` and `evaluateAll()` answer at once with what's on the page at that moment. Right after an action, nothing there can just mean it hasn't arrived yet. `textContent()`, `inputValue()` and `getAttribute()` wait for their element, and assertions like `toHaveText()` retry.
+
+Before one of the reads that doesn't wait, wait for something that proves the content has arrived, or use an assertion that retries. Check what the wait really proves. The page settings popup on a screen's Pages tab loads over AJAX after the click, so reading it straight away finds an empty list, with nothing wrong in the app. Waiting for "Title for page number" works there because the popup's contents arrive all at once.
+
+### Accordion drawers
+
+A drawer slides for 300ms, and the one closing and the one opening are both on the page until it's over. A locator for something that's in every drawer, like "Edit this page", matches two links during that time, and that's a strict mode violation. Look inside the drawer you want. `editScreenPage()` does this for a screen's pages, and `openElementAccordion()` and `openMenuAccordion()` do it for elements and menu entries.
+
+The accordion ignores clicks while a drawer is moving. Playwright usually gets past this, because it waits for a heading to stop moving before clicking it, but a heading above the drawers that are moving is already still. If the click was ignored, an unscoped locator can go on to act on the wrong drawer without any error, and a scoped one times out.
+
+Only accordions that save their order can be dragged. A heading's link has `draggable="false"`, because otherwise Chromium starts its own drag of the link, the sortable stops getting mouse events, and the accordion stops responding to clicks. `dragDrawer()` in `070-admin-page-reload-keeps-drawer-open.spec.js` shows how to drag one: the sortable needs a mouse that moves in steps, which `dragTo()` doesn't do.
+
+When an admin page reloads, the drawer that was open stays open. A page with no drawer to go back to opens its first drawer, unless the accordion is one that starts closed, and the first one slides open while the page settles.
+
 ### Lists
 
 `waitForWorkingMessage(page)` is only for after a list action: search, sort, page jump, view change. A plain navigation to a list renders on the server and never shows the working message, so wait for the "Showing entries" footer instead.

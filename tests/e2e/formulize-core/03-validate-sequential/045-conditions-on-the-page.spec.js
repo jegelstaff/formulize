@@ -328,14 +328,24 @@ test('Section 3: { } in a new Loan Request, and as things change on screen', asy
 	const { selector } = howToCheck('N');
 	const everything = namesIn('Artifact');
 
+	const readOptions = () => namesOnPage(page.locator(selector), everything);
+
 	await login(page, 'curator1', '12345');
 	for (const row of rows) {
-		await setOptionsFilter(ARTIFACT_OPTIONS, conditionsFor(row, ARTIFACT_ELEMENTS));
+		const conditions = conditionsFor(row, ARTIFACT_ELEMENTS);
+		const expected = expectedNames(row['Should show'], everything);
+		await setOptionsFilter(ARTIFACT_OPTIONS, conditions);
 		await openNewLoanRequest(page);
 		if (row['On screen']) {
 			await putOnScreen(page, row['On screen']);
 		}
-		compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
+		compare(row, expected, await readOptions());
+		if (expected.length === 0) {
+			await proveQueryRan(row, () => setOptionsFilter(ARTIFACT_OPTIONS, provingConditions(conditions, 'artifacts_short_name', 'Roman Coin')), async () => {
+				await openNewLoanRequest(page);
+				return readOptions();
+			}, 'Roman Coin');
+		}
 	}
 	await setOptionsFilter(ARTIFACT_OPTIONS, []);
 	await leavePage(page);

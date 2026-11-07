@@ -87,7 +87,7 @@
             <h2> Manage the links in the menu</h2>
             <p>Click and drag the links to re-order them</p><br/>
             <div id="sortable-list">
-                <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/application_menu_entries_sections.html" sections=$content.links closeAccordion=1}>
+                <{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/application_menu_entries_sections.html" sections=$content.links closeAccordion=1 reorderable=1}>
             </div>
         </div>
     </form>

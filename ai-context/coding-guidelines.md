@@ -259,14 +259,15 @@ Array access with a variable key looks like this: `$content.per_group_conditions
 
 ### JavaScript in Admin Templates
 
-**The admin UI and the front end run different versions of jQuery. Check which one your code will run in before you write it.**
+**The Formulize admin UI, the front end and the system admin pages run different versions of jQuery. Check which one your code will run in before you write it.**
 
 | | jQuery | jQuery UI | Loaded by |
 |---|---|---|---|
-| **Admin UI** | **1.4.2** | **1.8.2** | `templates/admin/ui.html` |
-| **Front end** | 1.12.4 | 1.11.4 | `header.php`, which also loads `jquery-migrate` |
+| **Formulize admin UI** | **1.4.2** | **1.8.2** | `templates/admin/ui.html` |
+| **Front end** | 1.12.4 | 1.11.4 | `header.php`, which gets them from Google's CDN and also loads `jquery-migrate` |
+| **System admin pages** | 1.11.1 | 1.12.1 | `icms_cp_header()` in `include/cp_functions.php` |
 
-These values are surprising because the site itself ships jQuery 1.11.1 at `libraries/jquery/jquery.js`, but nothing loads it. `header.php` gets jQuery from Google's CDN. The shipped version should be removed in future work. Admin templates execute against 1.4.2 no matter what the page may have loaded earlier. Confirm it on any admin page by looking at the order of the `<script>` tags, not at which files exist on disk.
+Every admin page starts with the copies in `libraries/jquery/`, which `icms_cp_header()` loads. `templates/admin/ui.html` then loads 1.4.2 and UI 1.8.2 over the top of them, so Formulize admin templates execute against 1.4.2 no matter what the page loaded earlier. Pages outside `ui.php` keep 1.11.1. It has no `jquery-migrate`, so `$.browser` is undefined there, and an old plugin that reads it fails as soon as it loads. Confirm which version a page has by looking at the order of its `<script>` tags, not at which files exist on disk.
 
 There is also a **conditional fallback** in `modules/formulize/include/functions.php` that injects 1.4.2 and UI 1.8.2 only when `jQuery` or `jQuery.ui` is undefined. It is a safety net for pages that load no jQuery of their own, and it means some front-end contexts could theoretically end up on 1.4.2 as well, however this is extremely unlikely in real world situations.
 

@@ -1,9 +1,13 @@
 
+<{* After a reload, go back to the drawer that was open. That was in the accordion on the selected tab. An accordion that names a drawer to open always opens that one. *}>
+<{assign var=openDrawer value="false"}>
+<{if $number == $accordion_active_tab AND !isset($openAccordionOrdinal)}><{assign var=openDrawer value=$accordion_active}><{/if}>
 <script type="text/javascript">
 
 	pagehasaccordion["accordion-<{$number}>"] = true;
 
 	$(function() {
+		<{if $reorderable}>
 		var stop = false;
 		$("#accordion-<{$number}> h3").click(function(event) {
 			if (stop) {
@@ -12,20 +16,24 @@
 				stop = false;
 			}
 		});
+		<{/if}>
 		$("#accordion-<{$number}>").accordion({
 			autoHeight: false, // no fixed height for sections
 			collapsible: true, // sections can be collapsed
-			active: <{$accordion_active}>,
+			active: <{$openDrawer}>,
 			header: "> div > h3"
-		}).sortable({
+		})<{if $reorderable}>.sortable({
 			axis: "y",
 			handle: "h3",
 			stop: function(event, ui) {
 				stop = true;
 			}
-		});
+		})<{/if}>;
 		<{if !$closeAccordion}>
-		$("#accordion-<{$number}>").accordion("activate" , <{if $openAccordionOrdinal}><{$openAccordionOrdinal}><{else}>0<{/if}>);
+		// activate opens and closes, so it would shut a drawer that's already open. The one that was open can be gone, if it was deleted.
+		if($("#accordion-<{$number}> > div > .ui-accordion-content-active").length == 0) {
+			$("#accordion-<{$number}>").accordion("activate" , <{if $openAccordionOrdinal}><{$openAccordionOrdinal}><{else}>0<{/if}>);
+		}
 		<{/if}>
 	});
 
@@ -34,7 +42,7 @@
 <div id="accordion-<{$number}>">
 	<{foreach from=$sections key=sectionNumber item=section}>
 	<div id="drawer-<{$number}>-<{$sectionNumber}>">
-        <h3><a href="#"><span class="accordion-name"><{$section.name}></span></a></h3>
+        <h3><a href="#" draggable="false"><span class="accordion-name"><{$section.name}></span></a></h3>
 		<div class="accordion-content content">
 			<{if $section.header}>
 			<div style="position: absolute; top: 10px; right: 10px;">

@@ -376,8 +376,9 @@ $(document).ready(function() {
     <{/if}>
     var accordion_active = "";
     if(pagehasaccordion["accordion-"+tabs_selected]) {
-      <{* // not really the active accordion we want, it's the current position of the active accordion, since accordion sections are sortable! - this is a semi-rare bug that needs fixing, cross reference the active position with the results of a toArray call on the sortable element *}>
-      accordion_active = $("#accordion-"+tabs_selected).accordion( "option", "active" );
+      <{* where the open drawer is now, which is where it will be after the reload. The accordion's active option is where it was when it was opened, before any dragging. *}>
+      var $openDrawer = $("#accordion-"+tabs_selected+" > div > .ui-accordion-content-active").parent();
+      accordion_active = $openDrawer.length ? $openDrawer.index() : "";
     }
     window.document.scrollposition.accordion_active.value = accordion_active;
     var $openPanelsField = $("#open_group_conditions_panels");

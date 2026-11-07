@@ -2601,6 +2601,34 @@ function formulize_tryDelegatedSearchWhere($eleType, $term, $operator, $quotes, 
 	return false;
 }
 
+/**
+ * Build the where clause for a search on when an entry was made or modified, the way formulize_tryDelegatedSearchWhere does for a date element.
+ * The column has a time as well, so a term that names whole days, ie: 2026-03-05, {TODAY} or March, is every moment of those days, as the person
+ * searching sees them (see formulize_dateSpanInTerm). Anything else is about the date, so DATE(). Per-group filters use this too.
+ *
+ * @param string $term The search term, as typed
+ * @param string $operator The operator
+ * @param string $quotes The quotes the caller would use around the term
+ * @param string $likebits The wildcards for a partial match
+ * @param int $fid The form id
+ * @param string $column The fully qualified column, ie: main.creation_datetime
+ * @return string|false The where clause, or false if the term is a date with a time, or something else the column can be compared with as it is
+ */
+function formulize_metadataDateSearchWhere($term, $operator, $quotes, $likebits, $fid, $column)
+{
+	$normalizedOperator = formulizeDataHandler::normalizeSearchOperator($operator);
+	if ($range = formulize_dateSpanInTerm($term, true, ($normalizedOperator === 'LIKE' || $normalizedOperator === 'NOT LIKE'))) {
+		$dateTypeHandler = xoops_getmodulehandler('dateElement', 'formulize');
+		if ($clause = $dateTypeHandler->buildSearchWhereClause($term, $normalizedOperator, $quotes, $likebits, $fid, 'main', $column, $term, $range)) {
+			return $clause;
+		}
+	}
+	if (formulize_termIsADate($term)) {
+		return false; // a date and a time, a day has been dealt with above
+	}
+	return formulize_tryDelegatedSearchWhere('date', $term, $operator, $quotes, $likebits, $fid, 'main', "DATE($column)");
+}
+
 
 // THIS FUNCTION BREAKS DOWN THE FILTER STRING INTO ITS COMPONENTS.  TAKES EVERYTHING UP TO THE TOP LEVEL ARRAY SYNTAX.
 // $linkfids is the linked fids in order that they appear in the SQL query
@@ -2827,14 +2855,14 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					$likebits = "";
 					$ifParts[1] = formulize_db_escape($ifParts[1]);
 				} else { // a date field, or a blank uid term ({BLANK} -> creation_uid = '' / IS NULL): escape and compare on the column directly. (text uid searches were escaped already in the subquery above)
-					// metadata dates work the same as date elements for whole years and months, and terms that aren't dates. DATE() because the column has a time as well, and a period is whole days
-					if ($ifParts[0] == "creation_datetime" or $ifParts[0] == "mod_datetime") {
-						$metadataDateClause = formulize_tryDelegatedSearchWhere('date', $ifParts[1], $operator, $quotes, $likebits, $fid, 'main', "DATE(main." . $ifParts[0] . ")");
+					// metadata dates work the same as date elements, except that they have a time as well
+					if (_conditionIsOnADate(false, $ifParts[0])) {
+						$metadataDateClause = formulize_metadataDateSearchWhere($ifParts[1], $operator, $quotes, $likebits, $fid, "main." . $ifParts[0]);
 					}
 					$ifParts[1] = formulize_db_escape($ifParts[1]);
 				}
 				$newWhereClause = $metadataDateClause ? $metadataDateClause : " main." . $ifParts[0] . " $operator $quotes$likebits" . $ifParts[1] . "$likebits$quotes ";
-				if (($ifParts[0] == "creation_datetime" or $ifParts[0] == "mod_datetime") and formulize_negativeSearchIncludesBlanks($operator, $ifParts[1])) {
+				if (_conditionIsOnADate(false, $ifParts[0]) and formulize_negativeSearchIncludesBlanks($operator, $ifParts[1])) {
 					$newWhereClause = "( $newWhereClause OR main." . $ifParts[0] . " IS NULL )";
 				}
 				$mappedForm = $fid;
@@ -3129,6 +3157,10 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					// list via prepareLiteralTextForDB and/or re-escape it (corrupting quoted string values).
 					$newWhereClause = " $queryElement $operator " . $ifParts[1] . " ";
 
+					// HANDLE LIKE AND NOT LIKE ON AN ELEMENT WITH UI TEXT, WHICH LOOK IN THE LABELS
+				} elseif ((trim($operator) == "LIKE" or trim($operator) == "NOT LIKE") and $uiTextLikeComparison = formulize_uiTextLikeComparison(_getElementObject($element_id), $ifParts[1], $operator, $queryElement)) {
+					$newWhereClause = $uiTextLikeComparison;
+
 					// HANDLE ALL OTHER ELEMENT TYPES (not other box, not linked, not username/fullname list, not delegated)
 				} else {
 					// check if there's any conversion necessary from what the user typed into a special value that will work in the database
@@ -3136,15 +3168,16 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					$searchTermToUse = "";
 					$searchTerm = prepareLiteralTextForDB($element_id, $searchTerm, partialMatch: (trim($operator) == "LIKE" OR trim($operator) == "NOT LIKE"));
 					if (trim($operator) == "LIKE" or trim($operator) == "NOT LIKE") {
-						if (is_array($searchTerm) and count($searchTerm) > 1) { // method has returned a list of complete values in the database that match the term, so we need to construct an OR series to match this value in the database
+						if (is_array($searchTerm) and !empty($searchTerm)) { // method has returned a list of complete values in the database that match the term, so we need to construct a series to match them. They're whole values, so exactly: 1 is not part of 10 just because the digit is in it
 							$searchTermToUse = " (";
 							$start = true;
+							$wholeValueOperator = formulize_operatorIsNegation($operator) ? "!=" : "=";
 							foreach ($searchTerm as $thisTerm) {
 								if (!$start) {
 									// a negative search is not any of these values, so it has to be not this one and not that one. Every value is not one or the other.
 									$searchTermToUse .= formulize_operatorIsNegation($operator) ? " AND " : " OR ";
 								}
-								$searchTermToUse .= " $queryElement $operator $quotes$likebits" . formulize_db_escape($thisTerm) . "$likebits$quotes ";
+								$searchTermToUse .= " $queryElement $wholeValueOperator '" . formulize_db_escape($thisTerm) . "' ";
 								$start = false;
 							}
 							$searchTermToUse .= ") ";

@@ -319,7 +319,7 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 		// A date in the format the site shows dates in is read in that format first, because strtotime reads 05/03/2026 as May 3, even on a site that shows dates as d/m/Y
 		// When the term can be part of a date ($partialMatch, ie: LIKE), digits and separators that don't make up a whole date are kept as typed, because strtotime fills
 		// in what's missing, so 05/03 would become May 3 this year. They are matched against the date as stored and as the site shows it. Words like yesterday are still read as dates.
-		if(!in_array($firstChar, $operators) AND !formulize_parseDatePeriodSearchTerm($value)) {
+		if(!in_array($firstChar, $operators) AND !formulize_dateSpanInTerm($value)) {
 			$isoValue = formulize_dateValueAsISO($value);
 			$dateParts = date_parse($value);
 			$namesADay = ($dateParts['error_count'] == 0 AND $dateParts['year'] !== false AND $dateParts['month'] !== false AND $dateParts['day'] !== false);
@@ -356,55 +356,27 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	 * @param string $tableAlias Unused here, the column reference below is already qualified
 	 * @param string $queryElement The fully qualified column being searched
 	 * @param string $rawTerm The search term as originally typed, before prepareLiteralTextForDB converted it
+	 * @param array|null $period Optional. The start and end to compare with, when the caller has worked them out, ie: the first and last moments of a day, on a
+	 * column with a time as well (see formulize_dateSpanInTerm). Otherwise the period is read from $rawTerm.
 	 * @return string|false The where clause, or false to leave this term to the ordinary handling
 	 */
-	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main', $queryElement = '', $rawTerm = '') {
+	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main', $queryElement = '', $rawTerm = '', $period = null) {
 
-		$searchPeriod = formulize_parseDatePeriodSearchTerm($rawTerm);
+		$searchPeriod = $period ? $period : formulize_dateSpanInTerm($rawTerm);
 		if (!$searchPeriod OR !$queryElement) {
-			// Part of a date also matches the date as the site shows it, ie: 03/2026 on a site that shows dates as d/m/Y, because dates are stored as YYYY-MM-DD.
 			// Not needed if the site shows dates as they are stored, then the search carries on the way it would for any other element
 			$searchOperator = trim($operator);
-			$siteDateFormat = formulize_mysqlDateFormat();
-			if ($queryElement AND trim((string) $rawTerm) !== '' AND ($searchOperator == 'LIKE' OR $searchOperator == 'NOT LIKE') AND $siteDateFormat != '%Y-%m-%d') {
-				$storedDate = "'" . $likebits . formulize_db_escape($term) . $likebits . "'";
-				$shownDate = "'" . $likebits . formulize_db_escape($rawTerm) . $likebits . "'";
-				$dateAsShown = "DATE_FORMAT($queryElement,'" . formulize_db_escape($siteDateFormat) . "')";
-				return $searchOperator == 'LIKE'
-					? " ( $queryElement LIKE $storedDate OR $dateAsShown LIKE $shownDate ) "
-					: " ( $queryElement NOT LIKE $storedDate AND $dateAsShown NOT LIKE $shownDate ) ";
+			if ($queryElement AND $dateLikeComparison = formulize_dateLikeComparison($searchOperator, $queryElement, $term, $rawTerm, $likebits)) {
+				return $dateLikeComparison;
 			}
 			return $this->buildClauseForTermThatIsNotADate($term, $searchOperator, $queryElement);
 		}
-		$start = "'" . formulize_db_escape($searchPeriod['start']) . "'";
-		$end   = "'" . formulize_db_escape($searchPeriod['end']) . "'";
-
-		// The comparisons people expect when they have named a period rather than a day: after October means after all of
-		// it, before October means before any of it, and a plain search for October means anywhere inside it.
-		switch (trim($operator)) {
-			case '>=':
-				return " $queryElement >= $start ";
-			case '>':
-				return " $queryElement > $end ";
-			case '<=':
-				return " $queryElement <= $end ";
-			case '<':
-				return " $queryElement < $start ";
-			case '!=':
-			case '<>':
-			case 'NOT LIKE':
-				return " ( $queryElement < $start OR $queryElement > $end ) ";
-			case '=':
-			case 'LIKE':
-				return " ( $queryElement >= $start AND $queryElement <= $end ) ";
-		}
-		return false;
+		return formulize_dateSpanComparison($operator, $queryElement, "'" . formulize_db_escape($searchPeriod['start']) . "'", "'" . formulize_db_escape($searchPeriod['end']) . "'");
 	}
 
 	/**
-	 * Decide what a comparison means when the term isn't a date, instead of putting it in the SQL, because MySQL gives an error if a date is compared with text, where MariaDB
-	 * doesn't. LIKE and NOT LIKE are not affected, they treat the date as text. So a blank term finds blank dates, and no date is equal to a term that isn't a date, or before
-	 * or after it. Every date is not equal to it, including entries with no date, the same as any other negative search.
+	 * Build the clause for a search that compares a date with something that isn't one, instead of putting it in the SQL (see formulize_dateComparedWithTermThatIsNotADate).
+	 * A blank term finds blank dates, with = and !=. Otherwise it's a term that isn't a date, like any other. In a list, only the dates stay in the list.
 	 *
 	 * @param string $term The term, already passed through prepareLiteralTextForDB. An IN list is ('a','b').
 	 * @param string $operator The normalized operator
@@ -415,33 +387,27 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 		if(!$queryElement) {
 			return false;
 		}
+		$everyEntryMatches = formulize_dateComparedWithTermThatIsNotADate($operator);
+		if($everyEntryMatches === null) {
+			return false;
+		}
 		if($operator == 'IN' OR $operator == 'NOT IN') {
-			// only the dates in the list stay in the list
 			preg_match_all("/'([^']*)'/", (string) $term, $listItems);
 			$dates = array_filter($listItems[1], 'formulize_termIsADate');
 			if(count($dates) == count($listItems[1])) {
 				return false;
 			}
-			if(empty($dates)) {
-				return $operator == 'IN' ? " 1=0 " : " 1=1 ";
+			if(!empty($dates)) {
+				return " $queryElement $operator ('".implode("','", $dates)."') ";
 			}
-			return " $queryElement $operator ('".implode("','", $dates)."') ";
+		} elseif(formulize_termIsADate($term)) {
+			// a real date carries on as normal, except that an empty date from old data is before it, and nothing is before a blank (see formulize_dateSpanComparison)
+			$quotedDate = "'".formulize_db_escape($term)."'";
+			return ($operator == '<' OR $operator == '<=') ? formulize_dateSpanComparison($operator, $queryElement, $quotedDate, $quotedDate) : false;
+		} elseif(trim((string) $term) === '' AND ($everyEntryMatches OR $operator == '=' OR $operator == '<=>')) {
+			return formulize_blankDateComparison($queryElement, $everyEntryMatches);
 		}
-		if(!in_array($operator, array('=', '<=>', '!=', '<>', '<', '<=', '>', '>='))) {
-			return false;
-		}
-		$isNegation = ($operator == '!=' OR $operator == '<>');
-		if(trim((string) $term) === '') {
-			$earliestDate = "'".FORMULIZE_EARLIEST_DATE."'";
-			if($isNegation) {
-				return " $queryElement >= $earliestDate ";
-			}
-			return ($operator == '=' OR $operator == '<=>') ? " ( $queryElement < $earliestDate OR $queryElement IS NULL ) " : " 1=0 ";
-		}
-		if(formulize_termIsADate($term)) {
-			return false;
-		}
-		return $isNegation ? " 1=1 " : " 1=0 ";
+		return $everyEntryMatches ? " 1=1 " : " 1=0 ";
 	}
 
 	// this method will format a dataset value for display on screen when a list of entries is prepared

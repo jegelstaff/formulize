@@ -34,7 +34,7 @@ A row says what should be on the page. This table says where to look for it, and
 - **Names** is one of the tables at the end of this file, by its first column. Only text that is exactly one of those names counts, so other text in the same cells can't be mistaken for a result. By list means Artifact on the Catalogue list and Donor on the Donor artifacts list.
 - **The match is exact.** An entry that shouldn't be there fails a row as much as one that's missing.
 - **`Everything`** means every name in the set, `Everything except` means the rest of the set, and anything else is the list of names. A name that isn't in the set stops the spec, so a typo here can't pass.
-- **`Nothing` has to be proved.** A query that fails shows no entries, the same as one that finds none. So rows that find nothing in sections 1 and 4 are loaded again with their conditions in the "one or more" set, alongside one that must match, and that entry must appear.
+- **`Nothing` has to be proved.** A query that fails shows no entries, the same as one that finds none. So rows that find nothing in sections 1, 3 and 4 are loaded again with their conditions in the "one or more" set, alongside one that must match, and that entry must appear.
 
 ## What the operators mean
 
@@ -47,6 +47,7 @@ A row says what should be on the page. This table says where to look for it, and
 - A condition on a connected form keeps the main entries with at least one connected entry that meets it, and shows only the connected entries that do. See [Conditions on connected forms](../../../docs/filters.md#conditions-on-connected-forms).
 - `{ }` that refers to a blank field: `=` and `LIKE` find blanks, `!=` and `NOT LIKE` find anything that isn't blank, and `>` and `<` find nothing.
 - In a new entry, a `{ }` with nothing on screen has no meaning yet, so that condition is ignored. Any other conditions still apply.
+- Except on a linked element, when the `{ }` is a linked element with the same source. That condition finds nothing until a choice is made, whatever the operator, so a list that depends on another list is empty until then.
 - On a saved entry, a linked element always offers the value that's selected, whatever the condition says, so it isn't lost when the entry is saved. Rows for saved Loan Requests expect that.
 
 ## 1. The Artifacts subform in Main Vault
@@ -242,7 +243,7 @@ Set with `sourceEntryFilter` on `loans_artifact`, then open the Loan Request as 
 
 ## 3. `{ }` in a new Loan Request
 
-The same setting, on a new entry. With nothing on screen the `{ }` condition is ignored. Then a person fills in what the row says, and the options change while the page is open, with nothing saved. A term in **On screen** like `Materials they can display: Iron + Wood` means those boxes, in that order. `(blank)` means clearing it again after a value.
+The same setting, on a new entry. With nothing on screen the `{ }` condition is ignored, except that a list that depends on another list has nothing in it until a choice is made. Then a person fills in what the row says, and the options change while the page is open, with nothing saved. A term in **On screen** like `Materials they can display: Iron + Wood` means those boxes, in that order. `(blank)` means clearing it again after a value.
 
 | Row | All of | Any of | On screen | Should show | What it tests |
 |---|---|---|---|---|---|
@@ -252,10 +253,10 @@ The same setting, on a new entry. With nothing on screen the `{ }` condition is 
 | N4 | Date of acquisition < {loans_start_date} |  |  | Everything | ignored on a date |
 | N5 | Materials = {loans_materials} |  |  | Everything | ignored on checkboxes |
 | N6 | Materials != {loans_materials} |  |  | Everything | ignored on checkboxes, with != |
-| N7 | Collections = {loans_collections} |  |  | Everything | ignored on linked, several values |
-| N8 | Collections != {loans_collections} |  |  | Everything | ignored, with != |
-| N9 | Donor = {loans_donor} |  |  | Everything | ignored on linked, one value |
-| N10 | Donor != {loans_donor} |  |  | Everything | ignored, with != |
+| N7 | Collections = {loans_collections} |  |  | Nothing | empty until a choice is made, linked, several values |
+| N8 | Collections != {loans_collections} |  |  | Nothing | empty until a choice is made, with != |
+| N9 | Donor = {loans_donor} |  |  | Nothing | empty until a choice is made, linked, one value |
+| N10 | Donor != {loans_donor} |  |  | Nothing | empty until a choice is made, with != |
 | N11 | Era = {loans_era}; Collections = Weapons |  |  | Chinese Sword, Egyptian Chariot, French Musket | ignored, and the other condition still applies |
 | N12 |  | Era = {loans_era}; Collections = Weapons |  | Chinese Sword, Egyptian Chariot, French Musket | ignored in the set of either, and the other still applies |
 | N13 | Era = {loans_era} |  | Era wanted: CE | Everything except Roman Coin, Persian necklace, Egyptian Chariot, Babylonian Spoon, Persian necklace - number 2, Unknown Shard, Bronze Mirror | a radio on screen |

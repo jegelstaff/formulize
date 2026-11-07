@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape } from '../../utils';
+import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, editScreenPage, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -315,8 +315,7 @@ test.describe('Set columns and elements for screens', () => {
 		await page.getByRole('button', { name: 'close' }).click();
 		await page.getByRole('link', { name: 'Create a new page' }).click();
 		await waitForAdminPageReady(page)
-		await page.getByRole('link', { name: 'New page', exact: true }).click();
-		await page.getByRole('link', { name: 'Edit this page' }).click();
+		await editScreenPage(page, 'New page');
   	await page.getByRole('textbox', { name: 'Title for page number' }).fill('Donated Artifacts');
 		await page.getByLabel('Form elements to display on').selectOption(['Donors: Name', 'Donors: Donated artifacts']);
 		await saveAdminForm(page, 'popup');

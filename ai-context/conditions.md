@@ -23,7 +23,21 @@ Conditions are evaluated in two separate places, and they need to agree:
 
 All of these are in `include/functions.php`. If you change how a condition is treated in one path, check the other path too.
 
-List searches are different code again: they go through `formulize_parseFilter()`, so a fix to conditions doesn't fix searches.
+List searches are different code again: they go through `formulize_parseFilter()`, so a fix to conditions doesn't fix searches. Dates are the exception, see below.
+
+## Dates
+
+Conditions, searches, per-group filters and the check against one entry all read dates the same way, so each rule is in one function in `include/functions.php`. Change the rule there, and not in the code that calls it.
+
+| Rule | Function |
+|---|---|
+| Which span a term names: a year, a month, or a day on `creation_datetime` and `mod_datetime` | `formulize_dateSpanInTerm()` |
+| What each operator means against a span | `formulize_dateSpanComparison()`. Its output goes in SQL and in the PHP that `buildEvaluationCondition()` makes, so keep it to comparisons that mean the same in both. |
+| LIKE also matching the date as the site shows it | `formulize_dateLikeComparison()`. This one is SQL only, and `buildEvaluationCondition()` does the same with `stristr()`. |
+| A term that isn't a date | `formulize_dateComparedWithTermThatIsNotADate()` |
+| What blank is | `formulize_blankValueComparison()`, and `formulize_blankDateComparison()` for dates. Nothing is before or after a blank, on either side, for any kind of field: conditions leave blanks out with `formulize_blankValueComparison()` when `formulize_operatorComparesOrder()` is true. |
+
+The callers differ in one way on purpose: a negative condition or search takes in entries with no date, and a negative per-group filter doesn't, so that a permission filter is never widened.
 
 ## Which form draws the JavaScript
 

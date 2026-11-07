@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, conditionalElementReady, createMuseumForm, leavePage, dbQuery, dbPrefix, sqlEscape } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, editScreenPage, conditionalElementReady, createMuseumForm, leavePage, dbQuery, dbPrefix, sqlEscape } from '../../utils';
 
 // Where artifacts are kept and who asks to borrow them, added to the museum so that conditions and searches can be tried
 // on the page, with the kinds of values they have to cope with. The specs in 02-validate and 03-validate-sequential
@@ -173,9 +173,10 @@ async function expectElementsOnPage(page, screenUrl, pageTitle, elements) {
 	await waitForAdminPageReady(page);
 	await page.getByRole('link', { name: 'Pages' }).click();
 	if (pageTitle) {
-		await page.getByRole('link', { name: pageTitle, exact: true }).click();
+		await editScreenPage(page, pageTitle);
+	} else {
+		await page.getByRole('link', { name: 'Edit this page' }).click();
 	}
-	await page.getByRole('link', { name: 'Edit this page' }).click();
 	// allTextContents() doesn't wait for the popup's contents, which arrive all at once
 	await expect(page.getByText('Title for page number')).toBeVisible();
 	const selected = await page.getByLabel('Form elements to display on').locator('option:checked').allTextContents();
@@ -185,8 +186,7 @@ async function expectElementsOnPage(page, screenUrl, pageTitle, elements) {
 async function addScreenPage(page, title, elements) {
 	await page.getByRole('link', { name: 'Create a new page' }).click();
 	await waitForAdminPageReady(page);
-	await page.getByRole('link', { name: 'New page', exact: true }).click();
-	await page.getByRole('link', { name: 'Edit this page' }).click();
+	await editScreenPage(page, 'New page');
 	await page.getByRole('textbox', { name: 'Title for page number' }).fill(title);
 	await page.getByLabel('Form elements to display on').selectOption(elements);
 	await saveAdminForm(page, 'popup');

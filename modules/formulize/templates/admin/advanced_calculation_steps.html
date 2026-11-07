@@ -21,7 +21,7 @@
     <!--<p><a href="ui.php?page=screen&tab=steps&aid=<{$content.aid}>&fid=<{$content.fid}>&acid=<{$content.acid}>&op=new">Create a new step</a></p>-->
   
 <div id="sortable-list">
-<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/advanced_calculation_steps_sections.html" sections=$content.steps}>
+<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/advanced_calculation_steps_sections.html" sections=$content.steps reorderable=1}>
 </div>
 
 
