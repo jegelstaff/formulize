@@ -1,6 +1,6 @@
 # Conditions and searches
 
-Every row here is something a person can set up, and what they should see when they look at the page. The specs read this file, so a row is a test: section 7 runs in `02-validate`, and the others in `03-validate-sequential`, where `030-literal-terms-in-subform-filters.spec.js` also covers the filter boxes in the admin UI. To check a behaviour, read its row. To add a case, add a row.
+Every row here is something a person can set up, and what they should see when they look at the page. The specs read this file, so a row is a test. Every row runs in `03-validate-sequential/045-conditions-on-the-page.spec.js`, which checks them all and only then fails, listing every row that disagrees, so one run shows them all. To check a behaviour, read its row. To add a case, add a row.
 
 The museum's data is in `01-setup/020-data-entry.spec.js` and `01-setup/022-locations-and-loan-requests.spec.js`, and there is a summary at the end of this file.
 
@@ -484,7 +484,7 @@ Set with `fundamental_filters` on the list screen. Lists go through a different 
 | F26 | Catalogue | Catalogued by = {USER} |  | Roman Coin, Persian necklace, Babylonian Spoon | a list of users, and {USER} |
 ## 7. Search boxes on a list
 
-Read-only, so these run in `02-validate`, as curator1. Each term goes in the search box at the top of that column, on the Catalogue list or the Donor artifacts list. A term starting with `!` means the value doesn't have it, and `!=` means it isn't exactly that. Both find blanks, since they aren't a search for a value. `!{BLANK}` is not blank. `OR` in front of terms in several boxes means any one of them.
+As curator1. Each term goes in the search box at the top of that column, on the Catalogue list or the Donor artifacts list. A term starting with `!` means the value doesn't have it, and `!=` means it isn't exactly that. Both find blanks, since they aren't a search for a value. `!{BLANK}` is not blank. `OR` in front of terms in several boxes means any one of them.
 
 | Row | List | Typed in | Should show | What it tests |
 |---|---|---|---|---|
@@ -566,10 +566,14 @@ Read-only, so these run in `02-validate`, as curator1. Each term goes in the sea
 | B76 | Catalogue | Handling: `!flat` | Everything except Florentine Book, Candide - first edition, Silk Scroll | not part of it, and blanks |
 | B77 | Catalogue | Catalogued by: `Curator Two` | Florentine Book, French Musket | a list of users, by the name people see |
 | B78 | Donor artifacts | Province: `Ontario` | Freeform Solutions | a whole value, so not Prince Edward Island, which is 10 |
+| B79 | Catalogue | On loan: `Yes` | Roman Coin, Florentine Book | Yes/No, by what people see |
+| B80 | Catalogue | On loan: `No` | Chinese Sword, French Musket, Japanese Coin | Yes/No, by what people see |
 
 ## 8. Settings MCP can't reach
 
 MCP has no setting for these, so they're made in the admin UI.
+
+The spec also types conditions into the filter boxes of the Artifacts subform in the Collections form, as a webmaster does, and checks which weapons the Weapons collection shows. Those cases, and some date searches on the Artifacts list, are written in the spec rather than here.
 
 | Row | Setting | Open | Should see | What it tests |
 |---|---|---|---|---|
@@ -665,3 +669,43 @@ A blank cell is NULL.
 Entry ids in these rows are fixed by the order setup makes things: Freeform Solutions is donor 3, Weapons is collection 4.
 
 Storage and Storage they have are stored as 1 for Standard and 11 for Climate controlled, and Climate controlled is the default for Storage they have. Handling is stored as 1 for Gloves, 2 for Two people to lift and 12 for Keep flat.
+
+## To do
+
+What no row checks yet, and what checking it would take. Then problems found while writing the rows, which aren't fixed yet.
+
+### Gaps
+
+- **Per-group filters.** They make their own SQL, in `buildPerGroupFilterWhereClause()` in `forms.php`, and never go through `buildConditionsFilterSQL()`, so no row here says anything about them. Their rules aren't the rules conditions have:
+  - a negation leaves out entries with nothing in the field
+  - `{handle}` is another field in the same entry
+  - the only keywords are `{USER}`, `{USER_ID}`, `{USER_FULL_NAME}`, `{TODAY}` and `{BLANK}`
+  - a linked element has no lookup in its source form, so the term has to become the stored id through `prepareLiteralTextForDB()`
+
+  On a date, a per-group filter now reads the term the way a list search does (`buildPerGroupFilterDateClause()`). So a year or a month is a range of days, ie: `= 2011` is every date in 2011, and a term that isn't a date is decided without comparing it with a date. A per-group filter decides which entries a group can see at all, so this changes what a group with a date in its filter sees. Until now, a date term was compared as text, which rarely worked, so few sites are likely to have one.
+
+  To close: a group of its own with a filter on one of the museum's forms, and a user in it. It can't be a group that curator1 is in, or the filter changes what every other spec sees. The museum's only per-group filter is the one 015 gives All Staff on Surveys. Then a section of rows, where each row sets the group's filter and that user opens a list. Check whether MCP can set a per-group filter. If it can't, set it in the admin UI, on the form's permissions. The rows should expect the rules above, not the rules for conditions.
+
+- **Applying a default to the entries that already exist.** `applyDefaultToEntries()` in `data.php` runs when a webmaster saves a default and asks for it to go into the existing entries. It now decides what's blank with `formulize_blankValueComparison()`, so a number field holding 0 isn't blank any more. To close: rows that save a default with that box ticked and then check which entries got it, with a field that holds NULL, `''` and 0 across the entries. This writes to entries, so it needs a field nothing else reads, and has to put the values back through the UI.
+
+- **Display conditions on a new entry, and after something changes on screen.** Every V row opens a saved artifact. To close: rows that open a new Artifact, and rows with an On screen cell, like section 3. The display condition would refer to a field on the same page, so `conditional.js` checks it again when that field changes.
+
+- **A linked `{ }` element that has a default.** N41 to N43 cover a default on radio buttons, Storage they have. Nothing covers a new entry where the `{ }` refers to a linked element with a default, which is where "empty until chosen" and the default meet. To close: a default on a linked element in Loan Requests, and N rows that refer to it. Section 8 gives Donor contact a dynamic default and takes it away again, so use another element.
+
+- **Linked elements that show other columns.** When a linked element shows alternate columns, a search on it compares the term with those columns joined together. No linked element in the museum shows them. To close: a linked element set to show more than one column, ie: a donor's name and province, then B rows and S rows on it.
+
+- **Subform defaults from conditions on dates.** A subform filter with `=` writes the main entry's value into the subform entries when the main entry is saved. When the term is a date, that value comes out of the date handling. To close: a subform with a condition on a date, and a check of what its entries hold after a save. That saves entries, so they have to be put back through the UI.
+
+- **`proxy` and `new_0` entries.** `buildConditionsFilterSQL()` treats these markers as `new`: `proxy` is an entry someone makes on behalf of another user, and `new_0` comes from code that makes several entries at once. On-screen values stay under the marker the page used. No row opens a page with either one. To close: a user who may make entries for others, and N rows that open a new Loan Request made on someone's behalf.
+
+- **"Nothing" rows that aren't proved.** F22, B1, B17, B19, B21, B23, B24, B53 and B70 find nothing, and they aren't loaded a second time. A query that fails shows no entries, so these rows would pass anyway. To close: in section 6, put the row's conditions in the "one or more" set, alongside one that must match, the way sections 1, 3 and 4 do. In section 7, search again with `OR` in front of each of the row's terms, and `ORRoman Coin` in the Short name box, then check that Roman Coin is there. A row that already uses `OR` or `EMPTYSET` needs some other way.
+
+- **MySQL.** CI runs on MariaDB only. MySQL 8 refuses comparisons that MariaDB lets through, ie: a date with text, so a row can pass here and fail there. To close: a CI run on MySQL. There's a plan for one in `mysql-ci-plan.md` at the root of the repository.
+
+- **A value taken out on screen in a new entry.** This isn't decided yet. Should a `{ }` that refers to a field that was filled in on screen and then emptied find blanks, the way a saved blank does? The same question applies to text, radio and number fields emptied in a saved entry. The rows expect what the code does now. If that changes, N19, N25, N31 and N32 become Nothing, and N20 becomes Everything.
+
+### Problems found
+
+- **A quote in a search on a linked element (B45).** Typed text is stored with its special characters encoded, ie: O'Brien is `O&#039;Brien`. A derived value is stored as it is, ie: `Aoife O'Brien`. A search on a linked element encodes the term, with `convertStringToUseSpecialCharsToMatchDB()` in `formulize_parseFilter()`, so it can never find a derived value with a quote in it. An ampersand still works, because that function turns `&amp;` back into `&`. Master has the same code. This is to be fixed once the rows have been run in full on both branches. S60, S61 and D11 use the same name, so check them too.
+
+- **`{BLANK}` in a per-group filter.** `!= {BLANK}` makes `` (`field` != '' OR `field` IS NOT NULL) ``, so an empty value matches. It needs AND. `NOT {BLANK}` makes `` `field` NOT '' ``, which isn't valid SQL, and NOT is one of the operators in the admin UI. A date field avoids both now, but no other field does. Master has the same code.
