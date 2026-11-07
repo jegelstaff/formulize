@@ -632,9 +632,9 @@ Search boxes on the Catalogue list.
 | Viking Silver Armband | 875 | CE | 2025-07-10 | Yes | Emilie Du Châtelet | Modern History | 59.8586 | Silver |  |  |  |  |  |  |  |
 | Candide - first edition | 1759 | CE | 2025-11-29 | Yes | François-Marie Arouet | Modern History |  | Paper |  |  |  |  | Keep flat |  |  |
 | Persian necklace - number 2 | 350 | BCE | 2002-12-02 | Yes | Emilie Du Châtelet | Ancient History | 29.9355 |  |  |  |  |  |  |  | Persian necklace |
-| Unknown Shard | 500 | BCE |  | No |  |  |  |  |  |  |  |  |  |  |  |
-| Bronze Mirror | 200 | BCE | 2002-12-31 | Yes | Aoife O'Brien | Ancient History |  | Bronze |  |  |  |  |  |  |  |
-| Silk Scroll | 1400 | CE | 2003-01-01 | Yes | Hart & Sons Antiques | Modern History |  | Wood |  |  |  |  | Gloves, Keep flat |  |  |
+| Unknown Shard | 500 | BCE |  | No |  |  |  |  |  |  | empty string |  |  |  |  |
+| Bronze Mirror | 200 | BCE | 2002-12-31 | Yes | Aoife O'Brien | Ancient History |  | Bronze |  |  | empty string |  |  |  |  |
+| Silk Scroll | 1400 | CE | 2003-01-01 | Yes | Hart & Sons Antiques | Modern History |  | Wood |  |  | empty string |  | Gloves, Keep flat |  |  |
 
 A blank cell is NULL.
 
