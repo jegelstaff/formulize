@@ -29,4 +29,6 @@ For how CI runs the suite, see [Concurrency](testing-robust-specs.md#concurrency
 
 **One bad ready handler.** A jQuery error inside a `jQuery(document).ready()` aborts every later ready handler on the page, so the symptom appears far from the cause. An `.on()` in the admin UI is the usual culprit, because the [admin runs jQuery 1.4.2](coding-guidelines.md#javascript-in-admin-templates).
 
+**A list with the wrong entries or the wrong order.** Log the query that ran, as in [Trace a Query](coding-guidelines.md#trace-a-query), rather than reasoning about the code. If it works on master with the same code, check whether a spec on the branch added a connection to the list's form, which changes how the query is built.
+
 **An id that changed.** Admin `#form-N` and `#tabs-N` ids are tab positions, so adding a tab renumbers them. Select by field name.

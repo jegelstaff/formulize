@@ -353,6 +353,20 @@ if (!$result) {
 
 Avoid `echo`, `print_r()` and `var_dump()` to the page for this. Extra output can break redirects and admin saves, and you only see it if you fetch the page.
 
+### Trace a Query
+
+When a list or a search comes back wrong, such as the wrong order, missing entries or extra ones, log the SQL that actually ran and work backwards from it to the code that built it. That's quicker than reasoning about the code, and more reliable. The queries in `dataExtraction()` have commented-out `print` lines beside them: the single query, the query that fills the temporary table, and the query for each connected form. Put an `error_log()` with a marker at the same places, do the thing that goes wrong once, and read the queries back:
+
+```php
+error_log('TRACEQUERY ' . str_replace("REPLACEWITHTIMESTAMP", $timestamp, $linkQuery));
+```
+
+```bash
+docker logs --tail 3000 formulize-web-1 2>&1 | grep TRACEQUERY
+```
+
+Find them by the marker, not with `docker logs --since`, which goes by the container's clock. Compare what's in the query with what was asked for, such as every sort field in the ORDER BY. See [Two ways to build the query](formulize-module-overview.md#data-extraction-extractphp) for why a list can run different queries. Take the logging out when you're done.
+
 ### Turn On the Developer Dashboard
 
 The **Developer Dashboard** system preference adds a report of PHP errors and queries to each page. Set it to **Enable debug (inline mode)** on a local copy, read the page in a browser or fetch it with `curl` or Playwright, and turn it off when you're done. Only groups with the `enable_debug` permission see the report, and webmasters always do.
