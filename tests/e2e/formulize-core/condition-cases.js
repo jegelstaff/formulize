@@ -48,6 +48,11 @@ export const LOAN_ELEMENTS = {
 	'Borrower': 'loans_borrower',
 	'Approved': 'loans_approved',
 	'Start date': 'loans_start_date',
+	'Donor contact': 'loans_donor',
+};
+export const OFFER_ELEMENTS = {
+	'Item': 'offers_item',
+	'Visit': 'offers_visit',
 };
 
 function tableCells(line) {
@@ -247,6 +252,8 @@ export function phpErrorsSince(since) {
  * Check one row so that a row that can't be checked is recorded, and the rows after it still run. A setting MCP refuses, a
  * page that doesn't finish drawing, or anything else that stops the check becomes a disagreement saying so, and the page goes
  * somewhere neutral for the next row. When a row disagrees for any reason, the PHP errors logged while it ran are added too.
+ * Each disagreement is printed as soon as it's found, so the log shows how far a run has got, and a run that's stopped partway
+ * still shows what it found. Nothing prints for a row that agrees.
  * @param {import('@playwright/test').Page} page
  * @param {string} rowId - The row, ie: S12
  * @param {string[]} disagreements - Where the row's disagreements go
@@ -267,5 +274,8 @@ export async function checkRow(page, rowId, disagreements, check) {
 		for (const error of phpErrorsSince(since)) {
 			disagreements.push(`${rowId}: PHP logged ${error}`);
 		}
+	}
+	for (const disagreement of disagreements.slice(before)) {
+		console.log(disagreement);
 	}
 }

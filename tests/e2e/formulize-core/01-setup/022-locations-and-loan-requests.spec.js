@@ -1,6 +1,10 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, editScreenPage, conditionalElementReady, createMuseumForm, leavePage, elementId, dbQuery, dbPrefix, sqlEscape } from '../../utils';
+import {
+	formId, museumAppId, startElement, finishElement, makeRequired, linkToSource, inheritPermissionsFromArtifacts, openFormScreens,
+	setElementsOnOnlyPage, expectElementsOnPage, saveAndClose,
+} from './museum-forms';
 
 // Where artifacts are kept and who asks to borrow them, added to the museum so that conditions and searches can be tried
 // on the page, with the kinds of values they have to cope with. The specs in 02-validate and 03-validate-sequential
@@ -14,8 +18,8 @@ import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, editScr
 //   Artifacts        Location, Materials, On loan, Provenance, Storage, Appraiser email and Curator note, on two new tabs of
 //                    the Artifact screen, and a subform of the Loan Requests for the artifact. Storage has text people see
 //                    that's different from what's stored, and only the Roman Coin has a value. A third tab, Cataloguing,
-//                    has who catalogued it, another artifact it's part of a set with, and how to handle it, which is
-//                    checkboxes with text people see that's different from what's stored.
+//                    has who catalogued it and how to handle it, which is checkboxes with text people see that's
+//                    different from what's stored.
 //   New entries      Three artifacts, with dates on either side of a new year and one with nothing but the required
 //                    fields, and two donors whose names have ' and & in them. Hart & Sons Antiques are in Prince Edward
 //                    Island, which is stored as 10, so a search for Ontario, which is 1, can show it isn't found too.
@@ -49,7 +53,7 @@ const APPRAISER = 'appraiser@museum.example';
 const HANDLING = { 'Gloves': '1', 'Two people to lift': '2', 'Keep flat': '12' };
 
 // appraiser: an address, or '' for saving the Appraisal tab with the box emptied. Leave it out and the tab is never saved.
-// cataloguedBy, partOfSet and handling are on the Cataloguing tab, which is only saved for an artifact that has one of them.
+// cataloguedBy and handling are on the Cataloguing tab, which is only saved for an artifact that has one of them.
 // Made below through "Add Artifact", whose form has every element on one page, so their Appraiser email was saved blank, as ''
 const MADE_HERE = ['Unknown Shard', 'Bronze Mirror', 'Silk Scroll'];
 
@@ -66,19 +70,11 @@ const CATALOGUE = [
 	{ name: 'Polynesian Canoe', materials: ['Wood'], handling: ['Two people to lift'] },
 	{ name: 'Viking Silver Armband', materials: ['Silver'] },
 	{ name: 'Candide - first edition', materials: ['Paper'], handling: ['Keep flat'] },
-	{ name: 'Persian necklace - number 2', materials: [], partOfSet: 'Persian necklace' },
+	{ name: 'Persian necklace - number 2', materials: [] },
 	{ name: 'Unknown Shard', materials: [] },
 	{ name: 'Bronze Mirror', materials: ['Bronze'] },
 	{ name: 'Silk Scroll', materials: ['Wood'], handling: ['Gloves', 'Keep flat'] },
 ];
-
-function formId(title) {
-	return dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = '${sqlEscape(title)}'`)[0][0];
-}
-
-function museumAppId(fid) {
-	return dbQuery(`SELECT appid FROM ${dbPrefix()}_formulize_application_form_link WHERE fid = ${fid}`)[0][0];
-}
 
 function screenId(handle) {
 	return dbQuery(`SELECT sid FROM ${dbPrefix()}_formulize_screen WHERE screen_handle = '${sqlEscape(handle)}'`)[0][0];
@@ -86,32 +82,6 @@ function screenId(handle) {
 
 function artifactEntryId(name) {
 	return dbQuery(`SELECT entry_id FROM ${dbPrefix()}_formulize_artifacts WHERE artifacts_short_name = '${sqlEscape(name)}'`)[0][0];
-}
-
-// The app's form listing has every form's links in it at once, so go straight to the new element, as 035 and 038 do
-async function startElement(page, formTitle, type, caption, handle, columnHeading = '') {
-	const fid = formId(formTitle);
-	await page.goto(`/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=${fid}&aid=${museumAppId(fid)}&type=${type}`);
-	await waitForAdminPageReady(page);
-	await page.locator('input[name="elements-ele_caption"]').fill(caption);
-	await page.locator('input[name="elements-ele_handle"]').fill(handle);
-	if (columnHeading) {
-		await page.locator('input[name="elements-ele_colhead"]').fill(columnHeading);
-	}
-}
-
-async function finishElement(page, heading) {
-	await saveAdminForm(page);
-	await expect(page.getByRole('heading')).toContainText(heading);
-}
-
-async function makeRequired(page) {
-	await page.getByRole('group', { name: 'Make this element "required"' }).getByLabel('Yes').check();
-}
-
-async function linkToSource(page, source) {
-	await page.getByRole('link', { name: 'Options' }).click();
-	await page.locator('#formlink').selectOption(source);
 }
 
 // A new radio or checkbox element starts with one box for an option
@@ -141,61 +111,6 @@ async function createSubform(page, formTitle, sourceForm, caption, handle, colum
 	await page.locator('[id="elements-ele_value[6]-no"]').check(); // hideaddentries (Show the add button) = No
 	await page.getByRole('checkbox', { name: 'Show the Delete button' }).uncheck();
 	await finishElement(page, caption);
-}
-
-async function inheritPermissionsFromArtifacts(page, formTitle) {
-	const formUrl = `/modules/formulize/admin/ui.php?page=form&fid=${formId(formTitle)}&tab=permissions`;
-	await page.goto(formUrl);
-	await waitForAdminPageReady(page);
-	await expect(page.locator('#perm_mode_inherit')).toBeVisible({ timeout: 30000 });
-	await page.locator('#perm_mode_inherit').check();
-	await page.locator('#parent_perm_fid_select').selectOption({ label: 'Artifacts' });
-	await saveAdminForm(page);
-	await page.goto(formUrl);
-	await expect(page.locator('#perm_mode_inherit')).toBeChecked({ timeout: 30000 });
-	await expect(page.locator('#parent_perm_fid_select option:checked')).toHaveText('Artifacts');
-}
-
-// Open a form's Screens tab. A form's name also appears in the Connections lists of other forms, so find its own box.
-async function openFormScreens(page, formTitle) {
-	await page.goto('/modules/formulize/admin/ui.php?page=home');
-	await waitForAdminPageReady(page);
-	await page.getByRole('link', { name: 'Application: Museum' }).click();
-	const formBox = page.locator('div.form-listing-box')
-		.filter({ has: page.locator('.form-name-text').filter({ hasText: new RegExp(`^${formTitle}$`) }) });
-	await expect(formBox).toBeVisible();
-	await formBox.locator('.form-name-text').click();
-	await formBox.getByRole('link', { name: 'Screens' }).first().click();
-}
-
-async function setElementsOnOnlyPage(page, formTitle, screenName, elements) {
-	await openFormScreens(page, formTitle);
-	await page.getByRole('link', { name: screenName, exact: true }).click();
-	await waitForAdminPageReady(page);
-	const screenUrl = page.url();
-	await page.getByRole('link', { name: 'Pages' }).click();
-	await page.getByRole('link', { name: 'Edit this page' }).click();
-	await expect(page.getByText('Title for page number')).toBeVisible();
-	await page.getByLabel('Form elements to display on').selectOption(elements);
-	await saveAdminForm(page, 'popup');
-	await page.getByRole('button', { name: 'close' }).click();
-	await expectElementsOnPage(page, screenUrl, '', elements);
-}
-
-// Saving a page of a screen is what later specs depend on, so check it from a fresh load of the screen
-async function expectElementsOnPage(page, screenUrl, pageTitle, elements) {
-	await page.goto(screenUrl);
-	await waitForAdminPageReady(page);
-	await page.getByRole('link', { name: 'Pages' }).click();
-	if (pageTitle) {
-		await editScreenPage(page, pageTitle);
-	} else {
-		await page.getByRole('link', { name: 'Edit this page' }).click();
-	}
-	// allTextContents() doesn't wait for the popup's contents, which arrive all at once
-	await expect(page.getByText('Title for page number')).toBeVisible();
-	const selected = await page.getByLabel('Form elements to display on').locator('option:checked').allTextContents();
-	expect(selected.map(label => label.trim()).sort()).toEqual([...elements].sort());
 }
 
 async function addScreenPage(page, title, elements) {
@@ -244,12 +159,6 @@ async function setListColumns(page, formTitle, screenHandle, handles) {
 		await expect(page.locator(`#cols-${i}`)).toHaveValue(handle);
 	}
 	await expect(page.locator('#screens-entriesperpage')).toHaveValue('50');
-}
-
-// The page has to have finished loading, or it can't release the lock on the entry as it goes
-async function saveAndClose(page) {
-	await page.waitForLoadState('load');
-	await page.getByRole('link', { name: 'Save and Close' }).click();
 }
 
 async function openArtifactsAndAdd(page, username) {
@@ -411,13 +320,6 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 		await finishElement(page, 'Catalogued by');
 	});
 
-	test('Create Part of a set with Element', async ({ page }) => {
-		// another artifact, so a condition on what this list offers refers to the form it's in
-		await startElement(page, 'Artifacts', 'selectLinked', 'Part of a set with', 'artifacts_part_of_set');
-		await linkToSource(page, 'Artifacts: Short name');
-		await finishElement(page, 'Part of a set with');
-	});
-
 	test('Create Borrower Element', async ({ page }) => {
 		await startElement(page, 'Loan Requests', 'text', 'Borrower', 'loans_borrower');
 		await makeRequired(page);
@@ -533,7 +435,7 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 			'Artifacts: Loan requests',
 		];
 		const appraisal = ['Artifacts: Appraiser email'];
-		const cataloguing = ['Artifacts: Catalogued by', 'Artifacts: Part of a set with', 'Artifacts: Handling'];
+		const cataloguing = ['Artifacts: Catalogued by', 'Artifacts: Handling'];
 		await openFormScreens(page, 'Artifacts');
 		await page.getByRole('link', { name: 'Artifact', exact: true }).click();
 		await waitForAdminPageReady(page);
@@ -704,15 +606,12 @@ test.describe('Catalogue every artifact', () => {
 				await saveFormulizeForm(page);
 			}
 
-			if (artifact.cataloguedBy || artifact.partOfSet || artifact.handling) {
+			if (artifact.cataloguedBy || artifact.handling) {
 				await page.getByRole('link', { name: 'Cataloguing', exact: true }).click();
 				const cataloguedBy = page.locator('.form-row:has(.formulize-label-artifacts_catalogued_by) select');
 				await expect(cataloguedBy).toBeVisible();
 				if (artifact.cataloguedBy) {
 					await cataloguedBy.selectOption({ label: artifact.cataloguedBy });
-				}
-				if (artifact.partOfSet) {
-					await page.locator('.form-row:has(.formulize-label-artifacts_part_of_set) select').selectOption({ label: artifact.partOfSet });
 				}
 				for (const handling of artifact.handling ?? []) {
 					await page.locator('.form-row:has(.formulize-label-artifacts_handling)').getByRole('checkbox', { name: handling, exact: true }).check();
@@ -778,16 +677,14 @@ test.describe('What was built', () => {
 		const artifacts = `${dbPrefix()}_formulize_artifacts`;
 		const rows = dbQuery(`SELECT a.artifacts_short_name, a.artifacts_location IS NOT NULL, IFNULL(a.artifacts_materials, 'NULL'), IFNULL(a.artifacts_on_loan, 'NULL'),
 			a.artifacts_provenance IS NULL, IF(a.artifacts_appraiser_email IS NULL, 'NULL', IF(a.artifacts_appraiser_email = '', 'empty', a.artifacts_appraiser_email)), IFNULL(a.artifacts_storage, 'NULL'),
-			IFNULL(a.artifacts_handling, 'NULL'), IFNULL((SELECT u.uname FROM ${dbPrefix()}_users AS u WHERE u.uid = a.artifacts_catalogued_by), 'nobody'),
-			IFNULL((SELECT s.artifacts_short_name FROM ${artifacts} AS s WHERE s.entry_id = a.artifacts_part_of_set), 'nothing')
+			IFNULL(a.artifacts_handling, 'NULL'), IFNULL((SELECT u.uname FROM ${dbPrefix()}_users AS u WHERE u.uid = a.artifacts_catalogued_by), 'nobody')
 			FROM ${artifacts} AS a`);
 		const stored = Object.fromEntries(rows.map(row => [row[0], row.slice(1)]));
 		expect(Object.keys(stored).sort()).toEqual(CATALOGUE.map(artifact => artifact.name).sort());
 		for (const artifact of CATALOGUE) {
-			const [hasLocation, materials, onLoan, provenanceIsNull, appraiser, storage, handling, cataloguedBy, partOfSet] = stored[artifact.name];
+			const [hasLocation, materials, onLoan, provenanceIsNull, appraiser, storage, handling, cataloguedBy] = stored[artifact.name];
 			expect(handling === 'NULL' ? [] : handling.split('*=+*:').filter(Boolean).sort(), `${artifact.name} handling`).toEqual((artifact.handling ?? []).map(text => HANDLING[text]).sort()); // the codes, not what people see
 			expect(cataloguedBy, `${artifact.name} catalogued by`).toBe(artifact.cataloguedBy ?? 'nobody');
-			expect(partOfSet, `${artifact.name} part of a set with`).toBe(artifact.partOfSet ?? 'nothing');
 			expect(hasLocation, `${artifact.name} is in a location`).toBe('1');
 			// stored one after another in the order of the element's options, with *=+*: in front of each one
 			expect(materials === 'NULL' ? [] : materials.split('*=+*:').filter(Boolean).sort(), `${artifact.name} materials`).toEqual([...artifact.materials].sort());
