@@ -14,6 +14,12 @@
  *   php legacy-handles.php read <handle>      prints what is now stored at each place, as JSON
  *   php legacy-handles.php remove             puts back what install replaced, and removes what it added
  *
+ * The Donor list's source has commands of its own, because the spec checks that one on the artifact's form, where the
+ * condition install puts on the Donor list would hide it:
+ *   php legacy-handles.php install-source <handle>   stores the source by handle, keeping what was there to put back
+ *   php legacy-handles.php read-source               prints the source as it is stored now
+ *   php legacy-handles.php remove-source             puts back what install-source replaced
+ *
  * @package Formulize
  * @subpackage tests
  */
@@ -174,5 +180,41 @@ if ($command == 'remove') {
 	exit(0);
 }
 
-fwrite(STDERR, "usage: php legacy-handles.php install <handle> | read <handle> | remove\n");
+$sourceKeepFile = sys_get_temp_dir() . '/formulize_legacy_source_shim.json';
+function legacy_donor_ele_value($donor) {
+	return legacy_one("SELECT ele_value FROM " . legacy_table('formulize') . " WHERE ele_id = " . intval($donor))['ele_value'];
+}
+
+if ($command == 'install-source') {
+	if ($handle === '' OR file_exists($sourceKeepFile)) {
+		fwrite(STDERR, $handle === '' ? "give the handle\n" : "already installed - remove it first\n");
+		exit(1);
+	}
+	$stored = legacy_donor_ele_value($places['donor']);
+	file_put_contents($sourceKeepFile, json_encode(array('ele_value' => $stored)));
+	$eleValue = unserialize($stored);
+	$eleValue[2] = explode('#*=:*', $eleValue[2])[0] . '#*=:*' . $handle;
+	legacy_write("UPDATE " . legacy_table('formulize') . " SET ele_value = " . legacy_q(serialize($eleValue)) . " WHERE ele_id = {$places['donor']}");
+	echo "installed\n";
+	exit(0);
+}
+
+if ($command == 'read-source') {
+	echo unserialize(legacy_donor_ele_value($places['donor']))[2] . "\n";
+	exit(0);
+}
+
+if ($command == 'remove-source') {
+	if (!file_exists($sourceKeepFile)) {
+		echo "nothing to remove\n";
+		exit(0);
+	}
+	$keep = json_decode(file_get_contents($sourceKeepFile), true);
+	legacy_write("UPDATE " . legacy_table('formulize') . " SET ele_value = " . legacy_q($keep['ele_value']) . " WHERE ele_id = {$places['donor']}");
+	unlink($sourceKeepFile);
+	echo "removed\n";
+	exit(0);
+}
+
+fwrite(STDERR, "usage: php legacy-handles.php install <handle> | read <handle> | remove | install-source <handle> | read-source | remove-source\n");
 exit(1);

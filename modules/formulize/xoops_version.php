@@ -128,9 +128,9 @@ $modversion['formulize_exportable_tables'] = array(
 //
 // For each table: its key column, the usage report heading and how a row is named, and each column that can
 // refer to an element - the shape of what is stored, what it holds, and what a deletion does with it. 'holds'
-// is 'id' where only ids have ever been stored, 'handle' where Formulize saves handles, and 'either' where it
-// now saves ids but older settings can still hold handles - a rename writes the element's id there, so the
-// setting ends up the way a save would leave it today.
+// is 'id' where only ids have ever been stored, and 'either' where Formulize now saves ids but older settings can
+// still hold handles - a rename writes the element's id there, so the setting ends up the way a save would leave it
+// today.
 //
 // Records are left out even where they mention an element - logs, people's "Other" answers, digest content -
 // since they are a history of what happened rather than settings, and so is anything holding arbitrary values,

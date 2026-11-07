@@ -73,6 +73,12 @@ them *after* the e2e suite, when the setup specs have finished building the muse
   it) but nothing the museum system contains, and it reads and writes no data of its own - every element
   is in memory, and the only files it touches are named for a handle no real element uses.
 
+* `element_handle_patch_test.php` - what the update patch does to a site whose element handles still have
+  capitals or hyphens: the real patch and the real rename, on a real database, with an entry read back through
+  `getData()` before and after. Only the old site itself is written directly, because Formulize refuses to create
+  such a handle now. Renaming a field cannot be rolled back, so it needs a copy of the database, and refuses to start
+  without one. CI makes that copy and runs this after the final dump. The top of the file has the commands.
+
 To run one against a local docker environment:
 
 ```

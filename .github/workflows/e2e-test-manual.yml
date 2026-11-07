@@ -209,6 +209,16 @@ jobs:
           cp -r modules/formulize/templates/screens/* tests/e2e/final-state/modules/formulize/templates/screens/ || echo "templates/screens folder empty or not accessible"
         fi
 
+    # After everything, including the dump above, because it turns the finished system into a site with its element
+    # handles in their old shapes. It works on a copy of the database, and needs one of its own because renaming a
+    # field cannot be rolled back. It puts back the files it changes.
+    - name: PHP integrity tests (element handle update patch, on a copy of the built system)
+      if: ${{ !inputs.test_filter }}
+      run: |
+        docker exec formulize-mariadb-1 mariadb -uroot -pabc123 -e "CREATE DATABASE formulize_patch_test; GRANT ALL ON formulize_patch_test.* TO 'user'@'%'"
+        docker exec formulize-mariadb-1 sh -c "mariadb-dump -uroot -pabc123 formulize | mariadb -uroot -pabc123 formulize_patch_test"
+        docker exec -e FORMULIZE_PATCH_TEST_DB=formulize_patch_test formulize-web-1 php /var/www/html/tests/element_handle_patch_test.php
+
     - name: Clean up containers
       if: always()
       run: |

@@ -11,6 +11,9 @@ import { login, renameElementHandle, elementId, openArtifactOriginsMap, expectAr
  *
  * legacy-handles.php writes that kind of setting straight into the database, for the Donated to museum element, then
  * this renames the element through the admin UI and reads back what is stored.
+ *
+ * A linked list's source is checked by what a person gets as well: the Donor list has to offer the donors with its
+ * source stored by handle, which is how an old site has it, and again once a rename has turned that into the id.
  */
 
 const handle = 'artifacts_donated_to_museum';
@@ -69,5 +72,51 @@ test.describe.serial('Legacy handles in settings', () => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		expect(await renameElementHandle(page, 'artifacts_donated', handle)).toBeNull();
 		expectConverted(JSON.parse(legacySettings('read', handle)));
+	});
+});
+
+test.describe.serial('A linked list whose source is stored by handle', () => {
+
+	test.afterAll(() => {
+		legacySettings('remove-source');
+	});
+
+	// As curator1, open the Roman coin and check the Donor list offers its donor, and has it selected
+	async function expectTheDonorListToWork(page) {
+		const donor = 'François-Marie Arouet';
+		await page.goto('/user.php?op=logout');
+		await login(page, 'curator1', '12345');
+		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
+		await page.getByRole('row', { name: 'M001' }).getByRole('link').first().click();
+		await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeVisible();
+		await expect(page.getByLabel('Donor').locator('option', { hasText: donor })).toHaveCount(1);
+		await expect(page.getByLabel('Donor').locator('option:checked')).toHaveText(donor);
+		await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
+	}
+
+	async function renameAsAdmin(page, from, to) {
+		await page.goto('/user.php?op=logout');
+		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+		expect(await renameElementHandle(page, from, to)).toBeNull();
+	}
+
+	test('it works by handle, a rename turns that into the id, and it works by id', async ({ page }) => {
+		test.setTimeout(300000);
+		legacySettings('remove-source'); // anything an interrupted run left
+		expect(legacySettings('install-source', 'donors_name')).toBe('installed');
+		const stored = legacySettings('read-source');
+		expect(stored).toMatch(/^\d+#\*=:\*donors_name$/);
+		await expectTheDonorListToWork(page);
+
+		await renameAsAdmin(page, 'donors_name', 'donors_full_name');
+		const byId = `${stored.split('#*=:*')[0]}#*=:*${elementId('donors_full_name')}`;
+		expect(legacySettings('read-source')).toBe(byId);
+		await expectTheDonorListToWork(page);
+
+		// renaming back leaves the id as it is
+		await renameAsAdmin(page, 'donors_full_name', 'donors_name');
+		expect(legacySettings('read-source')).toBe(byId);
+		await expectTheDonorListToWork(page);
 	});
 });

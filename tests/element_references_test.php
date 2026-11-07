@@ -1,8 +1,8 @@
 <?php
 /**
  * Where an element is referred to, worked out by formulizeElementReferences from the declaration in
- * xoops_version.php and each element type's $eleValueReferences - and what deleting, renaming, and converting
- * old handles to ids does at each of those places.
+ * xoops_version.php and each element type's $eleValueReferences - and what deleting and renaming does at each of
+ * those places.
  *
  * A standalone logic test: it loads the real class and the real declarations, and runs them against an
  * in-memory stand-in for the database, so it needs nothing but PHP. The element type handlers it needs are
@@ -16,7 +16,7 @@
  *    term, a list column but not its search value, a custom button's element but not its value. Legacy
  *    handles in settings Formulize now saves as ids become ids; tokens, {search_handle} tokens and
  *    notification tags take the new handle; ids are left alone.
- * 3. Converting old handles to ids without a rename, and what a numeric legacy handle does.
+ * 3. What a rename does with a numeric legacy handle.
  * 4. What formulizeElementHandleCode rewrites in code - the handle given to a display function, a filter term, the
  *    variables Formulize names after a handle, moving a variable of the author's own out of the way - and what it
  *    leaves for a person, which the usage report marks and a rename lists.
@@ -31,6 +31,11 @@
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
     exit;
+}
+
+function stop($message) { // not die(), which exits with 0, so a test it stopped would pass in CI
+	fwrite(STDERR, $message);
+	exit(1);
 }
 
 $repo = dirname(__DIR__);
@@ -61,7 +66,7 @@ foreach(array('CALENDAR_SCREENS', 'FORM_SCREENS', 'LIST_SCREENS', 'MAP_SCREENS',
 function declarationOf($file) {
 	$src = file_get_contents($file);
 	if(!preg_match('/public static \$eleValueReferences = (array\(.*?\n\t\));/s', $src, $m)) {
-		die("no declaration in $file\n");
+		stop("no declaration in $file\n");
 	}
 	return $m[1];
 }
@@ -84,8 +89,13 @@ file_put_contents($stubRoot.'/modules/formulize/class/calendarScreen.php', "<?ph
 	public \$vars = array(); function setVar(\$k, \$v) { \$this->vars[\$k] = \$v; } function getVar(\$k) { return isset(\$this->vars[\$k]) ? \$this->vars[\$k] : null; } } }\n");
 require $stubRoot.'/modules/formulize/class/calendarScreen.php';
 
-// how a handle is written in code, and what a rename rewrites there - the real class, which stands on its own
+// how a handle is written in code, and what a rename rewrites there - the real class, and the real sanitizer it asks,
+// copied out of the class it lives in, which needs the whole system around it
 require $repo.'/modules/formulize/class/elementHandleCode.php';
+if(!preg_match('/static function sanitize_handle_name\(.*?\n\t}/s', file_get_contents($classDir.'formulize.php'), $match)) {
+	stop("no sanitize_handle_name in formulize.php\n");
+}
+eval('class formulizeElement { '.$match[0].' }');
 // and the parameters that take elements, read from the real source files that declare them, copied in where
 // XOOPS_ROOT_PATH says the module is, beside the stubs. Only files that declare one are copied, and none of them is
 // one of the stubs.
@@ -112,7 +122,7 @@ $P = formulizeElementParameters::all();
 $xv = file_get_contents($repo.'/modules/formulize/xoops_version.php');
 $start = strpos($xv, "\$modversion['formulize_element_references'] = array(");
 $end = strpos($xv, "\n);", $start);
-if($start === false OR $end === false) { die("declaration not found\n"); }
+if($start === false OR $end === false) { stop("declaration not found\n"); }
 $modversion = array();
 eval(substr($xv, $start, $end - $start + 3));
 $GLOBALS['__declaration'] = $modversion['formulize_element_references'];
@@ -130,7 +140,7 @@ class FakeDB {
 	function query($sql) {
 		if(stripos(ltrim($sql), 'select') !== 0 AND stripos(ltrim($sql), 'update') !== 0) {
 			// the usage report is drawn on a GET request, when the real database refuses everything but a SELECT
-			die("query() is given only SELECTs while reading, as the database proxy allows on a GET request: $sql\n");
+			stop("query() is given only SELECTs while reading, as the database proxy allows on a GET request: $sql\n");
 		}
 		if(preg_match('/^SELECT COLUMN_NAME AS Field FROM information_schema\.COLUMNS .* TABLE_NAME = Q#(\d+)# /', $sql, $m)) {
 			$m[1] = substr($this->quoted[$m[1]], 2); // the quoted, prefixed table name, without its 'x_'
@@ -152,7 +162,7 @@ class FakeDB {
 			}
 			return true;
 		}
-		die("unexpected SQL: $sql\n");
+		stop("unexpected SQL: $sql\n");
 	}
 	function queryF($sql) { return $this->query($sql); }
 	function fetchArray(&$result) { return is_array($result) ? array_shift($result) : false; }
@@ -420,35 +430,6 @@ resetTables(array('formulize_saved_views' => array(
 )));
 removeReferences(new formulizeElementReferences(700, 'is_approved', 3));
 check('grouping id removed where it appears, columns untouched', $xoopsDB->row('formulize_saved_views', 'sv_id', 4)['sv_calc_grouping'].'|'.$xoopsDB->row('formulize_saved_views', 'sv_id', 4)['sv_calc_cols'], '12,12/|11/22');
-
-echo "== converting legacy handles to ids, without renaming\n";
-resetTables(array(
-	'formulize' => array(
-		array('ele_id' => 800, 'ele_type' => 'text', 'ele_handle' => 'name', 'id_form' => 5, 'ele_caption' => 'Hello {name}', 'ele_desc' => '',
-			'ele_filtersettings' => '', 'ele_disabledconditions' => '', 'ele_dynamicdefault_conditions' => '', 'ele_dynamicdefault_source' => 0, 'ele_value' => 'a:0:{}'),
-		array('ele_id' => 801, 'ele_type' => 'text', 'ele_handle' => 'other', 'id_form' => 5, 'ele_caption' => '{name}', 'ele_desc' => '',
-			'ele_filtersettings' => serialize(array(0 => array('name', 800), 1 => array('=', '='), 2 => array('name', '{name}'), 3 => array('all', 'all'))),
-			'ele_disabledconditions' => '', 'ele_dynamicdefault_conditions' => '', 'ele_dynamicdefault_source' => 0, 'ele_value' => 'a:0:{}'),
-	),
-	'formulize_saved_views' => array(
-		array('sv_id' => 5, 'sv_name' => 'v', 'sv_oldcols' => 'name,x', 'sv_quicksearches' => '', 'sv_sort' => 'name',
-			'sv_calc_cols' => '', 'sv_calc_calcs' => '', 'sv_calc_blanks' => '', 'sv_calc_grouping' => ''),
-	),
-	'formulize_screen_map' => array(
-		array('sid' => 40, 'title' => 'Map', 'lat_element' => 'name', 'lng_element' => '801', 'label_element' => '', 'description_element' => '',
-			'columns' => serialize(array(array('name', '', 'Box'), array('creation_uid', '', 'Box'))), 'fundamental_filters' => ''),
-	),
-));
-(new formulizeElementReferences(800, 'name', 5))->convertLegacyHandlesToIds();
-$other = $xoopsDB->row('formulize', 'ele_id', 801);
-check('to ids: the condition handle becomes the id, terms and tokens untouched',
-	unserialize($other['ele_filtersettings']), array(0 => array(800, 800), 1 => array('=', '='), 2 => array('name', '{name}'), 3 => array('all', 'all')));
-check('to ids: captions untouched', $other['ele_caption'], '{name}');
-$view = $xoopsDB->row('formulize_saved_views', 'sv_id', 5);
-check('to ids: saved view columns and sort become ids', $view['sv_oldcols'].'|'.$view['sv_sort'], '800,x|800');
-$map = $xoopsDB->row('formulize_screen_map', 'sid', 40);
-check('to ids: a map pin element becomes the id', $map['lat_element'], '800'); // a text column
-check('to ids: map columns become ids, a metadata column is left', unserialize($map['columns']), array(array(800, '', 'Box'), array('creation_uid', '', 'Box')));
 
 echo "== a rename where the old handle is a number\n";
 resetTables(array(
@@ -720,6 +701,16 @@ check('variables: with a prefix, only the variable with that prefix',
 	$C::renameVariables(array('$quickSearchold $quickDateRangeold $old'), 'old', 'new', array('quickSearch', 'quickDateRange')),
 	array('$quickSearchnew $quickDateRangenew $old'));
 check('variables: nothing moved out of the way when the old handle is not there', $C::renameVariables(array('$new'), 'old', 'new'), array('$new'));
+check('variables: capitals are another spelling of the same handle, so the two are one variable and nothing is moved',
+	$C::renameVariables(array('$value = $My_Handle + $my_handle;'), 'My_Handle', 'my_handle'), array('$value = $my_handle + $my_handle;'));
+check('variables: and so are hyphens', $C::renameVariables(array('$my-handle + $my_handle'), 'my-handle', 'my_handle'), array('$my_handle + $my_handle'));
+check('variables: and across the texts that share their variables, with a prefix',
+	$C::renameVariables(array('a' => '$quickSearchMy_Handle', 'b' => '{$quickSearchmy_handle}'), 'My_Handle', 'my_handle', array('quickSearch')),
+	array('a' => '$quickSearchmy_handle', 'b' => '{$quickSearchmy_handle}'));
+$twoSpellings = $C::renameVariables(array('$My_Handle + $MY_HANDLE + $my_handle'), 'My_Handle', 'my_handle');
+check('variables: a second old spelling joins the first, rather than moving it', $C::renameVariables($twoSpellings, 'MY_HANDLE', 'my_handle'), array('$my_handle + $my_handle + $my_handle'));
+check('variables: a suffix makes it a different name, so a variable already called that is still moved',
+	$C::renameVariables(array('$My_Handle + $my_handle_f6'), 'My_Handle', 'my_handle_f6'), array('$my_handle_f6 + $my_handle_f6_1'));
 check('tokens', $C::renameTokens('{old} {old_x} {search_old}', 'old', 'new'), '{new} {old_x} {search_old}');
 check('still named: a key, a backticked column, a bare column only in a query, a variable, a token; not another handle',
 	array($C::stillNamed('$r[\'old\']', 'old'), $C::stillNamed('SELECT `old` FROM t', 'old'), $C::stillNamed('SELECT old FROM t', 'old'),

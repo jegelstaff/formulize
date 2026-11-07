@@ -23,12 +23,17 @@ if (PHP_SAPI !== 'cli') {
 	exit;
 }
 
+function stop($message) { // not die(), which exits with 0, so a test it stopped would pass in CI
+	fwrite(STDERR, $message);
+	exit(1);
+}
+
 $repo = dirname(__DIR__);
 define('XOOPS_ROOT_PATH', $repo);
 
 // The prefix as the real class has it, without bringing in what the class needs around it
 if (!preg_match("/const HIDDEN_COLUMN_PREFIX = '([^']+)';/", file_get_contents($repo . '/modules/formulize/class/savedViews.php'), $match)) {
-	die("no HIDDEN_COLUMN_PREFIX in savedViews.php\n");
+	stop("no HIDDEN_COLUMN_PREFIX in savedViews.php\n");
 }
 eval('class formulizeSavedViewsHandler { const HIDDEN_COLUMN_PREFIX = ' . var_export($match[1], true) . '; }');
 
