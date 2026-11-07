@@ -2,7 +2,7 @@
 
 Every row here is something a person can set up, and what they should see when they look at the page. The specs read this file, so a row is a test. Every row runs in `03-validate-sequential/045-conditions-on-the-page.spec.js`, which checks them all and only then fails, listing every row that disagrees, so one run shows them all. To check a behaviour, read its row. To add a case, add a row.
 
-The museum's data is in `01-setup/020-data-entry.spec.js` and `01-setup/022-locations-and-loan-requests.spec.js`, and there is a summary at the end of this file.
+The museum's data is in `01-setup/020-data-entry.spec.js`, `01-setup/022-locations-and-loan-requests.spec.js` and `01-setup/023-visits-and-offers.spec.js`, and there is a summary at the end of this file.
 
 ## Writing a row
 
@@ -11,6 +11,7 @@ The museum's data is in `01-setup/020-data-entry.spec.js` and `01-setup/022-loca
 - `(empty)` is a condition with nothing in the term. `{BLANK}` is the keyword for blank.
 - `{handle}` refers to a field in the entry that's open.
 - **Should show** is `Everything`, `Nothing`, `Everything except` some names, or a list of names, separated by commas.
+- **Where what a row should show is open to question, it's what master does now.** For now, the aim is to change as little of master's behaviour as possible, so master's result is the answer for anything the rules below don't already settle. Each such row is checked by comparing runs on master and on the branch.
 
 ## How each section is checked
 
@@ -22,7 +23,7 @@ A row says what should be on the page. This table says where to look for it, and
 | R | The row's saved Loan Request | `.form-row:has(.formulize-label-loans_artifact) select option` | Artifact | The options are exactly the row's names |
 | N | A new Loan Request, then what the row puts on screen | `.form-row:has(.formulize-label-loans_artifact) select option` | Artifact | The options are exactly the row's names, once the redraw has finished |
 | L | The row's artifact, on its Location and loans tab | `.formulize-subform td` | Loan Request | The names in those cells are exactly the row's names, out of that artifact's requests |
-| P | The row's artifact, on its Cataloguing tab | `.form-row:has(.formulize-label-artifacts_part_of_set) select option` | Artifact | The options are exactly the row's names |
+| O | The row's visit | `.form-row:has(.formulize-label-visits_follow_up) select option` | Offer | The options are exactly the row's names |
 | Q | Main Vault, with the row's values in the page's address | `.formulize-subform td` | Artifact | The names in those cells are exactly the row's names |
 | D | A new Loan Request | `.form-row:has(.formulize-label-loans_donor) select option` | Donor | The options are exactly the row's names |
 | C | A new Loan Request | `.form-row:has(.formulize-label-loans_collections) label` | Collection | The boxes are exactly the row's names |
@@ -49,6 +50,7 @@ A row says what should be on the page. This table says where to look for it, and
 - A number in a condition on a linked element is an entry id, if no entry has that number as its text. Display conditions don't do this, so section 5 doesn't have rows for it.
 - A condition on a connected form keeps the main entries with at least one connected entry that meets it, and shows only the connected entries that do. See [Conditions on connected forms](../../../docs/filters.md#conditions-on-connected-forms).
 - `{ }` that refers to a blank field: `=` and `LIKE` find blanks, `!=` and `NOT LIKE` find anything that isn't blank, and `>` and `<` find nothing.
+- The exception is a condition whose element lists entries from the form the `{ }` refers to, where the `{ }` names a linked element in that form, ie: `Visit = {visits_donor}` in section 4. With that linked element blank, `=` finds nothing, because master finds nothing. `!=` finds everything, since nothing is the same.
 - `{TODAY}` is today's date, `{USER}` is curator1, who is Curator One, and `{ID}` is the entry that's open. A `{ }` that isn't an element or one of these is read from a parameter of that name in the page's address, and with no such parameter the condition is ignored.
 - On when an entry was made or modified, which have a time as well, a day is all of that day, as the person sees it. `<= {TODAY}` is everything made today, and `> {TODAY}` is after the end of today.
 - A list of users matches the name people see in it, ie: Curator One, as well as the user's login.
@@ -325,7 +327,7 @@ The same setting, on a new entry. With nothing on screen, a list that depends on
 
 ## 4. Other surfaces
 
-**The Loan requests subform in an Artifact.** Set with `sourceEntryFilter` on `artifacts_subform_loan_requests`, and read on the artifact's Location and loans tab. A subform only shows entries connected to the entry that's open, so these rows are about the Loan Requests for that artifact.
+**The Loan requests subform in an Artifact.** Set with `sourceEntryFilter` on `artifacts_subform_loan_requests`, and read on the artifact's Location and loans tab. A subform only shows entries connected to the entry that's open, so these rows are about the Loan Requests for that artifact. Donor contact and the artifact's Donor are both lists of donors, so L14 to L19 find the loan requests whose contact is the artifact's own donor.
 
 | Row | Artifact | All of | Any of | Should show | What it tests |
 |---|---|---|---|---|---|
@@ -342,6 +344,12 @@ The same setting, on a new entry. With nothing on screen, a list that depends on
 | L11 | Roman Coin | Approved = Yes |  | City Museum | a literal term |
 | L12 | Unknown Shard | Approved != Yes |  | Everything | a literal term, with !=, and blanks |
 | L13 | Unknown Shard | Approved = {BLANK} |  | Regional Archive | {BLANK} |
+| L14 | Roman Coin | Donor contact = {artifacts_donor} |  | City Museum | linked, and the reference is linked to the same form |
+| L15 | Roman Coin | Donor contact != {artifacts_donor} |  | Harbour Gallery | the opposite |
+| L16 | Florentine Book | Donor contact = {artifacts_donor} |  | Nothing | a blank field isn't the artifact's donor |
+| L17 | Florentine Book | Donor contact != {artifacts_donor} |  | Everything | a blank field isn't the artifact's donor, with != |
+| L18 | Unknown Shard | Donor contact = {artifacts_donor} |  | Everything | a blank linked reference finds blanks |
+| L19 | Unknown Shard | Donor contact != {artifacts_donor} |  | Nothing | a blank linked reference, with != |
 
 **The Donor contact list in a new Loan Request.** Set with `sourceEntryFilter` on `loans_donor`.
 
@@ -372,16 +380,16 @@ The same setting, on a new entry. With nothing on screen, a list that depends on
 | C4 | Suitable audience = Adults; Suitable audience NOT LIKE Child |  | Coins | has one and not the other |
 | C5 | Suitable audience != Children | Name LIKE History; Name = Coins; Suitable audience = {BLANK} | Coins | all and any |
 
-**The Part of a set with list in an Artifact.** Set with `sourceEntryFilter` on `artifacts_part_of_set`, and read on the artifact's Cataloguing tab. The list offers other artifacts, so a `{ }` refers to the form the list is in. An artifact isn't offered as part of a set with itself, and the artifact selected is always offered.
+**The Follow up on list in a Visit.** Set with `sourceEntryFilter` on `visits_follow_up`, and read on the visit. Visits are donors' visits to the museum, and Offers are things they offer to give. When a donor comes back, Follow up on lists the offers that can be followed up. An offer's Visit is a list of visits, and the `{ }` refers to the visit that's open, so a condition compares the offer's visit with this one. `Visit = {visits_donor}` is an offer made at any visit by the same donor as this one. `Visit = {visits_name}` is an offer made at a visit with this visit's name, which means this visit. Nothing is chosen in Follow up on, so the list holds exactly what the condition finds. Visits and Offers are the only forms in the museum with a link each way, and nothing else uses them.
 
-| Row | Artifact | All of | Any of | Should show | What it tests |
+| Row | Visit | All of | Any of | Should show | What it tests |
 |---|---|---|---|---|---|
-| P1 | Persian necklace - number 2 | Era = {artifacts_era} |  | Roman Coin, Persian necklace, Egyptian Chariot, Babylonian Spoon, Unknown Shard, Bronze Mirror | a reference to the same form |
-| P2 | Persian necklace - number 2 | Era != {artifacts_era} |  | Persian necklace, Chinese Sword, Florentine Book, French Musket, Japanese Coin, American Bicycle, Polynesian Canoe, Viking Silver Armband, Candide - first edition, Silk Scroll | != to the same form, and the artifact selected |
-| P3 | Persian necklace - number 2 | Donor = {artifacts_donor} |  | Persian necklace, Florentine Book, Viking Silver Armband | linked, to the same form |
-| P4 | Persian necklace - number 2 | Materials = {artifacts_materials} |  | Persian necklace, Japanese Coin, Unknown Shard | checkboxes, a blank reference finds blanks |
-| P5 | Chinese Sword | Era = {artifacts_era} |  | Florentine Book, French Musket, Japanese Coin, American Bicycle, Polynesian Canoe, Viking Silver Armband, Candide - first edition, Silk Scroll | nothing selected |
-| P6 | Chinese Sword | Year > {artifacts_year} |  | Everything except Roman Coin, Chinese Sword | a number, to the same form |
+| O1 | Arouet in April | Visit = {visits_donor} |  | Letters, Snuff box | linked, through the visit to its donor |
+| O2 | Arouet in April | Visit != {visits_donor} |  | Telescope, Unlabelled box, Sketchbook | the opposite, and an offer with no visit. Master reads != as = here, so it shows what O1 does |
+| O3 | Arouet in March | Visit = {visits_name} |  | Letters | not linked, the field the Visit list shows |
+| O4 | Arouet in March | Visit != {visits_name} |  | Everything except Letters | the opposite, and an offer with no visit |
+| O5 | Walk-in in April | Visit = {visits_donor} |  | Nothing | a visit with no donor has no one to match, which is what master does |
+| O6 | Walk-in in April | Visit != {visits_donor} |  | Everything | the opposite. Master finds nothing, since it reads != as = here, as in O2 |
 
 **Values in the page's address.** Set with `sourceEntryFilter` on `locations_subform_artifacts`, then open Main Vault with the row's values on the end of the address.
 
@@ -621,24 +629,24 @@ Search boxes on the Catalogue list.
 
 ## The museum's data
 
-| Artifact | Year | Era | Acquired | Donated | Donor | Collections | Latitude | Materials | On loan | Provenance | Appraiser email | Storage | Handling | Catalogued by | Part of a set with |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Roman Coin | 150 | BCE | 2020-08-21 | Yes | François-Marie Arouet | Ancient History, Coins | 41.9028 | Silver | Yes |  | appraiser@museum.example | Climate controlled, stored as 11 | Gloves | Curator One |  |
-| Persian necklace | 350 | BCE | 2002-12-02 | Yes | Emilie Du Châtelet | Ancient History | 29.9355 | Gold, Silver |  |  |  |  |  | Curator One |  |
-| Chinese Sword | 198 | CE | 1993-08-10 | Yes | Freeform Solutions | Ancient History, Weapons | 34.3416 | Iron | No |  | empty string |  |  |  |  |
-| Egyptian Chariot | 1850 | BCE | 2011-09-19 | No |  | Ancient History, Weapons | 25.6872 | Wood, Bronze |  | Bought in Cairo | empty string |  | Two people to lift |  |  |
-| Babylonian Spoon | 1500 | BCE | 2015-09-26 | Yes | François-Marie Arouet | Ancient History | 32.5422 | Bronze |  | City Museum |  |  |  | Curator One |  |
-| Florentine Book | 1588 | CE | 1988-02-29 | Yes | Emilie Du Châtelet | Modern History | 43.7696 | Paper | Yes | Bought at Sotheby's |  |  | Gloves, Keep flat | Curator Two |  |
-| French Musket | 1804 | CE | 1927-03-04 | No |  | Modern History, Weapons | 48.8566 | Iron, Wood | No | Bought in Paris | empty string |  |  | Curator Two |  |
-| Japanese Coin | 1880 | CE | 1955-11-25 | Yes | Freeform Solutions | Coins, Modern History | 35.6762 |  | No |  | appraiser@museum.example |  |  |  |  |
-| American Bicycle | 1884 | CE | 2007-05-09 | No |  | Modern History | 42.3601 | Cast iron |  |  |  |  |  |  |  |
-| Polynesian Canoe | 1701 | CE | 1977-06-14 | Yes | François-Marie Arouet | Modern History | -17.5516 | Wood |  |  |  |  | Two people to lift |  |  |
-| Viking Silver Armband | 875 | CE | 2025-07-10 | Yes | Emilie Du Châtelet | Modern History | 59.8586 | Silver |  |  |  |  |  |  |  |
-| Candide - first edition | 1759 | CE | 2025-11-29 | Yes | François-Marie Arouet | Modern History |  | Paper |  |  |  |  | Keep flat |  |  |
-| Persian necklace - number 2 | 350 | BCE | 2002-12-02 | Yes | Emilie Du Châtelet | Ancient History | 29.9355 |  |  |  |  |  |  |  | Persian necklace |
-| Unknown Shard | 500 | BCE |  | No |  |  |  |  |  |  | empty string |  |  |  |  |
-| Bronze Mirror | 200 | BCE | 2002-12-31 | Yes | Aoife O'Brien | Ancient History |  | Bronze |  |  | empty string |  |  |  |  |
-| Silk Scroll | 1400 | CE | 2003-01-01 | Yes | Hart & Sons Antiques | Modern History |  | Wood |  |  | empty string |  | Gloves, Keep flat |  |  |
+| Artifact | Year | Era | Acquired | Donated | Donor | Collections | Latitude | Materials | On loan | Provenance | Appraiser email | Storage | Handling | Catalogued by |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Roman Coin | 150 | BCE | 2020-08-21 | Yes | François-Marie Arouet | Ancient History, Coins | 41.9028 | Silver | Yes |  | appraiser@museum.example | Climate controlled, stored as 11 | Gloves | Curator One |
+| Persian necklace | 350 | BCE | 2002-12-02 | Yes | Emilie Du Châtelet | Ancient History | 29.9355 | Gold, Silver |  |  |  |  |  | Curator One |
+| Chinese Sword | 198 | CE | 1993-08-10 | Yes | Freeform Solutions | Ancient History, Weapons | 34.3416 | Iron | No |  | empty string |  |  |  |
+| Egyptian Chariot | 1850 | BCE | 2011-09-19 | No |  | Ancient History, Weapons | 25.6872 | Wood, Bronze |  | Bought in Cairo | empty string |  | Two people to lift |  |
+| Babylonian Spoon | 1500 | BCE | 2015-09-26 | Yes | François-Marie Arouet | Ancient History | 32.5422 | Bronze |  | City Museum |  |  |  | Curator One |
+| Florentine Book | 1588 | CE | 1988-02-29 | Yes | Emilie Du Châtelet | Modern History | 43.7696 | Paper | Yes | Bought at Sotheby's |  |  | Gloves, Keep flat | Curator Two |
+| French Musket | 1804 | CE | 1927-03-04 | No |  | Modern History, Weapons | 48.8566 | Iron, Wood | No | Bought in Paris | empty string |  |  | Curator Two |
+| Japanese Coin | 1880 | CE | 1955-11-25 | Yes | Freeform Solutions | Coins, Modern History | 35.6762 |  | No |  | appraiser@museum.example |  |  |  |
+| American Bicycle | 1884 | CE | 2007-05-09 | No |  | Modern History | 42.3601 | Cast iron |  |  |  |  |  |  |
+| Polynesian Canoe | 1701 | CE | 1977-06-14 | Yes | François-Marie Arouet | Modern History | -17.5516 | Wood |  |  |  |  | Two people to lift |  |
+| Viking Silver Armband | 875 | CE | 2025-07-10 | Yes | Emilie Du Châtelet | Modern History | 59.8586 | Silver |  |  |  |  |  |  |
+| Candide - first edition | 1759 | CE | 2025-11-29 | Yes | François-Marie Arouet | Modern History |  | Paper |  |  |  |  | Keep flat |  |
+| Persian necklace - number 2 | 350 | BCE | 2002-12-02 | Yes | Emilie Du Châtelet | Ancient History | 29.9355 |  |  |  |  |  |  |  |
+| Unknown Shard | 500 | BCE |  | No |  |  |  |  |  |  | empty string |  |  |  |
+| Bronze Mirror | 200 | BCE | 2002-12-31 | Yes | Aoife O'Brien | Ancient History |  | Bronze |  |  | empty string |  |  |  |
+| Silk Scroll | 1400 | CE | 2003-01-01 | Yes | Hart & Sons Antiques | Modern History |  | Wood |  |  | empty string |  | Gloves, Keep flat |  |
 
 A blank cell is NULL.
 
@@ -665,6 +673,21 @@ A blank cell is NULL.
 | University Library | Florentine Book |  |  |  |  |  |  |  |  | Climate controlled |
 | Regional Archive | Unknown Shard |  |  |  |  |  |  |  |  | Climate controlled |
 | Town Hall | Unknown Shard |  |  |  |  |  |  |  | No | Climate controlled |
+
+| Visit | Donor |
+|---|---|
+| Arouet in March | François-Marie Arouet |
+| Arouet in April | François-Marie Arouet |
+| Du Châtelet in March | Emilie Du Châtelet |
+| Walk-in in April |  |
+
+| Offer | Visit |
+|---|---|
+| Letters | Arouet in March |
+| Snuff box | Arouet in April |
+| Telescope | Du Châtelet in March |
+| Unlabelled box | Walk-in in April |
+| Sketchbook |  |
 
 Entry ids in these rows are fixed by the order setup makes things: Freeform Solutions is donor 3, Weapons is collection 4.
 
@@ -703,6 +726,8 @@ What no row checks yet, and what checking it would take. Then problems found whi
 - **MySQL.** CI runs on MariaDB only. MySQL 8 refuses comparisons that MariaDB lets through, ie: a date with text, so a row can pass here and fail there. To close: a CI run on MySQL. There's a plan for one in `mysql-ci-plan.md` at the root of the repository.
 
 - **A value taken out on screen in a new entry.** This isn't decided yet. Should a `{ }` that refers to a field that was filled in on screen and then emptied find blanks, the way a saved blank does? The same question applies to text, radio and number fields emptied in a saved entry. The rows expect what the code does now. If that changes, N19, N25, N31 and N32 become Nothing, and N20 becomes Everything.
+
+- **Forms that link to themselves.** A form with a list of its own entries isn't in the museum. It was, as Part of a set with, a list on Artifacts of other artifacts, and section 4 had rows for it. But that link from Artifacts to itself was in the relationship the Catalogue list uses, and it broke every fundamental filter on that list: F1 to F11, F18 and F23 to F26, in run 42398600775, on master, which has the same code. `formulize_parseFilter()` gives each form in a fundamental filter its alias in the query: `main` for the list's own form, then `f` and a number for each form linked to it. Artifacts was in both places, so `f2` replaced `main`, and the query that counts the entries failed with "Unknown column 'f2.artifacts_catalogued_by'". Forms that link to themselves are the subject of `self-referential-forms-plan.md`, at the root of the repository, which has this. To close: once that work is done, a form of its own with a list of its own entries, and rows like the ones that were here, ie: `Era = {artifacts_era}` and `Donor = {artifacts_donor}`. The list shouldn't offer the entry that's open, and should always offer the one that's selected.
 
 ### Problems found
 

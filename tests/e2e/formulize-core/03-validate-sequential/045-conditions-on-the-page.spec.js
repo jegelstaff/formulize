@@ -6,7 +6,7 @@ import {
 } from '../../utils';
 import {
 	casesFor, howToCheck, namesIn, conditionsFor, expectedNames, namesOnPage, searchesFor, searchList, disagreementIn, checkRow,
-	ARTIFACT_ELEMENTS, DONOR_ELEMENTS, COLLECTION_ELEMENTS, LOAN_ELEMENTS,
+	ARTIFACT_ELEMENTS, DONOR_ELEMENTS, COLLECTION_ELEMENTS, LOAN_ELEMENTS, OFFER_ELEMENTS,
 } from '../condition-cases';
 
 // Conditions and searches as a person meets them. Each row of conditions-and-searches.md is a setting and what should then be on
@@ -39,7 +39,9 @@ import {
 // Section 9 changes the site's Short date format in the Settings page, which every date on the site follows until it's put
 // back. The spec checks a date on the page before it runs the rows, because a save that can't write its file says nothing.
 
-test.use({ baseURL: E2E_TEST_BASE_URL });
+// A click or key press that submits a page waits for the server to answer, and with no time limit of its own it waits as long
+// as the test can run, which is an hour for section 7. With one, a row the server never answers is recorded and the rest run.
+test.use({ baseURL: E2E_TEST_BASE_URL, actionTimeout: 30000 });
 
 test.describe.configure({ mode: 'serial' });
 
@@ -51,7 +53,7 @@ const LOANS_SUBFORM = 'artifacts_subform_loan_requests';
 const ARTIFACT_OPTIONS = 'loans_artifact';
 const DONOR_OPTIONS = 'loans_donor';
 const COLLECTION_OPTIONS = 'loans_collections';
-const SET_OPTIONS = 'artifacts_part_of_set';
+const FOLLOW_UP_OPTIONS = 'visits_follow_up';
 const DISPLAYED_ELEMENT = 'artifacts_curator_note';
 const WEAPONS_SUBFORM = 'collections_subform_artifacts';
 const WEAPONS_SUBFORM_DELETE_LINKS = '#filterdiv > a.conditionsdelete';
@@ -173,7 +175,7 @@ async function putSettingsBack() {
 	await setOptionsFilter(ARTIFACT_OPTIONS, []);
 	await setOptionsFilter(DONOR_OPTIONS, []);
 	await setOptionsFilter(COLLECTION_OPTIONS, []);
-	await setOptionsFilter(SET_OPTIONS, []);
+	await setOptionsFilter(FOLLOW_UP_OPTIONS, []);
 	await setDisplayConditions([]);
 	for (const list of Object.values(LISTS)) {
 		await setFundamentalFilters(list.handle, []);
@@ -548,21 +550,31 @@ for (const section of [
 	});
 }
 
-test('Section 4: the Part of a set with list in an Artifact', async ({ page }) => {
-	const rows = casesFor('P');
+test('Section 4: the Follow up on list in a Visit', async ({ page }) => {
+	const rows = casesFor('O');
 	test.setTimeout(rows.length * SECONDS_PER_ROW * 1000);
-	const { selector } = howToCheck('P');
-	const everything = namesIn('Artifact');
+	const { selector } = howToCheck('O');
+	const everything = namesIn('Offer');
+	const fid = formId('Visits');
 
 	await login(page, 'curator1', '12345');
 	for (const row of rows) {
 		await checkRow(page, row['Row'], disagreements, async () => {
-			await setOptionsFilter(SET_OPTIONS, conditionsFor(row, ARTIFACT_ELEMENTS));
-			await openArtifactTab(page, row['Artifact'], 'Cataloguing', SET_OPTIONS);
-			compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
+			const conditions = conditionsFor(row, OFFER_ELEMENTS);
+			const expected = expectedNames(row['Should show'], everything);
+			const openAndRead = async () => {
+				await openEntry(page, fid, entryId('visits', 'visits_name', row['Visit']));
+				await expect(page.locator(`.form-row:has(.formulize-label-${FOLLOW_UP_OPTIONS}) select`)).toBeVisible();
+				return namesOnPage(page.locator(selector), everything);
+			};
+			await setOptionsFilter(FOLLOW_UP_OPTIONS, conditions);
+			compare(row, expected, await openAndRead());
+			if (expected.length === 0) {
+				await proveQueryRan(row, () => setOptionsFilter(FOLLOW_UP_OPTIONS, provingConditions(conditions, 'offers_item', everything[0])), openAndRead, everything[0]);
+			}
 		});
 	}
-	await setOptionsFilter(SET_OPTIONS, []);
+	await setOptionsFilter(FOLLOW_UP_OPTIONS, []);
 	await leavePage(page);
 });
 
@@ -633,9 +645,12 @@ test('Section 6: fundamental filters', async ({ page }) => {
 			await page.goto(`/modules/formulize/index.php?sid=${screenId(list.handle)}`);
 			await expect(page.getByText(/Showing entries:|No entries were found/).first()).toBeVisible();
 			compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
-			await setFundamentalFilters(list.handle, []);
 		});
 	}
+	for (const list of Object.values(LISTS)) {
+		await setFundamentalFilters(list.handle, []);
+	}
+	await leavePage(page);
 });
 
 // Every row is one search, on a fresh load of the list. Nothing is changed, so this could run anywhere, but it's here so that a
