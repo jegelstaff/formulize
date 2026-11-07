@@ -8953,8 +8953,8 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 								}
 								$filterOps[$filterId] = $overrideReturnedOp ? $overrideReturnedOp : '<=>';
 						// for new entries with a dynamic reference and no asynch value set...
-						} else { // can't do a subquery into a curly bracket form for a 'new' value...return nothing
-								return array("", "");
+						} else { // can't do a subquery into a curly bracket form for a 'new' value, so nothing matches. A list that depends on another list is empty until a choice is made, the same as the other linked comparisons
+								return array("-->>WHOLECONDITION<<-- 1=0 ", "");
 						}
 				}
 				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$asynchronousDataKey][$bareFilterTerm])) {
@@ -8985,7 +8985,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 				$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<-- 1=0 "; // the entry being referred to doesn't exist
 				$nullClauseHandled = true;
 			} elseif(is_array($referencedValues) AND empty($referencedValues) AND $curlyBracketEntry == 'new' AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$asynchronousDataKey][$bareFilterTerm])) {
-				$conditionsFilterComparisonValue = ""; // nothing to compare to in a new entry until there's a value, the condition is left out
+				$conditionsFilterComparisonValue = _newEntryWithNoValueForConditionsFilterSQL($filterOps[$filterId]);
 			} elseif(is_array($referencedValues)) {
 				$anyOfReferencedValues = array();
 				foreach($referencedValues as $referencedValue) {
@@ -9060,10 +9060,10 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 					} elseif($default) {
 							$conditionsFilterComparisonValue ="'$likebits".$default."$likebits'";
 					} else {
-							$conditionsFilterComparisonValue = "";
+							$conditionsFilterComparisonValue = _newEntryWithNoValueForConditionsFilterSQL($filterOps[$filterId]);
 					}
 				} else {
-					$conditionsFilterComparisonValue = "";
+					$conditionsFilterComparisonValue = _newEntryWithNoValueForConditionsFilterSQL($filterOps[$filterId]);
 				}
 
 			// OTHERWISE, LAST CALL, NOT NEW ENTRY AND NO ASYNCH DATA AVAILABLE...
@@ -9402,6 +9402,17 @@ function _dateRangeComparisonForConditionsFilterSQL($period, $op, $handle) {
 	}
 	$blanksToo = (trim($op) == '!=' OR trim($op) == 'NOT LIKE') ? " `$handle` IS NULL OR " : "";
 	return "-->>WHOLECONDITION<<-- ".$blanksToo.$comparison;
+}
+
+/**
+ * Build the comparison for a condition in a new entry, on an element that isn't linked, when a { } term has nothing on screen and no default value.
+ * = finds nothing, so a list that depends on a value is empty until there is one. The other operators ignore the condition, which is what no comparison value means.
+ *
+ * @param string $op - The operator of the condition
+ * @return string The comparison value, which is empty if the condition is left out
+ */
+function _newEntryWithNoValueForConditionsFilterSQL($op) {
+	return $op == '<=>' ? "-->>WHOLECONDITION<<-- 1=0 " : "";
 }
 
 /**

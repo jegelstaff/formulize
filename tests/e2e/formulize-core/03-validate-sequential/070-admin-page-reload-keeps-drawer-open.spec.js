@@ -9,15 +9,15 @@ import { login, waitForAdminPageReady, saveAdminForm, dbQuery, dbPrefix } from '
 // tall enough that the headings stay on the screen with a drawer open, because the mouse can't drag to something off the screen
 test.use({ baseURL: E2E_TEST_BASE_URL, viewport: { width: 1280, height: 1200 } });
 
-// Grab the icon, because the rest of a heading is a link, and dragging a link in Chromium starts the browser's own drag of it,
-// and the sortable never hears about the mouse again. The sortable only notices a drag that moves in steps.
+// By the title, which is a link. Chromium would start its own drag of it if the link allowed that, and the sortable would stop
+// getting mouse events. The sortable only notices a drag that moves in steps.
 async function dragDrawer(page, drawer, target) {
-	const grip = await drawer.locator('h3 .ui-icon').boundingBox();
+	const start = await drawer.locator('h3 a').boundingBox();
 	const end = await target.locator('h3').boundingBox();
-	const x = grip.x + grip.width / 2;
-	await page.mouse.move(x, grip.y + grip.height / 2);
+	const x = start.x + start.width / 2;
+	await page.mouse.move(x, start.y + start.height / 2);
 	await page.mouse.down();
-	await page.mouse.move(x, end.y + (end.y > grip.y ? end.height + 4 : -4), { steps: 15 });
+	await page.mouse.move(x, end.y + (end.y > start.y ? end.height + 4 : -4), { steps: 15 });
 	await page.mouse.up();
 }
 
@@ -64,8 +64,14 @@ test('An admin page reloads with the same drawer open, or the first one if that 
 	await expect(editLink('Appraisal')).toBeVisible();
 	await expect(editLink('Location and loans')).toBeHidden();
 
-	// and back again, so the screen is left as it was
+	// the first click after a drag still works
 	await dragDrawer(page, drawer('Appraisal'), drawer('Location and loans'));
+	await heading('Artifact').click();
+	await expect(editLink('Artifact')).toBeVisible();
+	await heading('Appraisal').click();
+	await expect(editLink('Appraisal')).toBeVisible();
+
+	// and it's now back where it started, so saving leaves the screen as it was
 	await saveAdminForm(page);
 	await expect(page.locator('#sortable-list .accordion-name')).toHaveText(['Artifact', 'Location and loans', 'Appraisal']);
 	await expect(editLink('Appraisal')).toBeVisible();

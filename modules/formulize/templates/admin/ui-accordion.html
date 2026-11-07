@@ -26,7 +26,9 @@
 			axis: "y",
 			handle: "h3",
 			stop: function(event, ui) {
+				// the click that ends a drag is ignored. Chromium doesn't always send one, and this mustn't ignore the next real click instead.
 				stop = true;
+				setTimeout(function() { stop = false; }, 0);
 			}
 		})<{/if}>;
 		<{if !$closeAccordion}>

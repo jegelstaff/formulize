@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, editScreenPage, conditionalElementReady, createMuseumForm, leavePage, dbQuery, dbPrefix, sqlEscape } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, editScreenPage, conditionalElementReady, createMuseumForm, leavePage, elementId, dbQuery, dbPrefix, sqlEscape } from '../../utils';
 
 // Where artifacts are kept and who asks to borrow them, added to the museum so that conditions and searches can be tried
 // on the page, with the kinds of values they have to cope with. The specs in 02-validate and 03-validate-sequential
@@ -10,8 +10,9 @@ import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, editScr
 //                    can show any artifact. A subform only ever shows entries connected to the entry that's open.
 //   Loan Requests    What a borrower is asking for, and the Artifact they want. Those fields are what { } terms refer
 //                    to when a condition narrows the Artifact list to what the borrower asked for.
-//   Artifacts        Location, Materials, On loan, Provenance, Appraiser email and Curator note, on two new tabs of the
-//                    Artifact screen, and a subform of the Loan Requests for the artifact.
+//   Artifacts        Location, Materials, On loan, Provenance, Storage, Appraiser email and Curator note, on two new tabs of
+//                    the Artifact screen, and a subform of the Loan Requests for the artifact. Storage has text people see
+//                    that's different from what's stored, and only the Roman Coin has a value.
 //   New entries      Three artifacts, with dates on either side of a new year and one with nothing but the required
 //                    fields, and two donors whose names have ' and & in them.
 //
@@ -39,7 +40,7 @@ const APPRAISER = 'appraiser@museum.example';
 
 // appraiser: an address, or '' for saving the Appraisal tab with nothing in it. Leave it out and the tab is never saved.
 const CATALOGUE = [
-	{ name: 'Roman Coin', materials: ['Silver'], onLoan: 'Yes', appraiser: APPRAISER },
+	{ name: 'Roman Coin', materials: ['Silver'], onLoan: 'Yes', appraiser: APPRAISER, storage: 'Climate controlled' },
 	{ name: 'Persian necklace', materials: ['Gold', 'Silver'] },
 	{ name: 'Chinese Sword', materials: ['Iron'], onLoan: 'No', appraiser: '' },
 	{ name: 'Egyptian Chariot', materials: ['Wood', 'Bronze'], provenance: 'Bought in Cairo', appraiser: '' },
@@ -355,6 +356,21 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 		await finishElement(page, 'Curator note');
 	});
 
+	test('Create Storage Element', async ({ page }) => {
+		// 1 is part of 11 on purpose, so that looking for one by what people see can't find the other by its stored value
+		await startElement(page, 'Artifacts', 'radio', 'Storage', 'artifacts_storage');
+		await fillOptions(page, ['1|Standard', '11|Climate controlled']);
+		const showWhatPeopleSee = page.getByRole('radio', { name: 'Show the same values the user sees' });
+		await showWhatPeopleSee.check();
+		await finishElement(page, 'Storage');
+		// lists and searches depend on this setting, so check it from a fresh load
+		const fid = formId('Artifacts');
+		await page.goto(`/modules/formulize/admin/ui.php?page=element&ele_id=${elementId('artifacts_storage')}&fid=${fid}&aid=${museumAppId(fid)}`);
+		await waitForAdminPageReady(page);
+		await page.getByRole('link', { name: 'Options' }).click();
+		await expect(showWhatPeopleSee).toBeChecked();
+	});
+
 	test('Create Borrower Element', async ({ page }) => {
 		await startElement(page, 'Loan Requests', 'text', 'Borrower', 'loans_borrower');
 		await makeRequired(page);
@@ -447,6 +463,7 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 			'Artifacts: Materials',
 			'Artifacts: On loan',
 			'Artifacts: Provenance',
+			'Artifacts: Storage',
 			'Artifacts: Curator note',
 			'Artifacts: Loan requests',
 		];
@@ -477,6 +494,7 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 			'artifacts_location',
 			'artifacts_latitude',
 			'artifacts_provenance',
+			'artifacts_storage',
 			'artifacts_appraiser_email',
 			'creation_datetime',
 		]);
@@ -595,6 +613,9 @@ test.describe('Catalogue every artifact', () => {
 			if (artifact.provenance) {
 				await page.locator('.form-row:has(.formulize-label-artifacts_provenance) input[type="text"]').fill(artifact.provenance);
 			}
+			if (artifact.storage) {
+				await page.locator('.form-row:has(.formulize-label-artifacts_storage)').getByRole('radio', { name: artifact.storage, exact: true }).check();
+			}
 			await saveFormulizeForm(page);
 
 			if (artifact.appraiser !== undefined) {
@@ -660,18 +681,19 @@ test.describe('What was built', () => {
 
 	test('Stored values match what was entered, with both kinds of blank', () => {
 		const rows = dbQuery(`SELECT artifacts_short_name, artifacts_location IS NOT NULL, IFNULL(artifacts_materials, 'NULL'), IFNULL(artifacts_on_loan, 'NULL'),
-			artifacts_provenance IS NULL, IF(artifacts_appraiser_email IS NULL, 'NULL', IF(artifacts_appraiser_email = '', 'empty', artifacts_appraiser_email))
+			artifacts_provenance IS NULL, IF(artifacts_appraiser_email IS NULL, 'NULL', IF(artifacts_appraiser_email = '', 'empty', artifacts_appraiser_email)), IFNULL(artifacts_storage, 'NULL')
 			FROM ${dbPrefix()}_formulize_artifacts`);
 		const stored = Object.fromEntries(rows.map(row => [row[0], row.slice(1)]));
 		expect(Object.keys(stored).sort()).toEqual(CATALOGUE.map(artifact => artifact.name).sort());
 		for (const artifact of CATALOGUE) {
-			const [hasLocation, materials, onLoan, provenanceIsNull, appraiser] = stored[artifact.name];
+			const [hasLocation, materials, onLoan, provenanceIsNull, appraiser, storage] = stored[artifact.name];
 			expect(hasLocation, `${artifact.name} is in a location`).toBe('1');
 			// stored one after another in the order of the element's options, with *=+*: in front of each one
 			expect(materials === 'NULL' ? [] : materials.split('*=+*:').filter(Boolean).sort(), `${artifact.name} materials`).toEqual([...artifact.materials].sort());
 			expect(onLoan, `${artifact.name} on loan`).toBe({ Yes: '1', No: '2' }[artifact.onLoan] ?? 'NULL');
 			expect(provenanceIsNull, `${artifact.name} provenance`).toBe(artifact.provenance ? '0' : '1');
 			expect(appraiser, `${artifact.name} appraiser`).toBe(artifact.appraiser === undefined ? 'NULL' : (artifact.appraiser || 'empty'));
+			expect(storage, `${artifact.name} storage`).toBe({ 'Climate controlled': '11' }[artifact.storage] ?? 'NULL'); // the stored value, not what people see
 		}
 	});
 

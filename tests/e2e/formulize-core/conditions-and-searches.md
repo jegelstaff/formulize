@@ -43,11 +43,11 @@ A row says what should be on the page. This table says where to look for it, and
 - NULL and an empty string are both blank.
 - A year or month in a date condition means all of that period: `= 2002` is any day in 2002, `> 2002` is after the end of it, and `< 2002` is before the start of it.
 - A term that can't be a date finds nothing with `=`, `>`, `<` and `LIKE`, and everything with `!=` and `NOT LIKE`.
+- `LIKE` and `NOT LIKE` on an element with text people see that's different from what's stored look in that text, and then compare whole stored values.
 - A number in a condition on a linked element is an entry id, if no entry has that number as its text. Display conditions don't do this, so section 5 doesn't have rows for it.
 - A condition on a connected form keeps the main entries with at least one connected entry that meets it, and shows only the connected entries that do. See [Conditions on connected forms](../../../docs/filters.md#conditions-on-connected-forms).
 - `{ }` that refers to a blank field: `=` and `LIKE` find blanks, `!=` and `NOT LIKE` find anything that isn't blank, and `>` and `<` find nothing.
-- In a new entry, a `{ }` with nothing on screen has no meaning yet, so that condition is ignored. Any other conditions still apply.
-- Except on a linked element, when the `{ }` is a linked element with the same source. That condition finds nothing until a choice is made, whatever the operator, so a list that depends on another list is empty until then.
+- In a new entry, a `{ }` with nothing on screen has no value yet, so a list that depends on it is empty until there's one. On a linked element that's true of every operator. On any other element it's true of `=`, and the other operators ignore the condition. If the `{ }` element has a default value, an element that isn't linked uses that, whatever the operator. Any other conditions still apply.
 - On a saved entry, a linked element always offers the value that's selected, whatever the condition says, so it isn't lost when the entry is saved. Rows for saved Loan Requests expect that.
 
 ## 1. The Artifacts subform in Main Vault
@@ -243,22 +243,22 @@ Set with `sourceEntryFilter` on `loans_artifact`, then open the Loan Request as 
 
 ## 3. `{ }` in a new Loan Request
 
-The same setting, on a new entry. With nothing on screen the `{ }` condition is ignored, except that a list that depends on another list has nothing in it until a choice is made. Then a person fills in what the row says, and the options change while the page is open, with nothing saved. A term in **On screen** like `Materials they can display: Iron + Wood` means those boxes, in that order. `(blank)` means clearing it again after a value.
+The same setting, on a new entry. With nothing on screen, a list that depends on the `{ }` is empty, or the condition is ignored, as it says in [What the operators mean](#what-the-operators-mean). Then a person fills in what the row says, and the options change while the page is open, with nothing saved. A term in **On screen** like `Materials they can display: Iron + Wood` means those boxes, in that order. `(blank)` means clearing it again after a value.
 
 | Row | All of | Any of | On screen | Should show | What it tests |
 |---|---|---|---|---|---|
-| N1 | Era = {loans_era} |  |  | Everything | ignored, nothing on screen |
-| N2 | Era != {loans_era} |  |  | Everything | ignored, whatever the operator |
+| N1 | Era = {loans_era} |  |  | Nothing | = finds nothing until there's a value |
+| N2 | Era != {loans_era} |  |  | Everything | ignored with any other operator |
 | N3 | Year > {loans_made_after} |  |  | Everything | ignored on a number |
 | N4 | Date of acquisition < {loans_start_date} |  |  | Everything | ignored on a date |
-| N5 | Materials = {loans_materials} |  |  | Everything | ignored on checkboxes |
+| N5 | Materials = {loans_materials} |  |  | Nothing | = on checkboxes finds nothing until there's a value |
 | N6 | Materials != {loans_materials} |  |  | Everything | ignored on checkboxes, with != |
 | N7 | Collections = {loans_collections} |  |  | Nothing | empty until a choice is made, linked, several values |
 | N8 | Collections != {loans_collections} |  |  | Nothing | empty until a choice is made, with != |
 | N9 | Donor = {loans_donor} |  |  | Nothing | empty until a choice is made, linked, one value |
 | N10 | Donor != {loans_donor} |  |  | Nothing | empty until a choice is made, with != |
-| N11 | Era = {loans_era}; Collections = Weapons |  |  | Chinese Sword, Egyptian Chariot, French Musket | ignored, and the other condition still applies |
-| N12 |  | Era = {loans_era}; Collections = Weapons |  | Chinese Sword, Egyptian Chariot, French Musket | ignored in the set of either, and the other still applies |
+| N11 | Era != {loans_era}; Collections = Weapons |  |  | Chinese Sword, Egyptian Chariot, French Musket | ignored, and the other condition still applies |
+| N12 |  | Era = {loans_era}; Collections = Weapons |  | Chinese Sword, Egyptian Chariot, French Musket | finds nothing in the set of either, and the other still applies |
 | N13 | Era = {loans_era} |  | Era wanted: CE | Everything except Roman Coin, Persian necklace, Egyptian Chariot, Babylonian Spoon, Persian necklace - number 2, Unknown Shard, Bronze Mirror | a radio on screen |
 | N14 | Era != {loans_era} |  | Era wanted: CE | Roman Coin, Persian necklace, Egyptian Chariot, Babylonian Spoon, Persian necklace - number 2, Unknown Shard, Bronze Mirror | != on screen |
 | N15 | Year > {loans_made_after} |  | Made after year: 1500 | Egyptian Chariot, Florentine Book, French Musket, Japanese Coin, American Bicycle, Polynesian Canoe, Candide - first edition | a number on screen |
@@ -285,6 +285,8 @@ The same setting, on a new entry. With nothing on screen the `{ }` condition is 
 | N36 |  | Provenance != {loans_borrower}; Era = BCE | Borrower: Bought in Cairo | Everything | one of a reference on screen and a literal term |
 | N37 | Donated to museum = {loans_approved} |  | Approved: Yes | Everything except Egyptian Chariot, French Musket, American Bicycle, Unknown Shard | Yes on screen |
 | N38 | Donated to museum != {loans_approved} |  | Approved: Yes | Egyptian Chariot, French Musket, American Bicycle, Unknown Shard | != with Yes on screen |
+| N39 | Donor = {loans_borrower} |  |  | Nothing | linked, one value, and the `{ }` isn't linked |
+| N40 | Donor != {loans_borrower} |  |  | Nothing | the same, with != |
 
 ## 4. Other surfaces
 
@@ -482,6 +484,9 @@ Read-only, so these run in `02-validate`, as curator1. Each term goes in the sea
 | B65 | Donor artifacts | First name: `OR!Emilie`<br>Last name: `ORArouet` | Everything except Emilie Du Châtelet | OR terms in different boxes |
 | B66 | Donor artifacts | Collections: `!Weapons` | Everything except L. Warner Foundation | connected: an artifact is not in Weapons, so Freeform Solutions is found, though another of theirs is. L. Warner Foundation has no artifacts, so is not |
 | B67 | Donor artifacts | Latitude: `!=41.9028` | Everything except L. Warner Foundation | connected: an artifact has no latitude, or another one |
+| B68 | Catalogue | Storage: `climate` | Roman Coin | text people see that's different from what's stored, part of it |
+| B69 | Catalogue | Storage: `!climate` | Everything except Roman Coin | not part of that text, and blanks |
+| B70 | Catalogue | Storage: `standard` | Nothing | Standard is stored as 1, and the Roman Coin's value is 11, which doesn't count |
 
 ## 8. Settings MCP can't reach
 
@@ -532,24 +537,24 @@ Search boxes on the Catalogue list.
 
 ## The museum's data
 
-| Artifact | Year | Era | Acquired | Donated | Donor | Collections | Latitude | Materials | On loan | Provenance | Appraiser email |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| Roman Coin | 150 | BCE | 2020-08-21 | Yes | François-Marie Arouet | Ancient History, Coins | 41.9028 | Silver | Yes |  | appraiser@museum.example |
-| Persian necklace | 350 | BCE | 2002-12-02 | Yes | Emilie Du Châtelet | Ancient History | 29.9355 | Gold, Silver |  |  |  |
-| Chinese Sword | 198 | CE | 1993-08-10 | Yes | Freeform Solutions | Ancient History, Weapons | 34.3416 | Iron | No |  | empty string |
-| Egyptian Chariot | 1850 | BCE | 2011-09-19 | No |  | Ancient History, Weapons | 25.6872 | Wood, Bronze |  | Bought in Cairo | empty string |
-| Babylonian Spoon | 1500 | BCE | 2015-09-26 | Yes | François-Marie Arouet | Ancient History | 32.5422 | Bronze |  | City Museum |  |
-| Florentine Book | 1588 | CE | 1988-02-29 | Yes | Emilie Du Châtelet | Modern History | 43.7696 | Paper | Yes | Bought at Sotheby's |  |
-| French Musket | 1804 | CE | 1927-03-04 | No |  | Modern History, Weapons | 48.8566 | Iron, Wood | No | Bought in Paris | empty string |
-| Japanese Coin | 1880 | CE | 1955-11-25 | Yes | Freeform Solutions | Coins, Modern History | 35.6762 |  | No |  | appraiser@museum.example |
-| American Bicycle | 1884 | CE | 2007-05-09 | No |  | Modern History | 42.3601 | Cast iron |  |  |  |
-| Polynesian Canoe | 1701 | CE | 1977-06-14 | Yes | François-Marie Arouet | Modern History | -17.5516 | Wood |  |  |  |
-| Viking Silver Armband | 875 | CE | 2025-07-10 | Yes | Emilie Du Châtelet | Modern History | 59.8586 | Silver |  |  |  |
-| Candide - first edition | 1759 | CE | 2025-11-29 | Yes | François-Marie Arouet | Modern History |  | Paper |  |  |  |
-| Persian necklace - number 2 | 350 | BCE | 2002-12-02 | Yes | Emilie Du Châtelet | Ancient History | 29.9355 |  |  |  |  |
-| Unknown Shard | 500 | BCE |  | No |  |  |  |  |  |  |  |
-| Bronze Mirror | 200 | BCE | 2002-12-31 | Yes | Aoife O'Brien | Ancient History |  | Bronze |  |  |  |
-| Silk Scroll | 1400 | CE | 2003-01-01 | Yes | Hart & Sons Antiques | Modern History |  | Wood |  |  |  |
+| Artifact | Year | Era | Acquired | Donated | Donor | Collections | Latitude | Materials | On loan | Provenance | Appraiser email | Storage |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Roman Coin | 150 | BCE | 2020-08-21 | Yes | François-Marie Arouet | Ancient History, Coins | 41.9028 | Silver | Yes |  | appraiser@museum.example | Climate controlled, stored as 11 |
+| Persian necklace | 350 | BCE | 2002-12-02 | Yes | Emilie Du Châtelet | Ancient History | 29.9355 | Gold, Silver |  |  |  |  |
+| Chinese Sword | 198 | CE | 1993-08-10 | Yes | Freeform Solutions | Ancient History, Weapons | 34.3416 | Iron | No |  | empty string |  |
+| Egyptian Chariot | 1850 | BCE | 2011-09-19 | No |  | Ancient History, Weapons | 25.6872 | Wood, Bronze |  | Bought in Cairo | empty string |  |
+| Babylonian Spoon | 1500 | BCE | 2015-09-26 | Yes | François-Marie Arouet | Ancient History | 32.5422 | Bronze |  | City Museum |  |  |
+| Florentine Book | 1588 | CE | 1988-02-29 | Yes | Emilie Du Châtelet | Modern History | 43.7696 | Paper | Yes | Bought at Sotheby's |  |  |
+| French Musket | 1804 | CE | 1927-03-04 | No |  | Modern History, Weapons | 48.8566 | Iron, Wood | No | Bought in Paris | empty string |  |
+| Japanese Coin | 1880 | CE | 1955-11-25 | Yes | Freeform Solutions | Coins, Modern History | 35.6762 |  | No |  | appraiser@museum.example |  |
+| American Bicycle | 1884 | CE | 2007-05-09 | No |  | Modern History | 42.3601 | Cast iron |  |  |  |  |
+| Polynesian Canoe | 1701 | CE | 1977-06-14 | Yes | François-Marie Arouet | Modern History | -17.5516 | Wood |  |  |  |  |
+| Viking Silver Armband | 875 | CE | 2025-07-10 | Yes | Emilie Du Châtelet | Modern History | 59.8586 | Silver |  |  |  |  |
+| Candide - first edition | 1759 | CE | 2025-11-29 | Yes | François-Marie Arouet | Modern History |  | Paper |  |  |  |  |
+| Persian necklace - number 2 | 350 | BCE | 2002-12-02 | Yes | Emilie Du Châtelet | Ancient History | 29.9355 |  |  |  |  |  |
+| Unknown Shard | 500 | BCE |  | No |  |  |  |  |  |  |  |  |
+| Bronze Mirror | 200 | BCE | 2002-12-31 | Yes | Aoife O'Brien | Ancient History |  | Bronze |  |  |  |  |
+| Silk Scroll | 1400 | CE | 2003-01-01 | Yes | Hart & Sons Antiques | Modern History |  | Wood |  |  |  |  |
 
 A blank cell is NULL.
 

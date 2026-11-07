@@ -21,6 +21,7 @@ export const ARTIFACT_ELEMENTS = {
 	'Materials': 'artifacts_materials',
 	'On loan': 'artifacts_on_loan',
 	'Provenance': 'artifacts_provenance',
+	'Storage': 'artifacts_storage',
 	'Appraiser email': 'artifacts_appraiser_email',
 	'creation_datetime': 'creation_datetime',
 };
