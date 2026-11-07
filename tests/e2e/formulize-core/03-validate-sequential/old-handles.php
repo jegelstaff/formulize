@@ -1,7 +1,7 @@
 <?php
 /**
  * Turns the finished museum system into a site with its element handles in their old shapes, for
- * 030-update-fixes-old-handles.spec.js, and says what state the system is in.
+ * 060-update-fixes-old-handles.spec.js, and says what state the system is in.
  *
  * Handles used to be able to have capitals and hyphens. Formulize refuses to create those now, so the only way to get
  * such a site is to write it. This does that to real elements that drive real features, in every place an old site

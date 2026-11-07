@@ -4,7 +4,7 @@ import { login, saveFormulizeForm, dbQuery, dbPrefix, leavePage } from '../../ut
 
 /**
  * What a person does with the museum system to see that it works, for the specs that change something the system
- * depends on: a rename in 010, and an update of an old site in 030.
+ * depends on: a rename in 010, and an update of an old site in 060.
  */
 
 export function rowOf(table, keyColumn, key, columns) {

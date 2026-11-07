@@ -1128,20 +1128,6 @@ function formulize_find_misspelled_element_handles() {
 }
 
 /**
- * The shape a handle in a stored reference would have today, for matching it with the element it was written for.
- *
- * Folds exactly the two changes that left references behind - lowercasing in 2025-10, and hyphens becoming
- * underscores in 2026-07 - and nothing more. Not sanitize_handle_name(), which also strips every other character,
- * because then "foo.bar" in a caption would be taken for an old spelling of foobar.
- *
- * @param string $handle A handle, or a stored reference to one
- * @return string
- */
-function formulize_canonical_handle($handle) {
-    return strtolower(str_replace('-', '_', (string) $handle));
-}
-
-/**
  * What could be an old spelling of a handle in the text of a stored setting.
  *
  * Serialized settings are text too, and the strings in them are written out whole, so this works on anything
@@ -1205,11 +1191,11 @@ function formulize_find_stale_handle_spellings() {
 
     // Elements with a handle that is still wrong are left out, since it is not settled what theirs is. Only ones
     // that step 1 of the normalization could not rename can be like that by now, and they are listed for a person.
-    $elements = array(); // canonical form => the element
+    $elements = array(); // handle => the element
     if ($res = $xoopsDB->queryF("SELECT ele_id, id_form, ele_handle FROM " . $xoopsDB->prefix('formulize'))) {
         while ($row = $xoopsDB->fetchArray($res)) {
             if (!is_numeric($row['ele_handle']) AND $row['ele_handle'] === formulizeElement::sanitize_handle_name($row['ele_handle'])) {
-                $elements[formulize_canonical_handle($row['ele_handle'])] = $row;
+                $elements[$row['ele_handle']] = $row;
             }
         }
     }
@@ -1236,15 +1222,17 @@ function formulize_find_stale_handle_spellings() {
 
     $found = array();
     foreach ($spellings as $spelling) {
-        $canonical = formulize_canonical_handle($spelling);
-        if (!isset($elements[$canonical]) OR $spelling === $elements[$canonical]['ele_handle']) {
+        // the element this would be a spelling of, by the same rule that makes every handle what it is now. A word that
+        // only looks like a handle can come out as one too, which is what the question below is for.
+        $handle = formulizeElement::sanitize_handle_name($spelling);
+        if (!isset($elements[$handle]) OR $spelling === $handle) {
             continue;
         }
         // Asked about an id no element can have, because a reference by id is a reference to the element whatever a
         // handle looks like. What is found this way can only be the spelling, at a position that holds a reference.
-        $references = new formulizeElementReferences(PHP_INT_MAX, $spelling, $elements[$canonical]['id_form']);
+        $references = new formulizeElementReferences(PHP_INT_MAX, $spelling, $elements[$handle]['id_form']);
         if ($references->references() OR $references->mentions()) {
-            $found[intval($elements[$canonical]['ele_id'])][] = $spelling;
+            $found[intval($elements[$handle]['ele_id'])][] = $spelling;
         }
     }
     return $found;
