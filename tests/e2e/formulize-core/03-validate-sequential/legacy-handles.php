@@ -14,6 +14,16 @@
  *   php legacy-handles.php read <handle>      prints what is now stored at each place, as JSON
  *   php legacy-handles.php remove             puts back what install replaced, and removes what it added
  *
+ * The Donor list's source has commands of its own, because the spec checks that one on the artifact's form, where the
+ * condition install puts on the Donor list would hide it:
+ *   php legacy-handles.php install-source <handle>   stores the source by handle, keeping what was there to put back
+ *   php legacy-handles.php read-source               prints the source as it is stored now
+ *   php legacy-handles.php remove-source             puts back what install-source replaced
+ *
+ * And for an element whose handle is a number, as on sites made before handles existed:
+ *   php legacy-handles.php install-numeric   gives Latitude its id as its handle and its field name, and prints the id
+ *   php legacy-handles.php remove-numeric    puts Latitude's handle and field back, if a run left them as a number
+ *
  * @package Formulize
  * @subpackage tests
  */
@@ -62,8 +72,9 @@ function legacy_places() {
 	$form = legacy_one("SELECT sid FROM " . legacy_table('formulize_screen') . " WHERE title = 'Artifact' AND type = 'multiPage'");
 	$donor = legacy_one("SELECT ele_id FROM " . legacy_table('formulize') . " WHERE ele_handle = 'artifacts_donor'");
 	$shortName = legacy_one("SELECT ele_id FROM " . legacy_table('formulize') . " WHERE ele_handle = 'artifacts_short_name'");
+	$donorsBio = legacy_one("SELECT ele_id FROM " . legacy_table('formulize') . " WHERE ele_handle = 'donors_bio'");
 	$group = legacy_one("SELECT groupid FROM " . legacy_table('groups') . " WHERE name = 'Departments - Curators'");
-	foreach (array($artifacts, $list, $map, $form, $donor, $shortName, $group) as $found) {
+	foreach (array($artifacts, $list, $map, $form, $donor, $shortName, $donorsBio, $group) as $found) {
 		if (!$found) {
 			fwrite(STDERR, "the museum system is not there to put the settings in\n");
 			exit(1);
@@ -71,7 +82,7 @@ function legacy_places() {
 	}
 	return array('fid' => intval($artifacts['id_form']), 'list' => intval($list['sid']), 'map' => intval($map['sid']),
 		'form' => intval($form['sid']), 'donor' => intval($donor['ele_id']), 'shortName' => intval($shortName['ele_id']),
-		'group' => intval($group['groupid']));
+		'donorsBio' => intval($donorsBio['ele_id']), 'group' => intval($group['groupid']));
 }
 
 $places = legacy_places();
@@ -88,6 +99,14 @@ if ($command == 'install') {
 	$keep['filtersettings'] = $row['ele_filtersettings'];
 	$conditions = array(0 => array($handle, $places['shortName']), 1 => array('=', '='), 2 => array('Yes', $handle), 3 => array('all', 'all'));
 	legacy_write("UPDATE " . legacy_table('formulize') . " SET ele_filtersettings = " . legacy_q(serialize($conditions)) . " WHERE ele_id = {$places['donor']}");
+
+	// A setting that only ever holds ids, where a word is something a person typed: a source mapping copies its value
+	// into each donor made from the Donor list, and this one copies the handle's text. A rename has to leave it.
+	$row = legacy_one("SELECT ele_value FROM " . legacy_table('formulize') . " WHERE ele_id = {$places['donor']}");
+	$keep['donor_ele_value'] = $row['ele_value'];
+	$eleValue = unserialize($row['ele_value']);
+	$eleValue['linkedSourceMappings'] = array(array('thisForm' => $handle, 'sourceForm' => $places['donorsBio']));
+	legacy_write("UPDATE " . legacy_table('formulize') . " SET ele_value = " . legacy_q(serialize($eleValue)) . " WHERE ele_id = {$places['donor']}");
 
 	// a list column by handle, searching for the handle's text; a custom button effect by handle, writing the handle's text
 	$row = legacy_one("SELECT advanceview, customactions FROM " . legacy_table('formulize_screen_listofentries') . " WHERE sid = {$places['list']}");
@@ -153,6 +172,7 @@ if ($command == 'read') {
 		'view_columns' => $view['sv_oldcols'], 'view_sort' => $view['sv_sort'], 'view_pubfilters' => $view['sv_pubfilters'],
 		'view_search' => explode(formulizeSavedViewsHandler::SEARCH_DELIMITER, $view['sv_quicksearches'])[0],
 		'group_filter_element' => (string) $groupFilter[0][0], 'group_filter_term' => (string) $groupFilter[2][0],
+		'mapping_value' => (string) unserialize(legacy_one("SELECT ele_value FROM " . legacy_table('formulize') . " WHERE ele_id = {$places['donor']}")['ele_value'])['linkedSourceMappings'][0]['thisForm'],
 	)) . "\n";
 	exit(0);
 }
@@ -163,7 +183,7 @@ if ($command == 'remove') {
 		exit(0);
 	}
 	$keep = json_decode(file_get_contents($keepFile), true);
-	legacy_write("UPDATE " . legacy_table('formulize') . " SET ele_filtersettings = " . legacy_q($keep['filtersettings']) . " WHERE ele_id = {$places['donor']}");
+	legacy_write("UPDATE " . legacy_table('formulize') . " SET ele_filtersettings = " . legacy_q($keep['filtersettings']) . ", ele_value = " . legacy_q($keep['donor_ele_value']) . " WHERE ele_id = {$places['donor']}");
 	legacy_write("UPDATE " . legacy_table('formulize_screen_listofentries') . " SET advanceview = " . legacy_q($keep['advanceview']) . ", customactions = " . legacy_q($keep['customactions']) . " WHERE sid = {$places['list']}");
 	legacy_write("UPDATE " . legacy_table('formulize_screen_map') . " SET columns = " . legacy_q($keep['mapcolumns']) . " WHERE sid = {$places['map']}");
 	legacy_write("UPDATE " . legacy_table('formulize_screen_multipage') . " SET elementdefaults = " . legacy_q($keep['elementdefaults']) . " WHERE sid = {$places['form']}");
@@ -174,5 +194,66 @@ if ($command == 'remove') {
 	exit(0);
 }
 
-fwrite(STDERR, "usage: php legacy-handles.php install <handle> | read <handle> | remove\n");
+$sourceKeepFile = sys_get_temp_dir() . '/formulize_legacy_source_shim.json';
+function legacy_donor_ele_value($donor) {
+	return legacy_one("SELECT ele_value FROM " . legacy_table('formulize') . " WHERE ele_id = " . intval($donor))['ele_value'];
+}
+
+if ($command == 'install-source') {
+	if ($handle === '' OR file_exists($sourceKeepFile)) {
+		fwrite(STDERR, $handle === '' ? "give the handle\n" : "already installed - remove it first\n");
+		exit(1);
+	}
+	$stored = legacy_donor_ele_value($places['donor']);
+	file_put_contents($sourceKeepFile, json_encode(array('ele_value' => $stored)));
+	$eleValue = unserialize($stored);
+	$eleValue[2] = explode('#*=:*', $eleValue[2])[0] . '#*=:*' . $handle;
+	legacy_write("UPDATE " . legacy_table('formulize') . " SET ele_value = " . legacy_q(serialize($eleValue)) . " WHERE ele_id = {$places['donor']}");
+	echo "installed\n";
+	exit(0);
+}
+
+if ($command == 'read-source') {
+	echo unserialize(legacy_donor_ele_value($places['donor']))[2] . "\n";
+	exit(0);
+}
+
+if ($command == 'remove-source') {
+	if (!file_exists($sourceKeepFile)) {
+		echo "nothing to remove\n";
+		exit(0);
+	}
+	$keep = json_decode(file_get_contents($sourceKeepFile), true);
+	legacy_write("UPDATE " . legacy_table('formulize') . " SET ele_value = " . legacy_q($keep['ele_value']) . " WHERE ele_id = {$places['donor']}");
+	unlink($sourceKeepFile);
+	echo "removed\n";
+	exit(0);
+}
+
+// Sites made before element handles existed have a number for each one, the element's own id, and their data table
+// field has that name as well. A rename of such an element has to leave every number in the settings alone, because
+// each is the id it always was.
+if ($command == 'install-numeric' OR $command == 'remove-numeric') {
+	$element = legacy_one("SELECT ele_id, ele_handle FROM " . legacy_table('formulize') . " WHERE ele_handle IN ('artifacts_latitude', ele_id) AND id_form = {$places['fid']} ORDER BY ele_handle = 'artifacts_latitude' DESC LIMIT 1");
+	if (!$element) {
+		fwrite(STDERR, "there is no Latitude element\n");
+		exit(1);
+	}
+	$id = intval($element['ele_id']);
+	$data = legacy_table('formulize_artifacts');
+	if ($command == 'install-numeric' AND $element['ele_handle'] === 'artifacts_latitude') {
+		legacy_write("UPDATE " . legacy_table('formulize') . " SET ele_handle = '$id' WHERE ele_id = $id");
+		legacy_write("ALTER TABLE `$data` RENAME COLUMN `artifacts_latitude` TO `$id`");
+		echo "$id\n";
+	} elseif ($command == 'remove-numeric' AND $element['ele_handle'] === (string) $id) {
+		legacy_write("UPDATE " . legacy_table('formulize') . " SET ele_handle = 'artifacts_latitude' WHERE ele_id = $id");
+		legacy_write("ALTER TABLE `$data` RENAME COLUMN `$id` TO `artifacts_latitude`");
+		echo "removed\n";
+	} else {
+		echo $command == 'install-numeric' ? "already installed\n" : "nothing to remove\n";
+	}
+	exit(0);
+}
+
+fwrite(STDERR, "usage: php legacy-handles.php install <handle> | read <handle> | remove | install-source <handle> | read-source | remove-source | install-numeric | remove-numeric\n");
 exit(1);
