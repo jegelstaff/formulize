@@ -9,15 +9,21 @@ import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, editScr
 //   Locations        Name, and a subform of the artifacts stored there. Every artifact is in Main Vault, so that subform
 //                    can show any artifact. A subform only ever shows entries connected to the entry that's open.
 //   Loan Requests    What a borrower is asking for, and the Artifact they want. Those fields are what { } terms refer
-//                    to when a condition narrows the Artifact list to what the borrower asked for.
+//                    to when a condition narrows the Artifact list to what the borrower asked for. Storage they have
+//                    is Climate controlled unless someone says otherwise, so a { } term has a default to refer to.
 //   Artifacts        Location, Materials, On loan, Provenance, Storage, Appraiser email and Curator note, on two new tabs of
 //                    the Artifact screen, and a subform of the Loan Requests for the artifact. Storage has text people see
-//                    that's different from what's stored, and only the Roman Coin has a value.
+//                    that's different from what's stored, and only the Roman Coin has a value. A third tab, Cataloguing,
+//                    has who catalogued it, another artifact it's part of a set with, and how to handle it, which is
+//                    checkboxes with text people see that's different from what's stored.
 //   New entries      Three artifacts, with dates on either side of a new year and one with nothing but the required
-//                    fields, and two donors whose names have ' and & in them.
+//                    fields, and two donors whose names have ' and & in them. Hart & Sons Antiques are in Prince Edward
+//                    Island, which is stored as 10, so a search for Ontario, which is 1, can show it isn't found too.
 //
 // This lives in 01-setup/ because it creates forms and elements, and it's numbered after 021 so that the entries made
-// in 020 aren't disturbed: nothing here adds to a screen that the data entry there goes through, except new tabs.
+// in 020 aren't disturbed. The Artifact screen only gets new tabs, but "Add Artifact" opens a form with every element on
+// one page, so the new elements are there too. On loan has a Yes and a No of its own, which is why the radios below are
+// found in their element's row.
 //
 // Blanks are stored in two ways, and searches have to treat them the same, so both are here on purpose. A text box left
 // blank is saved as NULL, and so is everything else on the tabs below. An email element left blank is saved as ''.
@@ -38,24 +44,28 @@ const MATERIALS = ['Iron', 'Cast iron', 'Bronze', 'Silver', 'Gold', 'Wood', 'Pap
 
 const APPRAISER = 'appraiser@museum.example';
 
+// The codes stored for the handling options, behind the text people see
+const HANDLING = { 'Gloves': '1', 'Two people to lift': '2', 'Keep flat': '12' };
+
 // appraiser: an address, or '' for saving the Appraisal tab with nothing in it. Leave it out and the tab is never saved.
+// cataloguedBy, partOfSet and handling are on the Cataloguing tab, which is only saved for an artifact that has one of them.
 const CATALOGUE = [
-	{ name: 'Roman Coin', materials: ['Silver'], onLoan: 'Yes', appraiser: APPRAISER, storage: 'Climate controlled' },
-	{ name: 'Persian necklace', materials: ['Gold', 'Silver'] },
+	{ name: 'Roman Coin', materials: ['Silver'], onLoan: 'Yes', appraiser: APPRAISER, storage: 'Climate controlled', cataloguedBy: 'Curator One', handling: ['Gloves'] },
+	{ name: 'Persian necklace', materials: ['Gold', 'Silver'], cataloguedBy: 'Curator One' },
 	{ name: 'Chinese Sword', materials: ['Iron'], onLoan: 'No', appraiser: '' },
-	{ name: 'Egyptian Chariot', materials: ['Wood', 'Bronze'], provenance: 'Bought in Cairo', appraiser: '' },
-	{ name: 'Babylonian Spoon', materials: ['Bronze'], provenance: 'City Museum' },
-	{ name: 'Florentine Book', materials: ['Paper'], onLoan: 'Yes', provenance: "Bought at Sotheby's" },
-	{ name: 'French Musket', materials: ['Iron', 'Wood'], onLoan: 'No', provenance: 'Bought in Paris', appraiser: '' },
+	{ name: 'Egyptian Chariot', materials: ['Wood', 'Bronze'], provenance: 'Bought in Cairo', appraiser: '', handling: ['Two people to lift'] },
+	{ name: 'Babylonian Spoon', materials: ['Bronze'], provenance: 'City Museum', cataloguedBy: 'Curator One' },
+	{ name: 'Florentine Book', materials: ['Paper'], onLoan: 'Yes', provenance: "Bought at Sotheby's", cataloguedBy: 'Curator Two', handling: ['Gloves', 'Keep flat'] },
+	{ name: 'French Musket', materials: ['Iron', 'Wood'], onLoan: 'No', provenance: 'Bought in Paris', appraiser: '', cataloguedBy: 'Curator Two' },
 	{ name: 'Japanese Coin', materials: [], onLoan: 'No', appraiser: APPRAISER },
 	{ name: 'American Bicycle', materials: ['Cast iron'] },
-	{ name: 'Polynesian Canoe', materials: ['Wood'] },
+	{ name: 'Polynesian Canoe', materials: ['Wood'], handling: ['Two people to lift'] },
 	{ name: 'Viking Silver Armband', materials: ['Silver'] },
-	{ name: 'Candide - first edition', materials: ['Paper'] },
-	{ name: 'Persian necklace - number 2', materials: [] },
+	{ name: 'Candide - first edition', materials: ['Paper'], handling: ['Keep flat'] },
+	{ name: 'Persian necklace - number 2', materials: [], partOfSet: 'Persian necklace' },
 	{ name: 'Unknown Shard', materials: [] },
 	{ name: 'Bronze Mirror', materials: ['Bronze'] },
-	{ name: 'Silk Scroll', materials: ['Wood'] },
+	{ name: 'Silk Scroll', materials: ['Wood'], handling: ['Gloves', 'Keep flat'] },
 ];
 
 function formId(title) {
@@ -291,6 +301,9 @@ async function addLoanRequest(page, request) {
 	if (request.approved) {
 		await page.locator('.form-row:has(.formulize-label-loans_approved)').getByRole('radio', { name: request.approved, exact: true }).check();
 	}
+	if (request.storage) {
+		await page.locator('.form-row:has(.formulize-label-loans_storage)').getByRole('radio', { name: request.storage, exact: true }).check();
+	}
 	await saveFormulizeForm(page);
 	await saveAndClose(page);
 	await expect(page.getByRole('button', { name: /^Add Loan Requests?$/ })).toBeVisible();
@@ -371,6 +384,34 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 		await expect(showWhatPeopleSee).toBeChecked();
 	});
 
+	test('Create Handling Element', async ({ page }) => {
+		// 1 is part of 12 on purpose, the same as Storage
+		await startElement(page, 'Artifacts', 'checkbox', 'Handling', 'artifacts_handling');
+		await fillOptions(page, Object.entries(HANDLING).map(([text, code]) => `${code}|${text}`));
+		const showWhatPeopleSee = page.getByRole('radio', { name: 'Show the same values the user sees' });
+		await showWhatPeopleSee.check();
+		await finishElement(page, 'Handling');
+		const fid = formId('Artifacts');
+		await page.goto(`/modules/formulize/admin/ui.php?page=element&ele_id=${elementId('artifacts_handling')}&fid=${fid}&aid=${museumAppId(fid)}`);
+		await waitForAdminPageReady(page);
+		await page.getByRole('link', { name: 'Options' }).click();
+		await expect(showWhatPeopleSee).toBeChecked();
+	});
+
+	test('Create Catalogued by Element', async ({ page }) => {
+		await startElement(page, 'Artifacts', 'selectUsers', 'Catalogued by', 'artifacts_catalogued_by');
+		await page.getByRole('link', { name: 'Options' }).click();
+		await page.locator('#element-formlink_scope').selectOption('All Curators');
+		await finishElement(page, 'Catalogued by');
+	});
+
+	test('Create Part of a set with Element', async ({ page }) => {
+		// another artifact, so a condition on what this list offers refers to the form it's in
+		await startElement(page, 'Artifacts', 'selectLinked', 'Part of a set with', 'artifacts_part_of_set');
+		await linkToSource(page, 'Artifacts: Short name');
+		await finishElement(page, 'Part of a set with');
+	});
+
 	test('Create Borrower Element', async ({ page }) => {
 		await startElement(page, 'Loan Requests', 'text', 'Borrower', 'loans_borrower');
 		await makeRequired(page);
@@ -423,6 +464,23 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 		await finishElement(page, 'Approved');
 	});
 
+	test('Create Storage they have Element', async ({ page }) => {
+		// the same values as Storage in Artifacts, so the two can be compared. Most borrowers are museums, so Climate controlled is the default.
+		await startElement(page, 'Loan Requests', 'radio', 'Storage they have', 'loans_storage');
+		await fillOptions(page, ['1|Standard', '11|Climate controlled']);
+		const climateControlledByDefault = page.locator('input[name="defaultoption"]').nth(1); // the box next to the second option
+		await climateControlledByDefault.check();
+		const showWhatPeopleSee = page.getByRole('radio', { name: 'Show the same values the user sees' });
+		await showWhatPeopleSee.check();
+		await finishElement(page, 'Storage they have');
+		const fid = formId('Loan Requests');
+		await page.goto(`/modules/formulize/admin/ui.php?page=element&ele_id=${elementId('loans_storage')}&fid=${fid}&aid=${museumAppId(fid)}`);
+		await waitForAdminPageReady(page);
+		await page.getByRole('link', { name: 'Options' }).click();
+		await expect(climateControlledByDefault).toBeChecked();
+		await expect(showWhatPeopleSee).toBeChecked();
+	});
+
 	test('Create Loan requests Subform in Artifacts', async ({ page }) => {
 		await createSubform(page, 'Artifacts', 'Loan Requests', 'Loan requests', 'artifacts_subform_loan_requests', ['Borrower', 'Start date', 'End date', 'Approved']);
 	});
@@ -454,6 +512,7 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 			'Loan Requests: Start date',
 			'Loan Requests: End date',
 			'Loan Requests: Approved',
+			'Loan Requests: Storage they have',
 		]);
 	});
 
@@ -468,6 +527,7 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 			'Artifacts: Loan requests',
 		];
 		const appraisal = ['Artifacts: Appraiser email'];
+		const cataloguing = ['Artifacts: Catalogued by', 'Artifacts: Part of a set with', 'Artifacts: Handling'];
 		await openFormScreens(page, 'Artifacts');
 		await page.getByRole('link', { name: 'Artifact', exact: true }).click();
 		await waitForAdminPageReady(page);
@@ -475,8 +535,10 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 		await page.getByRole('link', { name: 'Pages' }).click();
 		await addScreenPage(page, 'Location and loans', locationAndLoans);
 		await addScreenPage(page, 'Appraisal', appraisal);
+		await addScreenPage(page, 'Cataloguing', cataloguing);
 		await expectElementsOnPage(page, screenUrl, 'Location and loans', locationAndLoans);
 		await expectElementsOnPage(page, screenUrl, 'Appraisal', appraisal);
+		await expectElementsOnPage(page, screenUrl, 'Cataloguing', cataloguing);
 	});
 
 	test('Catalogue list screen', async ({ page }) => {
@@ -496,7 +558,10 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 			'artifacts_provenance',
 			'artifacts_storage',
 			'artifacts_appraiser_email',
+			'artifacts_handling',
+			'artifacts_catalogued_by',
 			'creation_datetime',
+			'mod_datetime',
 		]);
 	});
 
@@ -549,6 +614,7 @@ test.describe('Donors with punctuation in their names', () => {
 		await openDonorsAndAdd(page);
 		await conditionalElementReady(page, 'donors_organization_name', () => page.getByText('Organization', { exact: true }).click());
 		await page.getByRole('textbox', { name: 'Organization name' }).fill('Hart & Sons Antiques');
+		await page.getByRole('combobox', { name: 'Province', exact: true }).selectOption('Prince Edward Island');
 		await saveFormulizeForm(page);
 		await saveAndClose(page);
 		await expect(page.getByRole('button', { name: 'Add Donor', exact: true })).toBeVisible();
@@ -570,7 +636,7 @@ test.describe('Artifacts for blanks and year boundaries', () => {
 		await openArtifactsAndAdd(page, 'ahstaff');
 		await fillRequiredArtifactFields(page, { name: 'Bronze Mirror', height: '30', width: '30', depth: '2', year: '200', era: 'BCE' });
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2002-12-31');
-		await conditionalElementReady(page, 'artifacts_donor', () => page.getByRole('radio', { name: 'Yes' }).check()); // donated
+		await conditionalElementReady(page, 'artifacts_donor', () => page.locator('.form-row:has(.formulize-label-artifacts_donated_to_museum)').getByRole('radio', { name: 'Yes', exact: true }).check()); // donated
 		await page.getByLabel('Donor').selectOption({ label: 'Aoife O\'Brien' });
 		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
 		await saveFormulizeForm(page);
@@ -582,7 +648,7 @@ test.describe('Artifacts for blanks and year boundaries', () => {
 		await openArtifactsAndAdd(page, 'mhstaff');
 		await fillRequiredArtifactFields(page, { name: 'Silk Scroll', height: '40', width: '40', depth: '3', year: '1400', era: 'CE' });
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2003-01-01');
-		await conditionalElementReady(page, 'artifacts_donor', () => page.getByRole('radio', { name: 'Yes' }).check()); // donated
+		await conditionalElementReady(page, 'artifacts_donor', () => page.locator('.form-row:has(.formulize-label-artifacts_donated_to_museum)').getByRole('radio', { name: 'Yes', exact: true }).check()); // donated
 		await page.getByLabel('Donor').selectOption({ label: 'Hart & Sons Antiques' });
 		await page.getByRole('checkbox', { name: 'Modern History' }).check();
 		await saveFormulizeForm(page);
@@ -626,6 +692,22 @@ test.describe('Catalogue every artifact', () => {
 				await saveFormulizeForm(page);
 			}
 
+			if (artifact.cataloguedBy || artifact.partOfSet || artifact.handling) {
+				await page.getByRole('link', { name: 'Cataloguing', exact: true }).click();
+				const cataloguedBy = page.locator('.form-row:has(.formulize-label-artifacts_catalogued_by) select');
+				await expect(cataloguedBy).toBeVisible();
+				if (artifact.cataloguedBy) {
+					await cataloguedBy.selectOption({ label: artifact.cataloguedBy });
+				}
+				if (artifact.partOfSet) {
+					await page.locator('.form-row:has(.formulize-label-artifacts_part_of_set) select').selectOption({ label: artifact.partOfSet });
+				}
+				for (const handling of artifact.handling ?? []) {
+					await page.locator('.form-row:has(.formulize-label-artifacts_handling)').getByRole('checkbox', { name: handling, exact: true }).check();
+				}
+				await saveFormulizeForm(page);
+			}
+
 			await leavePage(page, `/modules/formulize/index.php?fid=${artifactsFid}`); // releases the entry lock
 			await expect(page.getByRole('button', { name: 'Add Artifact', exact: true })).toBeVisible();
 		});
@@ -660,6 +742,7 @@ test.describe('Data entry for Loan Requests', () => {
 			donor: 'Hart & Sons Antiques',
 			start: '2003-01-01',
 			approved: 'No',
+			storage: 'Standard',
 		});
 	});
 
@@ -680,13 +763,19 @@ test.describe('Data entry for Loan Requests', () => {
 test.describe('What was built', () => {
 
 	test('Stored values match what was entered, with both kinds of blank', () => {
-		const rows = dbQuery(`SELECT artifacts_short_name, artifacts_location IS NOT NULL, IFNULL(artifacts_materials, 'NULL'), IFNULL(artifacts_on_loan, 'NULL'),
-			artifacts_provenance IS NULL, IF(artifacts_appraiser_email IS NULL, 'NULL', IF(artifacts_appraiser_email = '', 'empty', artifacts_appraiser_email)), IFNULL(artifacts_storage, 'NULL')
-			FROM ${dbPrefix()}_formulize_artifacts`);
+		const artifacts = `${dbPrefix()}_formulize_artifacts`;
+		const rows = dbQuery(`SELECT a.artifacts_short_name, a.artifacts_location IS NOT NULL, IFNULL(a.artifacts_materials, 'NULL'), IFNULL(a.artifacts_on_loan, 'NULL'),
+			a.artifacts_provenance IS NULL, IF(a.artifacts_appraiser_email IS NULL, 'NULL', IF(a.artifacts_appraiser_email = '', 'empty', a.artifacts_appraiser_email)), IFNULL(a.artifacts_storage, 'NULL'),
+			IFNULL(a.artifacts_handling, 'NULL'), IFNULL((SELECT u.name FROM ${dbPrefix()}_users AS u WHERE u.uid = a.artifacts_catalogued_by), 'nobody'),
+			IFNULL((SELECT s.artifacts_short_name FROM ${artifacts} AS s WHERE s.entry_id = a.artifacts_part_of_set), 'nothing')
+			FROM ${artifacts} AS a`);
 		const stored = Object.fromEntries(rows.map(row => [row[0], row.slice(1)]));
 		expect(Object.keys(stored).sort()).toEqual(CATALOGUE.map(artifact => artifact.name).sort());
 		for (const artifact of CATALOGUE) {
-			const [hasLocation, materials, onLoan, provenanceIsNull, appraiser, storage] = stored[artifact.name];
+			const [hasLocation, materials, onLoan, provenanceIsNull, appraiser, storage, handling, cataloguedBy, partOfSet] = stored[artifact.name];
+			expect(handling === 'NULL' ? [] : handling.split('*=+*:').filter(Boolean).sort(), `${artifact.name} handling`).toEqual((artifact.handling ?? []).map(text => HANDLING[text]).sort()); // the codes, not what people see
+			expect(cataloguedBy, `${artifact.name} catalogued by`).toBe(artifact.cataloguedBy ?? 'nobody');
+			expect(partOfSet, `${artifact.name} part of a set with`).toBe(artifact.partOfSet ?? 'nothing');
 			expect(hasLocation, `${artifact.name} is in a location`).toBe('1');
 			// stored one after another in the order of the element's options, with *=+*: in front of each one
 			expect(materials === 'NULL' ? [] : materials.split('*=+*:').filter(Boolean).sort(), `${artifact.name} materials`).toEqual([...artifact.materials].sort());
@@ -695,6 +784,15 @@ test.describe('What was built', () => {
 			expect(appraiser, `${artifact.name} appraiser`).toBe(artifact.appraiser === undefined ? 'NULL' : (artifact.appraiser || 'empty'));
 			expect(storage, `${artifact.name} storage`).toBe({ 'Climate controlled': '11' }[artifact.storage] ?? 'NULL'); // the stored value, not what people see
 		}
+	});
+
+	test('Every loan request has the storage they have, which is the default unless they said otherwise', () => {
+		const storage = Object.fromEntries(dbQuery(`SELECT loans_borrower, IFNULL(loans_storage, 'NULL') FROM ${dbPrefix()}_formulize_loan_requests`));
+		expect(storage).toEqual({ 'City Museum': '11', 'Harbour Gallery': '1', 'University Library': '11', 'Regional Archive': '11', 'Town Hall': '11' });
+	});
+
+	test('Hart & Sons Antiques are in Prince Edward Island, which is stored as 10', () => {
+		expect(dbQuery(`SELECT donors_province FROM ${dbPrefix()}_formulize_donors WHERE donors_name = 'Hart & Sons Antiques'`)[0][0]).toBe('10');
 	});
 
 	test('Main Vault shows every artifact', async ({ page }) => {

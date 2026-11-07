@@ -3218,6 +3218,11 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 					}
 				}
 
+				// A blank value is not before or after anything. NULL takes care of itself, but '' comes before everything when it's compared as text. See formulize_operatorComparesOrder
+				if (formulize_operatorComparesOrder($operator)) {
+					$newWhereClause = "( $newWhereClause AND " . formulize_blankValueComparison(_getElementObject($element_id), $element_id, $queryElement, true) . " )";
+				}
+
 				// The comparison in a negative search isn't true when a field is NULL, so those entries are added here. All the ways of building the clause above end up here.
 				// In brackets, so this isn't mistaken for a clause that ends in IS NULL, which means something else: a main form entry with no connected entry also matches (see $termMatchesMissingEntry)
 				if ($searchIncludesBlanks) {

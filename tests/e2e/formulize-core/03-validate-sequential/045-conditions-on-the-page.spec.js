@@ -43,6 +43,7 @@ const LOANS_SUBFORM = 'artifacts_subform_loan_requests';
 const ARTIFACT_OPTIONS = 'loans_artifact';
 const DONOR_OPTIONS = 'loans_donor';
 const COLLECTION_OPTIONS = 'loans_collections';
+const SET_OPTIONS = 'artifacts_part_of_set';
 const DISPLAYED_ELEMENT = 'artifacts_curator_note';
 
 const LISTS = {
@@ -61,6 +62,7 @@ const ON_SCREEN = {
 	'Donor contact': { handle: 'loans_donor', kind: 'list' },
 	'Borrower': { handle: 'loans_borrower', kind: 'typed', role: 'textbox' },
 	'Approved': { handle: 'loans_approved', kind: 'radio' },
+	'Storage they have': { handle: 'loans_storage', kind: 'radio' },
 };
 
 let api; // talks to MCP, with its own connection, since afterAll has no request fixture
@@ -119,6 +121,7 @@ async function putSettingsBack() {
 	await setOptionsFilter(ARTIFACT_OPTIONS, []);
 	await setOptionsFilter(DONOR_OPTIONS, []);
 	await setOptionsFilter(COLLECTION_OPTIONS, []);
+	await setOptionsFilter(SET_OPTIONS, []);
 	await setDisplayConditions([]);
 	for (const list of Object.values(LISTS)) {
 		await setFundamentalFilters(list.handle, []);
@@ -154,10 +157,11 @@ async function openEntry(page, fid, entry) {
 	await page.waitForLoadState('load');
 }
 
-async function openArtifactTab(page, artifact) {
+// Open an artifact on one of its tabs, and wait for an element on that tab
+async function openArtifactTab(page, artifact, tab = 'Location and loans', elementOnTab = 'artifacts_location') {
 	await openEntry(page, formId('Artifacts'), entryId('artifacts', 'artifacts_short_name', artifact));
-	await page.getByRole('link', { name: 'Location and loans', exact: true }).click();
-	await expect(page.locator('.form-row:has(.formulize-label-artifacts_location) select')).toBeVisible();
+	await page.getByRole('link', { name: tab, exact: true }).click();
+	await expect(page.locator(`.form-row:has(.formulize-label-${elementOnTab}) select`)).toBeVisible();
 	await page.waitForLoadState('load');
 }
 
@@ -405,6 +409,43 @@ for (const section of [
 	});
 }
 
+test('Section 4: the Part of a set with list in an Artifact', async ({ page }) => {
+	const rows = casesFor('P');
+	test.setTimeout(rows.length * SECONDS_PER_ROW * 1000);
+	const { selector } = howToCheck('P');
+	const everything = namesIn('Artifact');
+
+	await login(page, 'curator1', '12345');
+	for (const row of rows) {
+		await setOptionsFilter(SET_OPTIONS, conditionsFor(row, ARTIFACT_ELEMENTS));
+		await openArtifactTab(page, row['Artifact'], 'Cataloguing', SET_OPTIONS);
+		compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
+	}
+	await setOptionsFilter(SET_OPTIONS, []);
+	await leavePage(page);
+});
+
+test('Section 4: values in the page\'s address', async ({ page }) => {
+	const rows = casesFor('Q');
+	test.setTimeout(rows.length * SECONDS_PER_ROW * 1000);
+	const { selector } = howToCheck('Q');
+	const everything = namesIn('Artifact');
+	const fid = formId('Locations');
+	const entry = entryId('locations', 'locations_name', 'Main Vault');
+
+	await login(page, 'curator1', '12345');
+	for (const row of rows) {
+		await setSubformFilter(MAIN_VAULT_SUBFORM, conditionsFor(row, ARTIFACT_ELEMENTS));
+		const address = row['In the address'] ? `&${row['In the address']}` : '';
+		await leavePage(page, `/modules/formulize/index.php?fid=${fid}&ve=${entry}${address}`);
+		await page.waitForLoadState('load');
+		await expect(page.locator('.formulize-subform')).toBeVisible();
+		compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
+	}
+	await setSubformFilter(MAIN_VAULT_SUBFORM, []);
+	await leavePage(page);
+});
+
 // Set a row's display conditions, and open the artifacts it names to see if the element is there
 async function checkDisplayRow(page, row, selector) {
 	await setDisplayConditions(conditionsFor(row, ARTIFACT_ELEMENTS));
@@ -470,7 +511,7 @@ test('Section 8: a disabled condition, made in the admin UI', async ({ page }) =
 
 	await page.goto('/user.php?op=logout');
 	await login(page, 'curator1', '12345');
-	for (const row of casesFor('A').filter(row => row['Row'] !== 'A4')) {
+	for (const row of casesFor('A').filter(row => !['A4', 'A5'].includes(row['Row']))) { // A4 and A5 are the dynamic default, below
 		const shouldBeEditable = row['Should see'] === 'End date can be edited';
 		if (await endDateCanBeEdited(row['Open']) !== shouldBeEditable) {
 			disagreements.push(`${row['Row']}: ${row['Should see']}, on ${row['Open']}`);
@@ -509,6 +550,13 @@ test('Section 8: a dynamic default, made in the admin UI', async ({ page }) => {
 	const shown = await page.locator('.form-row:has(.formulize-label-loans_donor) select option:checked').allTextContents();
 	if (!shown.map(text => text.trim()).includes('Emilie Du Châtelet')) {
 		disagreements.push(`${row['Row']}: Donor contact should show Emilie Du Châtelet, but shows ${shown.join(', ')}`);
+	}
+	// a new Loan Request has no artifact chosen yet, so the condition finds nothing, and there's no donor to default to
+	const [newEntryRow] = casesFor('A').filter(row => row['Row'] === 'A5');
+	await openNewLoanRequest(page);
+	const donorsShownNew = await namesOnPage(page.locator('.form-row:has(.formulize-label-loans_donor) select option:checked'), namesIn('Donor'));
+	if (donorsShownNew.length > 0) {
+		disagreements.push(`${newEntryRow['Row']}: Donor contact should show nothing, but shows ${donorsShownNew.join(', ')}`);
 	}
 	await leavePage(page, '/user.php?op=logout');
 

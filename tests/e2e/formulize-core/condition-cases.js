@@ -23,7 +23,11 @@ export const ARTIFACT_ELEMENTS = {
 	'Provenance': 'artifacts_provenance',
 	'Storage': 'artifacts_storage',
 	'Appraiser email': 'artifacts_appraiser_email',
+	'Location': 'artifacts_location',
+	'Handling': 'artifacts_handling',
+	'Catalogued by': 'artifacts_catalogued_by',
 	'creation_datetime': 'creation_datetime',
+	'mod_datetime': 'mod_datetime',
 };
 export const DONOR_ELEMENTS = {
 	'Name': 'donors_name',

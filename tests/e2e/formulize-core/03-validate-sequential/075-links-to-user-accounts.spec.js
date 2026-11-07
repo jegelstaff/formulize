@@ -47,6 +47,13 @@ const accountForm = page => page.locator('.formulizeThemeForm');
 const saveControl = page => page.getByRole('link', { name: /^Save/ }).or(page.getByRole('button', { name: /^Save/ }));
 const editableFields = page => accountForm(page).locator('input:not([type="hidden"], [type="button"], [type="submit"], [disabled]), textarea:not([disabled]), select:not([disabled])');
 
+// A page showing an account locks it until the page is left, and users.php locks every user in its list. So each test
+// leaves, or the next one finds the account drawn read only. This page shows no accounts.
+async function leave(page) {
+	await leavePage(page, '/modules/formulize/application.php?id=all');
+	await expect(page).toHaveURL(/\/application\.php\?id=all$/);
+}
+
 test.beforeAll(async ({ browser, playwright }) => {
 	api = await playwright.request.newContext({ baseURL: E2E_TEST_BASE_URL });
 	const page = await browser.newPage({ baseURL: E2E_TEST_BASE_URL });
@@ -75,7 +82,7 @@ test('Your own account opens in Edit Account', async ({ page }) => {
 	await leavePage(page, '/user.php'); // already logged in, so this goes to your account too
 	await expect(page).toHaveURL(/\/edituser\.php$/);
 	await expect(editableFields(page)).not.toHaveCount(0);
-	await leavePage(page);
+	await leave(page);
 });
 
 test('Someone else\'s account shows nothing without permission to see it', async ({ page }) => {
@@ -98,7 +105,7 @@ test('Permission to see someone\'s entry gets a disabled form', async ({ page })
 	await expect(accountForm(page)).toBeVisible();
 	await expect(editableFields(page)).toHaveCount(0);
 	await expect(saveControl(page)).toHaveCount(0);
-	await leavePage(page);
+	await leave(page);
 });
 
 test('Permission to update someone\'s entry gets a working form', async ({ page }) => {
@@ -108,7 +115,7 @@ test('Permission to update someone\'s entry gets a working form', async ({ page 
 	await expect(accountForm(page)).toBeVisible();
 	await expect(editableFields(page)).not.toHaveCount(0);
 	await expect(saveControl(page).first()).toBeVisible();
-	await leavePage(page);
+	await leave(page);
 	await setCuratorAbilities(curatorAbilitiesToStart);
 	expect(curatorAbilities().filter(name => !NOT_ABILITIES.includes(name))).toEqual(curatorAbilitiesToStart);
 });
@@ -122,6 +129,7 @@ test('Someone who manages users goes to users.php, and back to the list when the
 	await page.getByRole('link', { name: 'Save and Close' }).click();
 	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
 	await expect(page).toHaveURL(/\/modules\/formulize\/users\.php$/);
+	await leave(page);
 });
 
 test('A name in the Creator column goes to the same place', async ({ page }) => {
@@ -145,7 +153,7 @@ test('A name in the Creator column goes to the same place', async ({ page }) => 
 	const ownAccount = await openCreator();
 	await expect(ownAccount).toHaveURL(/\/edituser\.php$/);
 	await expect(editableFields(ownAccount)).not.toHaveCount(0);
-	await leavePage(ownAccount);
+	await leave(ownAccount);
 	await ownAccount.close();
 
 	await page.goto('/user.php?op=logout');
@@ -153,7 +161,7 @@ test('A name in the Creator column goes to the same place', async ({ page }) => 
 	const theirAccount = await openCreator();
 	await expect(theirAccount).toHaveURL(new RegExp(`/modules/formulize/users\\.php\\?ve=${uidOf('curator1')}$`));
 	await expect(editableFields(theirAccount)).not.toHaveCount(0);
-	await leavePage(theirAccount);
+	await leave(theirAccount);
 	await theirAccount.close();
 });
 

@@ -54,6 +54,16 @@ For people building applications, see [Forms that create users and groups](../do
 - `userAccountElement.php::processUserAccountSubmission()` creates and updates the user object. Group memberships are handled separately.
 - Group memberships are applied at the end of `readelements.php`, after derived values, by `formulizeHandler::processEauGroupMembershipsForWrittenEntries()`. It covers an entries-are-users form being saved, and a connected form being saved when it holds an element named in `entries_are_users_default_groups_element_links`. For each user it calls `formulizeElementsHandler::processUserGroupMemberships($userId, $formId, $entryId)`, which delegates to `formulizeUserAccountGroupMembershipElementHandler`, and then to `GroupMembershipService::processUserGroupMemberships()`.
 
+### The name columns in the users table
+
+The column names don't mean what they say:
+
+- **`uname` is the person's full name**, ie: Curator One. An entries-are-users form writes it from the First name and Last name elements, with a space between. It's what Formulize shows for a user, including in a list of users.
+- **`login_name` is what they log in with**, ie: curator1. The Username element writes it.
+- **`name` is often empty.** Code that reads it falls back to `uname`, ie: `parseUserAndToday()`.
+
+A list of users stores the uid and always shows `uname`, since `selectElement` enforces `{USERNAMES}` as its only option. So code that turns typed text into a user, like `selectElement::prepareLiteralTextForDB()`, looks in `uname` for the full name and `login_name` for the login.
+
 ### Enforced memberships
 
 Members whose membership is enforced can't be removed. On save, `GroupMembershipService::filterMandatoryMemberships()` puts them back, so the group member management UI on `groups.php` (the `eagGroupMembers` element) must not offer a Remove button for them.

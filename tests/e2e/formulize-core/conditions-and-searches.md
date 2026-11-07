@@ -22,6 +22,8 @@ A row says what should be on the page. This table says where to look for it, and
 | R | The row's saved Loan Request | `.form-row:has(.formulize-label-loans_artifact) select option` | Artifact | The options are exactly the row's names |
 | N | A new Loan Request, then what the row puts on screen | `.form-row:has(.formulize-label-loans_artifact) select option` | Artifact | The options are exactly the row's names, once the redraw has finished |
 | L | The row's artifact, on its Location and loans tab | `.formulize-subform td` | Loan Request | The names in those cells are exactly the row's names, out of that artifact's requests |
+| P | The row's artifact, on its Cataloguing tab | `.form-row:has(.formulize-label-artifacts_part_of_set) select option` | Artifact | The options are exactly the row's names |
+| Q | Main Vault, with the row's values in the page's address | `.formulize-subform td` | Artifact | The names in those cells are exactly the row's names |
 | D | A new Loan Request | `.form-row:has(.formulize-label-loans_donor) select option` | Donor | The options are exactly the row's names |
 | C | A new Loan Request | `.form-row:has(.formulize-label-loans_collections) label` | Collection | The boxes are exactly the row's names |
 | V | Each artifact the row names, on its Location and loans tab | `.form-row:has(.formulize-label-artifacts_curator_note) input[type="text"]` | Artifact | The box is on the page for the artifact in Shows on, and not for the one in Hidden on |
@@ -47,6 +49,9 @@ A row says what should be on the page. This table says where to look for it, and
 - A number in a condition on a linked element is an entry id, if no entry has that number as its text. Display conditions don't do this, so section 5 doesn't have rows for it.
 - A condition on a connected form keeps the main entries with at least one connected entry that meets it, and shows only the connected entries that do. See [Conditions on connected forms](../../../docs/filters.md#conditions-on-connected-forms).
 - `{ }` that refers to a blank field: `=` and `LIKE` find blanks, `!=` and `NOT LIKE` find anything that isn't blank, and `>` and `<` find nothing.
+- `{TODAY}` is today's date, `{USER}` is curator1, who is Curator One, and `{ID}` is the entry that's open. A `{ }` that isn't an element or one of these is read from a parameter of that name in the page's address, and with no such parameter the condition is ignored.
+- On when an entry was made or modified, which have a time as well, a day is all of that day, as the person sees it. `<= {TODAY}` is everything made today, and `> {TODAY}` is after the end of today.
+- A list of users matches the name people see in it, ie: Curator One, as well as the user's login.
 - In a new entry, a `{ }` with nothing on screen has no value yet, so a list that depends on it is empty until there's one. On a linked element that's true of every operator. On any other element it's true of `=`, and the other operators ignore the condition. If the `{ }` element has a default value, an element that isn't linked uses that, whatever the operator. Any other conditions still apply.
 - On a saved entry, a linked element always offers the value that's selected, whatever the condition says, so it isn't lost when the entry is saved. Rows for saved Loan Requests expect that.
 
@@ -182,6 +187,29 @@ Set with `sourceEntryFilter` on `locations_subform_artifacts`, then open Main Va
 | S124 | Collections NOT LIKE ns; Latitude != {BLANK} | Era = CE; Donor = {BLANK} | Florentine Book, American Bicycle, Polynesian Canoe, Viking Silver Armband | negatives and blanks in both sets |
 | S125 | Date of acquisition != 2002; Collections = Weapons | Era != BCE; Date of acquisition < 2000 | Chinese Sword, French Musket | dates and linked in both sets |
 | S126 | On loan != Yes; Provenance = {BLANK} | Materials = {BLANK}; Appraiser email = {BLANK} | Everything except Roman Coin, Egyptian Chariot, Babylonian Spoon, Florentine Book, French Musket | blanks of every kind |
+| S127 | Date of acquisition < {TODAY} |  | Everything except Unknown Shard | {TODAY}, and nothing is before a blank |
+| S128 | Date of acquisition > {TODAY} |  | Nothing | nothing was acquired after today |
+| S129 | creation_datetime <= {TODAY} |  | Everything | on or before a day is all of that day, so everything made today |
+| S130 | creation_datetime > {TODAY} |  | Nothing | after a day is after the end of it |
+| S131 | mod_datetime <= {TODAY} |  | Everything | when an entry was modified, all of today |
+| S132 | mod_datetime > {TODAY} |  | Nothing | after the end of today |
+| S133 | Location = {ID} |  | Everything | {ID} is the entry that's open, Main Vault |
+| S134 | Location != {ID} |  | Nothing | not the entry that's open |
+| S135 | Appraiser email < z |  | Roman Coin, Japanese Coin | text, '' is blank, and nothing is before a blank |
+| S136 | Provenance > (empty) |  | Nothing | nothing is after a blank |
+| S137 | Provenance > {BLANK} |  | Nothing | the same, with {BLANK} |
+| S138 | Storage = Climate controlled |  | Roman Coin | text people see that's different from what's stored |
+| S139 | Storage = 11 |  | Roman Coin | what's stored still works |
+| S140 | Storage LIKE climate |  | Roman Coin | part of the text people see |
+| S141 | Storage NOT LIKE climate |  | Everything except Roman Coin | not part of it, and blanks |
+| S142 | Storage LIKE standard |  | Nothing | Standard is stored as 1, and the Roman Coin's value, 11, doesn't count |
+| S143 | Handling = Two people to lift |  | Egyptian Chariot, Polynesian Canoe | checkboxes with text people see, a whole value |
+| S144 | Handling = 1 |  | Roman Coin, Florentine Book, Silk Scroll | what's stored, so not Keep flat, which is 12 |
+| S145 | Handling LIKE glove |  | Roman Coin, Florentine Book, Silk Scroll | part of the text people see |
+| S146 | Handling NOT LIKE flat |  | Everything except Florentine Book, Candide - first edition, Silk Scroll | not part of it, and blanks |
+| S147 | Catalogued by = Curator Two |  | Florentine Book, French Musket | a list of users, by the name people see |
+| S148 | Catalogued by = {USER} |  | Roman Coin, Persian necklace, Babylonian Spoon | {USER} is curator1, Curator One |
+| S149 | Catalogued by != {USER} |  | Everything except Roman Coin, Persian necklace, Babylonian Spoon | not curator1, and blanks |
 
 ## 2. `{ }` in the Artifact list of a saved Loan Request
 
@@ -240,6 +268,8 @@ Set with `sourceEntryFilter` on `loans_artifact`, then open the Loan Request as 
 | R49 | City Museum | Era != {loans_era}; Donor != Freeform Solutions |  | Roman Coin, Florentine Book, French Musket, American Bicycle, Polynesian Canoe, Viking Silver Armband, Candide - first edition, Silk Scroll | a reference with a literal term |
 | R50 | City Museum |  | Era != {loans_era}; Short name = Babylonian Spoon | Everything except Persian necklace, Egyptian Chariot, Persian necklace - number 2, Unknown Shard, Bronze Mirror | one of a reference and a literal term |
 | R51 | University Library | On loan = {loans_approved} | Era = {loans_era}; Short name = Silk Scroll | Florentine Book, Silk Scroll | blank references, in both sets |
+| R52 | University Library | Storage = {loans_storage} |  | Roman Coin, Florentine Book | text people see that's different from what's stored, and the value behind it is compared |
+| R53 | University Library | Storage != {loans_storage} |  | Everything except Roman Coin | the same, with != |
 
 ## 3. `{ }` in a new Loan Request
 
@@ -287,6 +317,11 @@ The same setting, on a new entry. With nothing on screen, a list that depends on
 | N38 | Donated to museum != {loans_approved} |  | Approved: Yes | Egyptian Chariot, French Musket, American Bicycle, Unknown Shard | != with Yes on screen |
 | N39 | Donor = {loans_borrower} |  |  | Nothing | linked, one value, and the `{ }` isn't linked |
 | N40 | Donor != {loans_borrower} |  |  | Nothing | the same, with != |
+| N41 | Storage = {loans_storage} |  |  | Roman Coin | the default, Climate controlled, before anything is chosen |
+| N42 | Storage != {loans_storage} |  |  | Everything except Roman Coin | the default, with != |
+| N43 | Storage = {loans_storage} |  | Storage they have: Standard | Nothing | what's chosen on screen, rather than the default |
+| N44 | Collections = {loans_borrower} |  |  | Nothing | linked, several values, and the `{ }` isn't linked |
+| N45 | Collections != {loans_borrower} |  |  | Nothing | the same, with != |
 
 ## 4. Other surfaces
 
@@ -337,6 +372,27 @@ The same setting, on a new entry. With nothing on screen, a list that depends on
 | C4 | Suitable audience = Adults; Suitable audience NOT LIKE Child |  | Coins | has one and not the other |
 | C5 | Suitable audience != Children | Name LIKE History; Name = Coins; Suitable audience = {BLANK} | Coins | all and any |
 
+**The Part of a set with list in an Artifact.** Set with `sourceEntryFilter` on `artifacts_part_of_set`, and read on the artifact's Cataloguing tab. The list offers other artifacts, so a `{ }` refers to the form the list is in. An artifact isn't offered as part of a set with itself, and the artifact selected is always offered.
+
+| Row | Artifact | All of | Any of | Should show | What it tests |
+|---|---|---|---|---|---|
+| P1 | Persian necklace - number 2 | Era = {artifacts_era} |  | Roman Coin, Persian necklace, Egyptian Chariot, Babylonian Spoon, Unknown Shard, Bronze Mirror | a reference to the same form |
+| P2 | Persian necklace - number 2 | Era != {artifacts_era} |  | Persian necklace, Chinese Sword, Florentine Book, French Musket, Japanese Coin, American Bicycle, Polynesian Canoe, Viking Silver Armband, Candide - first edition, Silk Scroll | != to the same form, and the artifact selected |
+| P3 | Persian necklace - number 2 | Donor = {artifacts_donor} |  | Persian necklace, Florentine Book, Viking Silver Armband | linked, to the same form |
+| P4 | Persian necklace - number 2 | Materials = {artifacts_materials} |  | Persian necklace, Japanese Coin, Unknown Shard | checkboxes, a blank reference finds blanks |
+| P5 | Chinese Sword | Era = {artifacts_era} |  | Florentine Book, French Musket, Japanese Coin, American Bicycle, Polynesian Canoe, Viking Silver Armband, Candide - first edition, Silk Scroll | nothing selected |
+| P6 | Chinese Sword | Year > {artifacts_year} |  | Everything except Roman Coin, Chinese Sword | a number, to the same form |
+
+**Values in the page's address.** Set with `sourceEntryFilter` on `locations_subform_artifacts`, then open Main Vault with the row's values on the end of the address.
+
+| Row | In the address | All of | Any of | Should show | What it tests |
+|---|---|---|---|---|---|
+| Q1 | place=Cairo | Provenance LIKE {place} |  | Egyptian Chariot | a value from the address |
+| Q2 | place=Cairo | Provenance NOT LIKE {place} |  | Everything except Egyptian Chariot | the same, with NOT LIKE, and blanks |
+| Q3 | place= | Provenance LIKE {place} |  | Everything except Egyptian Chariot, Babylonian Spoon, Florentine Book, French Musket | an empty value is a search for blanks |
+| Q4 |  | Provenance LIKE {place} |  | Everything | no such value, so the condition is ignored |
+| Q5 | era=BCE | Era = {era} |  | Roman Coin, Persian necklace, Egyptian Chariot, Babylonian Spoon, Persian necklace - number 2, Unknown Shard, Bronze Mirror | = with a value from the address |
+
 ## 5. Display conditions
 
 Set with `display_conditions` on `artifacts_curator_note`, then open each artifact named on its Location and loans tab as curator1. Curator note is on the page for one, and not for the other. Blanks are the ones that go wrong, so Unknown Shard is used wherever it can be.
@@ -382,6 +438,17 @@ Set with `display_conditions` on `artifacts_curator_note`, then open each artifa
 | V37 | Date of acquisition != bread |  | Unknown Shard | Nothing | not a date, shown everywhere |
 | V38 | Era = BCE | Donor = {BLANK}; Donor NOT LIKE Solutions | Unknown Shard | Chinese Sword | all and any |
 | V39 |  | Provenance = {BLANK}; Era = CE | Unknown Shard | Egyptian Chariot | either |
+| V40 | Donated to museum = {artifacts_on_loan} |  | Roman Coin | Chinese Sword | a reference to another field of the same artifact |
+| V41 | Donated to museum != {artifacts_on_loan} |  | Chinese Sword | Roman Coin | the same, with != |
+| V42 | Year > {artifacts_latitude} |  | Roman Coin | Unknown Shard | nothing is after a blank reference |
+| V43 | Appraiser email < z |  | Roman Coin | Chinese Sword | text, '' is blank, and nothing is before a blank |
+| V44 | Date of acquisition < {TODAY} |  | Roman Coin | Unknown Shard | {TODAY} |
+| V45 | creation_datetime <= {TODAY} |  | Roman Coin | Nothing | when an entry was made, all of today |
+| V46 | creation_datetime > {TODAY} |  | Nothing | Roman Coin | after the end of today |
+| V47 | Storage = Climate controlled |  | Roman Coin | Unknown Shard | text people see that's different from what's stored |
+| V48 | Storage LIKE climate |  | Roman Coin | Chinese Sword | part of the text people see |
+| V49 | Handling LIKE glove |  | Florentine Book | Egyptian Chariot | checkboxes with text people see |
+| V50 | Catalogued by = {USER} |  | Roman Coin | Florentine Book | a list of users, and {USER} |
 
 ## 6. Fundamental filters
 
@@ -411,6 +478,10 @@ Set with `fundamental_filters` on the list screen. Lists go through a different 
 | F20 | Donor artifacts | Era = EMPTYSET:BCE |  | Freeform Solutions, L. Warner Foundation, Hart & Sons Antiques | no artifact is BCE |
 | F21 | Donor artifacts | Collections = EMPTYSET:Weapons |  | Everything except Freeform Solutions | no artifact is in Weapons, on a linked element |
 | F22 | Donor artifacts | First name != {BLANK}; Era = EMPTYSET:BCE |  | Nothing | EMPTYSET with a condition on the donor |
+| F23 | Catalogue | Storage LIKE climate |  | Roman Coin | text people see that's different from what's stored |
+| F24 | Catalogue | Handling = Gloves |  | Roman Coin, Florentine Book, Silk Scroll | checkboxes, by the text people see |
+| F25 | Catalogue | creation_datetime <= {TODAY} |  | Everything | when an entry was made, all of today |
+| F26 | Catalogue | Catalogued by = {USER} |  | Roman Coin, Persian necklace, Babylonian Spoon | a list of users, and {USER} |
 ## 7. Search boxes on a list
 
 Read-only, so these run in `02-validate`, as curator1. Each term goes in the search box at the top of that column, on the Catalogue list or the Donor artifacts list. A term starting with `!` means the value doesn't have it, and `!=` means it isn't exactly that. Both find blanks, since they aren't a search for a value. `!{BLANK}` is not blank. `OR` in front of terms in several boxes means any one of them.
@@ -479,7 +550,7 @@ Read-only, so these run in `02-validate`, as curator1. Each term goes in the sea
 | B60 | Donor artifacts | Email Address: `!freeform` | Everything except Freeform Solutions | and NULL and '' |
 | B61 | Donor artifacts | Is the donor anonymous?: `!No` | Everything except L. Warner Foundation | a radio |
 | B62 | Donor artifacts | Province: `!Yukon` | Everything | a province no one has |
-| B63 | Donor artifacts | Province: `!a` | Everything except Freeform Solutions | a province, a term that matches one of them |
+| B63 | Donor artifacts | Province: `!a` | Everything except Freeform Solutions, Hart & Sons Antiques | a province, a term that matches one of them |
 | B64 | Donor artifacts | First name: `!Emilie`<br>Email Address: `!freeform` | Everything except Emilie Du Châtelet, Freeform Solutions | two boxes |
 | B65 | Donor artifacts | First name: `OR!Emilie`<br>Last name: `ORArouet` | Everything except Emilie Du Châtelet | OR terms in different boxes |
 | B66 | Donor artifacts | Collections: `!Weapons` | Everything except L. Warner Foundation | connected: an artifact is not in Weapons, so Freeform Solutions is found, though another of theirs is. L. Warner Foundation has no artifacts, so is not |
@@ -487,6 +558,14 @@ Read-only, so these run in `02-validate`, as curator1. Each term goes in the sea
 | B68 | Catalogue | Storage: `climate` | Roman Coin | text people see that's different from what's stored, part of it |
 | B69 | Catalogue | Storage: `!climate` | Everything except Roman Coin | not part of that text, and blanks |
 | B70 | Catalogue | Storage: `standard` | Nothing | Standard is stored as 1, and the Roman Coin's value is 11, which doesn't count |
+| B71 | Catalogue | creation_datetime: `<={TODAY}` | Everything | on or before a day is all of that day |
+| B72 | Catalogue | mod_datetime: `<={TODAY}` | Everything | when an entry was modified |
+| B73 | Catalogue | Appraiser email: `<z` | Roman Coin, Japanese Coin | text, '' is blank, and nothing is before a blank |
+| B74 | Catalogue | Handling: `glove` | Roman Coin, Florentine Book, Silk Scroll | checkboxes with text people see |
+| B75 | Catalogue | Handling: `=1` | Roman Coin, Florentine Book, Silk Scroll | what's stored, so not Keep flat, which is 12 |
+| B76 | Catalogue | Handling: `!flat` | Everything except Florentine Book, Candide - first edition, Silk Scroll | not part of it, and blanks |
+| B77 | Catalogue | Catalogued by: `Curator Two` | Florentine Book, French Musket | a list of users, by the name people see |
+| B78 | Donor artifacts | Province: `Ontario` | Freeform Solutions | a whole value, so not Prince Edward Island, which is 10 |
 
 ## 8. Settings MCP can't reach
 
@@ -498,6 +577,7 @@ MCP has no setting for these, so they're made in the admin UI.
 | A2 | The same | Harbour Gallery | End date can't be edited | a disabled condition that's met |
 | A3 | The same | University Library | End date can't be edited | a disabled condition that's met by a blank |
 | A4 | Donor contact has a dynamic default of the Donor in Artifacts, where `Short name = {loans_artifact}`, and defaults apply when blank | University Library | Donor contact shows Emilie Du Châtelet | a dynamic default, where the left side is the source of the linked `{ }` |
+| A5 | The same | A new Loan Request | Donor contact shows nothing | a dynamic default, when the `{ }` has no value yet |
 
 ## 9. A site that shows dates as d/m/Y
 
@@ -537,24 +617,24 @@ Search boxes on the Catalogue list.
 
 ## The museum's data
 
-| Artifact | Year | Era | Acquired | Donated | Donor | Collections | Latitude | Materials | On loan | Provenance | Appraiser email | Storage |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Roman Coin | 150 | BCE | 2020-08-21 | Yes | François-Marie Arouet | Ancient History, Coins | 41.9028 | Silver | Yes |  | appraiser@museum.example | Climate controlled, stored as 11 |
-| Persian necklace | 350 | BCE | 2002-12-02 | Yes | Emilie Du Châtelet | Ancient History | 29.9355 | Gold, Silver |  |  |  |  |
-| Chinese Sword | 198 | CE | 1993-08-10 | Yes | Freeform Solutions | Ancient History, Weapons | 34.3416 | Iron | No |  | empty string |  |
-| Egyptian Chariot | 1850 | BCE | 2011-09-19 | No |  | Ancient History, Weapons | 25.6872 | Wood, Bronze |  | Bought in Cairo | empty string |  |
-| Babylonian Spoon | 1500 | BCE | 2015-09-26 | Yes | François-Marie Arouet | Ancient History | 32.5422 | Bronze |  | City Museum |  |  |
-| Florentine Book | 1588 | CE | 1988-02-29 | Yes | Emilie Du Châtelet | Modern History | 43.7696 | Paper | Yes | Bought at Sotheby's |  |  |
-| French Musket | 1804 | CE | 1927-03-04 | No |  | Modern History, Weapons | 48.8566 | Iron, Wood | No | Bought in Paris | empty string |  |
-| Japanese Coin | 1880 | CE | 1955-11-25 | Yes | Freeform Solutions | Coins, Modern History | 35.6762 |  | No |  | appraiser@museum.example |  |
-| American Bicycle | 1884 | CE | 2007-05-09 | No |  | Modern History | 42.3601 | Cast iron |  |  |  |  |
-| Polynesian Canoe | 1701 | CE | 1977-06-14 | Yes | François-Marie Arouet | Modern History | -17.5516 | Wood |  |  |  |  |
-| Viking Silver Armband | 875 | CE | 2025-07-10 | Yes | Emilie Du Châtelet | Modern History | 59.8586 | Silver |  |  |  |  |
-| Candide - first edition | 1759 | CE | 2025-11-29 | Yes | François-Marie Arouet | Modern History |  | Paper |  |  |  |  |
-| Persian necklace - number 2 | 350 | BCE | 2002-12-02 | Yes | Emilie Du Châtelet | Ancient History | 29.9355 |  |  |  |  |  |
-| Unknown Shard | 500 | BCE |  | No |  |  |  |  |  |  |  |  |
-| Bronze Mirror | 200 | BCE | 2002-12-31 | Yes | Aoife O'Brien | Ancient History |  | Bronze |  |  |  |  |
-| Silk Scroll | 1400 | CE | 2003-01-01 | Yes | Hart & Sons Antiques | Modern History |  | Wood |  |  |  |  |
+| Artifact | Year | Era | Acquired | Donated | Donor | Collections | Latitude | Materials | On loan | Provenance | Appraiser email | Storage | Handling | Catalogued by | Part of a set with |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Roman Coin | 150 | BCE | 2020-08-21 | Yes | François-Marie Arouet | Ancient History, Coins | 41.9028 | Silver | Yes |  | appraiser@museum.example | Climate controlled, stored as 11 | Gloves | Curator One |  |
+| Persian necklace | 350 | BCE | 2002-12-02 | Yes | Emilie Du Châtelet | Ancient History | 29.9355 | Gold, Silver |  |  |  |  |  | Curator One |  |
+| Chinese Sword | 198 | CE | 1993-08-10 | Yes | Freeform Solutions | Ancient History, Weapons | 34.3416 | Iron | No |  | empty string |  |  |  |  |
+| Egyptian Chariot | 1850 | BCE | 2011-09-19 | No |  | Ancient History, Weapons | 25.6872 | Wood, Bronze |  | Bought in Cairo | empty string |  | Two people to lift |  |  |
+| Babylonian Spoon | 1500 | BCE | 2015-09-26 | Yes | François-Marie Arouet | Ancient History | 32.5422 | Bronze |  | City Museum |  |  |  | Curator One |  |
+| Florentine Book | 1588 | CE | 1988-02-29 | Yes | Emilie Du Châtelet | Modern History | 43.7696 | Paper | Yes | Bought at Sotheby's |  |  | Gloves, Keep flat | Curator Two |  |
+| French Musket | 1804 | CE | 1927-03-04 | No |  | Modern History, Weapons | 48.8566 | Iron, Wood | No | Bought in Paris | empty string |  |  | Curator Two |  |
+| Japanese Coin | 1880 | CE | 1955-11-25 | Yes | Freeform Solutions | Coins, Modern History | 35.6762 |  | No |  | appraiser@museum.example |  |  |  |  |
+| American Bicycle | 1884 | CE | 2007-05-09 | No |  | Modern History | 42.3601 | Cast iron |  |  |  |  |  |  |  |
+| Polynesian Canoe | 1701 | CE | 1977-06-14 | Yes | François-Marie Arouet | Modern History | -17.5516 | Wood |  |  |  |  | Two people to lift |  |  |
+| Viking Silver Armband | 875 | CE | 2025-07-10 | Yes | Emilie Du Châtelet | Modern History | 59.8586 | Silver |  |  |  |  |  |  |  |
+| Candide - first edition | 1759 | CE | 2025-11-29 | Yes | François-Marie Arouet | Modern History |  | Paper |  |  |  |  | Keep flat |  |  |
+| Persian necklace - number 2 | 350 | BCE | 2002-12-02 | Yes | Emilie Du Châtelet | Ancient History | 29.9355 |  |  |  |  |  |  |  | Persian necklace |
+| Unknown Shard | 500 | BCE |  | No |  |  |  |  |  |  |  |  |  |  |  |
+| Bronze Mirror | 200 | BCE | 2002-12-31 | Yes | Aoife O'Brien | Ancient History |  | Bronze |  |  |  |  |  |  |  |
+| Silk Scroll | 1400 | CE | 2003-01-01 | Yes | Hart & Sons Antiques | Modern History |  | Wood |  |  |  |  | Gloves, Keep flat |  |  |
 
 A blank cell is NULL.
 
@@ -565,7 +645,7 @@ A blank cell is NULL.
 | Freeform Solutions | Organization |  |  | formulize@freeform.ca |  | Ontario |
 | L. Warner Foundation | Organization |  |  | empty string | No |  |
 | Aoife O'Brien | Individual | Aoife | O'Brien | empty string |  |  |
-| Hart & Sons Antiques | Organization |  |  | empty string |  |  |
+| Hart & Sons Antiques | Organization |  |  | empty string |  | Prince Edward Island |
 
 | Collection | Suitable audience |
 |---|---|
@@ -574,12 +654,14 @@ A blank cell is NULL.
 | Coins | Adults |
 | Weapons | Children, Adults |
 
-| Loan Request | Artifact | Collections wanted | Materials | Era | Made after | Donor contact | Start | End | Approved |
-|---|---|---|---|---|---|---|---|---|---|
-| City Museum | Roman Coin | Coins | Silver | BCE | 300 | François-Marie Arouet | 2026-01-15 | 2026-06-30 | Yes |
-| Harbour Gallery | Roman Coin | Weapons, Modern History | Iron, Wood | CE | 1500 | Hart & Sons Antiques | 2003-01-01 |  | No |
-| University Library | Florentine Book |  |  |  |  |  |  |  |  |
-| Regional Archive | Unknown Shard |  |  |  |  |  |  |  |  |
-| Town Hall | Unknown Shard |  |  |  |  |  |  |  | No |
+| Loan Request | Artifact | Collections wanted | Materials | Era | Made after | Donor contact | Start | End | Approved | Storage they have |
+|---|---|---|---|---|---|---|---|---|---|---|
+| City Museum | Roman Coin | Coins | Silver | BCE | 300 | François-Marie Arouet | 2026-01-15 | 2026-06-30 | Yes | Climate controlled |
+| Harbour Gallery | Roman Coin | Weapons, Modern History | Iron, Wood | CE | 1500 | Hart & Sons Antiques | 2003-01-01 |  | No | Standard |
+| University Library | Florentine Book |  |  |  |  |  |  |  |  | Climate controlled |
+| Regional Archive | Unknown Shard |  |  |  |  |  |  |  |  | Climate controlled |
+| Town Hall | Unknown Shard |  |  |  |  |  |  |  | No | Climate controlled |
 
 Entry ids in these rows are fixed by the order setup makes things: Freeform Solutions is donor 3, Weapons is collection 4.
+
+Storage and Storage they have are stored as 1 for Standard and 11 for Climate controlled, and Climate controlled is the default for Storage they have. Handling is stored as 1 for Gloves, 2 for Two people to lift and 12 for Keep flat.
