@@ -47,7 +47,7 @@ const APPRAISER = 'appraiser@museum.example';
 // The codes stored for the handling options, behind the text people see
 const HANDLING = { 'Gloves': '1', 'Two people to lift': '2', 'Keep flat': '12' };
 
-// appraiser: an address, or '' for saving the Appraisal tab with nothing in it. Leave it out and the tab is never saved.
+// appraiser: an address, or '' for saving the Appraisal tab with the box emptied. Leave it out and the tab is never saved.
 // cataloguedBy, partOfSet and handling are on the Cataloguing tab, which is only saved for an artifact that has one of them.
 const CATALOGUE = [
 	{ name: 'Roman Coin', materials: ['Silver'], onLoan: 'Yes', appraiser: APPRAISER, storage: 'Climate controlled', cataloguedBy: 'Curator One', handling: ['Gloves'] },
@@ -688,7 +688,13 @@ test.describe('Catalogue every artifact', () => {
 				await page.getByRole('link', { name: 'Appraisal', exact: true }).click();
 				const email = page.locator('.form-row:has(.formulize-label-artifacts_appraiser_email)').getByRole('textbox');
 				await expect(email).toBeVisible();
+				if (artifact.appraiser === '') {
+					// Save on a page where nothing has changed only redraws it, so it's typed and taken out again, as a person would
+					await email.fill(APPRAISER);
+					await email.press('Tab');
+				}
 				await email.fill(artifact.appraiser);
+				await email.press('Tab');
 				await saveFormulizeForm(page);
 			}
 
