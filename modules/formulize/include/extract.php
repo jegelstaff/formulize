@@ -1271,6 +1271,9 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			// $frameworkSafeOrderByParts holds only parts safe for $entryIdQuery and the temp table INSERT
 			// (i.e. only main-form columns, usertable.email, and owner_groups_subquery — no connected-form aliases)
 			$frameworkSafeOrderByParts = [];
+			// $connectedFormOrderByParts holds the parts on connected forms, by their alias, ie: f0. They order the entries in each connected
+			// form's query, so the values in a cell follow the sort, as they do when everything is one query
+			$connectedFormOrderByParts = [];
 			// $primarySort* vars capture the first sort field for the framework path after the loop
 			$primarySortField = null;
 			$primarySortOrder = null;
@@ -1422,6 +1425,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				$orderByParts[] = "$sortFieldFullValue $sortOrder";
 				if ($sortIsOnMain) {
 					$frameworkSafeOrderByParts[] = "$sortFieldFullValue $sortOrder";
+				} else {
+					$connectedFormOrderByParts[$sortFidAlias][] = "$sortFieldFullValue $sortOrder";
 				}
 
 				// Capture first sort field vars for the framework path (non-main sort subquery only applies to primary sort)
@@ -1782,7 +1787,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 						}
 					}
 				}
+				// the entries are in the order of the main form's sort, and then each one's entries in this form are in the order of the sort on this form, if any
 				$linkQuery .= " ORDER BY sort_and_limit_table.mastersort";
+				if (!empty($connectedFormOrderByParts["f$linkId"])) {
+					$linkQuery .= ", " . implode(", ", $connectedFormOrderByParts["f$linkId"]);
+				}
 				if ($resultOnly !== 'bypass') {
 					//print str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery).'<br>';
 					$linkQueryRes[] = $xoopsDB->query(str_replace("REPLACEWITHTIMESTAMP", $timestamp, $linkQuery));
