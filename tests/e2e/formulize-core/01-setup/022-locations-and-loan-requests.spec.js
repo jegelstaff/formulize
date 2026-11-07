@@ -27,7 +27,8 @@ import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, editScr
 //
 // Blanks are stored in two ways, and searches have to treat them the same, so both are here on purpose. A text box left
 // blank is saved as NULL, and so is everything else on the tabs below. An email element left blank is saved as ''.
-// Appraiser email is on a tab of its own so that it stays NULL in the entries where that tab is never saved.
+// Appraiser email is on a tab of its own so that it stays NULL in the entries where that tab is never saved. The three
+// artifacts made here are the exception, because "Add Artifact" saves every element, so theirs is ''. See MADE_HERE.
 //
 // The subforms are added as elements, instead of ticking "Create a Subform interface" on the linked elements, because
 // that also puts the subform on the form's other multi-page screens, on a new page if it has to. The Artifacts form has
@@ -49,6 +50,9 @@ const HANDLING = { 'Gloves': '1', 'Two people to lift': '2', 'Keep flat': '12' }
 
 // appraiser: an address, or '' for saving the Appraisal tab with the box emptied. Leave it out and the tab is never saved.
 // cataloguedBy, partOfSet and handling are on the Cataloguing tab, which is only saved for an artifact that has one of them.
+// Made below through "Add Artifact", whose form has every element on one page, so their Appraiser email was saved blank, as ''
+const MADE_HERE = ['Unknown Shard', 'Bronze Mirror', 'Silk Scroll'];
+
 const CATALOGUE = [
 	{ name: 'Roman Coin', materials: ['Silver'], onLoan: 'Yes', appraiser: APPRAISER, storage: 'Climate controlled', cataloguedBy: 'Curator One', handling: ['Gloves'] },
 	{ name: 'Persian necklace', materials: ['Gold', 'Silver'], cataloguedBy: 'Curator One' },
@@ -774,7 +778,7 @@ test.describe('What was built', () => {
 		const artifacts = `${dbPrefix()}_formulize_artifacts`;
 		const rows = dbQuery(`SELECT a.artifacts_short_name, a.artifacts_location IS NOT NULL, IFNULL(a.artifacts_materials, 'NULL'), IFNULL(a.artifacts_on_loan, 'NULL'),
 			a.artifacts_provenance IS NULL, IF(a.artifacts_appraiser_email IS NULL, 'NULL', IF(a.artifacts_appraiser_email = '', 'empty', a.artifacts_appraiser_email)), IFNULL(a.artifacts_storage, 'NULL'),
-			IFNULL(a.artifacts_handling, 'NULL'), IFNULL((SELECT u.name FROM ${dbPrefix()}_users AS u WHERE u.uid = a.artifacts_catalogued_by), 'nobody'),
+			IFNULL(a.artifacts_handling, 'NULL'), IFNULL((SELECT u.uname FROM ${dbPrefix()}_users AS u WHERE u.uid = a.artifacts_catalogued_by), 'nobody'),
 			IFNULL((SELECT s.artifacts_short_name FROM ${artifacts} AS s WHERE s.entry_id = a.artifacts_part_of_set), 'nothing')
 			FROM ${artifacts} AS a`);
 		const stored = Object.fromEntries(rows.map(row => [row[0], row.slice(1)]));
@@ -789,7 +793,7 @@ test.describe('What was built', () => {
 			expect(materials === 'NULL' ? [] : materials.split('*=+*:').filter(Boolean).sort(), `${artifact.name} materials`).toEqual([...artifact.materials].sort());
 			expect(onLoan, `${artifact.name} on loan`).toBe({ Yes: '1', No: '2' }[artifact.onLoan] ?? 'NULL');
 			expect(provenanceIsNull, `${artifact.name} provenance`).toBe(artifact.provenance ? '0' : '1');
-			expect(appraiser, `${artifact.name} appraiser`).toBe(artifact.appraiser === undefined ? 'NULL' : (artifact.appraiser || 'empty'));
+			expect(appraiser, `${artifact.name} appraiser`).toBe(artifact.appraiser === undefined ? (MADE_HERE.includes(artifact.name) ? 'empty' : 'NULL') : (artifact.appraiser || 'empty'));
 			expect(storage, `${artifact.name} storage`).toBe({ 'Climate controlled': '11' }[artifact.storage] ?? 'NULL'); // the stored value, not what people see
 		}
 	});
