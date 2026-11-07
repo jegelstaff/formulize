@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import { login, leavePage, saveAdminForm, waitForAdminPageReady, conditionalChecksFinished, elementId, dbQuery, dbPrefix, sqlEscape } from '../../utils';
 import {
-	casesFor, howToCheck, namesIn, conditionsFor, expectedNames, namesOnPage, searchesFor, searchList, disagreementIn,
+	casesFor, howToCheck, namesIn, conditionsFor, expectedNames, namesOnPage, searchesFor, searchList, disagreementIn, checkRow,
 	ARTIFACT_ELEMENTS, DONOR_ELEMENTS, COLLECTION_ELEMENTS, LOAN_ELEMENTS,
 } from '../condition-cases';
 
@@ -15,8 +15,10 @@ import {
 //
 // How a section is built:
 //   - Each row sets its condition, opens the page and compares. A row that disagrees is recorded, and the section carries on.
+//     So is a row that can't be checked, ie: MCP refuses its setting or the page doesn't draw, with any PHP error logged
+//     while it ran. See checkRow in condition-cases.js.
 //   - The last test fails with every disagreement, by row, because maxFailures stops a run at the first failure, and one run
-//     on GitHub should show all of them. A test only fails sooner if something is really wrong, ie: MCP refuses a setting.
+//     on GitHub should show all of them. A test only fails sooner if something is really wrong outside the rows.
 //   - A row that should find nothing is loaded again to prove the query ran. A query that fails is treated as finding no
 //     entries, and nothing is logged, so it looks the same. See provingConditions below.
 //
@@ -36,7 +38,7 @@ test.use({ baseURL: E2E_TEST_BASE_URL });
 test.describe.configure({ mode: 'serial' });
 
 const MCP = '/mcp/index.php/mcp';
-const SECONDS_PER_ROW = 20;
+const SECONDS_PER_ROW = 45; // room for rows that can't be checked, which each wait out the expect timeout
 
 const MAIN_VAULT_SUBFORM = 'locations_subform_artifacts';
 const LOANS_SUBFORM = 'artifacts_subform_loan_requests';
@@ -296,13 +298,15 @@ test('Section 1: the Artifacts subform in Main Vault', async ({ page }) => {
 
 	await login(page, 'curator1', '12345');
 	for (const row of rows) {
-		const conditions = conditionsFor(row, ARTIFACT_ELEMENTS);
-		const expected = expectedNames(row['Should show'], everything);
-		await setSubformFilter(MAIN_VAULT_SUBFORM, conditions);
-		compare(row, expected, await openAndRead());
-		if (expected.length === 0) {
-			await proveQueryRan(row, () => setSubformFilter(MAIN_VAULT_SUBFORM, provingConditions(conditions, 'artifacts_short_name', 'Roman Coin')), openAndRead, 'Roman Coin');
-		}
+		await checkRow(page, row['Row'], disagreements, async () => {
+			const conditions = conditionsFor(row, ARTIFACT_ELEMENTS);
+			const expected = expectedNames(row['Should show'], everything);
+			await setSubformFilter(MAIN_VAULT_SUBFORM, conditions);
+			compare(row, expected, await openAndRead());
+			if (expected.length === 0) {
+				await proveQueryRan(row, () => setSubformFilter(MAIN_VAULT_SUBFORM, provingConditions(conditions, 'artifacts_short_name', 'Roman Coin')), openAndRead, 'Roman Coin');
+			}
+		});
 	}
 	await setSubformFilter(MAIN_VAULT_SUBFORM, []);
 	await leavePage(page);
@@ -317,10 +321,12 @@ test('Section 2: { } in the Artifact list of a saved Loan Request', async ({ pag
 
 	await login(page, 'curator1', '12345');
 	for (const row of rows) {
-		await setOptionsFilter(ARTIFACT_OPTIONS, conditionsFor(row, ARTIFACT_ELEMENTS));
-		await openEntry(page, fid, entryId('loan_requests', 'loans_borrower', row['Loan Request']));
-		await expect(page.locator(`.form-row:has(.formulize-label-${ARTIFACT_OPTIONS}) select`)).toBeVisible();
-		compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
+		await checkRow(page, row['Row'], disagreements, async () => {
+			await setOptionsFilter(ARTIFACT_OPTIONS, conditionsFor(row, ARTIFACT_ELEMENTS));
+			await openEntry(page, fid, entryId('loan_requests', 'loans_borrower', row['Loan Request']));
+			await expect(page.locator(`.form-row:has(.formulize-label-${ARTIFACT_OPTIONS}) select`)).toBeVisible();
+			compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
+		});
 	}
 	await setOptionsFilter(ARTIFACT_OPTIONS, []);
 	await leavePage(page);
@@ -336,20 +342,22 @@ test('Section 3: { } in a new Loan Request, and as things change on screen', asy
 
 	await login(page, 'curator1', '12345');
 	for (const row of rows) {
-		const conditions = conditionsFor(row, ARTIFACT_ELEMENTS);
-		const expected = expectedNames(row['Should show'], everything);
-		await setOptionsFilter(ARTIFACT_OPTIONS, conditions);
-		await openNewLoanRequest(page);
-		if (row['On screen']) {
-			await putOnScreen(page, row['On screen']);
-		}
-		compare(row, expected, await readOptions());
-		if (expected.length === 0) {
-			await proveQueryRan(row, () => setOptionsFilter(ARTIFACT_OPTIONS, provingConditions(conditions, 'artifacts_short_name', 'Roman Coin')), async () => {
-				await openNewLoanRequest(page);
-				return readOptions();
-			}, 'Roman Coin');
-		}
+		await checkRow(page, row['Row'], disagreements, async () => {
+			const conditions = conditionsFor(row, ARTIFACT_ELEMENTS);
+			const expected = expectedNames(row['Should show'], everything);
+			await setOptionsFilter(ARTIFACT_OPTIONS, conditions);
+			await openNewLoanRequest(page);
+			if (row['On screen']) {
+				await putOnScreen(page, row['On screen']);
+			}
+			compare(row, expected, await readOptions());
+			if (expected.length === 0) {
+				await proveQueryRan(row, () => setOptionsFilter(ARTIFACT_OPTIONS, provingConditions(conditions, 'artifacts_short_name', 'Roman Coin')), async () => {
+					await openNewLoanRequest(page);
+					return readOptions();
+				}, 'Roman Coin');
+			}
+		});
 	}
 	await setOptionsFilter(ARTIFACT_OPTIONS, []);
 	await leavePage(page);
@@ -362,19 +370,21 @@ test('Section 4: the Loan requests subform in an Artifact', async ({ page }) => 
 
 	await login(page, 'curator1', '12345');
 	for (const row of rows) {
-		const everything = namesIn('Loan Request', request => request['Artifact'] === row['Artifact']);
-		const conditions = conditionsFor(row, LOAN_ELEMENTS);
-		const expected = expectedNames(row['Should show'], everything);
-		const openAndRead = async () => {
-			await openArtifactTab(page, row['Artifact']);
-			await expect(page.locator('.formulize-subform')).toBeVisible();
-			return namesOnPage(page.locator(selector), everything);
-		};
-		await setSubformFilter(LOANS_SUBFORM, conditions, 0);
-		compare(row, expected, await openAndRead());
-		if (expected.length === 0) {
-			await proveQueryRan(row, () => setSubformFilter(LOANS_SUBFORM, provingConditions(conditions, 'loans_borrower', everything[0]), 0), openAndRead, everything[0]);
-		}
+		await checkRow(page, row['Row'], disagreements, async () => {
+			const everything = namesIn('Loan Request', request => request['Artifact'] === row['Artifact']);
+			const conditions = conditionsFor(row, LOAN_ELEMENTS);
+			const expected = expectedNames(row['Should show'], everything);
+			const openAndRead = async () => {
+				await openArtifactTab(page, row['Artifact']);
+				await expect(page.locator('.formulize-subform')).toBeVisible();
+				return namesOnPage(page.locator(selector), everything);
+			};
+			await setSubformFilter(LOANS_SUBFORM, conditions, 0);
+			compare(row, expected, await openAndRead());
+			if (expected.length === 0) {
+				await proveQueryRan(row, () => setSubformFilter(LOANS_SUBFORM, provingConditions(conditions, 'loans_borrower', everything[0]), 0), openAndRead, everything[0]);
+			}
+		});
 	}
 	await setSubformFilter(LOANS_SUBFORM, [], keepInSyncToStart);
 	await leavePage(page);
@@ -396,13 +406,15 @@ for (const section of [
 
 		await login(page, 'curator1', '12345');
 		for (const row of rows) {
-			const conditions = conditionsFor(row, section.elements);
-			const expected = expectedNames(row['Should show'], everything);
-			await setOptionsFilter(section.handle, conditions);
-			compare(row, expected, await openAndRead());
-			if (expected.length === 0) {
-				await proveQueryRan(row, () => setOptionsFilter(section.handle, provingConditions(conditions, ...section.proof)), openAndRead, section.proof[1]);
-			}
+			await checkRow(page, row['Row'], disagreements, async () => {
+				const conditions = conditionsFor(row, section.elements);
+				const expected = expectedNames(row['Should show'], everything);
+				await setOptionsFilter(section.handle, conditions);
+				compare(row, expected, await openAndRead());
+				if (expected.length === 0) {
+					await proveQueryRan(row, () => setOptionsFilter(section.handle, provingConditions(conditions, ...section.proof)), openAndRead, section.proof[1]);
+				}
+			});
 		}
 		await setOptionsFilter(section.handle, []);
 		await leavePage(page);
@@ -417,9 +429,11 @@ test('Section 4: the Part of a set with list in an Artifact', async ({ page }) =
 
 	await login(page, 'curator1', '12345');
 	for (const row of rows) {
-		await setOptionsFilter(SET_OPTIONS, conditionsFor(row, ARTIFACT_ELEMENTS));
-		await openArtifactTab(page, row['Artifact'], 'Cataloguing', SET_OPTIONS);
-		compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
+		await checkRow(page, row['Row'], disagreements, async () => {
+			await setOptionsFilter(SET_OPTIONS, conditionsFor(row, ARTIFACT_ELEMENTS));
+			await openArtifactTab(page, row['Artifact'], 'Cataloguing', SET_OPTIONS);
+			compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
+		});
 	}
 	await setOptionsFilter(SET_OPTIONS, []);
 	await leavePage(page);
@@ -435,12 +449,14 @@ test('Section 4: values in the page\'s address', async ({ page }) => {
 
 	await login(page, 'curator1', '12345');
 	for (const row of rows) {
-		await setSubformFilter(MAIN_VAULT_SUBFORM, conditionsFor(row, ARTIFACT_ELEMENTS));
-		const address = row['In the address'] ? `&${row['In the address']}` : '';
-		await leavePage(page, `/modules/formulize/index.php?fid=${fid}&ve=${entry}${address}`);
-		await page.waitForLoadState('load');
-		await expect(page.locator('.formulize-subform')).toBeVisible();
-		compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
+		await checkRow(page, row['Row'], disagreements, async () => {
+			await setSubformFilter(MAIN_VAULT_SUBFORM, conditionsFor(row, ARTIFACT_ELEMENTS));
+			const address = row['In the address'] ? `&${row['In the address']}` : '';
+			await leavePage(page, `/modules/formulize/index.php?fid=${fid}&ve=${entry}${address}`);
+			await page.waitForLoadState('load');
+			await expect(page.locator('.formulize-subform')).toBeVisible();
+			compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
+		});
 	}
 	await setSubformFilter(MAIN_VAULT_SUBFORM, []);
 	await leavePage(page);
@@ -468,7 +484,9 @@ test('Section 5: display conditions', async ({ page }) => {
 
 	await login(page, 'curator1', '12345');
 	for (const row of rows) {
-		await checkDisplayRow(page, row, selector);
+		await checkRow(page, row['Row'], disagreements, async () => {
+			await checkDisplayRow(page, row, selector);
+		});
 	}
 	await setDisplayConditions([]);
 	await leavePage(page);
@@ -481,13 +499,15 @@ test('Section 6: fundamental filters', async ({ page }) => {
 
 	await login(page, 'curator1', '12345');
 	for (const row of rows) {
-		const list = LISTS[row['List']];
-		const everything = namesIn(list.names);
-		await setFundamentalFilters(list.handle, conditionsFor(row, list.elements));
-		await page.goto(`/modules/formulize/index.php?sid=${screenId(list.handle)}`);
-		await expect(page.getByText(/Showing entries:|No entries were found/).first()).toBeVisible();
-		compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
-		await setFundamentalFilters(list.handle, []);
+		await checkRow(page, row['Row'], disagreements, async () => {
+			const list = LISTS[row['List']];
+			const everything = namesIn(list.names);
+			await setFundamentalFilters(list.handle, conditionsFor(row, list.elements));
+			await page.goto(`/modules/formulize/index.php?sid=${screenId(list.handle)}`);
+			await expect(page.getByText(/Showing entries:|No entries were found/).first()).toBeVisible();
+			compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
+			await setFundamentalFilters(list.handle, []);
+		});
 	}
 });
 
@@ -512,10 +532,12 @@ test('Section 8: a disabled condition, made in the admin UI', async ({ page }) =
 	await page.goto('/user.php?op=logout');
 	await login(page, 'curator1', '12345');
 	for (const row of casesFor('A').filter(row => !['A4', 'A5'].includes(row['Row']))) { // A4 and A5 are the dynamic default, below
-		const shouldBeEditable = row['Should see'] === 'End date can be edited';
-		if (await endDateCanBeEdited(row['Open']) !== shouldBeEditable) {
-			disagreements.push(`${row['Row']}: ${row['Should see']}, on ${row['Open']}`);
-		}
+		await checkRow(page, row['Row'], disagreements, async () => {
+			const shouldBeEditable = row['Should see'] === 'End date can be edited';
+			if (await endDateCanBeEdited(row['Open']) !== shouldBeEditable) {
+				disagreements.push(`${row['Row']}: ${row['Should see']}, on ${row['Open']}`);
+			}
+		});
 	}
 	await leavePage(page, '/user.php?op=logout');
 
@@ -546,18 +568,22 @@ test('Section 8: a dynamic default, made in the admin UI', async ({ page }) => {
 	await page.goto('/user.php?op=logout');
 	await login(page, 'curator1', '12345');
 	const [row] = casesFor('A').filter(row => row['Row'] === 'A4');
-	await openEntry(page, formId('Loan Requests'), entryId('loan_requests', 'loans_borrower', row['Open']));
-	const shown = await page.locator('.form-row:has(.formulize-label-loans_donor) select option:checked').allTextContents();
-	if (!shown.map(text => text.trim()).includes('Emilie Du Châtelet')) {
-		disagreements.push(`${row['Row']}: Donor contact should show Emilie Du Châtelet, but shows ${shown.join(', ')}`);
-	}
+	await checkRow(page, row['Row'], disagreements, async () => {
+		await openEntry(page, formId('Loan Requests'), entryId('loan_requests', 'loans_borrower', row['Open']));
+		const shown = await page.locator('.form-row:has(.formulize-label-loans_donor) select option:checked').allTextContents();
+		if (!shown.map(text => text.trim()).includes('Emilie Du Châtelet')) {
+			disagreements.push(`${row['Row']}: Donor contact should show Emilie Du Châtelet, but shows ${shown.join(', ')}`);
+		}
+	});
 	// a new Loan Request has no artifact chosen yet, so the condition finds nothing, and there's no donor to default to
 	const [newEntryRow] = casesFor('A').filter(row => row['Row'] === 'A5');
-	await openNewLoanRequest(page);
-	const donorsShownNew = await namesOnPage(page.locator('.form-row:has(.formulize-label-loans_donor) select option:checked'), namesIn('Donor'));
-	if (donorsShownNew.length > 0) {
-		disagreements.push(`${newEntryRow['Row']}: Donor contact should show nothing, but shows ${donorsShownNew.join(', ')}`);
-	}
+	await checkRow(page, newEntryRow['Row'], disagreements, async () => {
+		await openNewLoanRequest(page);
+		const donorsShownNew = await namesOnPage(page.locator('.form-row:has(.formulize-label-loans_donor) select option:checked'), namesIn('Donor'));
+		if (donorsShownNew.length > 0) {
+			disagreements.push(`${newEntryRow['Row']}: Donor contact should show nothing, but shows ${donorsShownNew.join(', ')}`);
+		}
+	});
 	await leavePage(page, '/user.php?op=logout');
 
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
@@ -587,24 +613,30 @@ test('Section 9: a site that shows dates as d/m/Y', async ({ page }) => {
 
 	const { selector: conditionSelector } = howToCheck('T');
 	for (const row of conditionRows) {
-		await setSubformFilter(MAIN_VAULT_SUBFORM, conditionsFor(row, ARTIFACT_ELEMENTS));
-		await openEntry(page, fid, mainVault);
-		await expect(page.locator('.formulize-subform')).toBeVisible();
-		compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(conditionSelector), everything));
+		await checkRow(page, row['Row'], disagreements, async () => {
+			await setSubformFilter(MAIN_VAULT_SUBFORM, conditionsFor(row, ARTIFACT_ELEMENTS));
+			await openEntry(page, fid, mainVault);
+			await expect(page.locator('.formulize-subform')).toBeVisible();
+			compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(conditionSelector), everything));
+		});
 	}
 	await setSubformFilter(MAIN_VAULT_SUBFORM, []);
 
 	const { selector: displaySelector } = howToCheck('W');
 	for (const row of displayRows) {
-		await checkDisplayRow(page, row, displaySelector);
+		await checkRow(page, row['Row'], disagreements, async () => {
+			await checkDisplayRow(page, row, displaySelector);
+		});
 	}
 	await setDisplayConditions([]);
 
 	const { selector: searchSelector } = howToCheck('U');
 	await leavePage(page, catalogue);
 	for (const row of searchRows) {
-		await searchList(page, catalogue, searchesFor(row, ARTIFACT_ELEMENTS));
-		compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(searchSelector), everything));
+		await checkRow(page, row['Row'], disagreements, async () => {
+			await searchList(page, catalogue, searchesFor(row, ARTIFACT_ELEMENTS));
+			compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(searchSelector), everything));
+		});
 	}
 
 	await page.goto('/user.php?op=logout');

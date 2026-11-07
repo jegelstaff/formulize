@@ -114,7 +114,9 @@ async function expectWeaponsSubformToShow(page, shown, notShown) {
 	await expect(subform).not.toBeVisible();
 }
 
-test.describe.serial('Literal terms in subform conditions', () => {
+// Not serial: each case takes away the conditions before it and sets its own, so a case that fails doesn't stop the rest from
+// being tried. With one worker they still run in this order, and the first still takes settingsBefore.
+test.describe('Literal terms in subform conditions', () => {
 
 	test.beforeEach(() => {
 		test.setTimeout(300000);

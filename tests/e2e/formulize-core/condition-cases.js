@@ -1,6 +1,8 @@
 const { expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
+const { webContainer } = require('../docker-containers');
 import { waitForWorkingMessage } from '../utils';
 
 // Reads conditions-and-searches.md, for the specs that check what it says. That file is the test data: this only knows how
@@ -212,4 +214,58 @@ export function searchesFor(row, elements) {
 		}
 		return { handle: elements[parts[1]], term: parts[2] };
 	});
+}
+
+/**
+ * The PHP errors in the log from a moment on, in words. A row that breaks the page often leaves one, and it says where to
+ * look. Only uncaught exceptions are logged, so a query that fails isn't here.
+ * @param {number} since - Seconds since the epoch, like the log's microtime
+ * @returns {string[]}
+ */
+export function phpErrorsSince(since) {
+	let log = '';
+	try {
+		log = execSync(`docker exec ${webContainer()} tail -n 500 /var/www/html/logs/formulize_log_active.log`, { encoding: 'utf8', timeout: 10000, maxBuffer: 5 * 1024 * 1024 });
+	} catch (e) {
+		return []; // no log, or no container to read it from, which is no reason to stop the row
+	}
+	const errors = [];
+	for (const line of log.split('\n')) {
+		try {
+			const entry = JSON.parse(line);
+			if (entry.formulize_event === 'PHP-error-recorded' && entry.microtime >= since) {
+				errors.push(`${entry.PHP_error_string} (${entry.PHP_error_file}:${entry.PHP_error_errline})`);
+			}
+		} catch (e) {
+			// not a line of JSON
+		}
+	}
+	return [...new Set(errors)];
+}
+
+/**
+ * Check one row so that a row that can't be checked is recorded, and the rows after it still run. A setting MCP refuses, a
+ * page that doesn't finish drawing, or anything else that stops the check becomes a disagreement saying so, and the page goes
+ * somewhere neutral for the next row. When a row disagrees for any reason, the PHP errors logged while it ran are added too.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} rowId - The row, ie: S12
+ * @param {string[]} disagreements - Where the row's disagreements go
+ * @param {() => Promise<void>} check - Sets up the row and compares, adding to disagreements
+ */
+export async function checkRow(page, rowId, disagreements, check) {
+	const since = Date.now() / 1000;
+	const before = disagreements.length;
+	try {
+		await check();
+	} catch (error) {
+		const message = String(error && error.message ? error.message : error).replace(/\u001b\[[0-9;]*m/g, '');
+		const lines = message.split('\n').map(line => line.trim()).filter(line => line !== '');
+		disagreements.push(`${rowId}: could not be checked. ${lines.slice(0, 2).join(' ')}`);
+		await page.goto('/modules/formulize/index.php').catch(() => {});
+	}
+	if (disagreements.length > before) {
+		for (const error of phpErrorsSince(since)) {
+			disagreements.push(`${rowId}: PHP logged ${error}`);
+		}
+	}
 }

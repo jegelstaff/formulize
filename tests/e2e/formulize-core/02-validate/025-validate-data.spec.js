@@ -43,7 +43,7 @@ test.describe('Validate Data', () => {
 		await page3.getByRole('checkbox', { name: 'Backgrounder / Resume' }).check();
 		await page3.getByRole('checkbox', { name: 'Suitable audience' }).check();
 		await page3.getByRole('group', { name: 'Exhibits', exact: true }).getByLabel('Name').check();
-		await page3.getByRole('checkbox', { name: 'Curator' }).check();
+		await page3.getByRole('checkbox', { name: 'Curator', exact: true }).check();
 		await page3.getByRole('group', { name: 'Exhibits', exact: true }).getByLabel('Collections').check();
 		await page3.getByRole('checkbox', { name: 'Artifacts' }).check();
 		await page3.getByRole('checkbox', { name: 'Respondent name' }).check();
