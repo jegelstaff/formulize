@@ -182,10 +182,11 @@ while ($row = $xoopsDB->fetchArray($result)) {
 }
 ok('the system has elements to check', count($elementIds) > 0, 'found ' . count($elementIds));
 
-// What the configuration-as-code system says each element depends on, asked once. The scan uses the same
-// routine to decide what counts as a reference, and this is here so that it goes on doing so: if anyone
-// ever gives the scan its own idea of what a reference is, the two drift apart silently, and the way that
-// shows up is a deletion quietly leaving something behind. Built from the same properties the scan reads.
+// What the configuration-as-code system says each element depends on, asked once. That is separate code from the
+// scan - getElementDependencies() and each type's getEleValueDependencies(), which formulizeElementReferences never
+// calls - so the two can disagree, and where they do, a deletion can quietly leave something behind. It only covers
+// elements that depend on other elements, and only one way: something the scan reports and the dependencies do not
+// would pass. Built from the same properties the scan reads.
 $dependenciesOfElement = array();
 $dependencyResult = $xoopsDB->query("SELECT ele_id, ele_type, ele_filtersettings, ele_disabledconditions,
     ele_dynamicdefault_conditions, ele_dynamicdefault_source, ele_value FROM " . prefix('formulize'));

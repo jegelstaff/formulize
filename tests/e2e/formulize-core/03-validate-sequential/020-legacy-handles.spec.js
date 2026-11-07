@@ -2,7 +2,11 @@ const { test, expect } = require('@playwright/test');
 const { execFileSync } = require('child_process');
 const { webContainer } = require('../../docker-containers');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
-import { login, renameElementHandle, elementId, openArtifactOriginsMap, expectArtifactOriginsMap } from '../../utils';
+import {
+	login, renameElementHandle, elementId, openArtifactOriginsMap, expectArtifactOriginsMap, loadSavedView, expectArtifactOriginsList,
+	dbQuery, dbPrefix,
+} from '../../utils';
+import { asAdmin, asCurator } from './museum-checks';
 
 /**
  * Settings written before Formulize saved element ids still name elements by handle. Renaming the element must turn
@@ -53,6 +57,7 @@ test.describe.serial('Legacy handles in settings', () => {
 			expect(stored.group_filter_element).toBe(id);
 			// the values that are only the handle's text
 			expect(stored.condition_term).toBe(handle);
+			expect(stored.mapping_value).toBe(handle); // a setting that only holds ids, so the word there is not the element
 			expect(stored.list_search).toBe(handle);
 			expect(stored.button_value).toBe(handle);
 			expect(stored.screen_default_values).toContain(handle);
@@ -118,5 +123,41 @@ test.describe.serial('A linked list whose source is stored by handle', () => {
 		await renameAsAdmin(page, 'donors_full_name', 'donors_name');
 		expect(legacySettings('read-source')).toBe(byId);
 		await expectTheDonorListToWork(page);
+	});
+});
+
+test.describe.serial('An element whose handle is a number', () => {
+
+	test.afterAll(() => {
+		legacySettings('remove-numeric');
+	});
+
+	// The map plots by Latitude, and the Artifact origins list shows it, both naming it by its id
+	const whereLatitudeIsUsed = () => [
+		dbQuery(`SELECT m.lat_element FROM ${dbPrefix()}_formulize_screen_map m JOIN ${dbPrefix()}_formulize_screen s ON s.sid = m.sid WHERE s.screen_handle = 'artifact_origins'`)[0][0],
+		dbQuery(`SELECT sv_oldcols FROM ${dbPrefix()}_formulize_saved_views WHERE sv_name = 'Artifact origins list'`)[0][0],
+	];
+	async function expectTheMapAndListToWork(page) {
+		await asCurator(page);
+		await openArtifactOriginsMap(page);
+		await expectArtifactOriginsMap(page);
+		await page.goto('/modules/formulize/');
+		await loadSavedView(page, 'Artifact origins list');
+		await expectArtifactOriginsList(page);
+	}
+
+	test('a rename gives it a handle, and the numbers that were its handle and its id stay as ids', async ({ page }) => {
+		test.setTimeout(300000);
+		legacySettings('remove-numeric'); // anything an interrupted run left
+		const before = whereLatitudeIsUsed();
+		const id = legacySettings('install-numeric');
+		expect(id).toBe(before[0]); // the map names it by the number that is now its handle as well
+		expect(before[1].split(',')).toContain(id);
+		await expectTheMapAndListToWork(page);
+
+		await asAdmin(page);
+		expect(await renameElementHandle(page, id, 'artifacts_latitude')).toBeNull();
+		expect(whereLatitudeIsUsed()).toEqual(before);
+		await expectTheMapAndListToWork(page);
 	});
 });

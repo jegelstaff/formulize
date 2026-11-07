@@ -62,6 +62,9 @@ $misspelled = array(
 // it, one use is misspelled beside the others, so the procedure names the element both ways.
 $staleElement = 'artifacts_id_number';
 $staleSpelling = 'Artifacts_ID_Number';
+// Another, whose settings name it with hyphens, which is the other change that left references behind: the custom
+// button on the Artifacts list names it
+$staleWithHyphens = array('element' => 'artifacts_condition', 'spelling' => 'artifacts-condition');
 // Takes the handle of an element in another form, which only differs from it by case
 $collision = array('element' => 'donors_bio', 'spelling' => 'ARTIFACTS_HEIGHT');
 // Has no field to rename, because its field is under some other name, until a person mends that
@@ -433,6 +436,7 @@ if ($command == 'break') {
 		$spellings[intval($elements[$handle]['ele_id'])] = $spelling;
 	}
 	$spellings[intval(old_element($staleElement)['ele_id'])] = $staleSpelling;
+	$spellings[intval(old_element($staleWithHyphens['element'])['ele_id'])] = $staleWithHyphens['spelling'];
 	$tokens = array();
 	foreach ($misspelled as $handle => $spelling) {
 		$tokens['{' . $handle . '}'] = '{' . $spelling . '}';

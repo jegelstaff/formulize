@@ -13,23 +13,6 @@ behaviour. CI runs them *before* the e2e suite, since they have nothing to wait 
 * `normalize_then_escape_test.php`
 * `date_search_test.php`
 * `empty_set_search_test.php`
-* `element_references_test.php` - where an element is referred to, as `formulizeElementReferences` works it
-  out from the declaration in `xoops_version.php` and each element type's `$eleValueReferences`, against an
-  in-memory stand-in for the database. Covers the usage report and the clean up after a deletion, a rename
-  changing only the positions declared to hold a reference (never a condition's term or a search value),
-  old handles becoming ids, tokens and notification tags being renamed, a column declared more than once
-  (a list screen column's element and the {handle} token in its search), and code kept in the database.
-  Also what `formulizeElementHandleCode` rewrites in code: the handle given to a parameter declared to take
-  elements, in each shape (one, commas, list, lists, keys), filter terms, the variables Formulize names after
-  handles (moving one of the author's own out of the way), and what it leaves for a person - an array key, a
-  column in a query, a handle put together at runtime. And the declarations themselves, read by
-  `formulizeElementParameters` from the real source: each names a real parameter and shape, no other method
-  shares a declared method's name, and every function and method known to take elements is declared.
-* `element_handle_normalization_test.php` - what the update patch in `admin/patches/002_always_run.php` takes to
-  be an old spelling of an element handle, before asking `formulizeElementReferences` whether it really is a
-  reference: capitals or hyphens in the shape of a handle, with a saved view's hidden column prefix and
-  `{search_handle}` taken off, leaving out Formulize's own tokens like `{TODAY}` and notification tags that are
-  correct as they are.
 * `blocked_extensions_sync_test.php` - the list of never-executable script extensions, written out in
   `BLOCKED_EXTENSIONS`, `uploads/.htaccess`, the fallback copy in `uploads_execution_probe.php` and the copy
   in `docs/uploads_not_executable.md`, is the same set everywhere. Fails if any copy drifts from the constant.
@@ -73,11 +56,14 @@ them *after* the e2e suite, when the setup specs have finished building the muse
   it) but nothing the museum system contains, and it reads and writes no data of its own - every element
   is in memory, and the only files it touches are named for a handle no real element uses.
 
-* `element_handle_patch_test.php` - what the update patch does to a site whose element handles still have
-  capitals or hyphens: the real patch and the real rename, on a real database, with an entry read back through
-  `getData()` before and after. Only the old site itself is written directly, because Formulize refuses to create
-  such a handle now. Renaming a field cannot be rolled back, so it needs a copy of the database, and refuses to start
-  without one. CI makes that copy and runs this after the final dump. The top of the file has the commands.
+* `element_handle_code_test.php` - what a rename rewrites in a piece of code, through
+  `formulizeElementHandleCode`: the handle given to a parameter declared to take elements, in each shape, filter
+  terms, `{handle}` tokens, the variables Formulize names after handles (moving one of the author's own out of the
+  way, and two spellings of one handle becoming one variable), and what it leaves for a person. And the
+  declarations themselves, read by `formulizeElementParameters` from the real source. The one unit test situation in
+  renaming: PHP can be written many more ways than the museum system happens to. It boots the application, and
+  reads and writes nothing of the system. What renaming and the update patch do to a real system is tested through
+  the application, in `03-validate-sequential/`.
 
 To run one against a local docker environment:
 

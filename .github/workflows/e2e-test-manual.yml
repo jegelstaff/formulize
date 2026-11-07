@@ -104,12 +104,6 @@ jobs:
     - name: PHP logic tests (blocked file-extension lists in step)
       run: docker exec formulize-web-1 php /var/www/html/tests/blocked_extensions_sync_test.php
 
-    - name: PHP logic tests (element references - delete, rename, old handles to ids)
-      run: docker exec formulize-web-1 php /var/www/html/tests/element_references_test.php
-
-    - name: PHP logic tests (old spellings of element handles, for the update patch)
-      run: docker exec formulize-web-1 php /var/www/html/tests/element_handle_normalization_test.php
-
     - name: Install dependencies
       run: npm ci
       working-directory: tests/e2e
@@ -156,6 +150,12 @@ jobs:
     - name: PHP integrity tests (element reference scan, against the built system)
       if: ${{ !inputs.test_filter }}
       run: docker exec formulize-web-1 php /var/www/html/tests/element_reference_integrity_test.php
+
+    # What a rename rewrites in a piece of code. It reads nothing of the system and writes nothing, but it needs the
+    # application booted, which needs the install the setup specs do.
+    - name: PHP integrity tests (what a rename rewrites in code)
+      if: ${{ !inputs.test_filter }}
+      run: docker exec formulize-web-1 php /var/www/html/tests/element_handle_code_test.php
 
     - name: PHP integrity tests (saved views round trip)
       if: ${{ !inputs.test_filter }}
@@ -208,16 +208,6 @@ jobs:
         if [ -d "modules/formulize/templates/screens" ]; then
           cp -r modules/formulize/templates/screens/* tests/e2e/final-state/modules/formulize/templates/screens/ || echo "templates/screens folder empty or not accessible"
         fi
-
-    # After everything, including the dump above, because it turns the finished system into a site with its element
-    # handles in their old shapes. It works on a copy of the database, and needs one of its own because renaming a
-    # field cannot be rolled back. It puts back the files it changes.
-    - name: PHP integrity tests (element handle update patch, on a copy of the built system)
-      if: ${{ !inputs.test_filter }}
-      run: |
-        docker exec formulize-mariadb-1 mariadb -uroot -pabc123 -e "CREATE DATABASE formulize_patch_test; GRANT ALL ON formulize_patch_test.* TO 'user'@'%'"
-        docker exec formulize-mariadb-1 sh -c "mariadb-dump -uroot -pabc123 formulize | mariadb -uroot -pabc123 formulize_patch_test"
-        docker exec -e FORMULIZE_PATCH_TEST_DB=formulize_patch_test formulize-web-1 php /var/www/html/tests/element_handle_patch_test.php
 
     - name: Clean up containers
       if: always()

@@ -88,7 +88,12 @@ test.describe.serial('Updating a site with element handles in their old shapes',
 		expect(said).toContain('Renaming element handles');
 		expect(said).toContain('Artifacts_Year');
 		expect(said).toContain('Updating references to element handles that still use capitals or hyphens');
-		expect(said).toContain('Artifacts_ID_Number');
+		// exactly the stale references that were planted, with capitals and with hyphens, and nothing that only looks like one
+		const updated = said.split('\n').filter(line => line.startsWith('Updated references to')).map(line => line.trim()).sort();
+		expect(updated).toEqual([
+			'Updated references to artifacts_condition written as artifacts-condition',
+			'Updated references to artifacts_id_number written as Artifacts_ID_Number',
+		]);
 		expect(said).toContain('Element handles that could not be fixed');
 		expect(said).toContain('Artifacts_Date_Of_Acquisition');
 		expect(said).toContain('Old element handles still used in custom code');
