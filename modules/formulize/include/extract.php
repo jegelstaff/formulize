@@ -3098,6 +3098,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 							}
 							// if any linked checkbox
 							// or if any select type (which will necessarily be only linked ones since we're in a linked if statement from above), that supports multiple selections [1], and (number of rows is greater than 1 [0] or it is an autocomplete element [8])
+							$sourceEntryIsSelected = "$queryElement = source.entry_id";
 							if (elementTypeIsOrExtends($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], 'checkboxLinked')
 								OR (
 									elementTypeIsOrExtends($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], 'select')
@@ -3112,10 +3113,17 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 									$likebits = "";
 									$search_column = "source.`entry_id`";
 								}
-								$newWhereClause = $linkedExists . " (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE ($queryElement = source.entry_id OR $queryElement LIKE CONCAT('%,',source.entry_id,',%')) AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($cleanSearchTerm) . $likebits . $quotes . ")";
-							} else {
-								$newWhereClause = $linkedExists . " (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $queryElement = source.entry_id AND " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($cleanSearchTerm) . $likebits . $quotes . ")";
+								$sourceEntryIsSelected = "($queryElement = source.entry_id OR $queryElement LIKE CONCAT('%,',source.entry_id,',%'))";
 							}
+							// Typed text is stored with its special characters encoded, ie: O'Brien is O&#039;Brien, and the term has been encoded the same way to match it. A derived value
+							// is stored as it is, ie: Aoife O'Brien, so the source column can hold either, and the term is looked for both ways. (Not with IN and NOT IN, see above.)
+							// ie: donor LIKE O'Brien becomes ... AND (source.`donors_name` LIKE '%O&#039;Brien%' OR source.`donors_name` LIKE '%O\'Brien%')
+							$sourceValueMatches = $search_column . $operator . $quotes . $likebits . formulize_db_escape($cleanSearchTerm) . $likebits . $quotes;
+							$searchTermAsTyped = htmlspecialchars_decode($cleanSearchTerm, ENT_QUOTES);
+							if ($searchTermAsTyped !== $cleanSearchTerm AND trim($operator) !== 'IN' AND trim($operator) !== 'NOT IN') {
+								$sourceValueMatches = "($sourceValueMatches OR " . $search_column . $operator . $quotes . $likebits . formulize_db_escape($searchTermAsTyped) . $likebits . $quotes . ")";
+							}
+							$newWhereClause = $linkedExists . " (SELECT 1 FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS source WHERE $sourceEntryIsSelected AND $sourceValueMatches)";
 						}
 					}
 
