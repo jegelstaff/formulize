@@ -114,7 +114,7 @@ export function namesIn(table, filter = () => true) {
 	return names;
 }
 
-// One cell of conditions, as MCP takes them
+// One cell of conditions, as MCP takes them, with the caption each one was written with
 function conditionsIn(cell, type, elements) {
 	return cell.split(';').map(condition => condition.trim()).filter(condition => condition !== '').map(condition => {
 		const operator = condition.match(/ (NOT LIKE|LIKE|IN|!=|>=|<=|=|>|<)( |$)/);
@@ -126,7 +126,7 @@ function conditionsIn(cell, type, elements) {
 			throw new Error(`No element for the caption "${caption}" in the condition: ${condition}`);
 		}
 		const term = condition.slice(operator.index + operator[0].length).trim();
-		return { element: elements[caption], operator: operator[1], value: term === '(empty)' ? '' : term, type };
+		return { caption, element: elements[caption], operator: operator[1], value: term === '(empty)' ? '' : term, type };
 	});
 }
 
@@ -134,6 +134,13 @@ function conditionsIn(cell, type, elements) {
  * The conditions in a row, as MCP takes them
  */
 export function conditionsFor(row, elements) {
+	return conditionsWithCaptionsFor(row, elements).map(({ caption, ...condition }) => condition);
+}
+
+/**
+ * The conditions in a row, with the caption each one was written with, for typing them into the admin UI
+ */
+export function conditionsWithCaptionsFor(row, elements) {
 	return [
 		...conditionsIn(row['All of'], 'match-all', elements),
 		...conditionsIn(row['Any of'], 'match-one-or-more', elements),
@@ -172,6 +179,26 @@ export async function namesOnPage(locator, everything) {
 }
 
 /**
+ * The entries, out of those a row opens, where something is on the page, ie: the artifacts that show Curator note. For sections that
+ * look for one thing on each entry, rather than reading names on one page.
+ * @param {import('@playwright/test').Page} page
+ * @param {string[]} names - The entries to open, by name
+ * @param {(name: string) => Promise<void>} open - Opens one of them
+ * @param {string} selector - What to look for
+ * @returns {Promise<string[]>} The names of the entries it's on, sorted
+ */
+export async function namesWhereShown(page, names, open, selector) {
+	const shown = [];
+	for (const name of names) {
+		await open(name);
+		if (await page.locator(selector).first().isVisible()) {
+			shown.push(name);
+		}
+	}
+	return shown.sort();
+}
+
+/**
  * How a row disagrees with the page, in words, or null if it doesn't. The match is exact, so something extra counts as much as something missing.
  */
 export function disagreementIn(row, expected, shown) {
@@ -191,11 +218,11 @@ export function disagreementIn(row, expected, shown) {
  * Type a row's searches in a list, on a fresh load of it. The boxes have to still hold what was typed afterwards, or a row
  * expecting everything would pass with no search at all.
  * @param {import('@playwright/test').Page} page
- * @param {string} listUrl - Where the list is
+ * @param {() => Promise<void>} openList - Opens the list
  * @param {{handle: string, term: string}[]} searches - From searchesFor
  */
-export async function searchList(page, listUrl, searches) {
-	await page.goto(listUrl);
+export async function searchList(page, openList, searches) {
+	await openList();
 	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
 	for (const { handle, term } of searches) {
 		await page.locator(`input[name="search_${handle}"]`).fill(term);

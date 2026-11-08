@@ -2,21 +2,22 @@ const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import {
 	login, leavePage, saveAdminForm, waitForAdminPageReady, conditionalChecksFinished, elementId, dbQuery, dbPrefix, sqlEscape, ensureMainMenuOpen,
-	waitForWorkingMessage, applyColumnChanges, openAllColumnSections,
+	applyColumnChanges, openAllColumnSections,
 } from '../../utils';
 import {
-	casesFor, howToCheck, namesIn, conditionsFor, expectedNames, namesOnPage, searchesFor, searchList, disagreementIn, checkRow,
-	ARTIFACT_ELEMENTS, DONOR_ELEMENTS, COLLECTION_ELEMENTS, LOAN_ELEMENTS, OFFER_ELEMENTS,
+	casesFor, howToCheck, namesIn, conditionsFor, conditionsWithCaptionsFor, expectedNames, namesOnPage, namesWhereShown, searchesFor, searchList,
+	disagreementIn, checkRow, ARTIFACT_ELEMENTS, DONOR_ELEMENTS, COLLECTION_ELEMENTS, LOAN_ELEMENTS, OFFER_ELEMENTS,
 } from '../condition-cases';
 
 // Conditions and searches as a person meets them. Each row of conditions-and-searches.md is a setting and what should then be on
-// the page, so this sets the condition with MCP, or types the search into the list, opens the page as curator1, and compares
-// what's there with the row. That file says where to look in each section, and which names can show there.
+// the page, so this sets the condition with MCP, or types it into the admin UI, or types the search into the list, opens the page
+// as curator1, and compares what's there with the row's Should show. That file says where to look in each section, and which names
+// can show there, and every row is read the same way. Nothing a row checks is written here.
 //
 // Conditions take two paths, SQL for finding entries and an evaluation of one entry for displaying elements (see
 // ai-context/conditions.md), and sections 1 to 4 and 6 are the first and section 5 is the second. Section 7 is the search boxes
 // on a list, which go through formulize_parseFilter(), different code again, so a fix to one doesn't fix the others. Section 8
-// makes conditions in the admin UI, the way a webmaster does, and some of its cases are written here rather than in that file.
+// types each row's conditions into the admin UI, the way a webmaster does, for the settings MCP can't reach.
 //
 // How a section is built:
 //   - Each row sets its condition, opens the page and compares. A row that disagrees is recorded, and the section carries on.
@@ -47,6 +48,7 @@ test.describe.configure({ mode: 'serial' });
 
 const MCP = '/mcp/index.php/mcp';
 const SECONDS_PER_ROW = 45; // room for rows that can't be checked, which each wait out the expect timeout
+const SECONDS_PER_ADMIN_UI_ROW = 300; // typing conditions into the admin UI saves and reloads the page for each one
 
 const MAIN_VAULT_SUBFORM = 'locations_subform_artifacts';
 const LOANS_SUBFORM = 'artifacts_subform_loan_requests';
@@ -58,50 +60,23 @@ const DISPLAYED_ELEMENT = 'artifacts_curator_note';
 const WEAPONS_SUBFORM = 'collections_subform_artifacts';
 const WEAPONS_SUBFORM_DELETE_LINKS = '#filterdiv > a.conditionsdelete';
 
-const sword = 'Chinese Sword';
-const chariot = 'Egyptian Chariot';
-const musket = 'French Musket';
-const WEAPONS = [sword, chariot, musket];
+// The condition boxes in the admin UI that section 8 types each row's conditions into, by the letter of the rows. filter is the
+// name the boxes are made with, so the "match all" set is new_<filter>_element and the rest, and "match one or more" is
+// new_<filter>_oom_element. list is where the conditions are listed once they're saved, and deleteLinks are their Xs.
+const ADMIN_UI_CONDITIONS = {
+	A: { element: 'loans_end_date', tab: 'Display Settings', filter: 'disabledconditions', list: '#disabledconditions', deleteLinks: '#disabledconditions > a.conditionsdelete', elements: LOAN_ELEMENTS },
+	E: { element: 'loans_donor', tab: 'Advanced', filter: 'dynamicDefaultConditions', list: '#dynamic-defaults', deleteLinks: 'div#dynamic-defaults a.conditionsdelete', elements: ARTIFACT_ELEMENTS },
+	M: { element: WEAPONS_SUBFORM, tab: 'Options', filter: 'subformfilter', list: '#filterdiv', deleteLinks: WEAPONS_SUBFORM_DELETE_LINKS, elements: ARTIFACT_ELEMENTS },
+};
 
-// Conditions typed into the filter boxes of the Artifacts subform in the Collections form, and which of the Weapons collection's
-// artifacts it should then show. Setup gave Weapons three:
-//   Chinese Sword     donated       CE    acquired 1993-08-10
-//   Egyptian Chariot  not donated   BCE   acquired 2011-09-19
-//   French Musket     not donated   CE    acquired 1927-03-04
-// A term works when it's what people type, and not only when it's the value the element stores: Yes or No for a Yes/No element,
-// which stores codes, and a date written out, which is stored as YYYY-MM-DD. The stored values still work too, since conditions
-// made before now use them. A condition is [caption, operator, term] as the boxes take them. all is "match all of these", and
-// any is "match one or more of these".
-const TYPED_IN_THE_ADMIN_UI = [
-	{ title: 'with no conditions, the Weapons collection shows all its artifacts', all: [], any: [], shows: [sword, chariot, musket] },
-	{ title: 'Donated to museum = Yes shows only the donated artifacts', all: [['Donated to museum', '=', 'Yes']], any: [], shows: [sword] },
-	{ title: 'Donated to museum = No shows only the artifacts that were not donated', all: [['Donated to museum', '=', 'No']], any: [], shows: [chariot, musket] },
-	{ title: 'Donated to museum LIKE %yes%, with wildcards typed around it, shows only the donated artifacts', all: [['Donated to museum', 'LIKE', '%yes%']], any: [], shows: [sword] },
-	{ title: 'Donated to museum = 1, the code for Yes, still shows only the donated artifacts', all: [['Donated to museum', '=', '1']], any: [], shows: [sword] },
-	{ title: 'Era IN BCE, a list of one, shows only the BCE artifacts', all: [['Era', 'IN', 'BCE']], any: [], shows: [chariot] },
-	{ title: 'Date of acquisition = August 10 1993, written out, shows only the artifact acquired that day', all: [['Date of acquisition', '=', 'August 10 1993']], any: [], shows: [sword] },
-	{ title: 'Date of acquisition LIKE 2011, just the year, shows only the artifact acquired that year', all: [['Date of acquisition', 'LIKE', '2011']], any: [], shows: [chariot] },
-	{ title: 'Date of acquisition >= 2000, a year with a comparison, is from the start of that year', all: [['Date of acquisition', '>=', '2000']], any: [], shows: [chariot] },
-	{ title: 'Donor != Freeform Solutions includes the artifacts with no donor', all: [['Donor', 'NOT', 'Freeform Solutions']], any: [], shows: [chariot, musket] },
-	{ title: 'Donor = {BLANK} shows the artifacts with no donor', all: [['Donor', '=', '{BLANK}']], any: [], shows: [chariot, musket] },
-	{ title: 'Match all and match one or more together: not donated, and either BCE or acquired in 1993', all: [['Donated to museum', '=', 'No']], any: [['Era', '=', 'BCE'], ['Date of acquisition', 'LIKE', '1993']], shows: [chariot] },
-	{ title: 'Match all with a reference to the collection on screen, and match one or more', all: [['Collections', '=', '{collections_name}']], any: [['Era', '=', 'BCE'], ['Donor', '=', 'Freeform Solutions']], shows: [sword, chariot] },
-	{ title: 'Match one or more with a negated reference to the collection on screen', all: [], any: [['Collections', 'NOT', '{collections_name}'], ['Era', '=', 'BCE']], shows: [chariot] },
-];
-
-// Searches typed into the Date of acquisition box on the Artifacts list, which has the same date handling as conditions. Only the
-// artifacts named in shows and hides are looked at. The list doesn't have the column, so it's added for the visit.
-const DATE_SEARCHES = [
-	{ term: '2011', shows: [chariot], hides: [sword, musket] },
-	{ term: 'August 1993', shows: [sword], hides: [chariot, musket] },
-	{ term: '>=2020', shows: ['Roman Coin'], hides: [sword, chariot, musket] },
-	{ term: 'bread', shows: [], hides: [sword, chariot, musket, 'Roman Coin'] },
-];
-
+// The lists in sections 6 and 7, by the name rows give them. A list with a handle is a list screen, opened by its address. The
+// Artifacts list is the Artifacts form's own list, opened from the menu, and it has no fundamental filters.
 const LISTS = {
 	'Catalogue': { handle: 'artifact_catalogue', names: 'Artifact', elements: ARTIFACT_ELEMENTS },
 	'Donor artifacts': { handle: 'donor_artifacts', names: 'Donor', elements: { ...ARTIFACT_ELEMENTS, ...DONOR_ELEMENTS } },
+	'Artifacts': { open: openArtifactsListWithDates, names: 'Artifact', elements: ARTIFACT_ELEMENTS },
 };
+const LIST_SCREENS = Object.values(LISTS).filter(list => list.handle);
 
 // What a row's On screen cell can put on the page in a new Loan Request. A value is what to fill in to have something to clear.
 // A box to type in is found by its role in the element's row: a number box is a spinbutton, and a date box is a textbox, as in 020.
@@ -177,9 +152,23 @@ async function putSettingsBack() {
 	await setOptionsFilter(COLLECTION_OPTIONS, []);
 	await setOptionsFilter(FOLLOW_UP_OPTIONS, []);
 	await setDisplayConditions([]);
-	for (const list of Object.values(LISTS)) {
+	for (const list of LIST_SCREENS) {
 		await setFundamentalFilters(list.handle, []);
 	}
+}
+
+const listScreenUrls = new Map();
+
+// Open one of the lists, on a fresh load
+async function openList(page, list) {
+	if (list.open) {
+		await list.open(page);
+		return;
+	}
+	if (!listScreenUrls.has(list.handle)) {
+		listScreenUrls.set(list.handle, `/modules/formulize/index.php?sid=${screenId(list.handle)}`);
+	}
+	await page.goto(listScreenUrls.get(list.handle));
 }
 
 function compare(row, expected, shown) {
@@ -322,46 +311,43 @@ function weaponsSubformSettings() {
 	return dbQuery(`SELECT ele_value FROM ${dbPrefix()}_formulize WHERE ele_id = ${elementId(WEAPONS_SUBFORM)}`)[0][0];
 }
 
-async function openWeaponsSubformOptions(page) {
-	await openElementSettings(page, WEAPONS_SUBFORM, 'Options');
-	await expect(page.locator('#new_subformfilter_element')).toBeVisible();
-}
-
-// Type conditions into the subform's two sets of boxes, as a webmaster does, once the ones there are taken away. Each is saved,
-// and must then be in the list of conditions.
-async function limitWeaponsSubform(page, all, any) {
+// Type conditions into an element's condition boxes in the admin UI, as a webmaster does, once the ones there are taken away. Each
+// is saved, and must then be in the list of conditions. The admin UI calls != NOT.
+async function typeConditions(page, boxes, conditions) {
 	await asAdmin(page);
-	await removeConditions(page, WEAPONS_SUBFORM, 'Options', WEAPONS_SUBFORM_DELETE_LINKS);
-	await openWeaponsSubformOptions(page);
-	for (const [set, conditions] of [['subformfilter', all], ['subformfilter_oom', any]]) {
-		for (const [caption, op, term] of conditions) {
-			await page.locator(`#new_${set}_element`).selectOption({ label: caption });
-			await page.locator(`#new_${set}_op`).selectOption(op);
-			await page.locator(`#new_${set}_term`).fill(term);
-			await saveAdminForm(page);
-			await openWeaponsSubformOptions(page);
-			await expect(page.locator('#filterdiv')).toContainText(`${caption} ${op} ${term}`);
-		}
+	await removeConditions(page, boxes.element, boxes.tab, boxes.deleteLinks);
+	for (const { caption, operator, value, type } of conditions) {
+		const set = type === 'match-all' ? boxes.filter : `${boxes.filter}_oom`;
+		const op = operator === '!=' ? 'NOT' : operator;
+		await openElementSettings(page, boxes.element, boxes.tab);
+		await page.locator(`#new_${set}_element`).selectOption({ label: caption });
+		await page.locator(`#new_${set}_op`).selectOption(op);
+		await page.locator(`#new_${set}_term`).fill(value);
+		await saveAdminForm(page);
+		await openElementSettings(page, boxes.element, boxes.tab);
+		await expect(page.locator(boxes.list)).toContainText(`${caption} ${op} ${value}`);
 	}
 }
 
-// Open the Weapons collection as curator1, and which of its artifacts the subform shows. It's left without saving.
-async function weaponsShown(page) {
-	await asCurator(page);
-	await ensureMainMenuOpen(page);
-	await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-	await page.getByRole('row', { name: 'Weapons' }).getByRole('link').first().click();
-	const subform = page.locator('.formulize-subform-table');
-	await expect(subform).toBeVisible();
-	const shown = [];
-	for (const name of WEAPONS) {
-		if (await subform.getByText(name, { exact: true }).count() > 0) {
-			shown.push(name);
-		}
+// The rows of a section whose conditions are typed into the admin UI. A row with the same conditions as the row before it uses them
+// as they are, so they're typed again only when they change, or when a row stopped partway. Each row is read as curator1. read
+// opens the page and returns what the row's Should show is out of, and what's there.
+async function checkAdminUIRows(page, letter, read) {
+	const boxes = ADMIN_UI_CONDITIONS[letter];
+	let typed = null;
+	for (const row of casesFor(letter)) {
+		await checkRow(page, row['Row'], disagreements, async () => {
+			const conditions = conditionsWithCaptionsFor(row, boxes.elements);
+			if (JSON.stringify(conditions) !== typed) {
+				typed = null;
+				await typeConditions(page, boxes, conditions);
+				typed = JSON.stringify(conditions);
+			}
+			await asCurator(page);
+			const { everything, shown } = await read(row);
+			compare(row, expectedNames(row['Should show'], everything), shown);
+		});
 	}
-	await leavePage(page); // releases the entry lock
-	await expect(subform).not.toBeVisible();
-	return shown;
 }
 
 // The Artifacts list, with the Date of acquisition column added for this visit
@@ -601,19 +587,11 @@ test('Section 4: values in the page\'s address', async ({ page }) => {
 	await leavePage(page);
 });
 
-// Set a row's display conditions, and open the artifacts it names to see if the element is there
+// Set a row's display conditions, and open the artifacts in its Open cell to see which of them the element is on
 async function checkDisplayRow(page, row, selector) {
 	await setDisplayConditions(conditionsFor(row, ARTIFACT_ELEMENTS));
-	for (const [column, shouldShow] of [['Shows on', true], ['Hidden on', false]]) {
-		if (row[column] === 'Nothing') {
-			continue; // the condition holds for every artifact, or for none
-		}
-		expectedNames(row[column], namesIn('Artifact')); // a name that isn't an artifact is a mistake in the row
-		await openArtifactTab(page, row[column]);
-		if (await page.locator(selector).isVisible() !== shouldShow) {
-			disagreements.push(`${row['Row']}: Curator note should ${shouldShow ? 'show' : 'be hidden'} on ${row[column]}`);
-		}
-	}
+	const opened = expectedNames(row['Open'], namesIn('Artifact'));
+	compare(row, expectedNames(row['Should show'], opened), await namesWhereShown(page, opened, artifact => openArtifactTab(page, artifact), selector));
 }
 
 test('Section 5: display conditions', async ({ page }) => {
@@ -642,12 +620,12 @@ test('Section 6: fundamental filters', async ({ page }) => {
 			const list = LISTS[row['List']];
 			const everything = namesIn(list.names);
 			await setFundamentalFilters(list.handle, conditionsFor(row, list.elements));
-			await page.goto(`/modules/formulize/index.php?sid=${screenId(list.handle)}`);
+			await openList(page, list);
 			await expect(page.getByText(/Showing entries:|No entries were found/).first()).toBeVisible();
 			compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
 		});
 	}
-	for (const list of Object.values(LISTS)) {
+	for (const list of LIST_SCREENS) {
 		await setFundamentalFilters(list.handle, []);
 	}
 	await leavePage(page);
@@ -659,82 +637,37 @@ test('Section 7: searches on a list', async ({ page }) => {
 	const rows = casesFor('B');
 	test.setTimeout(rows.length * SECONDS_PER_ROW * 1000);
 	const { selector } = howToCheck('B');
-	const listUrls = {};
-	for (const [name, list] of Object.entries(LISTS)) {
-		listUrls[name] = `/modules/formulize/index.php?sid=${screenId(list.handle)}`;
-	}
 
 	await login(page, 'curator1', '12345');
 	for (const row of rows) {
 		await checkRow(page, row['Row'], disagreements, async () => {
 			const list = LISTS[row['List']];
 			const everything = namesIn(list.names);
-			await searchList(page, listUrls[row['List']], searchesFor(row, list.elements));
+			await searchList(page, () => openList(page, list), searchesFor(row, list.elements));
 			compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
 		});
 	}
 	await leavePage(page);
 });
 
-test('Section 7: date searches on the Artifacts list', async ({ page }) => {
-	test.setTimeout(300000);
-	const box = page.locator('input[name="search_artifacts_date_of_acquisition"]');
-
-	await login(page, 'curator1', '12345');
-	for (const search of DATE_SEARCHES) {
-		const rowId = `Artifacts list, Date of acquisition: \`${search.term}\``;
-		await checkRow(page, rowId, disagreements, async () => {
-			if (!(await box.isVisible())) {
-				await openArtifactsListWithDates(page); // the first time, and again if a search before this one had to leave the list
-			}
-			await box.fill(search.term);
-			await box.press('Enter');
-			await waitForWorkingMessage(page);
-			await expect(page.getByText(/Showing entries:|No entries were found/).first()).toBeVisible();
-			await expect(box).toHaveValue(search.term);
-			const shown = [];
-			for (const name of [...search.shows, ...search.hides]) {
-				if (await page.getByRole('cell', { name, exact: true }).count() > 0) {
-					shown.push(name);
-				}
-			}
-			const disagreement = disagreementIn(rowId, search.shows, shown);
-			if (disagreement) {
-				disagreements.push(disagreement);
-			}
-		});
-	}
-	await leavePage(page);
-});
-
 test('Section 8: a disabled condition, made in the admin UI', async ({ page }) => {
-	test.setTimeout(300000);
-	const endDateCanBeEdited = async borrower => {
+	test.setTimeout(casesFor('A').length * SECONDS_PER_ADMIN_UI_ROW * 1000);
+	const { selector } = howToCheck('A');
+	const openRequest = async borrower => {
 		await openEntry(page, formId('Loan Requests'), entryId('loan_requests', 'loans_borrower', borrower));
 		await expect(page.locator('.form-row:has(.formulize-label-loans_borrower)')).toBeVisible();
-		return page.locator('.form-row:has(.formulize-label-loans_end_date) input:not([type="hidden"]):not([disabled])').first().isVisible();
 	};
 
+	// End date is disabled for every group when its conditions are met. The rows give the conditions.
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 	await openElementSettings(page, 'loans_end_date', 'Display Settings');
 	await page.locator('select[name="elements_ele_disabled\\[\\]"]').selectOption('all');
-	await page.locator('#new_disabledconditions_element').selectOption('Approved');
-	await page.locator('#new_disabledconditions_op').selectOption('NOT');
-	await page.locator('#new_disabledconditions_term').fill('Yes');
 	await saveAdminForm(page);
-	await openElementSettings(page, 'loans_end_date', 'Display Settings');
-	await expect(page.locator('#disabledconditions')).toContainText('Approved');
 
-	await page.goto('/user.php?op=logout');
-	await login(page, 'curator1', '12345');
-	for (const row of casesFor('A').filter(row => !['A4', 'A5'].includes(row['Row']))) { // A4 and A5 are the dynamic default, below
-		await checkRow(page, row['Row'], disagreements, async () => {
-			const shouldBeEditable = row['Should see'] === 'End date can be edited';
-			if (await endDateCanBeEdited(row['Open']) !== shouldBeEditable) {
-				disagreements.push(`${row['Row']}: ${row['Should see']}, on ${row['Open']}`);
-			}
-		});
-	}
+	await checkAdminUIRows(page, 'A', async row => {
+		const everything = expectedNames(row['Open'], namesIn('Loan Request'));
+		return { everything, shown: await namesWhereShown(page, everything, openRequest, selector) };
+	});
 	await leavePage(page, '/user.php?op=logout');
 
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
@@ -747,38 +680,27 @@ test('Section 8: a disabled condition, made in the admin UI', async ({ page }) =
 });
 
 test('Section 8: a dynamic default, made in the admin UI', async ({ page }) => {
-	test.setTimeout(300000);
+	test.setTimeout(casesFor('E').length * SECONDS_PER_ADMIN_UI_ROW * 1000);
+	const { selector } = howToCheck('E');
+	const everything = namesIn('Donor');
+
+	// Donor contact defaults to the Donor of the artifact that meets the conditions, when it's blank. The rows give the conditions,
+	// which are only on offer once there's a source.
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 	await openElementSettings(page, 'loans_donor', 'Advanced');
 	await page.locator('select[name="elements-ele_dynamicdefault_source"]').selectOption(String(elementId('artifacts_donor')));
 	await page.locator('#elements-ele_use_default_when_blank1').check();
 	await saveAdminForm(page);
-	await openElementSettings(page, 'loans_donor', 'Advanced'); // the conditions are only on offer once there's a source
-	await page.locator('#new_dynamicDefaultConditions_element').selectOption('Short name');
-	await page.locator('#new_dynamicDefaultConditions_term').fill('{loans_artifact}');
-	await saveAdminForm(page);
-	await openElementSettings(page, 'loans_donor', 'Advanced');
-	await expect(page.locator('#dynamic-defaults')).toContainText('{loans_artifact}');
 
-	// looked at and not saved, so University Library still has no donor contact
-	await page.goto('/user.php?op=logout');
-	await login(page, 'curator1', '12345');
-	const [row] = casesFor('A').filter(row => row['Row'] === 'A4');
-	await checkRow(page, row['Row'], disagreements, async () => {
-		await openEntry(page, formId('Loan Requests'), entryId('loan_requests', 'loans_borrower', row['Open']));
-		const shown = await page.locator('.form-row:has(.formulize-label-loans_donor) select option:checked').allTextContents();
-		if (!shown.map(text => text.trim()).includes('Emilie Du Châtelet')) {
-			disagreements.push(`${row['Row']}: Donor contact should show Emilie Du Châtelet, but shows ${shown.join(', ')}`);
+	// looked at and not saved, so the Loan Requests still have no donor contact
+	await checkAdminUIRows(page, 'E', async row => {
+		if (row['Loan Request'] === '(new)') {
+			await openNewLoanRequest(page);
+		} else {
+			await openEntry(page, formId('Loan Requests'), entryId('loan_requests', 'loans_borrower', row['Loan Request']));
+			await expect(page.locator(`.form-row:has(.formulize-label-${DONOR_OPTIONS}) select`)).toBeVisible();
 		}
-	});
-	// a new Loan Request has no artifact chosen yet, so the condition finds nothing, and there's no donor to default to
-	const [newEntryRow] = casesFor('A').filter(row => row['Row'] === 'A5');
-	await checkRow(page, newEntryRow['Row'], disagreements, async () => {
-		await openNewLoanRequest(page);
-		const donorsShownNew = await namesOnPage(page.locator('.form-row:has(.formulize-label-loans_donor) select option:checked'), namesIn('Donor'));
-		if (donorsShownNew.length > 0) {
-			disagreements.push(`${newEntryRow['Row']}: Donor contact should show nothing, but shows ${donorsShownNew.join(', ')}`);
-		}
+		return { everything, shown: await namesOnPage(page.locator(selector), everything) };
 	});
 	await leavePage(page, '/user.php?op=logout');
 
@@ -791,25 +713,24 @@ test('Section 8: a dynamic default, made in the admin UI', async ({ page }) => {
 	await expect(page.locator('select[name="elements-ele_dynamicdefault_source"]')).toHaveJSProperty('selectedIndex', 0);
 });
 
-// The conditions are typed into the boxes as a webmaster types them, and removed with each one's X, so the subform's settings end
-// up exactly as setup left them. Weapons is only looked at, never saved.
+// The conditions are removed with each one's X, so the subform's settings end up exactly as setup left them. Weapons is only looked
+// at, never saved.
 test('Section 8: conditions typed in the admin UI, on the Artifacts subform of a collection', async ({ page }) => {
-	test.setTimeout(TYPED_IN_THE_ADMIN_UI.length * 300000);
+	test.setTimeout(casesFor('M').length * SECONDS_PER_ADMIN_UI_ROW * 1000);
+	const { selector } = howToCheck('M');
+	const everything = namesIn('Artifact', artifact => artifact['Collections'].split(', ').includes('Weapons'));
 	weaponsSubformMayHaveConditions = true;
 	await asAdmin(page);
 	await removeConditions(page, WEAPONS_SUBFORM, 'Options', WEAPONS_SUBFORM_DELETE_LINKS); // anything an interrupted run left
 	weaponsSubformToStart = weaponsSubformSettings();
 
-	for (const typed of TYPED_IN_THE_ADMIN_UI) {
-		const rowId = `Weapons collection: ${typed.title}`;
-		await checkRow(page, rowId, disagreements, async () => {
-			await limitWeaponsSubform(page, typed.all, typed.any);
-			const disagreement = disagreementIn(rowId, typed.shows, await weaponsShown(page));
-			if (disagreement) {
-				disagreements.push(disagreement);
-			}
-		});
-	}
+	await checkAdminUIRows(page, 'M', async () => {
+		await openEntry(page, formId('Collections'), entryId('collections', 'collections_name', 'Weapons'));
+		await expect(page.locator('.formulize-subform')).toBeVisible();
+		const shown = await namesOnPage(page.locator(selector), everything);
+		await leavePage(page); // releases the entry lock
+		return { everything, shown };
+	});
 
 	await asAdmin(page);
 	await removeConditions(page, WEAPONS_SUBFORM, 'Options', WEAPONS_SUBFORM_DELETE_LINKS);
@@ -856,7 +777,7 @@ test('Section 9: a site that shows dates as d/m/Y', async ({ page }) => {
 	await leavePage(page, catalogue);
 	for (const row of searchRows) {
 		await checkRow(page, row['Row'], disagreements, async () => {
-			await searchList(page, catalogue, searchesFor(row, ARTIFACT_ELEMENTS));
+			await searchList(page, () => openList(page, LISTS['Catalogue']), searchesFor(row, ARTIFACT_ELEMENTS));
 			compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(searchSelector), everything));
 		});
 	}

@@ -6,11 +6,19 @@ The museum's data is in `01-setup/020-data-entry.spec.js`, `01-setup/022-locatio
 
 ## Writing a row
 
+Every row is written and read the same way, in every section. A row's id is its section's letter and a number, and the letter says how the row is checked, in the next table. The specs find a column by its heading.
+
 - **All of** and **Any of** are the two sets of conditions: all of the first set, and at least one of the second. Conditions in a set are separated by `;`.
 - A condition is the element's caption, an operator, and a term: `Era = BCE`. The operators are `=`, `!=`, `>`, `>=`, `<`, `<=`, `LIKE`, `NOT LIKE` and `IN`.
 - `(empty)` is a condition with nothing in the term. `{BLANK}` is the keyword for blank.
 - `{handle}` refers to a field in the entry that's open.
-- **Should show** is `Everything`, `Nothing`, `Everything except` some names, or a list of names, separated by commas.
+- **Should show** is `Everything`, `Nothing`, `Everything except` some names, or a list of names, separated by commas. What the names are out of is in the next table.
+- A row can say where to look, in a column named for what it holds:
+  - **Loan Request**, **Artifact**, **Visit** and **List** name the one to open. `(new)` in Loan Request is a new one.
+  - **Open** is several to open, by name, separated by commas, and Should show is out of those.
+  - **On screen** is what to fill in on the page first: `Caption: value`, with ` + ` between boxes to tick, and `(blank)` for filling it in and then clearing it.
+  - **Typed in** is what to type in a list's search boxes: ``Caption: `term` ``, with `<br>` between boxes.
+  - **In the address** is added to the page's address, ie: `place=Cairo`.
 - **Where what a row should show is open to question, it's what master does now.** For now, the aim is to change as little of master's behaviour as possible, so master's result is the answer for anything the rules below don't already settle. Each such row is checked by comparing runs on master and on the branch.
 
 ## How each section is checked
@@ -27,14 +35,17 @@ A row says what should be on the page. This table says where to look for it, and
 | Q | Main Vault, with the row's values in the page's address | `.formulize-subform td` | Artifact | The names in those cells are exactly the row's names |
 | D | A new Loan Request | `.form-row:has(.formulize-label-loans_donor) select option` | Donor | The options are exactly the row's names |
 | C | A new Loan Request | `.form-row:has(.formulize-label-loans_collections) label` | Collection | The boxes are exactly the row's names |
-| V | Each artifact the row names, on its Location and loans tab | `.form-row:has(.formulize-label-artifacts_curator_note) input[type="text"]` | Artifact | The box is on the page for the artifact in Shows on, and not for the one in Hidden on |
+| V | Each artifact in the row's Open, on its Location and loans tab | `.form-row:has(.formulize-label-artifacts_curator_note) input[type="text"]` | Artifact | The box is on the page for exactly the row's names, out of the artifacts it opens |
 | F | The row's list | `[id^="celladdress_"]` | By list | The names in those cells are exactly the row's names |
 | B | The row's list, then what the row types in the search boxes | `[id^="celladdress_"]` | By list | The names in those cells are exactly the row's names, and each box still holds what was typed |
+| A | Each Loan Request in the row's Open | `.form-row:has(.formulize-label-loans_end_date) input:not([type="hidden"]):not([disabled])` | Loan Request | End date can be edited in exactly the row's names, out of the Loan Requests it opens |
+| E | The row's Loan Request | `.form-row:has(.formulize-label-loans_donor) select option:checked` | Donor | The donor selected is exactly the row's names |
+| M | The Weapons collection | `.formulize-subform td` | Artifact | The names in those cells are exactly the row's names, out of the artifacts in Weapons |
 | T | Main Vault | `.formulize-subform td` | Artifact | The names in those cells are exactly the row's names |
-| W | Each artifact the row names, on its Location and loans tab | `.form-row:has(.formulize-label-artifacts_curator_note) input[type="text"]` | Artifact | The box is on the page for the artifact in Shows on, and not for the one in Hidden on |
+| W | Each artifact in the row's Open, on its Location and loans tab | `.form-row:has(.formulize-label-artifacts_curator_note) input[type="text"]` | Artifact | The box is on the page for exactly the row's names, out of the artifacts it opens |
 | U | The Catalogue list, then what the row types in the search boxes | `[id^="celladdress_"]` | Artifact | The names in those cells are exactly the row's names, and each box still holds what was typed |
 
-- **Names** is one of the tables at the end of this file, by its first column. Only text that is exactly one of those names counts, so other text in the same cells can't be mistaken for a result. By list means Artifact on the Catalogue list and Donor on the Donor artifacts list.
+- **Names** is one of the tables at the end of this file, by its first column. Only text that is exactly one of those names counts, so other text in the same cells can't be mistaken for a result. By list means Artifact on the Catalogue and Artifacts lists, and Donor on the Donor artifacts list. Out of means a row's Everything is only those, ie: a row in section 5 is out of the artifacts it opens.
 - **The match is exact.** An entry that shouldn't be there fails a row as much as one that's missing.
 - **`Everything`** means every name in the set, `Everything except` means the rest of the set, and anything else is the list of names. A name that isn't in the set stops the spec, so a typo here can't pass.
 - **`Nothing` has to be proved.** A query that fails shows no entries, the same as one that finds none. So rows that find nothing in sections 1, 3 and 4 are loaded again with their conditions in the "one or more" set, alongside one that must match, and that entry must appear.
@@ -42,12 +53,13 @@ A row says what should be on the page. This table says where to look for it, and
 ## What the operators mean
 
 - `=` and `LIKE` on an element with several values mean any of them. `!=` and `NOT LIKE` mean none of them, whichever order they were saved in.
+- A `{ }` that holds several values, ie: checkboxes, is the same. With `LIKE`, any of them can be part of a value, so Iron finds Cast iron, the same as a term that's typed. Linked values are entry ids, so they're compared whole, and so are the stored values of an element with text people see that's different from what's stored, because 1 isn't part of 12.
 - A blank field is not equal to anything, so `!=` and `NOT LIKE` find it. Nothing is before or after a blank, so `>` and `<` don't.
 - NULL and an empty string are both blank.
 - A year or month in a date condition means all of that period: `= 2002` is any day in 2002, `> 2002` is after the end of it, and `< 2002` is before the start of it.
 - A term that can't be a date finds nothing with `=`, `>`, `<` and `LIKE`, and everything with `!=` and `NOT LIKE`.
 - `LIKE` and `NOT LIKE` on an element with text people see that's different from what's stored look in that text, and then compare whole stored values.
-- A number in a condition on a linked element is an entry id, if no entry has that number as its text. Display conditions don't do this, so section 5 doesn't have rows for it.
+- A number in a condition on a linked element is an entry id, if no entry has that number as its text, whether the element holds one value or several. Display conditions don't do this, so section 5 doesn't have rows for it. On an element that isn't linked, a number is a value like any other, ie: `Handling = 1` is what's stored for Gloves, in S144.
 - A condition on a connected form keeps the main entries with at least one connected entry that meets it, and shows only the connected entries that do. See [Conditions on connected forms](../../../docs/filters.md#conditions-on-connected-forms).
 - `{ }` that refers to a blank field: `=` and `LIKE` find blanks, `!=` and `NOT LIKE` find anything that isn't blank, and `>` and `<` find nothing.
 - The exception is a condition whose element lists entries from the form the `{ }` refers to, where the `{ }` names a linked element in that form, ie: `Visit = {visits_donor}` in section 4. With that linked element blank, `=` finds nothing, because master finds nothing. `!=` finds everything, since nothing is the same.
@@ -55,6 +67,7 @@ A row says what should be on the page. This table says where to look for it, and
 - On when an entry was made or modified, which have a time as well, a day is all of that day, as the person sees it. `<= {TODAY}` is everything made today, and `> {TODAY}` is after the end of today.
 - A list of users matches the name people see in it, ie: Curator One, as well as the user's login.
 - In a new entry, a `{ }` with nothing on screen has no value yet, so a list that depends on it is empty until there's one. On a linked element that's true of every operator. On any other element it's true of `=`, and the other operators ignore the condition. If the `{ }` element has a default value, an element that isn't linked uses that, whatever the operator. Any other conditions still apply.
+- In a new entry, a `{ }` whose value was taken out on screen has no value either, but it's not the same as nothing yet: `=` finds nothing, and the other operators ignore the condition, on a linked element too. That's what master does.
 - On a saved entry, a linked element always offers the value that's selected, whatever the condition says, so it isn't lost when the entry is saved. Rows for saved Loan Requests expect that.
 
 ## 1. The Artifacts subform in Main Vault
@@ -133,7 +146,7 @@ Set with `sourceEntryFilter` on `locations_subform_artifacts`, then open Main Va
 | S68 | Collections != Weapons |  | Everything except Chinese Sword, Egyptian Chariot, French Musket | linked, several values, none is Weapons, and blanks |
 | S69 | Collections LIKE ns |  | Roman Coin, Chinese Sword, Egyptian Chariot, French Musket, Japanese Coin | linked, several values, part of a name, Coins and Weapons |
 | S70 | Collections NOT LIKE ns |  | Everything except Roman Coin, Chinese Sword, Egyptian Chariot, French Musket, Japanese Coin | linked, several values, no name has it, and blanks |
-| S71 | Collections = 4 |  | Chinese Sword, Egyptian Chariot, French Musket | linked, several values, the entry id of Weapons |
+| S71 | Collections = 4 |  | Chinese Sword, Egyptian Chariot, French Musket | linked, several values, the entry id of Weapons. On checkboxes that aren't linked, a number is a value, see S144 |
 | S72 | Collections != 4 |  | Everything except Chinese Sword, Egyptian Chariot, French Musket | linked, several values, not that entry id |
 | S73 | Collections = {BLANK} |  | Unknown Shard | linked, several values, blank |
 | S74 | Collections != {BLANK} |  | Everything except Unknown Shard | linked, several values, not blank |
@@ -297,20 +310,20 @@ The same setting, on a new entry. With nothing on screen, a list that depends on
 | N16 | Date of acquisition < {loans_start_date} |  | Start date: 2003-01-01 | Persian necklace, Chinese Sword, Florentine Book, French Musket, Japanese Coin, Polynesian Canoe, Persian necklace - number 2, Bronze Mirror | a date on screen |
 | N17 | Date of acquisition = {loans_start_date} |  | Start date: 2003-01-01 | Silk Scroll | the same date on screen |
 | N18 | Date of acquisition != {loans_start_date} |  | Start date: 2003-01-01 | Everything except Silk Scroll | != with a date on screen |
-| N19 | Date of acquisition = {loans_start_date} |  | Start date: (blank) | Unknown Shard | a date cleared on screen |
-| N20 | Date of acquisition != {loans_start_date} |  | Start date: (blank) | Everything except Unknown Shard | != with a date cleared on screen |
+| N19 | Date of acquisition = {loans_start_date} |  | Start date: (blank) | Nothing | a date cleared on screen has no value, so = finds nothing, as master does |
+| N20 | Date of acquisition != {loans_start_date} |  | Start date: (blank) | Everything | != with a date cleared on screen ignores the condition |
 | N21 | Materials = {loans_materials} |  | Materials they can display: Iron + Wood | Chinese Sword, Egyptian Chariot, French Musket, Polynesian Canoe, Silk Scroll | checkboxes on screen |
 | N22 | Materials != {loans_materials} |  | Materials they can display: Iron + Wood | Everything except Chinese Sword, Egyptian Chariot, French Musket, Polynesian Canoe, Silk Scroll | != with checkboxes on screen |
 | N23 | Materials LIKE {loans_materials} |  | Materials they can display: Iron + Wood | Chinese Sword, Egyptian Chariot, French Musket, American Bicycle, Polynesian Canoe, Silk Scroll | LIKE with checkboxes on screen |
 | N24 | Materials NOT LIKE {loans_materials} |  | Materials they can display: Iron + Wood | Everything except Chinese Sword, Egyptian Chariot, French Musket, American Bicycle, Polynesian Canoe, Silk Scroll | NOT LIKE with checkboxes on screen |
-| N25 | Materials = {loans_materials} |  | Materials they can display: (blank) | Japanese Coin, Persian necklace - number 2, Unknown Shard | checkboxes cleared on screen |
+| N25 | Materials = {loans_materials} |  | Materials they can display: (blank) | Nothing | checkboxes cleared on screen have no value, as master does |
 | N26 | Collections = {loans_collections} |  | Collections wanted: Weapons + Coins | Roman Coin, Chinese Sword, Egyptian Chariot, French Musket, Japanese Coin | linked checkboxes on screen |
 | N27 | Collections = {loans_collections} |  | Collections wanted: Coins + Weapons | Roman Coin, Chinese Sword, Egyptian Chariot, French Musket, Japanese Coin | the other order finds the same |
 | N28 | Collections != {loans_collections} |  | Collections wanted: Weapons + Coins | Everything except Roman Coin, Chinese Sword, Egyptian Chariot, French Musket, Japanese Coin | != with linked checkboxes on screen |
 | N29 | Collections LIKE {loans_collections} |  | Collections wanted: Weapons + Coins | Roman Coin, Chinese Sword, Egyptian Chariot, French Musket, Japanese Coin | LIKE with linked checkboxes on screen |
 | N30 | Collections NOT LIKE {loans_collections} |  | Collections wanted: Weapons + Coins | Everything except Roman Coin, Chinese Sword, Egyptian Chariot, French Musket, Japanese Coin | NOT LIKE with linked checkboxes on screen |
-| N31 | Collections = {loans_collections} |  | Collections wanted: (blank) | Unknown Shard | linked checkboxes cleared on screen |
-| N32 | Collections != {loans_collections} |  | Collections wanted: (blank) | Everything except Unknown Shard | != with linked checkboxes cleared |
+| N31 | Collections = {loans_collections} |  | Collections wanted: (blank) | Nothing | linked checkboxes cleared on screen have no value, as master does |
+| N32 | Collections != {loans_collections} |  | Collections wanted: (blank) | Everything | != with linked checkboxes cleared ignores the condition, unlike N8, where nothing was chosen yet |
 | N33 | Donor != {loans_donor} |  | Donor contact: Freeform Solutions | Everything except Chinese Sword, Japanese Coin | linked on screen |
 | N34 | Donor = {loans_donor} |  | Donor contact: Hart & Sons Antiques | Silk Scroll | an ampersand on screen |
 | N35 | Provenance != {loans_borrower} |  | Borrower: Bought in Cairo | Everything except Egyptian Chariot | text on screen |
@@ -403,60 +416,60 @@ The same setting, on a new entry. With nothing on screen, a list that depends on
 
 ## 5. Display conditions
 
-Set with `display_conditions` on `artifacts_curator_note`, then open each artifact named on its Location and loans tab as curator1. Curator note is on the page for one, and not for the other. Blanks are the ones that go wrong, so Unknown Shard is used wherever it can be.
+Set with `display_conditions` on `artifacts_curator_note`, then open each artifact in Open on its Location and loans tab as curator1. Should show is the ones Curator note is on. Blanks are the ones that go wrong, so Unknown Shard is used wherever it can be.
 
-| Row | All of | Any of | Shows on | Hidden on | What it tests |
+| Row | All of | Any of | Open | Should show | What it tests |
 |---|---|---|---|---|---|
-| V1 | Provenance = Bought in Cairo |  | Egyptian Chariot | Unknown Shard | text |
-| V2 | Provenance != Bought in Cairo |  | Unknown Shard | Egyptian Chariot | != on a blank |
-| V3 | Provenance NOT LIKE Cairo |  | Unknown Shard | Egyptian Chariot | NOT LIKE on a blank |
-| V4 | Provenance = {BLANK} |  | Unknown Shard | French Musket | blank |
-| V5 | Provenance != {BLANK} |  | French Musket | Unknown Shard | not blank |
-| V6 | Provenance = (empty) |  | Unknown Shard | French Musket | no term |
-| V7 | Appraiser email = {BLANK} |  | Unknown Shard | Roman Coin | blank, NULL and '' |
-| V8 | Appraiser email != {BLANK} |  | Roman Coin | Unknown Shard | not blank, NULL and '' |
-| V9 | Latitude != 0 |  | Unknown Shard | Nothing | number |
-| V10 | Latitude < 50 |  | Roman Coin | Unknown Shard | a blank is not less |
-| V11 | Latitude = {BLANK} |  | Unknown Shard | Roman Coin | a blank number |
-| V12 | Era = BCE |  | Unknown Shard | Chinese Sword | radio |
-| V13 | Era != CE |  | Unknown Shard | Chinese Sword | radio, != |
-| V14 | On loan = Yes |  | Roman Coin | Unknown Shard | Yes/No, by what people see |
-| V15 | On loan != Yes |  | Unknown Shard | Roman Coin | Yes/No, != |
-| V16 | On loan = {BLANK} |  | Unknown Shard | Roman Coin | Yes/No, blank |
-| V17 | Materials = Iron |  | Chinese Sword | Unknown Shard | checkboxes, a whole value |
-| V18 | Materials LIKE Iron |  | Chinese Sword | Unknown Shard | checkboxes, part of a value |
-| V19 | Materials != Iron |  | Unknown Shard | Chinese Sword | checkboxes, none is Iron |
-| V20 | Materials = {BLANK} |  | Unknown Shard | Roman Coin | checkboxes, blank |
-| V21 | Materials != {BLANK} |  | Roman Coin | Unknown Shard | checkboxes, not blank |
-| V22 | Donor = Freeform Solutions |  | Chinese Sword | Unknown Shard | linked |
-| V23 | Donor != Freeform Solutions |  | Unknown Shard | Chinese Sword | linked, != |
-| V24 | Donor = {BLANK} |  | Unknown Shard | Roman Coin | linked, blank |
-| V25 | Donor != {BLANK} |  | Roman Coin | Unknown Shard | linked, not blank |
-| V26 | Donor = Aoife O'Brien |  | Bronze Mirror | Unknown Shard | a quote |
-| V27 | Donor = Hart & Sons Antiques |  | Silk Scroll | Unknown Shard | an ampersand |
-| V28 | Collections = Weapons |  | Chinese Sword | Unknown Shard | linked, several values |
-| V29 | Collections != Weapons |  | Unknown Shard | Chinese Sword | linked, several values, != |
-| V30 | Collections LIKE ns |  | Roman Coin | Unknown Shard | linked, part of a name |
-| V31 | Collections = {BLANK} |  | Unknown Shard | Roman Coin | linked, several values, blank |
-| V32 | Date of acquisition = 2002 |  | Bronze Mirror | Unknown Shard | a year |
-| V33 | Date of acquisition != 2002 |  | Unknown Shard | Bronze Mirror | not in a year |
-| V34 | Date of acquisition > 2002 |  | Roman Coin | Unknown Shard | after a year |
-| V35 | Date of acquisition = {BLANK} |  | Unknown Shard | Roman Coin | date, blank |
-| V36 | Date of acquisition = bread |  | Nothing | Unknown Shard | not a date, hidden everywhere |
-| V37 | Date of acquisition != bread |  | Unknown Shard | Nothing | not a date, shown everywhere |
-| V38 | Era = BCE | Donor = {BLANK}; Donor NOT LIKE Solutions | Unknown Shard | Chinese Sword | all and any |
-| V39 |  | Provenance = {BLANK}; Era = CE | Unknown Shard | Egyptian Chariot | either |
-| V40 | Donated to museum = {artifacts_on_loan} |  | Roman Coin | Chinese Sword | a reference to another field of the same artifact |
-| V41 | Donated to museum != {artifacts_on_loan} |  | Chinese Sword | Roman Coin | the same, with != |
-| V42 | Year > {artifacts_latitude} |  | Roman Coin | Unknown Shard | nothing is after a blank reference |
-| V43 | Appraiser email < z |  | Roman Coin | Chinese Sword | text, '' is blank, and nothing is before a blank |
-| V44 | Date of acquisition < {TODAY} |  | Roman Coin | Unknown Shard | {TODAY} |
-| V45 | creation_datetime <= {TODAY} |  | Roman Coin | Nothing | when an entry was made, all of today |
-| V46 | creation_datetime > {TODAY} |  | Nothing | Roman Coin | after the end of today |
-| V47 | Storage = Climate controlled |  | Roman Coin | Unknown Shard | text people see that's different from what's stored |
-| V48 | Storage LIKE climate |  | Roman Coin | Chinese Sword | part of the text people see |
-| V49 | Handling LIKE glove |  | Florentine Book | Egyptian Chariot | checkboxes with text people see |
-| V50 | Catalogued by = {USER} |  | Roman Coin | Florentine Book | a list of users, and {USER} |
+| V1 | Provenance = Bought in Cairo |  | Egyptian Chariot, Unknown Shard | Egyptian Chariot | text |
+| V2 | Provenance != Bought in Cairo |  | Unknown Shard, Egyptian Chariot | Unknown Shard | != on a blank |
+| V3 | Provenance NOT LIKE Cairo |  | Unknown Shard, Egyptian Chariot | Unknown Shard | NOT LIKE on a blank |
+| V4 | Provenance = {BLANK} |  | Unknown Shard, French Musket | Unknown Shard | blank |
+| V5 | Provenance != {BLANK} |  | French Musket, Unknown Shard | French Musket | not blank |
+| V6 | Provenance = (empty) |  | Unknown Shard, French Musket | Unknown Shard | no term |
+| V7 | Appraiser email = {BLANK} |  | Unknown Shard, Roman Coin | Unknown Shard | blank, NULL and '' |
+| V8 | Appraiser email != {BLANK} |  | Roman Coin, Unknown Shard | Roman Coin | not blank, NULL and '' |
+| V9 | Latitude != 0 |  | Unknown Shard | Unknown Shard | number |
+| V10 | Latitude < 50 |  | Roman Coin, Unknown Shard | Roman Coin | a blank is not less |
+| V11 | Latitude = {BLANK} |  | Unknown Shard, Roman Coin | Unknown Shard | a blank number |
+| V12 | Era = BCE |  | Unknown Shard, Chinese Sword | Unknown Shard | radio |
+| V13 | Era != CE |  | Unknown Shard, Chinese Sword | Unknown Shard | radio, != |
+| V14 | On loan = Yes |  | Roman Coin, Unknown Shard | Roman Coin | Yes/No, by what people see |
+| V15 | On loan != Yes |  | Unknown Shard, Roman Coin | Unknown Shard | Yes/No, != |
+| V16 | On loan = {BLANK} |  | Unknown Shard, Roman Coin | Unknown Shard | Yes/No, blank |
+| V17 | Materials = Iron |  | Chinese Sword, Unknown Shard | Chinese Sword | checkboxes, a whole value |
+| V18 | Materials LIKE Iron |  | Chinese Sword, Unknown Shard | Chinese Sword | checkboxes, part of a value |
+| V19 | Materials != Iron |  | Unknown Shard, Chinese Sword | Unknown Shard | checkboxes, none is Iron |
+| V20 | Materials = {BLANK} |  | Unknown Shard, Roman Coin | Unknown Shard | checkboxes, blank |
+| V21 | Materials != {BLANK} |  | Roman Coin, Unknown Shard | Roman Coin | checkboxes, not blank |
+| V22 | Donor = Freeform Solutions |  | Chinese Sword, Unknown Shard | Chinese Sword | linked |
+| V23 | Donor != Freeform Solutions |  | Unknown Shard, Chinese Sword | Unknown Shard | linked, != |
+| V24 | Donor = {BLANK} |  | Unknown Shard, Roman Coin | Unknown Shard | linked, blank |
+| V25 | Donor != {BLANK} |  | Roman Coin, Unknown Shard | Roman Coin | linked, not blank |
+| V26 | Donor = Aoife O'Brien |  | Bronze Mirror, Unknown Shard | Bronze Mirror | a quote |
+| V27 | Donor = Hart & Sons Antiques |  | Silk Scroll, Unknown Shard | Silk Scroll | an ampersand |
+| V28 | Collections = Weapons |  | Chinese Sword, Unknown Shard | Chinese Sword | linked, several values |
+| V29 | Collections != Weapons |  | Unknown Shard, Chinese Sword | Unknown Shard | linked, several values, != |
+| V30 | Collections LIKE ns |  | Roman Coin, Unknown Shard | Roman Coin | linked, part of a name |
+| V31 | Collections = {BLANK} |  | Unknown Shard, Roman Coin | Unknown Shard | linked, several values, blank |
+| V32 | Date of acquisition = 2002 |  | Bronze Mirror, Unknown Shard | Bronze Mirror | a year |
+| V33 | Date of acquisition != 2002 |  | Unknown Shard, Bronze Mirror | Unknown Shard | not in a year |
+| V34 | Date of acquisition > 2002 |  | Roman Coin, Unknown Shard | Roman Coin | after a year |
+| V35 | Date of acquisition = {BLANK} |  | Unknown Shard, Roman Coin | Unknown Shard | date, blank |
+| V36 | Date of acquisition = bread |  | Unknown Shard | Nothing | not a date, hidden everywhere |
+| V37 | Date of acquisition != bread |  | Unknown Shard | Unknown Shard | not a date, shown everywhere |
+| V38 | Era = BCE | Donor = {BLANK}; Donor NOT LIKE Solutions | Unknown Shard, Chinese Sword | Unknown Shard | all and any |
+| V39 |  | Provenance = {BLANK}; Era = CE | Unknown Shard, Egyptian Chariot | Unknown Shard | either |
+| V40 | Donated to museum = {artifacts_on_loan} |  | Roman Coin, Chinese Sword | Roman Coin | a reference to another field of the same artifact |
+| V41 | Donated to museum != {artifacts_on_loan} |  | Chinese Sword, Roman Coin | Chinese Sword | the same, with != |
+| V42 | Year > {artifacts_latitude} |  | Roman Coin, Unknown Shard | Roman Coin | nothing is after a blank reference |
+| V43 | Appraiser email < z |  | Roman Coin, Chinese Sword | Roman Coin | text, '' is blank, and nothing is before a blank |
+| V44 | Date of acquisition < {TODAY} |  | Roman Coin, Unknown Shard | Roman Coin | {TODAY} |
+| V45 | creation_datetime <= {TODAY} |  | Roman Coin | Roman Coin | when an entry was made, all of today |
+| V46 | creation_datetime > {TODAY} |  | Roman Coin | Nothing | after the end of today |
+| V47 | Storage = Climate controlled |  | Roman Coin, Unknown Shard | Roman Coin | text people see that's different from what's stored |
+| V48 | Storage LIKE climate |  | Roman Coin, Chinese Sword | Roman Coin | part of the text people see |
+| V49 | Handling LIKE glove |  | Florentine Book, Egyptian Chariot | Florentine Book | checkboxes with text people see |
+| V50 | Catalogued by = {USER} |  | Roman Coin, Florentine Book | Roman Coin | a list of users, and {USER} |
 
 ## 6. Fundamental filters
 
@@ -492,7 +505,7 @@ Set with `fundamental_filters` on the list screen. Lists go through a different 
 | F26 | Catalogue | Catalogued by = {USER} |  | Roman Coin, Persian necklace, Babylonian Spoon | a list of users, and {USER} |
 ## 7. Search boxes on a list
 
-As curator1. Each term goes in the search box at the top of that column, on the Catalogue list or the Donor artifacts list. A term starting with `!` means the value doesn't have it, and `!=` means it isn't exactly that. Both find blanks, since they aren't a search for a value. `!{BLANK}` is not blank. `OR` in front of terms in several boxes means any one of them.
+As curator1. Each term goes in the search box at the top of that column, on the Catalogue list, the Donor artifacts list, or the Artifacts list. The Artifacts list is the Artifacts form's own list, from the menu, and it doesn't have Date of acquisition, so that column is added in Change columns each time it's opened. A term starting with `!` means the value doesn't have it, and `!=` means it isn't exactly that. Both find blanks, since they aren't a search for a value. `!{BLANK}` is not blank. `OR` in front of terms in several boxes means any one of them.
 
 | Row | List | Typed in | Should show | What it tests |
 |---|---|---|---|---|
@@ -576,20 +589,48 @@ As curator1. Each term goes in the search box at the top of that column, on the 
 | B78 | Donor artifacts | Province: `Ontario` | Freeform Solutions | a whole value, so not Prince Edward Island, which is 10 |
 | B79 | Catalogue | On loan: `Yes` | Roman Coin, Florentine Book | Yes/No, by what people see |
 | B80 | Catalogue | On loan: `No` | Chinese Sword, French Musket, Japanese Coin | Yes/No, by what people see |
+| B81 | Artifacts | Date of acquisition: `2011` | Egyptian Chariot | a year, in a column added with Change columns |
+| B82 | Artifacts | Date of acquisition: `August 1993` | Chinese Sword | a month written out, in a column added with Change columns |
+| B83 | Artifacts | Date of acquisition: `>=2020` | Roman Coin, Viking Silver Armband, Candide - first edition | on or after a year, in a column added with Change columns |
+| B84 | Artifacts | Date of acquisition: `bread` | Nothing | a term that cannot be a date, in a column added with Change columns |
 
 ## 8. Settings MCP can't reach
 
-MCP has no setting for these, so they're made in the admin UI.
+MCP has no setting for these, so the spec types each row's conditions into the admin UI, as a webmaster does, saving each one, and takes them away again with each one's X. A row with the same conditions as the row before it uses them as they are. The admin UI calls `!=` NOT.
 
-The spec also types conditions into the filter boxes of the Artifacts subform in the Collections form, as a webmaster does, and checks which weapons the Weapons collection shows. Those cases, and some date searches on the Artifacts list, are written in the spec rather than here.
+**A disabled condition.** End date in Loan Requests is disabled for all groups when its conditions are met. Should show is the Loan Requests where End date can be edited.
 
-| Row | Setting | Open | Should see | What it tests |
+| Row | All of | Any of | Open | Should show | What it tests |
+|---|---|---|---|---|---|
+| A1 | Approved != Yes |  | City Museum | City Museum | a disabled condition that isn't met |
+| A2 | Approved != Yes |  | Harbour Gallery | Nothing | a disabled condition that's met |
+| A3 | Approved != Yes |  | University Library | Nothing | a disabled condition that's met by a blank |
+
+**A dynamic default.** Donor contact in Loan Requests defaults to the Donor of the artifact that meets the conditions, and defaults apply when it's blank. Should show is the donor it has selected. Nothing is saved, so the Loan Requests keep no donor contact.
+
+| Row | All of | Any of | Loan Request | Should show | What it tests |
+|---|---|---|---|---|---|
+| E1 | Short name = {loans_artifact} |  | University Library | Emilie Du Châtelet | a dynamic default, where the left side is the source of the linked `{ }` |
+| E2 | Short name = {loans_artifact} |  | (new) | Nothing | a dynamic default, when the `{ }` has no value yet |
+
+**The Artifacts subform in the Weapons collection.** Typed into the filter boxes of the Artifacts subform in the Collections form. Weapons has Chinese Sword, Egyptian Chariot and French Musket, so Everything is those three. A term works when it's what people type, and not only when it's what the element stores: Yes or No for a Yes/No element, and a date written out. What's stored still works too, since conditions made before now use it.
+
+| Row | All of | Any of | Should show | What it tests |
 |---|---|---|---|---|
-| A1 | End date is disabled when `Approved != Yes` | City Museum | End date can be edited | a disabled condition that isn't met |
-| A2 | The same | Harbour Gallery | End date can't be edited | a disabled condition that's met |
-| A3 | The same | University Library | End date can't be edited | a disabled condition that's met by a blank |
-| A4 | Donor contact has a dynamic default of the Donor in Artifacts, where `Short name = {loans_artifact}`, and defaults apply when blank | University Library | Donor contact shows Emilie Du Châtelet | a dynamic default, where the left side is the source of the linked `{ }` |
-| A5 | The same | A new Loan Request | Donor contact shows nothing | a dynamic default, when the `{ }` has no value yet |
+| M1 |  |  | Everything | no conditions |
+| M2 | Donated to museum = Yes |  | Chinese Sword | Yes/No, by what people type |
+| M3 | Donated to museum = No |  | Egyptian Chariot, French Musket | Yes/No, the other value |
+| M4 | Donated to museum LIKE %yes% |  | Chinese Sword | wildcards typed around the term |
+| M5 | Donated to museum = 1 |  | Chinese Sword | the code Yes is stored as still works |
+| M6 | Era IN BCE |  | Egyptian Chariot | a list of one |
+| M7 | Date of acquisition = August 10 1993 |  | Chinese Sword | a date written out |
+| M8 | Date of acquisition LIKE 2011 |  | Egyptian Chariot | just the year |
+| M9 | Date of acquisition >= 2000 |  | Egyptian Chariot | a year with a comparison is from the start of that year |
+| M10 | Donor != Freeform Solutions |  | Egyptian Chariot, French Musket | != takes in the artifacts with no donor |
+| M11 | Donor = {BLANK} |  | Egyptian Chariot, French Musket | no donor |
+| M12 | Donated to museum = No | Era = BCE; Date of acquisition LIKE 1993 | Egyptian Chariot | all and any together |
+| M13 | Collections = {collections_name} | Era = BCE; Donor = Freeform Solutions | Chinese Sword, Egyptian Chariot | a reference to the collection that's open, and any |
+| M14 |  | Collections != {collections_name}; Era = BCE | Egyptian Chariot | a negated reference to the collection that's open, in any |
 
 ## 9. A site that shows dates as d/m/Y
 
@@ -609,14 +650,14 @@ Conditions, set with `sourceEntryFilter` on `locations_subform_artifacts`.
 | T8 | Date of acquisition LIKE 2002-12 |  | Persian necklace, Persian necklace - number 2, Bronze Mirror | part of a date as it's stored still matches |
 | T9 | Era = BCE | Date of acquisition LIKE 08/2020; Date of acquisition NOT LIKE 2002 | Roman Coin, Egyptian Chariot, Babylonian Spoon, Unknown Shard | all and any |
 
-Display conditions, set with `display_conditions` on `artifacts_curator_note`.
+Display conditions, set with `display_conditions` on `artifacts_curator_note`, the same as section 5.
 
-| Row | All of | Any of | Shows on | Hidden on | What it tests |
+| Row | All of | Any of | Open | Should show | What it tests |
 |---|---|---|---|---|---|
-| W1 | Date of acquisition LIKE 12/2002 |  | Bronze Mirror | Roman Coin | part of a date as the site shows it |
-| W2 | Date of acquisition NOT LIKE 12/2002 |  | Unknown Shard | Bronze Mirror | not part of a date, on a blank |
-| W3 | Date of acquisition = 21/08/2020 |  | Roman Coin | Bronze Mirror | a whole date |
-| W4 | Date of acquisition = 02/12/2002 |  | Persian necklace | Silk Scroll | a whole date, not February 12 |
+| W1 | Date of acquisition LIKE 12/2002 |  | Bronze Mirror, Roman Coin | Bronze Mirror | part of a date as the site shows it |
+| W2 | Date of acquisition NOT LIKE 12/2002 |  | Unknown Shard, Bronze Mirror | Unknown Shard | not part of a date, on a blank |
+| W3 | Date of acquisition = 21/08/2020 |  | Roman Coin, Bronze Mirror | Roman Coin | a whole date |
+| W4 | Date of acquisition = 02/12/2002 |  | Persian necklace, Silk Scroll | Persian necklace | a whole date, not February 12 |
 
 Search boxes on the Catalogue list.
 
@@ -721,16 +762,16 @@ What no row checks yet, and what checking it would take. Then problems found whi
 
 - **`proxy` and `new_0` entries.** `buildConditionsFilterSQL()` treats these markers as `new`: `proxy` is an entry someone makes on behalf of another user, and `new_0` comes from code that makes several entries at once. On-screen values stay under the marker the page used. No row opens a page with either one. To close: a user who may make entries for others, and N rows that open a new Loan Request made on someone's behalf.
 
-- **"Nothing" rows that aren't proved.** F22, B1, B17, B19, B21, B23, B24, B53 and B70 find nothing, and they aren't loaded a second time. A query that fails shows no entries, so these rows would pass anyway. To close: in section 6, put the row's conditions in the "one or more" set, alongside one that must match, the way sections 1, 3 and 4 do. In section 7, search again with `OR` in front of each of the row's terms, and `ORRoman Coin` in the Short name box, then check that Roman Coin is there. A row that already uses `OR` or `EMPTYSET` needs some other way.
+- **"Nothing" rows that aren't proved.** F22, B1, B17, B19, B21, B23, B24, B53, B70, B84 and E2 find nothing, and they aren't loaded a second time. A query that fails shows no entries, so these rows would pass anyway. To close: in section 6, put the row's conditions in the "one or more" set, alongside one that must match, the way sections 1, 3 and 4 do. In section 7, search again with `OR` in front of each of the row's terms, and `ORRoman Coin` in the Short name box, then check that Roman Coin is there. A row that already uses `OR` or `EMPTYSET` needs some other way.
 
 - **MySQL.** CI runs on MariaDB only. MySQL 8 refuses comparisons that MariaDB lets through, ie: a date with text, so a row can pass here and fail there. To close: a CI run on MySQL. There's a plan for one in `mysql-ci-plan.md` at the root of the repository.
 
-- **A value taken out on screen in a new entry.** This isn't decided yet. Should a `{ }` that refers to a field that was filled in on screen and then emptied find blanks, the way a saved blank does? The same question applies to text, radio and number fields emptied in a saved entry. The rows expect what the code does now. If that changes, N19, N25, N31 and N32 become Nothing, and N20 becomes Everything.
+- **A value taken out on screen in a saved entry.** In a new entry, a value taken out on screen has no value, which is what master does (N19, N20, N25, N31 and N32). No row empties a field on screen in a saved entry, where the `{ }` could mean the blank on screen or the value that's saved. To close: rows that open a saved Loan Request and empty a date, checkboxes and linked checkboxes on screen, and expect what master does.
 
-- **Forms that link to themselves.** A form with a list of its own entries isn't in the museum. It was, as Part of a set with, a list on Artifacts of other artifacts, and section 4 had rows for it. But that link from Artifacts to itself was in the relationship the Catalogue list uses, and it broke every fundamental filter on that list: F1 to F11, F18 and F23 to F26, in run 42398600775, on master, which has the same code. `formulize_parseFilter()` gives each form in a fundamental filter its alias in the query: `main` for the list's own form, then `f` and a number for each form linked to it. Artifacts was in both places, so `f2` replaced `main`, and the query that counts the entries failed with "Unknown column 'f2.artifacts_catalogued_by'". Forms that link to themselves are the subject of `self-referential-forms-plan.md`, at the root of the repository, which has this. To close: once that work is done, a form of its own with a list of its own entries, and rows like the ones that were here, ie: `Era = {artifacts_era}` and `Donor = {artifacts_donor}`. The list shouldn't offer the entry that's open, and should always offer the one that's selected.
+- **Forms that link to themselves.** A form with a list of its own entries isn't in the museum. It was, as Part of a set with, a list on Artifacts of other artifacts, and section 4 had rows for it. But that link from Artifacts to itself was in the relationship the Catalogue list uses, and it broke every fundamental filter on that list: F1 to F11 and F23 to F26, in run 42398600775, on master, which has the same code. `formulize_parseFilter()` gives each form in a fundamental filter its alias in the query: `main` for the list's own form, then `f` and a number for each form linked to it. Artifacts was in both places, so `f2` replaced `main`, and the query that counts the entries failed with "Unknown column 'f2.artifacts_catalogued_by'". Forms that link to themselves are the subject of `self-referential-forms-plan.md`, at the root of the repository, which has this. To close: once that work is done, a form of its own with a list of its own entries, and rows like the ones that were here, ie: `Era = {artifacts_era}` and `Donor = {artifacts_donor}`. The list shouldn't offer the entry that's open, and should always offer the one that's selected.
 
 ### Problems found
 
-- **A quote in a search on a linked element (B45).** Typed text is stored with its special characters encoded, ie: O'Brien is `O&#039;Brien`. A derived value is stored as it is, ie: `Aoife O'Brien`. A search on a linked element encodes the term, with `convertStringToUseSpecialCharsToMatchDB()` in `formulize_parseFilter()`, so it can never find a derived value with a quote in it. An ampersand still works, because that function turns `&amp;` back into `&`. Master has the same code. This is to be fixed once the rows have been run in full on both branches. S60, S61 and D11 use the same name, so check them too.
+- **"Any of" conditions on more than one form, in a list's fundamental filters (F18).** `formulize_parseFilter()` splits the fundamental filters by form, into the parts that the queries for each connected form use (`$oneSideFilters`). Two queries join those parts with AND: the one that counts the entries, and the one that picks them when the list has more than one connected form, as Donor artifacts does. So F18's "any of" set, `Email Address = {BLANK}` on the donor or `Collections NOT LIKE ns` on an artifact, becomes both, and only Hart & Sons Antiques is listed. `$basicOneSideFilter` isn't reset between forms either, so the second form's part has the first form's terms in it too. The comment above `$globalAndOr` in the same function calls this a longstanding divergence. On master the page fails, so there's no master result to go by. To fix: an "any of" set with terms on more than one form goes on the main form's part as a whole, with each connected form's terms in an EXISTS on that form. Decide whether the artifact conditions in both sets then have to be met by the same artifact, as they are when the list has one connected form.
 
 - **`{BLANK}` in a per-group filter.** `!= {BLANK}` makes `` (`field` != '' OR `field` IS NOT NULL) ``, so an empty value matches. It needs AND. `NOT {BLANK}` makes `` `field` NOT '' ``, which isn't valid SQL, and NOT is one of the operators in the admin UI. A date field avoids both now, but no other field does. Master has the same code.
