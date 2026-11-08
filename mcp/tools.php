@@ -3419,7 +3419,7 @@ Match incomplete orders that are due before today, and are going to either Canad
 Do not use foreign key values with linked elements; use the readable value instead:
 - Incorrect: [ { "element": "assigned_judge", "operator": "LIKE", "value": "509", "type": "match-all" } ]
 - Correct: [ { "element": "assigned_judge", "operator": "LIKE", "value": "Wapner", "type": "match-all" } ]';
-		$elementDescription = 'The element whose value should be checked, provided as an element handle or id. Get handles from get_form_details.';
+		$elementDescription = 'The element whose value should be checked, provided as an element handle or id. Get handles from get_form_details. It can also be one of the fields every entry has: creation_datetime or mod_datetime, for when the entry was made or last changed, or creation_uid or mod_uid, for who made it or last changed it.';
 		if($crossForm) {
 			$elementDescription .= " $noun display conditions can reference elements in this form or in other forms connected to it.";
 		}
@@ -3681,13 +3681,18 @@ Do not use foreign key values with linked elements; use the readable value inste
 		}
 
 		// validate that display conditions have valid element references, operators, and types
+		// the fields every entry has, ie: creation_datetime, are not elements, and are stored by name, the same as the admin UI and buildSourceEntryFilter() do
 		$validatedDisplayConditions = [];
 		foreach($display_conditions as $condition) {
-			if(!($conditionElementObject = _getElementObject($condition['element']))) {
+			$conditionElement = $condition['element'] ?? '';
+			if(isMetaDataField($conditionElement)) {
+				$conditionElementId = $conditionElement;
+			} elseif(!($conditionElementObject = _getElementObject($conditionElement))) {
 				throw new FormulizeMCPException('Invalid display condition: element not found', 'invalid_data');
-			}
-			if($conditionElementObject->getVar('fid') != $fid) {
+			} elseif($conditionElementObject->getVar('fid') != $fid) {
 				throw new FormulizeMCPException('Invalid display condition: element belongs to a different form', 'invalid_data');
+			} else {
+				$conditionElementId = $conditionElementObject->getVar('ele_id');
 			}
 			if(!in_array($condition['operator'], ['=', '>', '<', '>=', '<=', '!=', 'LIKE', 'NOT LIKE', 'IN'])) {
 				throw new FormulizeMCPException('Invalid display condition: operator not valid. Valid operators are =, >, <, >=, <=, !=, LIKE, NOT LIKE, IN', 'invalid_data');
@@ -3696,8 +3701,8 @@ Do not use foreign key values with linked elements; use the readable value inste
 			if(!in_array($conditionType, ['match-all', 'match-one-or-more'])) {
 				throw new FormulizeMCPException('Invalid display condition: type not valid. Valid types are match-all, match-one-or-more', 'invalid_data');
 			}
-			// store element references as IDs, the canonical format used by the admin UI and import/export (conversion is idempotent if an ID was passed)
-			$validatedDisplayConditions[0][] = $conditionElementObject->getVar('ele_id');
+			// store element references as IDs, the canonical format used by the admin UI and import/export (conversion is idempotent if an ID was passed), and the fields every entry has by name
+			$validatedDisplayConditions[0][] = $conditionElementId;
 			$validatedDisplayConditions[1][] = $condition['operator'];
 			$validatedDisplayConditions[2][] = $condition['value'];
 			$validatedDisplayConditions[3][] = $conditionType == 'match-all' ? 'all' : 'oom';

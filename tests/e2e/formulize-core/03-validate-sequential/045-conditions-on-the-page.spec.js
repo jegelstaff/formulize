@@ -131,7 +131,8 @@ async function tool(name, args) {
 		data: { jsonrpc: '2.0', id: ++requestId, method: 'tools/call', params: { name, arguments: args } },
 	});
 	const body = await response.json();
-	expect(body.error, `${name} ${JSON.stringify(args)} should succeed`).toBeUndefined();
+	// MCP doesn't log why it refused something, so its message goes in the row's readout
+	expect(body.error, `${name} ${JSON.stringify(args)} should succeed, and MCP said: ${body.error?.message ?? ''}`).toBeUndefined();
 	return JSON.parse(body.result.content[0].text);
 }
 
