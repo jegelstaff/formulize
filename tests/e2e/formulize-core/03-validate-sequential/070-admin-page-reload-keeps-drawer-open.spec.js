@@ -27,11 +27,17 @@ test('An admin page reloads with the same drawer open, or the first one if that 
 	const heading = title => page.getByRole('link', { name: title, exact: true });
 	const drawer = title => page.locator('[id^="drawer-"]').filter({ has: heading(title) });
 	const editLink = title => drawer(title).getByRole('link', { name: 'Edit this page' });
+	const pageNames = page.locator('#sortable-list .accordion-name');
 
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 	await page.goto(`/modules/formulize/admin/ui.php?page=screen&aid=${aid}&fid=${fid}&sid=${sid}&tab=pages`);
 	await waitForAdminPageReady(page);
 	await expect(editLink('Artifact')).toBeVisible();
+
+	// 022 can give the screen more pages after these three. The drags only move Appraisal among these, so the rest stay put.
+	const startingOrder = await pageNames.allTextContents();
+	expect(startingOrder.slice(0, 3)).toEqual(['Artifact', 'Location and loans', 'Appraisal']);
+	const appraisalFirst = ['Appraisal', ...startingOrder.filter(name => name !== 'Appraisal')];
 
 	await heading('Appraisal').click();
 	await expect(editLink('Appraisal')).toBeVisible();
@@ -60,7 +66,7 @@ test('An admin page reloads with the same drawer open, or the first one if that 
 	await expect(editLink('Artifact')).toBeHidden();
 	await dragDrawer(page, drawer('Appraisal'), drawer('Artifact'));
 	await saveAdminForm(page);
-	await expect(page.locator('#sortable-list .accordion-name')).toHaveText(['Appraisal', 'Artifact', 'Location and loans']);
+	await expect(pageNames).toHaveText(appraisalFirst);
 	await expect(editLink('Appraisal')).toBeVisible();
 	await expect(editLink('Location and loans')).toBeHidden();
 
@@ -73,6 +79,6 @@ test('An admin page reloads with the same drawer open, or the first one if that 
 
 	// and it's now back where it started, so saving leaves the screen as it was
 	await saveAdminForm(page);
-	await expect(page.locator('#sortable-list .accordion-name')).toHaveText(['Artifact', 'Location and loans', 'Appraisal']);
+	await expect(pageNames).toHaveText(startingOrder);
 	await expect(editLink('Appraisal')).toBeVisible();
 });
