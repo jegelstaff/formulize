@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, ensureMainMenuOpen, leavePage } from '../../utils';
+import { login, ensureMainMenuOpen, leavePage, reloadPage, dbQuery, dbPrefix } from '../../utils';
 import { E2E_TEST_BASE_URL, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
 
 // Entry locking: while someone has an entry open in a form, anyone else who opens it gets a message
@@ -33,8 +33,15 @@ async function openRomanCoin(page) {
 	await page.waitForLoadState('load');
 }
 
+// Roman Coin by its address, the way a link to it opens it
+function romanCoinUrl() {
+	const fid = dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = 'Artifacts'`)[0][0];
+	const entry = dbQuery(`SELECT entry_id FROM ${dbPrefix()}_formulize_artifacts WHERE artifacts_short_name = 'Roman Coin'`)[0][0];
+	return `/modules/formulize/index.php?fid=${fid}&ve=${entry}`;
+}
+
 // Leaving the page releases any lock this page took. The page sends that request as it goes away,
-// and it has been handled by the time the next page has loaded.
+// and leavePage waits until the server has handled it.
 async function leave(page) {
 	await leavePage(page);
 	await expect(page.locator('.formulize-label-artifacts_short_name')).not.toBeVisible();
@@ -109,6 +116,27 @@ test.describe('Entry locking', () => {
 		await openRomanCoin(curator2);
 		await expectEditable(curator2);
 	});
+
+	// The page going away sends its release after the page that replaces it has been drawn, with the entry locked again.
+	// So the new page has to have taken the lock over, or the old page's release would take it away.
+	for (const [who, comeBack] of [
+		['reloads an entry they have open', page => reloadPage(page)],
+		['follows a link to an entry they have open', page => leavePage(page, romanCoinUrl())],
+	]) {
+		test(`a curator who ${who} still has it locked`, async ({ browser }) => {
+			const curator1 = await signIn(browser, 'curator1');
+			const curator2 = await signIn(browser, 'curator2');
+			pages.push(curator1, curator2);
+
+			await curator1.goto(romanCoinUrl());
+			await expectEditable(curator1);
+			await comeBack(curator1);
+			await expectEditable(curator1);
+
+			await openRomanCoin(curator2);
+			await expectLockedBy(curator2, 'Curator One');
+		});
+	}
 
 	test('a webmaster can edit a locked entry, and takes the lock over from the curator', async ({ browser }) => {
 		const curator1 = await signIn(browser, 'curator1');

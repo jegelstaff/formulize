@@ -85,7 +85,9 @@ The ones you will want first:
 
 Formulize locks an entry while someone has it open, so that two people do not overwrite each other. A test that opens an entry and then simply ends still holds that lock, and the next test that wants the same entry — quite possibly in a different spec file, run minutes later — fails with no obvious connection to the test that caused it.
 
-The page releases its locks as it goes away, so a test that opens an entry must leave it the way a person would: click a link, or go to another page with `leavePage(page, url)`. Then check something on the page you arrive at. The lock is released by the time that page has loaded. A test that just ends doesn't count as leaving, because closing the browser doesn't release the locks.
+The page releases its locks as it goes away, so a test that opens an entry must leave it the way a person would: go to another page with `leavePage(page, url)`, or click a link. Then check something on the page you arrive at. A test that just ends doesn't count as leaving, because closing the browser doesn't release the locks.
+
+The release can still be on its way after the next page has loaded, and a test that ends then can close the browser before it's sent. `leavePage` waits until the server has handled it, so use it to leave an entry at the end of a test. Clicking a link doesn't wait.
 
 Wait for the page to finish loading before you leave it. A page that is still loading isn't ready to release its locks yet. `leavePage` does that wait for you. If you leave by clicking a link instead, call `await page.waitForLoadState('load')` first.
 

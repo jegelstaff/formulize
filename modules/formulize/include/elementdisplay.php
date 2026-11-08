@@ -147,7 +147,6 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		// locks are only valid for the session time, so if a lock is older than that, it is ignored and cleared
 		// Do this last, since locking overrides other permissions!
 
-		$lockFileName = "entry_".$entry."_in_form_".$form_id."_is_locked_for_editing";
 		// if we haven't found a lock for this entry, check if there is one...(as long as it's not an entry that we locked ourselves on this page load)
     // only care about the existence of a lock if there's an editable element in play
 		if(!$isDisabled AND $entry != "new" AND $entry > 0
@@ -155,16 +154,15 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
            AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
            AND ($element->hasData OR $element->isUserAccountElement) AND $element->getVar('ele_type') != 'derived'
            AND !strstr(getCurrentURL(),"printview.php")
-           AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName")
+           AND file_exists(formulize_entryLockFileName($entry, $form_id))
            AND !$userHasPermissionToIgnoreEntryLock) {
 			formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", "_is_locked_for_editing", ini_get("session.gc_maxlifetime")); // clean up expired locks
-            if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName")) {
-				list($lockUid, $lockUsername) = explode(",", file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName"));
-				if($lockUid != $user_id) {
+            if($lock = formulize_readEntryLock($entry, $form_id)) {
+				if($lock['uid'] != $user_id) {
                     // first time here, make the warning label
                     // not when an element is redrawn on its own after the page has loaded (conditional elements, derived values), since the reply is JSON and the page has had its chance to show the label already
                     if (count((array) $lockedEntries) == 0 AND !isset($GLOBALS['formulize_asynchronousElementRendering'])) {
-                        $label = json_encode(sprintf(_formulize_ENTRY_IS_LOCKED, $lockUsername));
+                        $label = json_encode(sprintf(_formulize_ENTRY_IS_LOCKED, $lock['username']));
                         // Later requests can put their markup into a page that is already showing, each with this label of its own: the drawer, and subform rows redrawn after the drawer saves.
                         // So the label goes at the top of the drawer when it is in the drawer, since the locked entry is the one in the drawer, and otherwise above the form,
                         // and only where there isn't one already.
@@ -225,18 +223,20 @@ EOF;
 		}
 		//formulize_benchmark("Done rendering element.");
 
-		// put a lock on this entry in this form, so we know that the element is being edited.  Lock will be removed next page load.
+		// put a lock on this entry in this form, so we know that the element is being edited. The page releases it when it goes away.
+		// This page load takes the lock over, even from an earlier page of the same person's, whose release can still be on its way.
+		// But an element redrawn on its own is part of a page that's showing, and that page's release has to still match the lock.
+		// So a redraw leaves a lock the person already has, and a lock it writes has no token, which any of their page loads that drew the entry can release.
+		$redrawnOnItsOwn = isset($GLOBALS['formulize_asynchronousElementRendering']);
 		if (!$isDisabled AND !$noSave AND $entry != "new" AND $entry > 0
             AND !isset($lockedEntries[$form_id][$entry])
             AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
             AND ($element->hasData OR $element->isUserAccountElement) AND $element->getVar('ele_type') != 'derived'
-            AND !strstr(getCurrentURL(),"printview.php")) {
+            AND !strstr(getCurrentURL(),"printview.php")
+            AND !($redrawnOnItsOwn AND ($lock = formulize_readEntryLock($entry, $form_id)) AND $lock['uid'] == $user_id)) {
 
             if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {
-                $lockFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/temp/$lockFileName", "w");
-                if (false !== $lockFile) {
-                    fwrite($lockFile, "$user_id,$username");
-                    fclose($lockFile);
+                if (formulize_writeEntryLock($entry, $form_id, $user_id, $username, $redrawnOnItsOwn ? '' : getEntryLockSecurityToken())) {
                     $entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry] = true;
                 }
             } else {

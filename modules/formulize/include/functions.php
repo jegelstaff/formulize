@@ -15254,3 +15254,5 @@ function formulize_quickSearchTypeNames() {
 // required here. They are part of this file, and nothing else should include them directly.
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/pwa.php';
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/linked_sources.php';
+// not in include/functions, because formulize_deleteEntryLock.php requires it too, without the rest of Formulize
+require_once XOOPS_ROOT_PATH . '/modules/formulize/include/entryLocks.php';

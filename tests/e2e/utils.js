@@ -1149,14 +1149,48 @@ export function autocompleteBox(page, handle) {
  * A form showing an entry for editing locks it, and the page releases the lock as it goes away. So a test that
  * opens an entry must leave it, or the next person to open the entry finds it locked. Closing the browser at the
  * end of a test doesn't count as leaving. The page can only release its locks once it has finished loading, so
- * this waits for that first. The release is sent as the page goes away, and in practice it has been handled by
- * the time the next page has loaded, which page.goto waits for.
+ * this waits for that first.
+ *
+ * The release is a request the page sends as it goes away. Playwright doesn't report it, and it can still be on
+ * its way after the next page has loaded, so a test that ends then can close the browser before it's sent. So this
+ * waits until the server has handled it, which shows because the file listing what the page locked is gone.
  *
  * @param {string} url - Where to go. Assert something on that page afterwards, as after any navigation.
  */
 export async function leavePage(page, url = '/') {
+	await leaveWith(page, () => page.goto(url));
+}
+
+/**
+ * Reload the page, the way a person does, and wait until the server has handled the release of the entries it
+ * locked, as leavePage does. The release arrives after the new page was drawn.
+ */
+export async function reloadPage(page) {
+	await leaveWith(page, () => page.reload());
+}
+
+async function leaveWith(page, navigation) {
 	await page.waitForLoadState('load');
-	await page.goto(url);
+	const lockLists = await entryLockListFiles(page);
+	await navigation();
+	await expect.poll(() => {
+		const tempFiles = serverTempFiles();
+		return lockLists.filter(file => tempFiles.includes(file));
+	}, { message: 'the page that was left released the entries it locked', timeout: 20000 }).toEqual([]);
+}
+
+// The files on the server that list what a page locked, which the page's release deletes. There's one for the page and
+// one for the form last shown in its drawer, named by the token and uid in the code that sends the release. A page
+// that locked nothing has the code but no file.
+async function entryLockListFiles(page) {
+	const html = await page.content();
+	const files = [...html.matchAll(/'formulize_entry_lock_token', '([0-9a-f]+)'\);\s*fd\.append\('formulize_entry_lock_uid', '(\d+)'\)/g)]
+		.map(([, token, uid]) => `${token}${uid}.token`);
+	return [...new Set(files)];
+}
+
+function serverTempFiles() {
+	return execFileSync('docker', ['exec', webContainer(), 'ls', '/var/www/html/modules/formulize/temp'], { encoding: 'utf8' }).split('\n');
 }
 
 /**
@@ -1200,7 +1234,7 @@ export async function ensureMainMenuOpen(page) {
 // ============================================================================
 
 const { execFileSync } = require('child_process');
-const { dbContainer } = require('./docker-containers');
+const { dbContainer, webContainer } = require('./docker-containers');
 
 const DB_ROOT_PASS = process.env.E2E_DB_ROOT_PASS || 'abc123';
 const DB_NAME = process.env.E2E_DB_NAME || 'formulize';
