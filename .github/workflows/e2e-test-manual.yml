@@ -18,6 +18,16 @@ on:
         required: false
         default: ''
         type: string
+      coverage:
+        description: 'Measure which lines of PHP the tests run (slower)'
+        required: false
+        default: false
+        type: boolean
+      coverage_base:
+        description: 'With coverage, also list the lines changed since this branch that no test ran'
+        required: false
+        default: 'master'
+        type: string
   workflow_call:
     inputs:
       ref:
@@ -34,9 +44,21 @@ on:
         required: false
         default: ''
         type: string
+      coverage:
+        description: 'Measure which lines of PHP the tests run (slower)'
+        required: false
+        default: false
+        type: boolean
+      coverage_base:
+        description: 'With coverage, also list the lines changed since this branch that no test ran'
+        required: false
+        default: 'master'
+        type: string
 
 env:
   GITHUB_TOKEN: ${{ github.token }}
+  # Where the coverage data goes, when the run measures coverage. Outside the checkout, which the web server serves. See tests/coverage/prepend.php
+  FORMULIZE_COVERAGE_DIR: /tmp/formulize-coverage
 
 jobs:
   manual-e2e-test-run:
@@ -74,18 +96,36 @@ jobs:
         sudo chgrp 33 ~/work/formulize/formulize
         chmod 775 ~/work/formulize/formulize
 
+    # Both the web server and the command line write the coverage data, as different users, and the phase file says which
+    # set of tests is running. Each set's step writes its name there as it starts.
+    - name: Prepare for coverage
+      if: ${{ inputs.coverage }}
+      run: |
+        # PHP runs this file before every request, so without it every page would fail
+        if [ ! -f tests/coverage/prepend.php ]; then
+          echo "::error::The branch being tested has no tests/coverage/prepend.php, so it can't be run with coverage"
+          exit 1
+        fi
+        mkdir -p "$FORMULIZE_COVERAGE_DIR/data" "$FORMULIZE_COVERAGE_DIR/executable"
+        chmod -R 777 "$FORMULIZE_COVERAGE_DIR"
+        echo php-logic > "$FORMULIZE_COVERAGE_DIR/phase"
+
     - name: Stop existing containers (if any)
       run: |
         docker compose down --remove-orphans || true
 
     - name: Run Docker Compose up
       run: |
+        COMPOSE_FILES="-f docker-compose.yaml"
+        if [ "${{ inputs.coverage }}" == "true" ]; then
+          COMPOSE_FILES="$COMPOSE_FILES -f tests/coverage/docker-compose.coverage.yaml"
+        fi
         if [ "${{ inputs.skip_docker_build }}" == "false" ]; then
           echo "Building and starting containers..."
-          docker compose up -d --build
+          docker compose $COMPOSE_FILES up -d --build
         else
           echo "Starting existing containers..."
-          docker compose up -d
+          docker compose $COMPOSE_FILES up -d
         fi
 
     - name: PHP logic tests (A4 password hashing)
@@ -122,6 +162,9 @@ jobs:
 
     - name: Run Playwright setup tests (sequential)
       run: |
+        if [ "${{ inputs.coverage }}" == "true" ]; then
+          echo "${{ inputs.test_filter && 'filtered' || '01-setup' }}" > "$FORMULIZE_COVERAGE_DIR/phase"
+        fi
         if [ -n "${{ inputs.test_filter }}" ]; then
           echo "Running filtered tests: ${{ inputs.test_filter }}"
           npx playwright test ${{ inputs.test_filter }}
@@ -132,21 +175,33 @@ jobs:
 
     - name: Run Playwright validation tests (concurrent)
       if: ${{ !inputs.test_filter }}
-      run: npx playwright test formulize-core/02-validate --workers=4 --fully-parallel
+      run: |
+        if [ "${{ inputs.coverage }}" == "true" ]; then
+          echo 02-validate > "$FORMULIZE_COVERAGE_DIR/phase"
+        fi
+        npx playwright test formulize-core/02-validate --workers=4 --fully-parallel
       working-directory: tests/e2e
 
     # After the validate specs, and on one worker: these change things the museum system shares - renaming the
     # elements its screens, views and notifications use - check the system still works, and put them back.
     - name: Run Playwright validation tests that change the system (sequential)
       if: ${{ !inputs.test_filter }}
-      run: npx playwright test formulize-core/03-validate-sequential --workers=1
+      run: |
+        if [ "${{ inputs.coverage }}" == "true" ]; then
+          echo 03-validate-sequential > "$FORMULIZE_COVERAGE_DIR/phase"
+        fi
+        npx playwright test formulize-core/03-validate-sequential --workers=1
       working-directory: tests/e2e
 
     # After the validate specs, and on one worker: the appearance specs switch the whole site to Lyris while
     # they run, and put it back when they're done.
     - name: Run Playwright appearance tests (sequential)
       if: ${{ !inputs.test_filter }}
-      run: npx playwright test formulize-core/04-appearance --workers=1
+      run: |
+        if [ "${{ inputs.coverage }}" == "true" ]; then
+          echo 04-appearance > "$FORMULIZE_COVERAGE_DIR/phase"
+        fi
+        npx playwright test formulize-core/04-appearance --workers=1
       working-directory: tests/e2e
 
     # This one runs after the suite rather than before it, unlike the PHP tests above: it checks what
@@ -157,7 +212,11 @@ jobs:
     # use, because a partly built system is not the system it is asking about.
     - name: PHP integrity tests (element reference scan, against the built system)
       if: ${{ !inputs.test_filter }}
-      run: docker exec formulize-web-1 php /var/www/html/tests/element_reference_integrity_test.php
+      run: |
+        if [ "${{ inputs.coverage }}" == "true" ]; then
+          echo php-integrity > "$FORMULIZE_COVERAGE_DIR/phase"
+        fi
+        docker exec formulize-web-1 php /var/www/html/tests/element_reference_integrity_test.php
 
     - name: PHP integrity tests (saved views round trip)
       if: ${{ !inputs.test_filter }}
@@ -174,6 +233,33 @@ jobs:
     - name: PHP integrity tests (element code files, setVar/getVar)
       if: ${{ !inputs.test_filter }}
       run: docker exec formulize-web-1 php /var/www/html/tests/element_code_files_test.php
+
+    # Before the containers come down, since the report is made in the web container, with the PHP the tests ran on. Also
+    # after a failure, for the tests that did run. The run has only the commit it tests, so the lines that changed come from
+    # the commit where this branch left the base branch, which GitHub finds, and which is fetched on its own.
+    - name: Build the coverage report
+      if: ${{ always() && inputs.coverage }}
+      env:
+        COVERAGE_BASE: ${{ inputs.coverage_base || 'master' }}
+      run: |
+        git ls-files '*.php' > "$FORMULIZE_COVERAGE_DIR/tracked.txt"
+        DIFF_OPTIONS=""
+        HEAD_SHA=$(git rev-parse HEAD)
+        BASE_TIP=$(git ls-remote origin "refs/heads/$COVERAGE_BASE" | cut -f1)
+        if [ -n "$BASE_TIP" ] \
+          && BASE_SHA=$(gh api "repos/${{ github.repository }}/compare/$BASE_TIP...$HEAD_SHA" --jq .merge_base_commit.sha) \
+          && git fetch --no-tags --depth=1 origin "$BASE_SHA" \
+          && git diff -U0 --no-color "$BASE_SHA" "$HEAD_SHA" -- '*.php' > "$FORMULIZE_COVERAGE_DIR/changed.diff"; then
+          DIFF_OPTIONS="--diff=/var/www/coverage/changed.diff --base=$COVERAGE_BASE"
+        else
+          echo "::warning::Could not find where this branch left $COVERAGE_BASE, so the report has no list of changed lines"
+        fi
+        docker exec formulize-web-1 php -d auto_prepend_file= -d xdebug.mode=off -d memory_limit=-1 /var/www/html/tests/coverage/merge.php --data=/var/www/coverage --out=/var/www/coverage/report --tracked=/var/www/coverage/tracked.txt $DIFF_OPTIONS
+        cat "$FORMULIZE_COVERAGE_DIR/report/summary.md" >> "$GITHUB_STEP_SUMMARY"
+        if [ -f "$FORMULIZE_COVERAGE_DIR/report/changed-lines.md" ]; then
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          head -c 600000 "$FORMULIZE_COVERAGE_DIR/report/changed-lines.md" >> "$GITHUB_STEP_SUMMARY"
+        fi
 
     - name: Create database dump and collect files
       if: always()
@@ -230,4 +316,12 @@ jobs:
       with:
         name: final-state
         path: tests/e2e/final-state/
+        retention-days: 7
+
+    - name: Upload Coverage Report
+      if: ${{ always() && inputs.coverage }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: coverage-report
+        path: ${{ env.FORMULIZE_COVERAGE_DIR }}/report/
         retention-days: 7
