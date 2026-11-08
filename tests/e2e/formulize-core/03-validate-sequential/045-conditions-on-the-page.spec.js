@@ -37,7 +37,7 @@ import {
 // main entry's value into the subform entries on a save, so Keep filtered values in sync is off for section 4, and the Loan
 // Requests are compared with what they were at the end. Date elements always submit YYYY-MM-DD, so a save is safe in section 9.
 //
-// Section 9 changes the site's Short date format in the Settings page, which every date on the site follows until it's put
+// Sections 9 and 10 change the site's Short date format in the Settings page, which every date on the site follows until it's put
 // back. The spec checks a date on the page before it runs the rows, because a save that can't write its file says nothing.
 
 // A click or key press that submits a page waits for the server to answer, and with no time limit of its own it waits as long
@@ -252,19 +252,26 @@ async function putOnScreen(page, onScreen) {
 	}
 }
 
+const shortDateFormatBox = page => page.locator('[data-conf-name="shortdatestring"]').getByRole('textbox');
+
+async function openSystemSettings(page) {
+	await page.goto('/modules/formulize/admin/ui.php?page=settings&view=system');
+	await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
+}
+
+async function currentShortDateFormat(page) {
+	await openSystemSettings(page);
+	return shortDateFormatBox(page).inputValue();
+}
+
 // The setting has to be saved by the Settings page, which is what writes the file the format is read from
 async function setShortDateFormat(page, format) {
-	const box = page.locator('[data-conf-name="shortdatestring"]').getByRole('textbox');
-	const url = '/modules/formulize/admin/ui.php?page=settings&view=system';
-	await page.goto(url);
-	await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
-	const formatBefore = await box.inputValue();
-	await box.fill(format);
+	const formatBefore = await currentShortDateFormat(page);
+	await shortDateFormatBox(page).fill(format);
 	await page.getByRole('button', { name: 'Save your changes' }).click();
 	await expect(async () => {
-		await page.goto(url);
-		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
-		await expect(box).toHaveValue(format, { timeout: 5000 });
+		await openSystemSettings(page);
+		await expect(shortDateFormatBox(page)).toHaveValue(format, { timeout: 5000 });
 	}).toPass({ timeout: 60000 });
 	return formatBefore;
 }
@@ -781,6 +788,50 @@ test('Section 9: a site that shows dates as d/m/Y', async ({ page }) => {
 			await searchList(page, () => openList(page, LISTS['Catalogue']), searchesFor(row, ARTIFACT_ELEMENTS));
 			compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(searchSelector), everything));
 		});
+	}
+
+	await page.goto('/user.php?op=logout');
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	await setShortDateFormat(page, shortDateFormatToRestore);
+	shortDateFormatToRestore = null;
+	await expectCatalogueToShow(page, '2002-12-31');
+});
+
+// S is the day's suffix, and \o\f is written as it is, so Bronze Mirror's date is 31st of December 2002. MySQL's DATE_FORMAT() has
+// one specifier for the day with its suffix, and none for an escaped character, so both have to be translated.
+const DATE_FORMAT_WITH_WORDS = 'jS \\o\\f F Y';
+
+test('Section 10: a site that shows dates with words', async ({ page }) => {
+	const rows = casesFor('G');
+	test.setTimeout(rows.length * SECONDS_PER_ROW * 1000 + 240000);
+	const { selector } = howToCheck('G');
+	const everything = namesIn('Artifact');
+	const fid = formId('Locations');
+	const mainVault = entryId('locations', 'locations_name', 'Main Vault');
+
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	shortDateFormatToRestore = await currentShortDateFormat(page);
+	// If the site doesn't show dates this way once it's saved, every row would be wrong for that reason, so it's recorded once, the
+	// rows aren't run, and the rest of the spec carries on
+	let datesShownWithWords = false;
+	await checkRow(page, 'G', disagreements, async () => {
+		await setShortDateFormat(page, DATE_FORMAT_WITH_WORDS);
+		await page.goto('/user.php?op=logout');
+		await login(page, 'curator1', '12345');
+		await expectCatalogueToShow(page, '31st of December 2002');
+		datesShownWithWords = true;
+	});
+
+	if (datesShownWithWords) {
+		for (const row of rows) {
+			await checkRow(page, row['Row'], disagreements, async () => {
+				await setSubformFilter(MAIN_VAULT_SUBFORM, conditionsFor(row, ARTIFACT_ELEMENTS));
+				await openEntry(page, fid, mainVault);
+				await expect(page.locator('.formulize-subform')).toBeVisible();
+				compare(row, expectedNames(row['Should show'], everything), await namesOnPage(page.locator(selector), everything));
+			});
+		}
+		await setSubformFilter(MAIN_VAULT_SUBFORM, []);
 	}
 
 	await page.goto('/user.php?op=logout');

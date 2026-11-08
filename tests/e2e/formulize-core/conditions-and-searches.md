@@ -44,6 +44,7 @@ A row says what should be on the page. This table says where to look for it, and
 | T | Main Vault | `.formulize-subform td` | Artifact | The names in those cells are exactly the row's names |
 | W | Each artifact in the row's Open, on its Location and loans tab | `.form-row:has(.formulize-label-artifacts_curator_note) input[type="text"]` | Artifact | The box is on the page for exactly the row's names, out of the artifacts it opens |
 | U | The Catalogue list, then what the row types in the search boxes | `[id^="celladdress_"]` | Artifact | The names in those cells are exactly the row's names, and each box still holds what was typed |
+| G | Main Vault | `.formulize-subform td` | Artifact | The names in those cells are exactly the row's names |
 
 - **Names** is one of the tables at the end of this file, by its first column. Only text that is exactly one of those names counts, so other text in the same cells can't be mistaken for a result. By list means Artifact on the Catalogue and Artifacts lists, and Donor on the Donor artifacts list. Out of means a row's Everything is only those, ie: a row in section 5 is out of the artifacts it opens.
 - **The match is exact.** An entry that shouldn't be there fails a row as much as one that's missing.
@@ -64,7 +65,7 @@ A row says what should be on the page. This table says where to look for it, and
 - `{ }` that refers to a blank field: `=` and `LIKE` find blanks, `!=` and `NOT LIKE` find anything that isn't blank, and `>` and `<` find nothing.
 - The exception is a condition whose element lists entries from the form the `{ }` refers to, where the `{ }` names a linked element in that form, ie: `Visit = {visits_donor}` in section 4. With that linked element blank, `=` finds nothing, because master finds nothing. `!=` finds everything, since nothing is the same.
 - `{TODAY}` is today's date, `{USER}` is curator1, who is Curator One, and `{ID}` is the entry that's open. A `{ }` that isn't an element or one of these is read from a parameter of that name in the page's address, and with no such parameter the condition is ignored.
-- On when an entry was made or modified, which have a time as well, a day is all of that day, as the person sees it. `<= {TODAY}` is everything made today, and `> {TODAY}` is after the end of today.
+- On when an entry was made or modified, which have a time as well, a day is all of that day, as the person sees it. `<= {TODAY}` is everything made today, and `> {TODAY}` is after the end of today. A term with a time in it, ie: `2000-01-01 00:00`, is that moment.
 - A list of users matches the name people see in it, ie: Curator One, as well as the user's login.
 - In a new entry, a `{ }` with nothing on screen has no value yet, so a list that depends on it is empty until there's one. On a linked element that's true of every operator. On any other element it's true of `=`, and the other operators ignore the condition. If the `{ }` element has a default value, an element that isn't linked uses that, whatever the operator. Any other conditions still apply.
 - In a new entry, a `{ }` whose value was taken out on screen has no value either, but it's not the same as nothing yet: `=` finds nothing, and the other operators ignore the condition, on a linked element too. That's what master does.
@@ -225,6 +226,9 @@ Set with `sourceEntryFilter` on `locations_subform_artifacts`, then open Main Va
 | S147 | Catalogued by = Curator Two |  | Florentine Book, French Musket | a list of users, by the name people see |
 | S148 | Catalogued by = {USER} |  | Roman Coin, Persian necklace, Babylonian Spoon | {USER} is curator1, Curator One |
 | S149 | Catalogued by != {USER} |  | Everything except Roman Coin, Persian necklace, Babylonian Spoon | not curator1, and blanks |
+| S150 | Handling LIKE 1 |  | Roman Coin, Florentine Book, Silk Scroll | a stored value, which is whole, so not Keep flat, which is stored as 12 |
+| S151 | creation_datetime > 2000-01-01 00:00 |  | Everything | a term with a time is that moment |
+| S152 | creation_datetime < 2000-01-01 00:00 |  | Nothing | the same, before it |
 
 ## 2. `{ }` in the Artifact list of a saved Loan Request
 
@@ -337,6 +341,8 @@ The same setting, on a new entry. With nothing on screen, a list that depends on
 | N43 | Storage = {loans_storage} |  | Storage they have: Standard | Nothing | what's chosen on screen, rather than the default |
 | N44 | Collections = {loans_borrower} |  |  | Nothing | linked, several values, and the `{ }` isn't linked |
 | N45 | Collections != {loans_borrower} |  |  | Nothing | the same, with != |
+| N46 | Era IN {loans_era} |  |  | Everything | IN is ignored too, until there's a value |
+| N47 | Era IN {loans_era} |  | Era wanted: CE | Everything except Roman Coin, Persian necklace, Egyptian Chariot, Babylonian Spoon, Persian necklace - number 2, Unknown Shard, Bronze Mirror | IN with a value on screen |
 
 ## 4. Other surfaces
 
@@ -382,6 +388,8 @@ The same setting, on a new entry. With nothing on screen, a list that depends on
 | D12 | Name = Hart & Sons Antiques |  | Hart & Sons Antiques | an ampersand in the term |
 | D13 | Name LIKE & |  | Hart & Sons Antiques | just the ampersand |
 | D14 | Name != Hart & Sons Antiques |  | Everything except Hart & Sons Antiques | not that name |
+| D15 | Province = Ontario |  | Freeform Solutions | a province by its name, which is stored as a code |
+| D16 | Province != Quebec |  | Everything except François-Marie Arouet, Emilie Du Châtelet | not that province, and blanks |
 
 **The Collections wanted boxes in a new Loan Request.** Set with `sourceEntryFilter` on `loans_collections`.
 
@@ -403,6 +411,8 @@ The same setting, on a new entry. With nothing on screen, a list that depends on
 | O4 | Arouet in March | Visit != {visits_name} |  | Everything except Letters | the opposite, and an offer with no visit |
 | O5 | Walk-in in April | Visit = {visits_donor} |  | Nothing | a visit with no donor has no one to match, which is what master does |
 | O6 | Walk-in in April | Visit != {visits_donor} |  | Everything | the opposite. Master finds nothing, since it reads != as = here, as in O2 |
+| O7 | Arouet in March |  | Visit = {visits_name}; Item = Sketchbook | Letters, Sketchbook | the field the Visit list shows, in Any of, beside a literal term |
+| O8 | Arouet in March |  | Visit != {visits_name}; Item = Letters | Everything | the opposite, in Any of |
 
 **Values in the page's address.** Set with `sourceEntryFilter` on `locations_subform_artifacts`, then open Main Vault with the row's values on the end of the address.
 
@@ -470,6 +480,12 @@ Set with `display_conditions` on `artifacts_curator_note`, then open each artifa
 | V48 | Storage LIKE climate |  | Roman Coin, Chinese Sword | Roman Coin | part of the text people see |
 | V49 | Handling LIKE glove |  | Florentine Book, Egyptian Chariot | Florentine Book | checkboxes with text people see |
 | V50 | Catalogued by = {USER} |  | Roman Coin, Florentine Book | Roman Coin | a list of users, and {USER} |
+| V51 | Materials = {artifacts_materials} |  | French Musket, Persian necklace | Everything | a reference that holds several values, on a field that holds them too |
+| V52 | Materials != {artifacts_materials} |  | Persian necklace, French Musket | Nothing | the opposite |
+| V53 | Era != {artifacts_materials} |  | Persian necklace, Egyptian Chariot | Everything | a field with one value, and a reference with several, none of them the same |
+| V54 | Era = {artifacts_materials} |  | Egyptian Chariot, Persian necklace | Nothing | the same, with = |
+| V55 | Materials LIKE {artifacts_materials} |  | French Musket, Egyptian Chariot | Everything | LIKE, with several values on both sides |
+| V56 | Materials != {artifacts_handling} |  | French Musket, Persian necklace | Everything | a blank reference, so != finds what isn't blank |
 
 ## 6. Fundamental filters
 
@@ -593,6 +609,8 @@ As curator1. Each term goes in the search box at the top of that column, on the 
 | B82 | Artifacts | Date of acquisition: `August 1993` | Chinese Sword | a month written out, in a column added with Change columns |
 | B83 | Artifacts | Date of acquisition: `>=2020` | Roman Coin, Viking Silver Armband, Candide - first edition | on or after a year, in a column added with Change columns |
 | B84 | Artifacts | Date of acquisition: `bread` | Nothing | a term that cannot be a date, in a column added with Change columns |
+| B85 | Catalogue | Handling: `1` | Roman Coin, Florentine Book, Silk Scroll | a stored value, which is whole, so not Keep flat, which is stored as 12 |
+| B86 | Catalogue | creation_datetime: `>2000-01-01 00:00` | Everything | a term with a time is that moment |
 
 ## 8. Settings MCP can't reach
 
@@ -667,6 +685,18 @@ Search boxes on the Catalogue list.
 | U2 | Catalogue | Date of acquisition: `02/12/2002` | Persian necklace, Persian necklace - number 2 | a whole date |
 | U3 | Catalogue | Date of acquisition: `31/12/2002` | Bronze Mirror | a whole date that only works day first |
 | U4 | Catalogue | Date of acquisition: `!12/2002` | Everything except Persian necklace, Persian necklace - number 2, Bronze Mirror | not part of a date, and blanks |
+
+## 10. A site that shows dates with words
+
+The same as section 9, with the Short date format `jS \o\f F Y`, so the Catalogue list shows Bronze Mirror as 31st of December 2002. `S` is the day's suffix, and `\o\f` is the word of, written as it is.
+
+Conditions, set with `sourceEntryFilter` on `locations_subform_artifacts`.
+
+| Row | All of | Any of | Should show | What it tests |
+|---|---|---|---|---|
+| G1 | Date of acquisition LIKE 1st |  | Roman Coin, Bronze Mirror, Silk Scroll | the day with its suffix, as the site shows it, so the 21st and the 31st too |
+| G2 | Date of acquisition LIKE nd of |  | Persian necklace, Persian necklace - number 2 | a word the format writes as it is |
+| G3 | Date of acquisition NOT LIKE 1st |  | Everything except Roman Coin, Bronze Mirror, Silk Scroll | not part of the date as the site shows it, and blanks |
 
 ## The museum's data
 
@@ -748,7 +778,15 @@ What no row checks yet, and what checking it would take. Then problems found whi
 
   On a date, a per-group filter now reads the term the way a list search does (`buildPerGroupFilterDateClause()`). So a year or a month is a range of days, ie: `= 2011` is every date in 2011, and a term that isn't a date is decided without comparing it with a date. A per-group filter decides which entries a group can see at all, so this changes what a group with a date in its filter sees. Until now, a date term was compared as text, which rarely worked, so few sites are likely to have one.
 
-  To close: a group of its own with a filter on one of the museum's forms, and a user in it. It can't be a group that curator1 is in, or the filter changes what every other spec sees. The museum's only per-group filter is the one 015 gives All Staff on Surveys. Then a section of rows, where each row sets the group's filter and that user opens a list. Check whether MCP can set a per-group filter. If it can't, set it in the admin UI, on the form's permissions. The rows should expect the rules above, not the rules for conditions.
+  **This one has to be closed before the tests cover this branch.** The branch changed how a per-group filter reads a date, and nothing runs that code. 042 uses the filter 015 gives All Staff on Surveys, but it's on a Yes/No, so `buildPerGroupFilterDateClause()` returns before it does anything.
+
+  To close: a group of its own with a filter on Artifacts, and a user in it who can open the Catalogue list. It can't be a group that curator1 is in, or the filter changes what every other spec sees. MCP can read a group's visibility conditions but not set them, so each row's filter is typed in the admin UI, on the form's permissions, the way section 8 types conditions. Then the user opens the Catalogue list. The rows should expect the rules above, not the rules for conditions:
+  - `Date of acquisition = 2002` is Persian necklace, Persian necklace - number 2 and Bronze Mirror
+  - `Date of acquisition != 2002` is everything except those and Unknown Shard, since a negation leaves out blanks
+  - `Date of acquisition > 2002` is Roman Coin, Egyptian Chariot, Babylonian Spoon, American Bicycle, Viking Silver Armband, Candide - first edition and Silk Scroll
+  - `Date of acquisition = bread` is nothing, and `!= bread` is everything except Unknown Shard
+  - `Date of acquisition = {BLANK}` is Unknown Shard, and `NOT {BLANK}` is everything else
+  - `creation_datetime <= {TODAY}` is everything
 
 - **Applying a default to the entries that already exist.** `applyDefaultToEntries()` in `data.php` runs when a webmaster saves a default and asks for it to go into the existing entries. It now decides what's blank with `formulize_blankValueComparison()`, so a number field holding 0 isn't blank any more. To close: rows that save a default with that box ticked and then check which entries got it, with a field that holds NULL, `''` and 0 across the entries. This writes to entries, so it needs a field nothing else reads, and has to put the values back through the UI.
 
@@ -765,8 +803,8 @@ What no row checks yet, and what checking it would take. Then problems found whi
   - a list of users stores a uid
   - linked elements store entry ids
 
-  Conditions in SQL are checked both ways, ie: M5 is `Donated to museum = 1`, S139 is `Storage = 11`, S144 is `Handling = 1`, and S56, S57, S71 and S72 use entry ids. The rest only use what people see:
-  - **Searches.** B75 (`=1` on Handling) and B50 (`!=4` on Collections) are the only B rows with a stored value. None searches for:
+  Conditions in SQL are checked both ways, ie: M5 is `Donated to museum = 1`, S139 is `Storage = 11`, S144 is `Handling = 1`, S150 is `Handling LIKE 1`, and S56, S57, S71 and S72 use entry ids. The rest only use what people see:
+  - **Searches.** B75 (`=1` on Handling), B85 (`1` on Handling) and B50 (`!=4` on Collections) are the only B rows with a stored value. None searches for:
     - `1` or `2` on a Yes/No
     - `11` on Storage, or `1`, which is Standard and shouldn't find the Roman Coin's 11
     - a province code, ie: `10`
@@ -778,7 +816,13 @@ What no row checks yet, and what checking it would take. Then problems found whi
 
 - **A number in a search on a linked element that holds one value.** In a search, a number is an entry id only on a linked element that holds several values (where `formulize_parseFilter()` in `extract.php` builds the EXISTS for a linked element). So searching Donor for `3` looks for 3 in the donors' names. A condition reads `Donor = 3` as an entry id (S56). Master searches the same way. To close: decide whether a search should read the number the way a condition does, then a B row on Donor, ie: `3`, which is Freeform Solutions. Until that's decided, the row would expect what master does.
 
-- **Subform defaults from conditions on dates.** A subform filter with `=` writes the main entry's value into the subform entries when the main entry is saved. When the term is a date, that value comes out of the date handling. To close: a subform with a condition on a date, and a check of what its entries hold after a save. That saves entries, so they have to be put back through the UI.
+- **Values that `=` conditions write into new entries.** An `=` condition gives a new entry its value in three places:
+  - a subform's filter, when a subform entry is added (`subformSaveFunctions.php`), when a subform fills itself in from one of its elements, and, on a save, into the subform entries that are blank (`synchSubformBlankDefaults()`)
+  - a list's fundamental filters, when an entry is added from the list (`readelements.php`)
+
+  **This one has to be closed before the tests cover this branch.** The branch stops a condition on a date writing a year or a month, ie: `= 2002`, which isn't a date that can be saved (`formulize_conditionValueCanBeSaved()` in `functions.php`). Nothing runs that, because no row saves an entry.
+
+  To close: a subform filter and a fundamental filter, each with `Date of acquisition = 2002` and then `Date of acquisition = 2002-12-02`, an artifact added through each, and a check of what the new artifact holds. With 2002 it has no date, and with 2002-12-02 it has that date. A condition that isn't on a date, ie: `Era = BCE`, should still write its value. That saves entries, so they have to be deleted again through the UI.
 
 - **`proxy` and `new_0` entries.** `buildConditionsFilterSQL()` treats these markers as `new`: `proxy` is an entry someone makes on behalf of another user, and `new_0` comes from code that makes several entries at once. On-screen values stay under the marker the page used. No row opens a page with either one. To close: a user who may make entries for others, and N rows that open a new Loan Request made on someone's behalf.
 
@@ -799,5 +843,7 @@ What no row checks yet, and what checking it would take. Then problems found whi
 - **Forms that link to themselves.** A form with a list of its own entries isn't in the museum. It was, as Part of a set with, a list on Artifacts of other artifacts, and section 4 had rows for it. But that link from Artifacts to itself was in the relationship the Catalogue list uses, and it broke every fundamental filter on that list: F1 to F11 and F23 to F26, in run 42398600775, on master, which has the same code. `formulize_parseFilter()` gives each form in a fundamental filter its alias in the query: `main` for the list's own form, then `f` and a number for each form linked to it. Artifacts was in both places, so `f2` replaced `main`, and the query that counts the entries failed with "Unknown column 'f2.artifacts_catalogued_by'". Forms that link to themselves are the subject of `self-referential-forms-plan.md`, at the root of the repository, which has this. To close: once that work is done, a form of its own with a list of its own entries, and rows like the ones that were here, ie: `Era = {artifacts_era}` and `Donor = {artifacts_donor}`. The list shouldn't offer the entry that's open, and should always offer the one that's selected.
 
 ### Problems found
+
+- **IN with a `{ }` in a saved entry.** This comes from reading the code, not from a run. In a saved entry, `_buildConditionsFilterSQL()` makes the comparison `curlybracketform.`handle` AND curlybracketform.`entry_id`=...`, and an IN list goes in brackets, so the condition becomes ``field IN ( curlybracketform.`loans_era` AND curlybracketform.`entry_id`=1 )``. That compares the field with true or false, so it finds nothing. In a new entry, a value on screen works (N47), because it goes in as a value. Master has the same code. In section 2, ie: `Era IN {loans_era}` on City Museum, the list would offer only Roman Coin, which is selected, on both branches.
 
 - **`{BLANK}` in a per-group filter.** `!= {BLANK}` makes `` (`field` != '' OR `field` IS NOT NULL) ``, so an empty value matches. It needs AND. `NOT {BLANK}` makes `` `field` NOT '' ``, which isn't valid SQL, and NOT is one of the operators in the admin UI. A date field avoids both now, but no other field does. Master has the same code.
