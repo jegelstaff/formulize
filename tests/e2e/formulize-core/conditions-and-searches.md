@@ -758,6 +758,26 @@ What no row checks yet, and what checking it would take. Then problems found whi
 
 - **Linked elements that show other columns.** When a linked element shows alternate columns, a search on it compares the term with those columns joined together. No linked element in the museum shows them. To close: a linked element set to show more than one column, ie: a donor's name and province, then B rows and S rows on it.
 
+- **Stored values, not only the text people see.** Several elements store something other than what people see:
+  - Yes/No stores 1 and 2
+  - Storage and Handling store the values behind their labels
+  - a province list stores a code
+  - a list of users stores a uid
+  - linked elements store entry ids
+
+  Conditions in SQL are checked both ways, ie: M5 is `Donated to museum = 1`, S139 is `Storage = 11`, S144 is `Handling = 1`, and S56, S57, S71 and S72 use entry ids. The rest only use what people see:
+  - **Searches.** B75 (`=1` on Handling) and B50 (`!=4` on Collections) are the only B rows with a stored value. None searches for:
+    - `1` or `2` on a Yes/No
+    - `11` on Storage, or `1`, which is Standard and shouldn't find the Roman Coin's 11
+    - a province code, ie: `10`
+    - a positive `4` on Collections
+  - **Display conditions.** No V row has `= 1` on a Yes/No, `= 11` on Storage or `= 1` on Handling. Entry ids are left out of section 5 on purpose, see What the operators mean.
+  - **A list of users.** S147 and B77 use the name people see, Curator Two. Nothing uses the user's login, which the rules say matches too, or the uid that's stored.
+
+  To close: B, V and S rows with those terms. The museum's data already has the values.
+
+- **A number in a search on a linked element that holds one value.** In a search, a number is an entry id only on a linked element that holds several values (where `formulize_parseFilter()` in `extract.php` builds the EXISTS for a linked element). So searching Donor for `3` looks for 3 in the donors' names. A condition reads `Donor = 3` as an entry id (S56). Master searches the same way. To close: decide whether a search should read the number the way a condition does, then a B row on Donor, ie: `3`, which is Freeform Solutions. Until that's decided, the row would expect what master does.
+
 - **Subform defaults from conditions on dates.** A subform filter with `=` writes the main entry's value into the subform entries when the main entry is saved. When the term is a date, that value comes out of the date handling. To close: a subform with a condition on a date, and a check of what its entries hold after a save. That saves entries, so they have to be put back through the UI.
 
 - **`proxy` and `new_0` entries.** `buildConditionsFilterSQL()` treats these markers as `new`: `proxy` is an entry someone makes on behalf of another user, and `new_0` comes from code that makes several entries at once. On-screen values stay under the marker the page used. No row opens a page with either one. To close: a user who may make entries for others, and N rows that open a new Loan Request made on someone's behalf.
