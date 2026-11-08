@@ -1459,7 +1459,8 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		$countMasterResults = "SELECT COUNT(main.$mainIdColumn) FROM " . $mainTable . $revisionTableYesNo . " AS main ";
 		// Only include the main-form EAU join when the COUNT WHERE clause actually references those aliases.
 		// Linked-form EAU joins (eau_usertable_f0, etc.) are never valid here since linked tables are not in scope.
-		$countWhereContent = $mainFormWhereClause . $scopeFilter . $otherPerGroupFilterWhereClause;
+		// The EXISTS clauses count too, since the main form's terms in an "any of" set with one connected form are in that form's EXISTS (see formulize_parseFilter)
+		$countWhereContent = $mainFormWhereClause . $scopeFilter . $otherPerGroupFilterWhereClause . $existsJoinText;
 		$eauCountJoinText = (strpos($countWhereContent, 'eau_usertable_main') !== false || strpos($countWhereContent, 'eau_profile_main') !== false) ? $eauMainJoinText : "";
 		$countMasterResults .= "$userJoinText $eauCountJoinText $otherPerGroupFilterJoins WHERE main.$mainIdColumn>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause ";
 		$countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
@@ -3324,7 +3325,6 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 		}
 	}
 
-	$basicOneSideFilter = ''; // possibly this needs to be initialized inside a loop, so that it resets for each iteration?
 	$fundamentalFilterForms = array(); // forms that have fundamental filters applied to them. Those filters are not parsed by the loop above, so we can't tell if they are blank searches or not
 	if (count((array) $fundamental_filters) > 0) {
 		// parse the fundamental filters
@@ -3353,8 +3353,22 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				$oneSideFilters[$form_id]['and'] .= $oneSideFilters[$form_id]['and'] ? " and ( $thisFilter ) " : " ( $thisFilter ) ";
 			}
 		}
-		foreach ($conditionsfilter_oom as $form_id => $theseFilters) {
+		// The "any of" set is one set, whichever forms its terms are on. When they're on the main form and one connected form, the whole set goes with the
+		// connected form, so a main entry qualifies through a connected entry where one of the terms holds, on that entry or on the main entry it belongs to.
+		// That's what the WHERE clause does, row by row, when the list has only that connected form. The connected form's EXISTS, and the query for its
+		// entries, both have the main form in them, so its terms can be read there. Split by form, the queries that use the parts AND them together.
+		// ie: email = {BLANK} or collections NOT LIKE ns, on donors and artifacts, goes on artifacts as ( ( main.`donors_email` ... ) or ( f1.`artifacts_collections` ... ) )
+		// (A set with terms on two or more connected forms would need an EXISTS for each of them inside the set. It's split by form, as before.)
+		$oomForms = is_array($conditionsfilter_oom) ? array_keys($conditionsfilter_oom) : array(); // nothing comes back if a { } term can't be resolved
+		$connectedOomForms = array_values(array_diff($oomForms, array($fid)));
+		if (count($oomForms) == 2 AND count($connectedOomForms) == 1) {
+			$conditionsfilter_oom = array($connectedOomForms[0] => array_merge(...array_values($conditionsfilter_oom)));
+		}
+		foreach ($oomForms as $form_id) {
 			$fundamentalFilterForms[$form_id] = true;
+		}
+		foreach ($conditionsfilter_oom as $form_id => $theseFilters) {
+			$basicOneSideFilter = ''; // this form's terms, not the ones of the form before it
 			foreach ($theseFilters as $thisFilter) {
 				$basicOneSideFilter .= $basicOneSideFilter ? " or ( $thisFilter ) " : " ( $thisFilter ) ";
 			}
