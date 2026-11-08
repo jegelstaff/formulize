@@ -8861,14 +8861,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 									// ie: collections = {collections} holding ,4,3, becomes (( t1.`artifacts_collections` LIKE '%,4,%' OR t1.`artifacts_collections` LIKE '%,3,%' ))
 									// and donor != {donors} holding ,1,2, on a field that holds one value becomes (( t1.`artifacts_donor` IS NULL OR NOT ( t1.`artifacts_donor` IN (1,2) ) ))
 									// A new entry with nothing chosen yet has no entry ids here, so it stays with the comparison below, which finds nothing. A list that depends on another list is empty until a choice is made.
-									$anyOfReferencedValues = array();
-									foreach($referencedEntryIds as $referencedEntryId) {
-										$anyOfReferencedValues[] = "`$linkedHandle` LIKE '%,$referencedEntryId,%'";
+									// A value taken out on screen in a new entry is different: = finds nothing, and the other operators ignore the condition, the same as on an element that isn't linked. That's what master does.
+									if($curlyBracketEntry == 'new' AND empty($referencedEntryIds)) {
+										return array(_newEntryWithNoValueForConditionsFilterSQL($filterOps[$filterId]), "");
 									}
-									if(!$filterElementObject->canHaveMultipleValues) {
-										$anyOfReferencedValues = empty($referencedEntryIds) ? array() : array("`$linkedHandle` IN (".implode(",", $referencedEntryIds).")");
-									}
-									$conditionsFilterComparisonValue = _anyOfComparisonForConditionsFilterSQL($filterElementObject, $filterElementIds[$filterId], $anyOfReferencedValues, $linkedNegation);
+									$conditionsFilterComparisonValue = _linkedEntryIdsComparisonForConditionsFilterSQL($filterElementObject, $filterElementIds[$filterId], $referencedEntryIds, $linkedNegation);
 									$nullClauseHandled = true;
 								} elseif ($curlyBracketTargetSourceFid == $targetSourceFid) {
 									// a. the right value contains multiple, linked values, that point to the same source as the left side, which accepts multiple values. So we must compare against each possibility, if the match is not exact (ie: if it's LIKE or NOT LIKE)
@@ -8908,12 +8905,13 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 							$targetSourceDataHandler = new formulizeDataHandler($targetSourceFid);
 							$foundEntries = $targetSourceDataHandler->findAllEntriesWithValue($targetSourceHandle, $filterTermToUse, operator: '<=>');
 							if(is_numeric($filterTerms[$filterId]) AND ($foundEntries === false OR count($foundEntries) == 0)) {
-								// the  target is a linked element (already know that from above), and so it has a foreign key in the database, and if the filter term is numeric and the operator is equals then no subquery is necessary, do a direct comparison instead
-								// check first if the subquery would return values. If so, then we stick with that. Otherwise, toss the subquery and go with a straight comparison to the filter term on the assumption it is a foreign key.
-								// for != the field must not be that entry, and a blank field isn't, so a NULL check goes alongside, as a whole condition, so it has its own brackets
-								// ie: donor != 3 becomes ( t1.`artifacts_donor` IS NULL OR t1.`artifacts_donor` != 3 )
-								$conditionsFilterComparisonValue = $filterOps[$filterId] === "!=" ? "-->>WHOLECONDITION<<-- `$linkedHandle` IS NULL OR `$linkedHandle` != ".$filterTerms[$filterId]." " : $filterTerms[$filterId];
-								$nullClauseHandled = $filterOps[$filterId] === "!=";
+								// This is only for linked elements, which hold entry ids in their source form. So a number that no source entry has as its text is taken to be one of those ids,
+								// and it's compared with the ids directly, with no subquery. Check first if the subquery would return values. If so, then we stick with that.
+								// On an element that isn't linked, ie: checkboxes, a number is one of the values people choose, and it's compared the same way as any other value, further down.
+								// An element that holds several values stores them as ,id,id, so the id is looked for in that. For != the field must not have that entry, and a blank field doesn't.
+								// ie: donor = 3 becomes (( t1.`artifacts_donor` IN (3) )), and collections != 4 becomes (( t1.`artifacts_collections` IS NULL OR NOT ( t1.`artifacts_collections` LIKE '%,4,%' ) ))
+								$conditionsFilterComparisonValue = _linkedEntryIdsComparisonForConditionsFilterSQL($filterElementObject, $filterElementIds[$filterId], array($filterTerms[$filterId]), $filterOps[$filterId] === "!=");
+								$nullClauseHandled = true;
 								unset($subQueryWhereClause);
 							} elseif($filterOps[$filterId] === "<=>" AND count($foundEntries)>1) {
 								// subquery will return more than one row, so the IN operator must be used when constructing the full statement, this gets assigned to the $filterOps[$filterId] below (which has been passed by reference)
@@ -8972,10 +8970,13 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		// *** OPTION 3: DYNAMIC REFERENCE, NOT TO A LINKED ELEMENT...
 
 		// OPTION 3A: A DYNAMIC REFERENCE ON AN ELEMENT THAT HOLDS SEVERAL VALUES, THAT ISN'T LINKED, IE: CHECKBOXES
-		// = and LIKE mean the field has any of the referenced values, and != and NOT LIKE mean it has none of them, the same as linked elements above. The values are stored one after
-		// another with *=+*: in front of each one, so each one has to be looked for separately. See _anyOfComparisonForConditionsFilterSQL. There's no need for a join to the referenced form.
+		// = means the field has any of the referenced values, and LIKE means one of its values has one of them in it (see formulize_referenceLikeLooksInPartOfAValue).
+		// != and NOT LIKE mean none of them, the same as linked elements above. The values are stored one after another with *=+*: in front of each one, so each one has to be
+		// looked for separately. See _anyOfComparisonForConditionsFilterSQL. There's no need for a join to the referenced form.
 		// ie: audience = {audience} holding *=+*:Children*=+*:Teens becomes
 		// ((( t1.`audience` LIKE '%*=+*:Children*=+*:%' OR t1.`audience` LIKE '%*=+*:Children' ) OR ( t1.`audience` LIKE '%*=+*:Teens*=+*:%' OR t1.`audience` LIKE '%*=+*:Teens' )))
+		// and materials LIKE {materials} holding *=+*:Iron becomes (( t1.`materials` LIKE '%Iron%' )), which finds Cast iron too
+		// In a new entry, nothing to compare, whether nothing has been chosen yet or a value was taken out on screen, means = finds nothing, and the other operators ignore the condition.
 		if ($conditionsFilterComparisonValue === NULL
 			AND substr($filterTerms[$filterId],0,1) == "{"
 			AND substr($filterTerms[$filterId],-1) == "}"
@@ -8984,12 +8985,15 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 			if($referencedValues === false) {
 				$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<-- 1=0 "; // the entry being referred to doesn't exist
 				$nullClauseHandled = true;
-			} elseif(is_array($referencedValues) AND empty($referencedValues) AND $curlyBracketEntry == 'new' AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$asynchronousDataKey][$bareFilterTerm])) {
+			} elseif(is_array($referencedValues) AND empty($referencedValues) AND $curlyBracketEntry == 'new') {
 				$conditionsFilterComparisonValue = _newEntryWithNoValueForConditionsFilterSQL($filterOps[$filterId]);
 			} elseif(is_array($referencedValues)) {
+				$partOfAValue = formulize_referenceLikeLooksInPartOfAValue($filterElementObject, $filterOps[$filterId]);
 				$anyOfReferencedValues = array();
 				foreach($referencedValues as $referencedValue) {
-					$anyOfReferencedValues[] = formulize_multiValueItemComparison(" `$filterHandle` ", $referencedValue);
+					$anyOfReferencedValues[] = $partOfAValue
+						? " `$filterHandle` LIKE '%".formulize_db_escape((string) $referencedValue)."%' "
+						: formulize_multiValueItemComparison(" `$filterHandle` ", $referencedValue);
 				}
 				$conditionsFilterComparisonValue = _anyOfComparisonForConditionsFilterSQL($filterElementObject, $filterElementIds[$filterId], $anyOfReferencedValues, ($filterOps[$filterId] == '!=' OR $filterOps[$filterId] == 'NOT LIKE'));
 				$nullClauseHandled = true;
@@ -9307,6 +9311,32 @@ function _anyOfComparisonForConditionsFilterSQL($filterElementObject, $filterEle
 }
 
 /**
+ * Build the comparison between a linked element and entry ids in its source form, see _anyOfComparisonForConditionsFilterSQL. A linked element holds entry ids, so this is
+ * only for linked elements. A number on an element that isn't linked, ie: checkboxes, is one of the values people choose, and isn't compared here.
+ * An element that holds several values stores them as ,id,id, so each id is looked for in that. An element that holds one value stores the id itself.
+ * ie: collections = 4 becomes (( t1.`artifacts_collections` LIKE '%,4,%' )), and donor != with 1 and 2 becomes (( t1.`artifacts_donor` IS NULL OR NOT ( t1.`artifacts_donor` IN (1,2) ) ))
+ *
+ * @param object $filterElementObject - The linked element the condition is on
+ * @param string $filterElementId - The element id
+ * @param array $entryIds - The entry ids in the source form. Empty if the reference is blank.
+ * @param bool $negative - True to find entries with none of the ids
+ * @return string The comparison value, marked as a whole condition
+ */
+function _linkedEntryIdsComparisonForConditionsFilterSQL($filterElementObject, $filterElementId, $entryIds, $negative) {
+	$handle = $filterElementObject->getVar('ele_handle');
+	$entryIds = array_map('intval', $entryIds);
+	$anyOfEntryIds = array();
+	if($filterElementObject->canHaveMultipleValues) {
+		foreach($entryIds as $entryId) {
+			$anyOfEntryIds[] = " `$handle` LIKE '%,$entryId,%' ";
+		}
+	} elseif(!empty($entryIds)) {
+		$anyOfEntryIds[] = " `$handle` IN (".implode(",", $entryIds).") ";
+	}
+	return _anyOfComparisonForConditionsFilterSQL($filterElementObject, $filterElementId, $anyOfEntryIds, $negative);
+}
+
+/**
  * Get the values that a { } reference holds, for comparing with an element that holds several values, and isn't linked. A linked reference is not handled here, its values are entry ids.
  *
  * @param string $handle - The handle of the element being referred to
@@ -9405,7 +9435,8 @@ function _dateRangeComparisonForConditionsFilterSQL($period, $op, $handle) {
 }
 
 /**
- * Build the comparison for a condition in a new entry, on an element that isn't linked, when a { } term has nothing on screen and no default value.
+ * Build the comparison for a condition in a new entry, when a { } term has nothing to compare. On an element that isn't linked, that's nothing on screen and no default value,
+ * or a value taken out on screen. On a linked element, it's only a value taken out on screen. Nothing chosen yet empties a linked element's list, whatever the operator.
  * = finds nothing, so a list that depends on a value is empty until there is one. The other operators ignore the condition, which is what no comparison value means.
  *
  * @param string $op - The operator of the condition
@@ -14018,6 +14049,23 @@ function formulize_multiValueItemComparison($column, $value) {
 }
 
 /**
+ * Whether LIKE and NOT LIKE with a { } reference look for a referenced value in part of a value of the element, ie: Iron finds Cast iron, the same as LIKE does with a term
+ * that's typed. Otherwise the values are compared whole. They are on a linked element, because its values are entry ids. And they are on an element with text people see
+ * that's different from what's stored, because a reference holds stored values, and a stored value of 1 is not part of 12.
+ * Conditions are checked with SQL (_buildConditionsFilterSQL) and against one entry (buildEvaluationCondition), and both use this, so they agree.
+ *
+ * @param object|false $elementObject The element the condition is on, or false for a metadata field
+ * @param string $operator The operator of the condition
+ * @return bool True if a referenced value can be part of a value of the element
+ */
+function formulize_referenceLikeLooksInPartOfAValue($elementObject, $operator) {
+	return (trim($operator) == 'LIKE' OR trim($operator) == 'NOT LIKE')
+		AND is_object($elementObject)
+		AND !$elementObject->isLinked
+		AND !formulize_elementUITexts($elementObject);
+}
+
+/**
  * Compare an element that has UI text with part of what people see, with LIKE or NOT LIKE. People see the labels, and the database holds the values behind them, so the
  * term is looked for in the labels, and the values with those labels are compared exactly. A value of 1 is not part of a value of 10 just because the digit is in it.
  * A stored value with no label, ie: imported, or its option was removed, is shown as it is, so that text is looked for too. That's what happens when conditions are
@@ -15001,13 +15049,27 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		}
 
 		// when a reference or the field holds several values, = and LIKE mean the field has any of the referenced values, and != and NOT LIKE mean it has none of them, the same as SQL
-		// (see _anyOfComparisonForConditionsFilterSQL). A blank reference means the field is blank, or not blank.
+		// (see _anyOfComparisonForConditionsFilterSQL). A blank reference means the field is blank, or not blank. LIKE can find a referenced value in part of one of the field's values,
+		// see formulize_referenceLikeLooksInPartOfAValue
 		$referenceExpression = "";
 		if($referencedValues !== null AND (is_array($compValue) OR count($referencedValues) > 1) AND in_array($thisOp, array('==', '!=', 'LIKE', 'NOT LIKE'))) {
 			$withoutBlanks = function($thisValue) { return $thisValue !== ''; };
 			$referencedTexts = array_filter(array_map('strval', $referencedValues), $withoutBlanks);
 			$fieldTexts = array_filter(array_map('strval', (array) $compValue), $withoutBlanks);
-			$fieldHasOne = empty($referencedTexts) ? empty($fieldTexts) : count(array_intersect($fieldTexts, $referencedTexts)) > 0;
+			if(empty($referencedTexts)) {
+				$fieldHasOne = empty($fieldTexts);
+			} elseif(formulize_referenceLikeLooksInPartOfAValue((isMetaDataField($filterElements[$i]) ? false : $element_handler->get($filterElements[$i])), $thisOp)) {
+				$fieldHasOne = false;
+				foreach($fieldTexts as $fieldText) {
+					foreach($referencedTexts as $referencedText) {
+						if(stripos($fieldText, $referencedText) !== false) {
+							$fieldHasOne = true;
+						}
+					}
+				}
+			} else {
+				$fieldHasOne = count(array_intersect($fieldTexts, $referencedTexts)) > 0;
+			}
 			$referenceExpression = ($fieldHasOne == ($thisOp == '==' OR $thisOp == 'LIKE')) ? 'TRUE' : 'FALSE';
 		}
 
