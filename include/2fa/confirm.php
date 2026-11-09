@@ -25,7 +25,7 @@ if(!$xoopsUser) {
     exit;
 }
 
-$codebox = "<br><br>Code: <input type='text' id='dialog-tfacode' value=''>";
+$codebox = tfa_codeInput();
 
 $profile_handler = xoops_getmodulehandler('profile', 'profile');
 $profile = $profile_handler->get($xoopsUser->getVar('uid'));

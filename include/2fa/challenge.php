@@ -23,7 +23,7 @@ if($user AND
    $method = user2FAMethod($user) AND
    userRemembersDevice($user) == false) {
     $rememberLabel = sprintf(_US_REMEMBER_DEVICE_FOR, tfa_formatWindow(tfa_rememberDeviceDays()));
-    $codebox = "<br><br>"._US_2FA_CODE."<input type='text' id='dialog-tfacode' value=''><br><br><input type='checkbox' id='dialog-tfaremember'> <label for='dialog-tfaremember'>".$rememberLabel."</label>";
+    $codebox = tfa_codeInput()."<br><br><input type='checkbox' id='dialog-tfaremember'> <label for='dialog-tfaremember'>".$rememberLabel."</label>";
     switch($method) {
         case TFA_SMS:
             $message = sendCode(TFA_SMS, $user->getVar('uid')); // will return errors

@@ -33,6 +33,17 @@ function tfa_formatPhone($phone) {
 }
 
 /**
+ * The labelled code input shown in every 2FA dialog. Codes are always numeric, so ask
+ * mobile browsers for the number pad, and let phones offer a code from an incoming SMS.
+ * The id is what the dialog scripts read the typed code from.
+ *
+ * @return string HTML, starting with a pair of line breaks, ready to append to a dialog message
+ */
+function tfa_codeInput() {
+	return "<br><br>" . _US_2FA_CODE . "<input type='text' id='dialog-tfacode' value='' inputmode='numeric' pattern='[0-9]*' autocomplete='one-time-code'>";
+}
+
+/**
  * Build the instruction + code-entry HTML shown inside a 2FA dialog panel.
  * Handles all scenarios: turn_off, change_pass, twophase_confirm, turn_on.
  * The caller is responsible for appending any hidden token inputs after this string.
@@ -40,7 +51,7 @@ function tfa_formatPhone($phone) {
  * @param string      $scenario       'turn_off'|'change_pass'|'twophase_confirm'|'turn_on'
  * @param string      $method         'app'|'texts'|'email'
  * @param string|null $contactDisplay Formatted, already-HTML-escaped contact address (null for app)
- * @param string      $codebox        HTML for the code input, e.g. "<br><br>Code: <input ...>"
+ * @param string      $codebox        HTML for the code input, from tfa_codeInput()
  * @param bool        $error          If true, prepend a bold red invalid-code banner
  */
 function tfa_buildDialogMessage($scenario, $method, $contactDisplay, $codebox, $error = false) {

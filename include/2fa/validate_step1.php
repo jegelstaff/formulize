@@ -31,7 +31,7 @@ $newMethod     = intval(isset($_POST['new_method']) ? $_POST['new_method'] : TFA
 $newPhone      = preg_replace('/[^0-9]/', '', isset($_POST['new_phone']) ? $_POST['new_phone'] : '');
 $newEmail      = isset($_POST['new_email']) ? trim($_POST['new_email']) : '';
 
-$codebox = "<br><br>Code: <input type='text' id='dialog-tfacode' value=''>";
+$codebox = tfa_codeInput();
 
 // Validate the confirm token issued by confirm.php for this session,
 // bound to the old contact where the phase-1 code was sent.
