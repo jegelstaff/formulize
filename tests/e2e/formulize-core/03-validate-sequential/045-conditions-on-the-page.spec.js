@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import {
 	login, leavePage, saveAdminForm, waitForAdminPageReady, conditionalChecksFinished, elementId, dbQuery, dbPrefix, sqlEscape, ensureMainMenuOpen,
-	applyColumnChanges, openAllColumnSections,
+	applyColumnChanges, openAllColumnSections, showPermissionsFor, getUserByLogin,
 } from '../../utils';
 import {
 	casesFor, howToCheck, namesIn, conditionsFor, conditionsWithCaptionsFor, expectedNames, namesOnPage, namesWhereShown, searchesFor, searchList,
@@ -17,7 +17,9 @@ import {
 // Conditions take two paths, SQL for finding entries and an evaluation of one entry for displaying elements (see
 // ai-context/conditions.md), and sections 1 to 4 and 6 are the first and section 5 is the second. Section 7 is the search boxes
 // on a list, which go through formulize_parseFilter(), different code again, so a fix to one doesn't fix the others. Section 8
-// types each row's conditions into the admin UI, the way a webmaster does, for the settings MCP can't reach.
+// types each row's conditions into the admin UI, the way a webmaster does, for the settings MCP can't reach. Sections 9 and 10 are
+// sites that show dates another way. Section 11 is a group's filter, which is SQL of its own, and section 12 is the values that
+// = conditions give a new entry.
 //
 // How a section is built:
 //   - Each row sets its condition, opens the page and compares. A row that disagrees is recorded, and the section carries on.
@@ -32,8 +34,9 @@ import {
 // This changes settings on elements and screens other specs use, so it's in 03-validate-sequential. It puts them back in the
 // test before last, and again in afterAll in case a section stopped partway.
 //
-// It runs after 040, which turns the MCP server on, makes an API key and leaves them there. No entry is saved on purpose, but
-// changing to a tab of the Artifact screen saves the tab it's leaving. A subform filter of = with a { } reference writes the
+// It runs after 040, which turns the MCP server on, makes an API key and leaves them there. No entry is saved on purpose, except in
+// section 12, which adds an artifact for each row and deletes it again. Everything is put back checks they've gone. But changing
+// to a tab of the Artifact screen saves the tab it's leaving. A subform filter of = with a { } reference writes the
 // main entry's value into the subform entries on a save, so Keep filtered values in sync is off for section 4, and the Loan
 // Requests are compared with what they were at the end. Date elements always submit YYYY-MM-DD, so a save is safe in section 9.
 //
@@ -60,14 +63,30 @@ const DISPLAYED_ELEMENT = 'artifacts_curator_note';
 const WEAPONS_SUBFORM = 'collections_subform_artifacts';
 const WEAPONS_SUBFORM_DELETE_LINKS = '#filterdiv > a.conditionsdelete';
 
-// The condition boxes in the admin UI that section 8 types each row's conditions into, by the letter of the rows. filter is the
-// name the boxes are made with, so the "match all" set is new_<filter>_element and the rest, and "match one or more" is
-// new_<filter>_oom_element. list is where the conditions are listed once they're saved, and deleteLinks are their Xs.
+// The Artifacts subform in Main Vault has no Add or Delete buttons, the way 022 made it. Section 12 turns them on to add an
+// artifact and delete it again, and putSettingsBack turns them off.
+const MAIN_VAULT_SUBFORM_AS_SETUP_LEFT_IT = { showAddButton: 0, showDeleteButton: 0 };
+
+// The condition boxes in the admin UI that sections 8 and 11 type each row's conditions into, by the letter of the rows. open
+// goes to the page they're on. filter is the name the boxes are made with, so the "match all" set is new_<filter>_element and
+// the rest, and "match one or more" is new_<filter>_oom_element. list is where the conditions are listed once they're saved,
+// a selector or a function that finds it, and deleteLinks are their Xs. Section 11's are named for its group, see auditorsFilterBoxes.
 const ADMIN_UI_CONDITIONS = {
-	A: { element: 'loans_end_date', tab: 'Display Settings', filter: 'disabledconditions', list: '#disabledconditions', deleteLinks: '#disabledconditions > a.conditionsdelete', elements: LOAN_ELEMENTS },
-	E: { element: 'loans_donor', tab: 'Advanced', filter: 'dynamicDefaultConditions', list: '#dynamic-defaults', deleteLinks: 'div#dynamic-defaults a.conditionsdelete', elements: ARTIFACT_ELEMENTS },
-	M: { element: WEAPONS_SUBFORM, tab: 'Options', filter: 'subformfilter', list: '#filterdiv', deleteLinks: WEAPONS_SUBFORM_DELETE_LINKS, elements: ARTIFACT_ELEMENTS },
+	A: { open: page => openElementSettings(page, 'loans_end_date', 'Display Settings'), filter: 'disabledconditions', list: '#disabledconditions', deleteLinks: '#disabledconditions > a.conditionsdelete', elements: LOAN_ELEMENTS },
+	E: { open: page => openElementSettings(page, 'loans_donor', 'Advanced'), filter: 'dynamicDefaultConditions', list: '#dynamic-defaults', deleteLinks: 'div#dynamic-defaults a.conditionsdelete', elements: ARTIFACT_ELEMENTS },
+	M: { open: page => openElementSettings(page, WEAPONS_SUBFORM, 'Options'), filter: 'subformfilter', list: '#filterdiv', deleteLinks: WEAPONS_SUBFORM_DELETE_LINKS, elements: ARTIFACT_ELEMENTS },
 };
+
+// What the admin UI calls the fields every entry has, in its lists of elements for conditions
+const CONDITION_LABELS = {
+	'creation_datetime': 'Creation date',
+	'mod_datetime': 'Last modification date',
+};
+
+// Section 11's group, and the one person in it, who come from outside the museum to check its records. 023 makes them, and gives
+// them every artifact. The group's filter decides which artifacts its members see, so no one else is in it.
+const AUDITORS = 'Auditors';
+const AUDITOR = 'auditor1';
 
 // The lists in sections 6 and 7, by the name rows give them. A list with a handle is a list screen, opened by its address. The
 // Artifacts list is the Artifacts form's own list, opened from the menu, and it has no fundamental filters.
@@ -96,6 +115,7 @@ let api; // talks to MCP, with its own connection, since afterAll has no request
 let apiKey;
 let requestId = 0;
 let loanRequestsToStart;
+let artifactsToStart;
 let keepInSyncToStart;
 let shortDateFormatToRestore = null; // set while section 9 has the site showing dates another way
 let weaponsSubformToStart = null; // the Weapons subform's settings, once anything an interrupted run left is taken away
@@ -112,6 +132,15 @@ function entryId(form, handle, name) {
 
 function screenId(handle) {
 	return dbQuery(`SELECT sid FROM ${dbPrefix()}_formulize_screen WHERE screen_handle = '${sqlEscape(handle)}'`)[0][0];
+}
+
+function artifactIds() {
+	return dbQuery(`SELECT entry_id FROM ${dbPrefix()}_formulize_artifacts ORDER BY entry_id`).map(row => row[0]);
+}
+
+function groupNamed(name) {
+	const rows = dbQuery(`SELECT groupid FROM ${dbPrefix()}_groups WHERE name = '${sqlEscape(name)}'`);
+	return rows.length ? parseInt(rows[0][0], 10) : null;
 }
 
 function loanRequests() {
@@ -136,8 +165,8 @@ async function tool(name, args) {
 	return JSON.parse(body.result.content[0].text);
 }
 
-const setSubformFilter = (handle, conditions, keepInSync = 1) =>
-	tool('update_subform_interface', { element_identifier: handle, properties: { sourceEntryFilter: conditions, keepFilteredValuesInSync: keepInSync } });
+const setSubformFilter = (handle, conditions, keepInSync = 1, otherProperties = {}) =>
+	tool('update_subform_interface', { element_identifier: handle, properties: { sourceEntryFilter: conditions, keepFilteredValuesInSync: keepInSync, ...otherProperties } });
 const setOptionsFilter = (handle, conditions) =>
 	tool('update_linked_list_element', { element_identifier: handle, properties: { sourceEntryFilter: conditions } });
 const setDisplayConditions = conditions =>
@@ -146,7 +175,7 @@ const setFundamentalFilters = (listHandle, conditions) =>
 	tool('update_list_screen', { screen_id: parseInt(screenId(listHandle), 10), fundamental_filters: conditions });
 
 async function putSettingsBack() {
-	await setSubformFilter(MAIN_VAULT_SUBFORM, []);
+	await setSubformFilter(MAIN_VAULT_SUBFORM, [], 1, MAIN_VAULT_SUBFORM_AS_SETUP_LEFT_IT);
 	await setSubformFilter(LOANS_SUBFORM, [], keepInSyncToStart);
 	await setOptionsFilter(ARTIFACT_OPTIONS, []);
 	await setOptionsFilter(DONOR_OPTIONS, []);
@@ -293,15 +322,16 @@ async function openElementSettings(page, handle, tab) {
 	await page.getByRole('link', { name: tab, exact: true }).click();
 }
 
-// Remove every condition in a filter box, the way a webmaster does, with each condition's X, which saves and reloads the page
-async function removeConditions(page, handle, tab, deleteLinks) {
-	await openElementSettings(page, handle, tab);
+// Remove every condition in a filter box, the way a webmaster does, with each condition's X, which saves and reloads the page.
+// open goes to the page the box is on, ie: one of the ADMIN_UI_CONDITIONS.
+async function removeConditions(page, open, deleteLinks) {
+	await open(page);
 	while (await page.locator(deleteLinks).count() > 0) {
 		await Promise.all([
 			page.waitForNavigation({ waitUntil: 'networkidle', timeout: 120000 }),
 			page.locator(deleteLinks).first().click(),
 		]);
-		await openElementSettings(page, handle, tab);
+		await open(page);
 	}
 }
 
@@ -323,25 +353,26 @@ function weaponsSubformSettings() {
 // is saved, and must then be in the list of conditions. The admin UI calls != NOT.
 async function typeConditions(page, boxes, conditions) {
 	await asAdmin(page);
-	await removeConditions(page, boxes.element, boxes.tab, boxes.deleteLinks);
+	await removeConditions(page, boxes.open, boxes.deleteLinks);
 	for (const { caption, operator, value, type } of conditions) {
 		const set = type === 'match-all' ? boxes.filter : `${boxes.filter}_oom`;
 		const op = operator === '!=' ? 'NOT' : operator;
-		await openElementSettings(page, boxes.element, boxes.tab);
-		await page.locator(`#new_${set}_element`).selectOption({ label: caption });
+		const label = CONDITION_LABELS[caption] ?? caption;
+		await boxes.open(page);
+		await page.locator(`#new_${set}_element`).selectOption({ label });
 		await page.locator(`#new_${set}_op`).selectOption(op);
 		await page.locator(`#new_${set}_term`).fill(value);
 		await saveAdminForm(page);
-		await openElementSettings(page, boxes.element, boxes.tab);
-		await expect(page.locator(boxes.list)).toContainText(`${caption} ${op} ${value}`);
+		await boxes.open(page);
+		const list = typeof boxes.list === 'function' ? boxes.list(page) : page.locator(boxes.list);
+		await expect(list).toContainText(`${label} ${op} ${value}`);
 	}
 }
 
 // The rows of a section whose conditions are typed into the admin UI. A row with the same conditions as the row before it uses them
-// as they are, so they're typed again only when they change, or when a row stopped partway. Each row is read as curator1. read
-// opens the page and returns what the row's Should show is out of, and what's there.
-async function checkAdminUIRows(page, letter, read) {
-	const boxes = ADMIN_UI_CONDITIONS[letter];
+// as they are, so they're typed again only when they change, or when a row stopped partway. Each row is read by the person reader
+// logs in, curator1 unless it says. read opens the page and returns what the row's Should show is out of, and what's there.
+async function checkAdminUIRows(page, letter, read, { boxes = ADMIN_UI_CONDITIONS[letter], reader = asCurator } = {}) {
 	let typed = null;
 	for (const row of casesFor(letter)) {
 		await checkRow(page, row['Row'], disagreements, async () => {
@@ -351,7 +382,7 @@ async function checkAdminUIRows(page, letter, read) {
 				await typeConditions(page, boxes, conditions);
 				typed = JSON.stringify(conditions);
 			}
-			await asCurator(page);
+			await reader(page);
 			const { everything, shown } = await read(row);
 			compare(row, expectedNames(row['Should show'], everything), shown);
 		});
@@ -373,6 +404,104 @@ async function openArtifactsListWithDates(page) {
 	await expect(page.locator('input[name="search_artifacts_date_of_acquisition"]')).toBeVisible();
 }
 
+// The Auditors' filter is on the Permissions tab of Artifacts, in the group's own panel, which the page shows once it's asked for
+async function openAuditorsPermissions(page) {
+	const fid = formId('Artifacts');
+	const aid = dbQuery(`SELECT appid FROM ${dbPrefix()}_formulize_application_form_link WHERE fid = ${fid}`)[0][0];
+	await page.goto(`/modules/formulize/admin/ui.php?page=form&fid=${fid}&aid=${aid}`);
+	await waitForAdminPageReady(page);
+	await page.getByRole('link', { name: 'Permissions', exact: true }).click();
+	await showPermissionsFor(page, [AUDITORS]);
+}
+
+// The boxes for the Auditors' filter, which are named for the form and the group, like the rest of section 8's ADMIN_UI_CONDITIONS
+function auditorsFilterBoxes() {
+	const filter = `${formId('Artifacts')}_${groupNamed(AUDITORS)}_filter`;
+	return {
+		open: openAuditorsPermissions,
+		filter,
+		list: page => page.getByRole('group', { name: AUDITORS }).first(),
+		deleteLinks: `a.conditionsdelete[target^="${filter}_"]`,
+		elements: ARTIFACT_ELEMENTS,
+	};
+}
+
+// How many filters the Auditors have on Artifacts, which is none, the way 023 left them, unless section 11 is part way through
+function auditorsFilters() {
+	return parseInt(dbQuery(`SELECT COUNT(*) FROM ${dbPrefix()}_formulize_group_filters WHERE groupid = ${groupNamed(AUDITORS)} AND fid = ${formId('Artifacts')}`)[0][0], 10);
+}
+
+async function asAuditor(page) {
+	await page.goto('/user.php?op=logout');
+	await login(page, AUDITOR, '12345');
+}
+
+// Add one artifact with the Artifacts subform in Main Vault, which is open, as a person does, and return its entry id. Pressing
+// Add saves the page, and the subform makes the new artifact, with the values its = conditions give a new entry.
+async function addArtifactInMainVault(page) {
+	const before = artifactIds();
+	await Promise.all([
+		page.waitForNavigation({ waitUntil: 'load', timeout: 120000 }),
+		page.locator('.formulize-subform input[name="addsub"]').click(),
+	]);
+	let added = [];
+	await expect.poll(() => {
+		added = artifactIds().filter(id => !before.includes(id));
+		return added.length;
+	}, { message: 'Add in the subform should make one new artifact', timeout: 30000 }).toBe(1);
+	return added[0];
+}
+
+// Delete artifacts with the Artifacts subform in Main Vault, as a person does: tick them, press Delete and say yes. The subform
+// has no conditions while this happens, so an artifact a condition would leave out is there to tick. Keep filtered values in sync
+// stays off, since deleting saves the page too.
+async function deleteArtifactsInMainVault(page, ids) {
+	await setSubformFilter(MAIN_VAULT_SUBFORM, [], 0, { showAddButton: 1, showDeleteButton: 1 });
+	await openEntry(page, formId('Locations'), entryId('locations', 'locations_name', 'Main Vault'));
+	const subform = page.locator('.formulize-subform');
+	await expect(subform).toBeVisible();
+	for (const id of ids) {
+		await subform.locator(`input.delbox[name="delbox${id}"]`).check();
+	}
+	page.once('dialog', dialog => dialog.accept());
+	await Promise.all([
+		page.waitForNavigation({ waitUntil: 'load', timeout: 120000 }),
+		subform.locator('input[name="deletesubs"]').click(),
+	]);
+	await expect.poll(() => artifactIds().filter(id => ids.includes(id)), { message: 'the artifacts should be deleted', timeout: 30000 }).toEqual([]);
+}
+
+// The artifacts that section 12 made, and hasn't deleted yet, ie: because a row stopped partway
+const addedArtifacts = () => artifactIds().filter(id => !artifactsToStart.includes(id));
+
+// How a row's Saved cell disagrees with what the artifact holds, if it does. The cell is Caption: value, separated by ;, and
+// (blank) for nothing, ie: Era: BCE; Date of acquisition: (blank). Read from the database, since what's saved is the question.
+function savedDisagreement(row, entry) {
+	const problems = [];
+	for (const saved of row['Saved'].split(';').map(part => part.trim()).filter(part => part !== '')) {
+		const [caption, expected] = saved.split(': ');
+		const value = dbQuery(`SELECT ${ARTIFACT_ELEMENTS[caption]} FROM ${dbPrefix()}_formulize_artifacts WHERE entry_id = ${parseInt(entry, 10)}`)[0][0];
+		const stored = (value === 'NULL' || value === '') ? '(blank)' : value;
+		if (stored !== expected) {
+			problems.push(`${caption} is ${stored}, not ${expected}`);
+		}
+	}
+	return problems.length ? `${row['Row']}: ${problems.join(', ')}` : null;
+}
+
+// Section 11's filter on the Auditors is taken off, and the artifacts section 12 added are deleted, here as well as in the sections,
+// in case one of them stopped partway. As a webmaster.
+async function undoSections11And12(page) {
+	if (auditorsFilters() > 0) {
+		await asAdmin(page);
+		await removeConditions(page, openAuditorsPermissions, auditorsFilterBoxes().deleteLinks);
+	}
+	if (addedArtifacts().length > 0) {
+		await asAdmin(page);
+		await deleteArtifactsInMainVault(page, addedArtifacts());
+	}
+}
+
 test.beforeAll(async ({ browser, playwright }) => {
 	api = await playwright.request.newContext({ baseURL: E2E_TEST_BASE_URL });
 	const page = await browser.newPage({ baseURL: E2E_TEST_BASE_URL });
@@ -383,6 +512,7 @@ test.beforeAll(async ({ browser, playwright }) => {
 	apiKey = await page.locator('td[id=key-1] .key-copy').getAttribute('data-key');
 	await page.close();
 	loanRequestsToStart = loanRequests();
+	artifactsToStart = artifactIds();
 	keepInSyncToStart = keepInSyncSetting();
 });
 
@@ -399,9 +529,12 @@ test.afterAll(async ({ browser }) => {
 	if (weaponsSubformMayHaveConditions) {
 		const page = await browser.newPage({ baseURL: E2E_TEST_BASE_URL });
 		await asAdmin(page);
-		await removeConditions(page, WEAPONS_SUBFORM, 'Options', WEAPONS_SUBFORM_DELETE_LINKS);
+		await removeConditions(page, ADMIN_UI_CONDITIONS.M.open, ADMIN_UI_CONDITIONS.M.deleteLinks);
 		await page.close();
 	}
+	const page = await browser.newPage({ baseURL: E2E_TEST_BASE_URL });
+	await undoSections11And12(page).catch(error => console.log(`What sections 11 and 12 changed could not all be put back: ${error.message}`));
+	await page.close();
 	await putSettingsBack();
 	await api.dispose();
 });
@@ -679,7 +812,7 @@ test('Section 8: a disabled condition, made in the admin UI', async ({ page }) =
 	await leavePage(page, '/user.php?op=logout');
 
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-	await removeConditions(page, 'loans_end_date', 'Display Settings', '#disabledconditions > a.conditionsdelete');
+	await removeConditions(page, ADMIN_UI_CONDITIONS.A.open, ADMIN_UI_CONDITIONS.A.deleteLinks);
 	await page.locator('select[name="elements_ele_disabled\\[\\]"]').selectOption('none');
 	await saveAdminForm(page);
 	await openElementSettings(page, 'loans_end_date', 'Display Settings');
@@ -713,7 +846,7 @@ test('Section 8: a dynamic default, made in the admin UI', async ({ page }) => {
 	await leavePage(page, '/user.php?op=logout');
 
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-	await removeConditions(page, 'loans_donor', 'Advanced', 'div#dynamic-defaults a.conditionsdelete');
+	await removeConditions(page, ADMIN_UI_CONDITIONS.E.open, ADMIN_UI_CONDITIONS.E.deleteLinks);
 	await page.locator('select[name="elements-ele_dynamicdefault_source"]').selectOption({ index: 0 });
 	await page.locator('#elements-ele_use_default_when_blank0').check();
 	await saveAdminForm(page);
@@ -729,7 +862,7 @@ test('Section 8: conditions typed in the admin UI, on the Artifacts subform of a
 	const everything = namesIn('Artifact', artifact => artifact['Collections'].split(', ').includes('Weapons'));
 	weaponsSubformMayHaveConditions = true;
 	await asAdmin(page);
-	await removeConditions(page, WEAPONS_SUBFORM, 'Options', WEAPONS_SUBFORM_DELETE_LINKS); // anything an interrupted run left
+	await removeConditions(page, ADMIN_UI_CONDITIONS.M.open, ADMIN_UI_CONDITIONS.M.deleteLinks); // anything an interrupted run left
 	weaponsSubformToStart = weaponsSubformSettings();
 
 	await checkAdminUIRows(page, 'M', async () => {
@@ -741,7 +874,7 @@ test('Section 8: conditions typed in the admin UI, on the Artifacts subform of a
 	});
 
 	await asAdmin(page);
-	await removeConditions(page, WEAPONS_SUBFORM, 'Options', WEAPONS_SUBFORM_DELETE_LINKS);
+	await removeConditions(page, ADMIN_UI_CONDITIONS.M.open, ADMIN_UI_CONDITIONS.M.deleteLinks);
 	weaponsSubformMayHaveConditions = false;
 	await leavePage(page, '/user.php?op=logout');
 });
@@ -841,14 +974,75 @@ test('Section 10: a site that shows dates with words', async ({ page }) => {
 	await expectCatalogueToShow(page, '2002-12-31');
 });
 
+// A group's filter is SQL of its own, in buildPerGroupFilterWhereClause(), not a condition, so it has its own rules. Each row's
+// filter is typed into the Auditors' panel on the Permissions tab of Artifacts, as a webmaster does, and auditor1, their one member,
+// opens the Catalogue list. The filter is taken off afterwards, since 023 left the Auditors with none. If 023 didn't make them,
+// every row would be wrong for that reason, so it's recorded once.
+test('Section 11: a group\'s filter on a date', async ({ page }) => {
+	const rows = casesFor('J');
+	test.setTimeout(rows.length * SECONDS_PER_ADMIN_UI_ROW * 1000 + 300000);
+	const { selector } = howToCheck('J');
+	const everything = namesIn('Artifact');
+
+	const auditorsThere = groupNamed(AUDITORS) !== null && getUserByLogin(AUDITOR) !== null;
+	if (!auditorsThere) {
+		disagreements.push(`J: could not be checked. 023 should have made the ${AUDITORS} group and ${AUDITOR}`);
+		return;
+	}
+	await checkAdminUIRows(page, 'J', async () => {
+		await openList(page, LISTS['Catalogue']);
+		await expect(page.getByText(/Showing entries:|No entries were found/).first()).toBeVisible();
+		return { everything, shown: await namesOnPage(page.locator(selector), everything) };
+	}, { boxes: auditorsFilterBoxes(), reader: asAuditor });
+
+	// recorded rather than thrown, so the sections after this one still run. Everything is put back tries again, and fails if it can't.
+	await checkRow(page, 'J', disagreements, async () => {
+		await asAdmin(page);
+		await removeConditions(page, openAuditorsPermissions, auditorsFilterBoxes().deleteLinks);
+	});
+	await leavePage(page, '/user.php?op=logout');
+});
+
+// Each row puts its conditions on the Artifacts subform in Main Vault, adds an artifact with the subform's Add button, and reads
+// what the new artifact holds. Then it deletes the artifact with the subform's Delete button, whatever the row found, so the next
+// row, and every spec after this one, has only the museum's artifacts. As a webmaster, because no one else can delete them.
+// Keep filtered values in sync is off, or the save that Add makes would give every artifact in Main Vault the row's values.
+test('Section 12: what = conditions give a new entry', async ({ page }) => {
+	const rows = casesFor('K');
+	test.setTimeout(rows.length * 3 * SECONDS_PER_ROW * 1000);
+	const fid = formId('Locations');
+	const mainVault = entryId('locations', 'locations_name', 'Main Vault');
+
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	for (const row of rows) {
+		await checkRow(page, row['Row'], disagreements, async () => {
+			await setSubformFilter(MAIN_VAULT_SUBFORM, conditionsFor(row, ARTIFACT_ELEMENTS), 0, { showAddButton: 1, showDeleteButton: 1 });
+			await openEntry(page, fid, mainVault);
+			await expect(page.locator('.formulize-subform')).toBeVisible();
+			const disagreement = savedDisagreement(row, await addArtifactInMainVault(page));
+			if (disagreement) {
+				disagreements.push(disagreement);
+			}
+		});
+		if (addedArtifacts().length > 0) {
+			await checkRow(page, row['Row'], disagreements, () => deleteArtifactsInMainVault(page, addedArtifacts()));
+		}
+	}
+	await setSubformFilter(MAIN_VAULT_SUBFORM, [], 1, MAIN_VAULT_SUBFORM_AS_SETUP_LEFT_IT);
+	await leavePage(page);
+});
+
 test('Everything is put back', async ({ page }) => {
+	await undoSections11And12(page);
 	await putSettingsBack();
 	expect(loanRequests(), 'nothing here should have changed a Loan Request').toEqual(loanRequestsToStart);
+	expect(artifactIds(), 'every artifact section 12 added should be deleted again').toEqual(artifactsToStart);
+	expect(auditorsFilters(), `the ${AUDITORS} should have no filter on Artifacts, the way 023 left them`).toBe(0);
 	if (weaponsSubformToStart !== null) {
 		expect(weaponsSubformSettings(), 'the Artifacts subform in Collections should have the settings setup gave it').toBe(weaponsSubformToStart);
 	}
 	const everything = namesIn('Artifact');
-	await login(page, 'curator1', '12345');
+	await asCurator(page); // undoSections11And12 may have logged in as a webmaster
 	await openEntry(page, formId('Locations'), entryId('locations', 'locations_name', 'Main Vault'));
 	await expect(page.locator('.formulize-subform')).toBeVisible();
 	expect(await namesOnPage(page.locator(howToCheck('S').selector), everything)).toEqual([...everything].sort());
