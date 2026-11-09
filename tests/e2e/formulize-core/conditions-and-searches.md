@@ -691,14 +691,14 @@ Search boxes on the Catalogue list.
 
 ## 10. A site that shows dates with words
 
-The same as section 9, with the Short date format `jS \o\f F Y`, so the Catalogue list shows Bronze Mirror as 31st of December 2002. `S` is the day's suffix, and `\o\f` is the word of, written as it is.
+The same as section 9, with the Short date format `jS F Y`, so the Catalogue list shows Bronze Mirror as 31st December 2002. `S` is the day's suffix.
 
 Conditions, set with `sourceEntryFilter` on `locations_subform_artifacts`.
 
 | Row | All of | Any of | Should show | What it tests |
 |---|---|---|---|---|
 | G1 | Date of acquisition LIKE 1st |  | Roman Coin, Bronze Mirror, Silk Scroll | the day with its suffix, as the site shows it, so the 21st and the 31st too |
-| G2 | Date of acquisition LIKE nd of |  | Persian necklace, Persian necklace - number 2 | a word the format writes as it is |
+| G2 | Date of acquisition LIKE nd December |  | Persian necklace, Persian necklace - number 2 | the suffix and the month together, as the site shows them |
 | G3 | Date of acquisition NOT LIKE 1st |  | Everything except Roman Coin, Bronze Mirror, Silk Scroll | not part of the date as the site shows it, and blanks |
 
 ## 11. A group's filter on a date
@@ -826,6 +826,8 @@ A gap matters most where it's code the branch changed. If no row runs that code,
 
 - **Element types whose own conversion now runs on a condition's term.** `_convertLiteralTermForConditionsFilterSQL()` sends a term through the element type's `prepareLiteralTextForDB()`, ie: a time element reads `2:30 pm` as 14:30, and a duration element reads `1d 2h` as minutes. The museum has no time or duration element, so no row runs those. The types it does have are covered, ie: S16, S34, S138, S147 and D15. To close: a time and a duration element on Artifacts, and S rows on them.
 
+- **A site date format with an escaped character.** `formulize_mysqlDateFormat()` in `functions.php` turns a PHP date format into one for MySQL's `DATE_FORMAT()`, for matching part of a date as the site shows it. It writes an escaped character, ie: the o in `\o`, as it is, and no row runs that, because the Settings page doesn't keep the backslash (see Problems found). To close: once it does, put `\o\f` back in section 10's format, ie: `jS \o\f F Y`, and a row like `Date of acquisition LIKE nd of`, which is the Persian necklaces.
+
 - **Timezones on when an entry was made or modified.** On these, a day is all of that day as the person sees it, so its range moves with the person's timezone (`formulize_dateSpanInTerm()`). No row is read by someone whose timezone is different from the server's, so the range never moves. To close: a user with another timezone, and rows like S129 to S132 and B71 read by them.
 
 - **Linked elements that show other columns.** When a linked element shows alternate columns, a search on it compares the term with those columns joined together. No linked element in the museum shows them. To close: a linked element set to show more than one column, ie: a donor's name and province, then B rows and S rows on it.
@@ -875,6 +877,8 @@ A gap matters most where it's code the branch changed. If no row runs that code,
 - **Forms that link to themselves.** A form with a list of its own entries isn't in the museum. It was, as Part of a set with, a list on Artifacts of other artifacts, and section 4 had rows for it. But that link from Artifacts to itself was in the relationship the Catalogue list uses, and it broke every fundamental filter on that list: F1 to F11 and F23 to F26, in run 42398600775, on master, which has the same code. `formulize_parseFilter()` gives each form in a fundamental filter its alias in the query: `main` for the list's own form, then `f` and a number for each form linked to it. Artifacts was in both places, so `f2` replaced `main`, and the query that counts the entries failed with "Unknown column 'f2.artifacts_catalogued_by'". Forms that link to themselves are the subject of `self-referential-forms-plan.md`, at the root of the repository, which has this. To close: once that work is done, a form of its own with a list of its own entries, and rows like the ones that were here, ie: `Era = {artifacts_era}` and `Donor = {artifacts_donor}`. The list shouldn't offer the entry that's open, and should always offer the one that's selected.
 
 ### Problems found
+
+- **A Short date format with a backslash in it isn't kept.** From run 42554478615. Section 10 first used `jS \o\f F Y`, so the site would write "of" as it is. After the Settings page saved that, the box didn't show it again, so the backslashes were lost or changed on the way. A PHP date format uses a backslash for a letter that's written as it is, ie: `j \d\e F` for 21 de agosto. The readout kept only the first lines of the error, so what the box held isn't known yet. Section 9's `d/m/Y` is saved and used as it should be.
 
 - **A `<` or `>` search on a column of the Users page.** This comes from reading the code, not from a run. `formulize_parseFilter()` in `extract.php` now leaves blanks out of every search that compares order, including searches on columns that build their own clause, ie: Last login on the Users page. It decides what's blank with `formulize_blankValueComparison()`, which looks up the column's type in the form's own data table. The Users page's form keeps its data in the `users` table instead, so the type isn't found, the column is taken to be text, and 0 counts as blank. So `<2025-01-01` on Last login would leave out people who have never logged in, whose last login is 0, where master lists them. A few lines up, a negative search already leaves types that build their own clause out of the blank handling. Nothing in the tests searches the Users page this way.
 
