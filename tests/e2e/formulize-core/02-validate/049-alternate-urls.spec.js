@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled, leavePage, dbQuery, dbPrefix } from '../../utils';
+import { login, saveAdminForm, editScreenPage, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled, leavePage, dbQuery, dbPrefix } from '../../utils';
 
 // Alternate URLs (issues 1046 and 1047). 01-setup/015 turns them on.
 //
@@ -95,8 +95,7 @@ test.describe('Alternate URLs', () => {
 		await page.getByRole('button', { name: 'close' }).click();
 		await page.getByRole('link', { name: 'Create a new page' }).click();
 		await waitForAdminPageReady(page);
-		await page.getByRole('link', { name: 'New page', exact: true }).click();
-		await page.getByRole('link', { name: 'Edit this page' }).click();
+		await editScreenPage(page, 'New page');
 		await page.getByRole('textbox', { name: 'Title for page number' }).fill(SECOND_PAGE);
 		await page.getByLabel('Form elements to display on').selectOption([`${FORM_TITLE}: Notes`]);
 		await saveAdminForm(page, 'popup');
