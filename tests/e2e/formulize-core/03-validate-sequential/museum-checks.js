@@ -36,7 +36,7 @@ export async function openArtifact(page, idNumber) {
 export async function expectYearEraToFollowTheYear(page) {
 	await asCurator(page);
 	await openArtifact(page, 'M001');
-	const year = page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0);
+	const year = page.getByRole('spinbutton', { name: 'Year', exact: true });
 	await year.fill('151');
 	await saveFormulizeForm(page);
 	await expect.poll(() => rowOf('formulize_artifacts', 'entry_id', 1, 'artifacts_year_era')[0]).toBe('151BCE');
@@ -57,11 +57,10 @@ export async function expectANewArtifactToGetItsIdNumber(page, handle) {
 	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 	await page.getByRole('button', { name: 'Add Artifact', exact: true }).click();
 	await page.getByRole('textbox', { name: 'Short name *' }).fill(shortName);
-	const dimensions = page.locator('.formulize-grid').nth(0).locator('input[type="number"]');
-	await dimensions.nth(0).fill('1.0'); // height
-	await dimensions.nth(1).fill('1.0'); // width
-	await dimensions.nth(2).fill('1.0'); // depth
-	await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1900'); // year
+	await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('1.0');
+	await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('1.0');
+	await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('1.0');
+	await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1900');
 	await page.getByRole('radio', { name: 'CE', exact: true }).check();
 	await saveFormulizeForm(page);
 	await expect.poll(() => added().map(([entryId, idNumber]) => idNumber === 'M' + entryId.padStart(3, '0'))).toEqual([true]);

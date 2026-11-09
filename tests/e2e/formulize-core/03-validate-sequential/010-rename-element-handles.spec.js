@@ -9,7 +9,7 @@ import {
 import {
 	saveFormulizeForm, saveAdminForm, waitForAdminPageReady, dbQuery, dbPrefix, renameElementHandle, elementId,
 	openArtifactOriginsMap, expectArtifactOriginsMap, loadSavedView, expectCoinsByName, expectArtifactOriginsList,
-	conditionalElementReady, leavePage, setCodeMirrorValue, autocompleteBox,
+	conditionalElementReady, setCodeMirrorValue, autocompleteBox,
 } from '../../utils';
 
 /**
@@ -33,37 +33,6 @@ function eleValueOf(handleOrId) {
 }
 function dataColumnExists(formHandle, column) {
 	return dbQuery(`SHOW COLUMNS FROM ${dbPrefix()}_formulize_${formHandle} LIKE '${column}'`).length === 1;
-}
-function formIdOf(title) {
-	return dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = '${title}'`)[0][0];
-}
-async function asAdmin(page) {
-	await page.goto('/user.php?op=logout');
-	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-}
-async function asCurator(page) {
-	await page.goto('/user.php?op=logout');
-	await login(page, 'curator1', '12345');
-}
-// Open an artifact from the Artifacts list, as curator1 sees it
-async function openArtifact(page, idNumber) {
-	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
-	await page.getByRole('row', { name: idNumber }).getByRole('link').first().click();
-	await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeVisible();
-}
-// Change the Roman coin's year and back, as curator1, and check Year-Era follows each time
-async function expectYearEraToFollowTheYear(page) {
-	await asCurator(page);
-	await openArtifact(page, 'M001');
-	const year = page.getByRole('spinbutton', { name: 'Year', exact: true });
-	await year.fill('151');
-	await saveFormulizeForm(page);
-	await expect.poll(() => rowOf('formulize_artifacts', 'entry_id', 1, 'artifacts_year_era')[0]).toBe('151BCE');
-	await year.fill('150');
-	await saveFormulizeForm(page);
-	await expect.poll(() => rowOf('formulize_artifacts', 'entry_id', 1, 'artifacts_year_era')[0]).toBe('150BCE');
-	await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
-	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 }
 // Open a screen's templates in its settings, first giving the screen its own copies of the default templates with
 // the "Customize the Templates" button, if it does not have them yet. Says whether it had to.
@@ -111,40 +80,6 @@ async function useDefaultScreenTemplates(page, fid, sid) {
 	await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${fid}&sid=${sid}&tab=templates`);
 	await waitForAdminPageReady(page);
 	await expect(page.getByRole('button', { name: 'Customize the Templates' })).toBeVisible();
-}
-// Add an artifact as curator1, filling in what the form requires, check the On After Save procedure gives it its
-// standard ID number - M and its entry id - in the column ID Number has under the handle given, then delete it again
-// from the Artifacts list
-async function expectANewArtifactToGetItsIdNumber(page, handle) {
-	const shortName = `Rename check ${handle}`;
-	const added = () => dbQuery(`SELECT entry_id, ${handle} FROM ${dbPrefix()}_formulize_artifacts WHERE artifacts_short_name = '${shortName}'`);
-	await asCurator(page);
-	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
-	await page.getByRole('button', { name: 'Add Artifact', exact: true }).click();
-	await page.getByRole('textbox', { name: 'Short name *' }).fill(shortName);
-	await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('1.0'); // height
-	await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('1.0'); // width
-	await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('1.0'); // depth
-	await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1900'); // year
-	await page.getByRole('radio', { name: 'CE', exact: true }).check();
-	await saveFormulizeForm(page);
-	await expect.poll(() => added().map(([entryId, idNumber]) => idNumber === 'M' + entryId.padStart(3, '0'))).toEqual([true]);
-	await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
-	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
-	await page.locator('input[name="search_artifacts_short_name"]').fill(shortName);
-	await page.getByRole('link', { name: 'Short name' }).click();
-	await expect(page.getByText('1 to 1 of 1.')).toBeVisible();
-	await page.locator('[id^=delete_]').first().check();
-	page.once('dialog', dialog => dialog.accept());
-	await Promise.all([page.waitForEvent('load'), page.getByRole('button', { name: 'Delete selected' }).click()]);
-	await expect.poll(() => added().length).toBe(0);
-}
-// Leave a form that was filled in and not saved, agreeing to lose the changes when the page asks
-async function leaveWithoutSaving(page) {
-	const agree = dialog => dialog.accept();
-	page.on('dialog', agree);
-	await leavePage(page, '/modules/formulize/');
-	page.off('dialog', agree);
 }
 
 test.describe.serial('Renaming element handles', () => {
@@ -221,8 +156,6 @@ test.describe.serial('Renaming element handles', () => {
 
 	test('Exhibit collections and Survey exhibit: the {handle} terms in linked list filters follow the rename, and still filter', async ({ page }) => {
 		test.setTimeout(300000);
-		const ancient = ['Roman Coin', 'Persian necklace', 'Chinese Sword', 'Egyptian Chariot', 'Babylonian Spoon'];
-		const modern = ['Florentine Book', 'French Musket', 'Japanese Coin', 'American Bicycle', 'Polynesian Canoe', 'Viking Silver Armband'];
 		// A new exhibit of Ancient History offers only its artifacts, as filtered by the {exhibits_collections} term.
 		// The Collections box is found by its element's handle, which is whatever it has been renamed to at the time.
 		const expectExhibitToOfferItsCollectionsArtifacts = async collectionsHandle => {
@@ -246,7 +179,7 @@ test.describe.serial('Renaming element handles', () => {
 		expect(eleValueOf('surveys_favourite_artifact')).toContain('{surveys_exhibit_seen}');
 		expect(eleValueOf('surveys_favourite_artifact')).not.toContain('{surveys_exhibit}');
 		await expectExhibitToOfferItsCollectionsArtifacts('exhibits_collection_list');
-		await expectSurveyToOfferTheExhibitsArtifacts();
+		await expectSurveyToOfferTheExhibitsArtifacts(page);
 		// and back
 		await asAdmin(page);
 		expect(await renameElementHandle(page, 'exhibits_collection_list', 'exhibits_collections')).toBeNull();
@@ -254,7 +187,7 @@ test.describe.serial('Renaming element handles', () => {
 		expect(eleValueOf('exhibits_artifacts')).toContain('{exhibits_collections}');
 		expect(eleValueOf('surveys_favourite_artifact')).toContain('{surveys_exhibit}');
 		await expectExhibitToOfferItsCollectionsArtifacts('exhibits_collections');
-		await expectSurveyToOfferTheExhibitsArtifacts();
+		await expectSurveyToOfferTheExhibitsArtifacts(page);
 	});
 
 	test('Short name and Latitude: the map, saved views, help text and notification all follow the rename', async ({ page }) => {
