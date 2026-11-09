@@ -1984,9 +1984,8 @@ function formulize_recordElementsOnlyButtonMeta($go_back, $currentURL, $button_t
 	);
 	if($meta['printableView']) {
 		$meta['printAction'] = XOOPS_URL . "/modules/formulize/printview.php";
-		// no security token: printview.php does not check one (its check is commented out
-		// in core), and the full page rendering's token would not survive being handed to
-		// the host as JSON anyway
+		// no security token: printview.php changes nothing, so it does not check one, and the
+		// full page rendering's token would not survive being handed to the host as JSON anyway
 		$meta['printFields'] = formulize_printViewFields($go_back, $fids, $formframe, $mainform, $entry, $elements_allowed, $screen, $settings);
 	}
 
@@ -2020,12 +2019,9 @@ function addSubmitButton($form, $subButtonText, $go_back, $currentURL, $button_t
 		$pv_text_temp = $buttons['printableview'];
 		$printViewFields = formulize_printViewFields($go_back, $fids, $formframe, $mainform, $cur_entry, $elements_allowed, $screen, $settings);
 		$newcurrentURL= XOOPS_URL . "/modules/formulize/printview.php";
+		// no security token: printview.php changes nothing, so it does not check one, and a filled in
+		// token here would be one that any script reading the page could use to save the form
 		print "<form name='printview' action='".$newcurrentURL."' method=post target=_blank>\n";
-
-		// add security token
-		if(isset($GLOBALS['xoopsSecurity'])) {
-			print $GLOBALS['xoopsSecurity']->getTokenHTML();
-		}
 
 		foreach($printViewFields as $printViewFieldName=>$printViewFieldValue) {
 			print "<input type=hidden name=".$printViewFieldName." value='".$printViewFieldValue."'>";

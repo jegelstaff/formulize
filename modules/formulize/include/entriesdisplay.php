@@ -2078,9 +2078,10 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 			// ends are measured rather than just the maximum). The measurement is handed to
 			// getHTMLForList through $GLOBALS['formulize_numericColumnWidths'], which emits it as
 			// a --fz-num-width custom property on each numeric value; the themes turn that into
-			// an inline-block box. Anywhere no width is known (subform listings, the XHR
-			// inline-edit redraw path) the property is simply absent and the value falls back to
-			// ordinary left alignment.
+			// an inline-block box. A value edited in the list is redrawn at its column's width,
+			// which the page sends along (see renderElement). Anywhere no width is known (subform
+			// listings) the property is simply absent and the value falls back to ordinary left
+			// alignment.
 			//
 			// Only the element types formulize_numberFormat actually formats are measured.
 			// Anything else (a select whose stored value happens to be numeric, say) displays
@@ -2129,8 +2130,8 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 					continue; // nothing numeric in this column on this page of results
 				}
 				$numericColWidth = max(
-					formulize_numericStringWidth(formulize_numberFormat($numericColMin, $numericCol)),
-					formulize_numericStringWidth(formulize_numberFormat($numericColMax, $numericCol))
+					formulize_numericValueWidth($numericColMin, $numericCol),
+					formulize_numericValueWidth($numericColMax, $numericCol)
 				);
 				if($numericColWidth > 0) {
 					$GLOBALS['formulize_numericColumnWidths'][$numericCol] = $numericColWidth;
@@ -3892,7 +3893,9 @@ function renderElement(handle,element_id,entryId,fid,check,deInstanceCounter) {
 		formulize_xhr_params[2] = entryId;
 		formulize_xhr_params[3] = fid;
 		formulize_xhr_params[5] = deInstanceCounter;
-		formulize_xhr_send('get_element_html',formulize_xhr_params);
+		// the element comes back with a token for saving it, which is only given to a page that
+		// already holds one of its own, so send the list's token, from the list's own form
+		formulize_xhr_send('get_element_html',formulize_xhr_params,jQuery("#controls input[name='<?php print _CORE_TOKEN; ?>_REQUEST']").val());
 	} else {
 		if(check && savingNow == "") {
 			savingNow = true;
@@ -3927,6 +3930,12 @@ function renderElement(handle,element_id,entryId,fid,check,deInstanceCounter) {
 					formulize_xhr_params[3] = fid;
 					formulize_xhr_params[5] = deInstanceCounter;
 					formulize_xhr_params[6] = <?php print $screen ? $screen->getVar('textwidth') : 0; ?>;
+					// where the cell is in the list, from its markup before it was edited, and how wide the
+					// numbers in its column are, so the value comes back drawn like the rest of the column
+					var cellAddress = /cellcontents_(\d+)_(\d+)/.exec(elementStates[handle][entryId]);
+					formulize_xhr_params[7] = cellAddress ? cellAddress[1] : 0;
+					formulize_xhr_params[8] = cellAddress ? cellAddress[2] : 0;
+					formulize_xhr_params[9] = cellAddress ? formulizeNumericColumnWidth(cellAddress[2]) : 0;
 					formulize_xhr_send('get_element_value',formulize_xhr_params);
 				}
 			});
@@ -3958,6 +3967,31 @@ function renderElementHtml(elementHtml,params) {
 	jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).addClass("formulize-de-editing").html(elementHtml+deControls);
 }
 
+// The numbers in a list column sit in boxes of the same width, set by getHTMLForList as --fz-num-width, so their
+// decimals line up. column is the column's number, which every cell has in the id of its main-cell-div.
+function formulizeNumericColumnSpans(column) {
+	return jQuery("#listofentries [id^='cellcontents_'][id$='_"+column+"'] span.formulize-numeric");
+}
+
+// The width of the widest box in a column, in characters
+function formulizeNumericColumnWidth(column) {
+	var width = 0;
+	formulizeNumericColumnSpans(column).each(function() {
+		width = Math.max(width, parseInt(this.style.getPropertyValue('--fz-num-width'), 10) || 0);
+	});
+	return width;
+}
+
+// Give every number in a column the widest box in it
+function formulizeLineUpNumericColumn(column) {
+	var width = formulizeNumericColumnWidth(column);
+	if(width > 0) {
+		formulizeNumericColumnSpans(column).each(function() {
+			this.style.setProperty('--fz-num-width', width + 'ch');
+		});
+	}
+}
+
 function renderElementNewValue(elementValue,params) {
 	handle = params[0];
 	element_id = params[1];
@@ -3966,6 +4000,10 @@ function renderElementNewValue(elementValue,params) {
 	deInstanceCounter = params[5];
 	jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).fadeTo("fast",1);
 	jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).removeClass("formulize-de-editing").html(elementValue);
+	// the new value may be wider than the column's other numbers, so give them all its width
+	if(params[8] !== undefined) {
+		formulizeLineUpNumericColumn(params[8]);
+	}
 	elementStates[handle].splice(entryId, 1);
 	savingNow = "";
 	elementActive = "";

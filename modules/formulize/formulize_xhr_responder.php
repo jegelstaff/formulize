@@ -333,6 +333,12 @@ switch($op) {
 		*/
     include_once XOOPS_ROOT_PATH."/modules/formulize/include/elementdisplay.php";
     include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php"; // security_check()
+    // The element comes back with a token that lets it be saved on its own, so it is only given to a
+    // page that already holds a token of its own: the list sends its token in this header. '' when it
+    // is missing, never false, because false would make check() look for a token in the request instead.
+    // Not used up, since the request says it is an XMLHttpRequest, so the list can still use it.
+    $gehToken = isset($_SERVER['HTTP_X_FORMULIZE_TOKEN']) ? (string) $_SERVER['HTTP_X_FORMULIZE_TOKEN'] : '';
+    if (!$GLOBALS['xoopsSecurity']->check(true, $gehToken)) { break; }
     $gehElementId = formulize_db_escape($_GET['param2']);
     $gehEntryId = intval($_GET['param3']);
     $gehElement = xoops_getmodulehandler('elements','formulize')->get($gehElementId);
@@ -347,6 +353,11 @@ switch($op) {
     $fid = intval($_GET['param4']);
     $deInstanceCounter = intval($_GET['param5']);
 		$textWidth = isset($_GET['param6']) ? intval($_GET['param6']) : 0;
+    // where the cell is in the list, and how wide its column's numbers are, so the value is drawn the same way
+    // as the rest of the column (see renderElement in entriesdisplay.php)
+    $cellRow = isset($_GET['param7']) ? intval($_GET['param7']) : 0;
+    $cellColumn = isset($_GET['param8']) ? intval($_GET['param8']) : 0;
+    $columnNumericWidth = isset($_GET['param9']) ? intval($_GET['param9']) : 0;
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
     include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
@@ -356,7 +367,15 @@ switch($op) {
     $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
     $dbValue = $data_handler->getElementValueInEntry($entryId,$handle);
     $preppedValue = prepvalues($dbValue,$handle,$entryId);
-    print getHTMLForList($preppedValue,$handle,$entryId,1,$textWidth,array(),$fid,0,0,$deInstanceCounter);// 1 is a flag to include the icon for switching to an editable element,two zeros are row and column, which ought to be passed in but we would need them to roundtrip through the whole xhr process?!
+    // the number boxes in the column are as wide as its widest number, which may now be this one
+    $numericWidth = $columnNumericWidth;
+    foreach ((array) $preppedValue as $preppedOne) {
+        $numericWidth = max($numericWidth, formulize_numericValueWidth($preppedOne, $handle));
+    }
+    if ($numericWidth > 0) {
+        $GLOBALS['formulize_numericColumnWidths'][$handle] = $numericWidth;
+    }
+    print getHTMLForList($preppedValue,$handle,$entryId,1,$textWidth,array(),$fid,$cellRow,$cellColumn,$deInstanceCounter); // 1 is a flag to include the icon for switching to an editable element
     break;
 
   case 'get_element_row_html':

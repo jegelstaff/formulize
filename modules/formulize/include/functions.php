@@ -7415,6 +7415,27 @@ function formulize_numericStringWidth($formattedNumber) {
 }
 
 /**
+ * How many characters wide a value is when a list shows it as a number: formatted for its element, then measured.
+ *
+ * The box the numbers in a list column sit in is as wide as the widest of them (see getHTMLForList). drawEntries
+ * measures a whole column with this, and the redraw of a value edited in the list measures the new value with it.
+ *
+ * @param mixed $value The value, as the element stores it
+ * @param string $handle The element's handle, which decides how the number is formatted
+ * @return int The number of visible characters, or 0 for a value that is empty or is not a number
+ */
+function formulize_numericValueWidth($value, $handle) {
+    if (is_array($value)) {
+        return 0;
+    }
+    $value = trim((string) $value);
+    if ($value === '' OR !is_numeric($value)) {
+        return 0;
+    }
+    return formulize_numericStringWidth(formulize_numberFormat($value + 0, $handle));
+}
+
+/**
  * Get the result of a calculation defined in a saved view
  *
  * @param mixed $formframe - The relationship ID, or name. Unless mainform is not specified, in which case this is the form ID, or handle, or title(!). Use IDs or handles!
@@ -9580,7 +9601,9 @@ function formulize_xhr_return(op,params,response) {
     }
 }
 
-function formulize_xhr_send(op,params) {
+// token is optional: a security token the page holds, for an operation that needs one. It goes in a
+// header, so it stays out of the address and the server's logs.
+function formulize_xhr_send(op,params,token) {
     // check that this is a valid operation we know how to handle
     if (op != 'check_for_unique_value' && op != 'get_element_html' && op != 'get_element_value' && op != 'delete_uploaded_file') {
         return true;
@@ -9596,6 +9619,12 @@ function formulize_xhr_send(op,params) {
     });
     formulize_xhr.open("GET", '<?php print XOOPS_URL . "/modules/formulize/formulize_xhr_responder.php?"; ?>'+params_for_uri+'op='+op+'&uid=<?php print $xoopsUser ? $xoopsUser->getVar('uid') : 0; ?>', true);
     formulize_xhr.setRequestHeader( "If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT" );
+    // say this is a background request so a token checked by it is not used up
+    // and stays good for whatever the page does next
+    formulize_xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+    if (token) {
+        formulize_xhr.setRequestHeader("X-Formulize-Token", token);
+    }
     formulize_xhr.onreadystatechange = function() {
     //alert(formulize_xhr.readyState);
     if (formulize_xhr.readyState == 4) {
@@ -9772,8 +9801,9 @@ function getHTMLForList($value, $handle, $entryId, $deDisplay=0, $textWidth=200,
         // so only the integer part varies. The width of that box is measured once per column by
         // drawEntries (see entriesdisplay.php, issue #918) and passed here in a global; all this
         // function does is emit the measurement as a custom property and let the theme do the styling.
-        // When no measurement is available - subform listings, the XHR inline-edit redraw path, custom
-        // code calling this directly - the property is simply left off and the value falls back to
+        // A value edited in the list is redrawn by the get_element_value op of formulize_xhr_responder.php,
+        // which sets the same global from the width the page sends. When no measurement is available -
+        // subform listings, custom code calling this directly - the property is simply left off and the value falls back to
         // plain left alignment rather than being forced into a guessed box.
         $isNumericValue = (($element_type == 'number' AND !is_array($v) AND trim((string) $v) !== '') OR (!is_array($v) AND is_numeric(trim((string) $v)) AND elementTypeIsOrExtends((string) $element_type, array('text', 'derived'))));
         $elclass = '';
