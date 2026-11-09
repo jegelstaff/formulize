@@ -1293,6 +1293,21 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
   line-height: var(--fz-leading-snug);
 }
 
+/* Columns with filters (issue #1076): when the screen's quicksearch setting is anything but "No" and the
+   widths are 'natural' or 'full', the Lyris openlisttemplate adds .lyris-list-table--filter-columns. The
+   filter controls are kept out of the column-width calculation (see .lyris-search-row .main-cell-div
+   below), so a column with a short heading and short values would otherwise squeeze its filter down to
+   a few pixels. This minimum keeps every filter usable. 10rem is 160px at the default text size, the
+   cell padding included, which leaves about 136px for the filter. That is the smallest whole rem that
+   fits a full date input with its calendar icon (about 132px), and it shows about 11 characters of a
+   dropdown's selected option beside its arrow, or about 14 characters in a text box.
+   It is in rem so it follows the site's text size. It is on the column cells (headers included) rather
+   than on the filter row, so the columns do not change width when the filter row is toggled. 'fixed'
+   mode is left alone, so the configured pixel widths still hold. */
+.lyris-list-table.lyris-list-table--filter-columns .column {
+  min-width: 10rem;
+}
+
 /* The empty list: a Formulize UI empty state (fz-empty), set in from the
    edges of the list body. */
 .lyris-list__empty {

@@ -9,6 +9,8 @@ if($downloadCalculationsURL AND $downloadCalculationsText) {
 
 // in fixed pixel width mode, the column cells wrap their content so the pixel widths hold instead of growing to fit it (see the Lyris style.css)
 $fixedColumnsClass = !empty($fixedColumnWidths) ? ' lyris-list-table--fixed-columns' : '';
+// when the screen has filters (the quicksearch setting is not "No") and the widths are natural or full (not fixed), the columns get a minimum width, so a narrow column still leaves room to see and use its filter (see the Lyris style.css)
+$filterColumnsClass = ($searchesShown AND empty($fixedColumnWidths)) ? ' lyris-list-table--filter-columns' : '';
 
 // Introductory text, from the screen's Appearance tab: the administrator's own markup. It is in the entries'
 // scrolling area, above the table, so it is there in full when the list opens and scrolls out of the way as
@@ -18,7 +20,7 @@ $introductoryTextMarkup = $introductoryText ? "<div class='formulize-screen-intr
 print "
 <div class='lyris-list__body' id='formulize-list-of-entries'>
 	$introductoryTextMarkup
-	<table class='fz-table lyris-list-table lyris-list-table--cozy$fixedColumnsClass'>
+	<table class='fz-table lyris-list-table lyris-list-table--cozy$fixedColumnsClass$filterColumnsClass'>
 	<thead>";
 
 		if($headersShown) {
