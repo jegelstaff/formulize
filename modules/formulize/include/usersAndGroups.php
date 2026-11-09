@@ -388,6 +388,38 @@ function formulize_resolveUserAccountScreen($uid) {
 }
 
 /**
+ * Where a link to someone's account should take the current user. What they get there is up to the permissions.
+ *
+ * Someone who can manage user accounts goes to users.php, the same as clicking on the user in the list. Anyone else goes to the
+ * user's entries-are-users entry, if they can see it, on an ordinary Formulize page, which draws a working form or a disabled
+ * one according to their permissions.
+ *
+ * This is for someone looking at another person's account. formulize_resolveUserAccountScreen() is for editing an account: it
+ * needs permission to edit the entry, and otherwise falls back to the System Users form, which only webmasters and the user
+ * themselves can see.
+ *
+ * @param int $uid The user ID
+ * @return string|bool The URL, or false if the current user can't see this account anywhere
+ */
+function formulize_userAccountURL($uid) {
+	global $xoopsUser;
+	$uid = intval($uid);
+	$gperm_handler = xoops_gethandler('groupperm');
+	$activeGroups = $xoopsUser ? $xoopsUser->getGroups() : array(XOOPS_GROUP_ANONYMOUS);
+	if ($gperm_handler->checkRight('system_admin', XOOPS_SYSTEM_USER, $activeGroups)) {
+		return XOOPS_URL . '/modules/formulize/users.php?ve=' . $uid;
+	}
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	foreach (findUserEauEntry($uid) as $match) {
+		if (security_check($match['fid'], $match['entry_id']) AND $eauForm = $form_handler->get($match['fid'])) {
+			$sid = intval($eauForm->getVar('defaultform'));
+			return XOOPS_URL . '/modules/formulize/index.php?' . ($sid ? 'sid=' . $sid : 'fid=' . $match['fid']) . '&ve=' . $match['entry_id'];
+		}
+	}
+	return false;
+}
+
+/**
  * Return the form IDs of all forms that have entries_are_groups enabled.
  *
  * @return int[] Array of form IDs

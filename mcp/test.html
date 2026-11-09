@@ -791,10 +791,11 @@
 
             if (accumulate) {
                 const separator = '<hr style="margin: 15px 0; border: none; border-top: 2px solid #ddd;">';
-                const currentContent = fixedElement.innerHTML;
-
-                if (currentContent && !currentContent.includes('Ready to test') && !currentContent.includes('loading')) {
-                    fixedElement.innerHTML = currentContent + separator + responseContent;
+                // Add to the responses already shown, or replace a placeholder (the welcome text, the loading
+                // message or the cleared message). Every response shown is in a .response-details box. The
+                // text can't be checked instead, because tool descriptions say things like "uploading".
+                if (fixedElement.querySelector('.response-details')) {
+                    fixedElement.innerHTML = fixedElement.innerHTML + separator + responseContent;
                     if (mainElement) {
                         mainElement.innerHTML = (mainElement.innerHTML || '') + separator + responseContent;
                     }
@@ -1614,16 +1615,10 @@
             updateTemplateSelector();
         }
 
-        // Initialize with a default request and try to fetch available options
+        // Initialize with a default request. That fetches the available options too, once.
         window.onload = function() {
             console.log('Page loaded, initializing...');
             updateRequestBodyForMethod();
-
-            // Try to fetch available options after a short delay to allow the page to load
-            setTimeout(() => {
-                console.log('Starting initial fetch of capabilities...');
-                fetchAvailableOptions();
-            }, 500);
         };
 
         // Show/hide API key

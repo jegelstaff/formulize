@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape } from '../../utils';
+import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, editScreenPage, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape, showPermissionsFor } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -45,9 +45,7 @@ async function openCustomButton(page, heading) {
 // data isolation: staff see only their department, curators (members of both
 // departments' groups) see both. See plan Phase 5.2 + the cascade discussion.
 async function setStandardPermissions(page) {
-	await page.locator('#groups').selectOption(['Departments - All Users', 'Departments - Curators']);
-	await page.getByRole('button', { name: 'Show permissions for these' }).click();
-	await expect(page.getByRole('group', { name: 'Departments - All Users' }).locator('legend')).toBeVisible();
+	await showPermissionsFor(page, ['Departments - All Users', 'Departments - Curators']);
 	// All department users: own entries + groupscope visibility (drives isolation).
 	const allUsers = page.getByRole('group', { name: 'Departments - All Users' });
 	await checkPerm(allUsers, '_view_form');
@@ -68,9 +66,7 @@ async function setStandardPermissions(page) {
 // Like setStandardPermissions but every department user gets global visibility
 // (view/update/delete any entry), used for forms that are not department-isolated.
 async function setGlobalPermissions(page) {
-	await page.locator('#groups').selectOption(['Departments - All Users', 'Departments - Curators']);
-	await page.getByRole('button', { name: 'Show permissions for these' }).click();
-	await expect(page.getByRole('group', { name: 'Departments - All Users' }).locator('legend')).toBeVisible();
+	await showPermissionsFor(page, ['Departments - All Users', 'Departments - Curators']);
 	const allUsers = page.getByRole('group', { name: 'Departments - All Users' });
 	await checkPerm(allUsers, '_view_form');
 	await checkPerm(allUsers, '_add_own_entry');
@@ -88,9 +84,7 @@ async function setGlobalPermissions(page) {
 }
 
 async function setAnonPermissions(page) {
-	await page.locator('#groups').selectOption(['Anonymous Users']);
-	await page.getByRole('button', { name: 'Show permissions for these' }).click();
-	await expect(page.getByRole('group', { name: 'Anonymous Users' }).locator('legend')).toBeVisible();
+	await showPermissionsFor(page, ['Anonymous Users']);
 	const anon = page.getByRole('group', { name: 'Anonymous Users' });
 	await checkPerm(anon, '_view_form');
 	await checkPerm(anon, '_add_own_entry');
@@ -315,8 +309,7 @@ test.describe('Set columns and elements for screens', () => {
 		await page.getByRole('button', { name: 'close' }).click();
 		await page.getByRole('link', { name: 'Create a new page' }).click();
 		await waitForAdminPageReady(page)
-		await page.getByRole('link', { name: 'New page', exact: true }).click();
-		await page.getByRole('link', { name: 'Edit this page' }).click();
+		await editScreenPage(page, 'New page');
   	await page.getByRole('textbox', { name: 'Title for page number' }).fill('Donated Artifacts');
 		await page.getByLabel('Form elements to display on').selectOption(['Donors: Name', 'Donors: Donated artifacts']);
 		await saveAdminForm(page, 'popup');

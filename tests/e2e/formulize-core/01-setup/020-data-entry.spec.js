@@ -1,6 +1,9 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveFormulizeForm, conditionalElementReady, openElementAccordion, saveAdminForm, applyColumnChanges, openAllColumnSections, ensureMainMenuOpen, leavePage, dbQuery, dbPrefix } from '../../utils';
+import { login, saveFormulizeForm, conditionalElementReady, openElementAccordion, saveAdminForm, applyColumnChanges, openAllColumnSections, leavePage, autocompleteBox, dbQuery, dbPrefix } from '../../utils';
+
+// the list of a form's entries
+const listOf = formTitle => `/modules/formulize/index.php?fid=${dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = '${formTitle}'`)[0][0]}`;
 
 test.describe('Validate menu entries', () => {
 	test('Validate menu entries for ahstaff', async ({ page }) => {
@@ -99,8 +102,8 @@ test.describe('Data Entry for Donors', () => {
 	  await page.getByRole('textbox', { name: 'Favourite colour' }).fill('#6c2d2d');
   	await page.getByRole('textbox', { name: 'Phone number' }).fill('1694221778');
 		await page.locator('.form-row:has(.formulize-label-donors_street_address) textarea').fill('Château de Cirey\nCirey-sur-Blaise\nFrance');
-  	await page.getByRole('combobox').selectOption('Quebec');
-  	await page.locator('.formulize-grid input[type="text"]').nth(0).fill('G1A 0A2');
+  	await page.getByRole('combobox', { name: 'Province', exact: true }).selectOption('Quebec');
+  	await page.getByRole('textbox', { name: 'Postal code', exact: true }).fill('G1A 0A2');
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -114,8 +117,8 @@ test.describe('Data Entry for Donors', () => {
 	 	await page.getByRole('textbox', { name: 'Favourite colour' }).fill('#3b96c4');
   	await page.getByRole('textbox', { name: 'Phone number' }).fill('1706221749');
   	await page.locator('.form-row:has(.formulize-label-donors_street_address) textarea').fill('Château de Cirey\nCirey-sur-Blaise\nFrance');
-  	await page.getByRole('combobox').selectOption('Quebec');
-  	await page.locator('.formulize-grid input[type="text"]').nth(0).fill('G1A 0A2');
+  	await page.getByRole('combobox', { name: 'Province', exact: true }).selectOption('Quebec');
+  	await page.getByRole('textbox', { name: 'Postal code', exact: true }).fill('G1A 0A2');
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -127,8 +130,8 @@ test.describe('Data Entry for Donors', () => {
 		await page.getByRole('textbox', { name: 'Email address' }).fill('formulize@freeform.ca');
   	await page.getByRole('textbox', { name: 'Phone number' }).fill('4166863766');
   	await page.locator('.form-row:has(.formulize-label-donors_street_address) textarea').fill('17 Crossovers St\nToronto');
-  	await page.getByRole('combobox').selectOption('Ontario');
-  	await page.locator('.formulize-grid input[type="text"]').nth(0).fill('M4E 3X2');
+  	await page.getByRole('combobox', { name: 'Province', exact: true }).selectOption('Ontario');
+  	await page.getByRole('textbox', { name: 'Postal code', exact: true }).fill('M4E 3X2');
   	await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
 	})
@@ -152,7 +155,7 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 
 	test('Create Roman Coin', async ({ page }) => {
 		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A very lovely Roman Coin.');
-		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('150'); // year
+		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('150'); // year
 		await page.getByRole('radio', { name: 'BCE', exact: true }).check();
 		page.once('dialog', dialog => {
 			console.log(`Dialog message: ${dialog.message()}`);
@@ -166,10 +169,10 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 			dialog.dismiss().catch(() => {});
 		});
 		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0)).toBeFocused();
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('0.2'); // height
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('1.5'); // width
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('1.5'); // depth
+		await expect(page.getByRole('spinbutton', { name: 'Height', exact: true })).toBeFocused();
+		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('0.2'); // height
+		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('1.5'); // width
+		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('1.5'); // depth
 		await saveFormulizeForm(page);
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2020-08-21');
 		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
@@ -185,10 +188,10 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 	test('Create Persian necklace', async ({ page }) => {
 		await page.getByRole('textbox', { name: 'Short name *' }).fill('Persian necklace');
 		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A beautiful Persian necklace.');
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('1.0'); // height
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('25.0'); // width
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('35.0'); // depth
-		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('350'); // year
+		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('1.0'); // height
+		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('25.0'); // width
+		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('35.0'); // depth
+		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('350'); // year
 		await page.getByRole('radio', { name: 'BCE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2002-12-02');
 		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
@@ -203,10 +206,10 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 	test('Create Chinese Sword', async ({ page }) => {
 		await page.getByRole('textbox', { name: 'Short name *' }).fill('Chinese Sword');
 		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('An engraved ceremonial sword.');
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('135.0'); // height
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('10.0'); // width
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('4.5'); // depth
-		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('198'); // year
+		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('135.0'); // height
+		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('10.0'); // width
+		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('4.5'); // depth
+		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('198'); // year
 		await page.getByRole('radio', { name: 'CE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('1993-08-10');
 		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
@@ -222,10 +225,10 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 	test('Create Egyptian Chariot', async ({ page }) => {
 		await page.getByRole('textbox', { name: 'Short name *' }).fill('Egyptian Chariot');
 		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('An Egyptian Chariot that is partially damaged, but overall excellent condition.');
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('250.0'); // height
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('200.0'); // width
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('475.0'); // depth
-		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1850'); // year
+		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('250.0'); // height
+		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('200.0'); // width
+		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('475.0'); // depth
+		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1850'); // year
 		await page.getByRole('radio', { name: 'BCE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2011-09-19');
 		await page.getByRole('slider', { name: 'Condition' }).fill('6');
@@ -241,10 +244,10 @@ test.describe('Data entry for Artifacts as ahstaff', () => {
 	test('Create Babylonian Spoon', async ({ page }) => {
 		await page.getByRole('textbox', { name: 'Short name *' }).fill('Babylonian Spoon');
 		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A small Babylonian spoon, probably for a child.');
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('5.0'); // height
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('1.5'); // width
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('8.0'); // depth
-		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1500'); // year
+		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('5.0'); // height
+		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('1.5'); // width
+		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('8.0'); // depth
+		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1500'); // year
 		await page.getByRole('radio', { name: 'BCE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2015-09-26');
 		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
@@ -269,10 +272,10 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 	test('Create Florentine Book', async ({ page }) => {
 		await page.getByRole('textbox', { name: 'Short name *' }).fill('Florentine Book');
 		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A book of Latin poetry from medieval Florence.');
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('22.0'); // height
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('12.0'); // width
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('3.0'); // depth
-		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1588'); // year
+		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('22.0'); // height
+		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('12.0'); // width
+		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('3.0'); // depth
+		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1588'); // year
 		await page.getByRole('radio', { name: 'CE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('1988-02-29');
 		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
@@ -287,10 +290,10 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 	test('Create French Musket', async ({ page }) => {
 		await page.getByRole('textbox', { name: 'Short name *' }).fill('French Musket');
 		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A musket from the Napoleonic wars.');
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('150.0'); // height
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('6.7'); // width
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('7.1'); // depth
-		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1804'); // year
+		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('150.0'); // height
+		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('6.7'); // width
+		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('7.1'); // depth
+		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1804'); // year
 		await page.getByRole('radio', { name: 'CE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('1927-03-04');
 		await page.getByRole('slider', { name: 'Condition' }).fill('7');
@@ -304,10 +307,10 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 	test('Create Japanese Coin', async ({ page }) => {
 		await page.getByRole('textbox', { name: 'Short name *' }).fill('Japanese Coin');
 		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A rare Meiji coin.');
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('0.2'); // height
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('25.0'); // width
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('25.0'); // depth
-		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1880'); // year
+		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('0.2'); // height
+		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('25.0'); // width
+		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('25.0'); // depth
+		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1880'); // year
 		await page.getByRole('radio', { name: 'CE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('1955-11-25');
 		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
@@ -323,10 +326,10 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 	test('Create American Bicycle', async ({ page }) => {
 		await page.getByRole('textbox', { name: 'Short name *' }).fill('American Bicycle');
 		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('An early bicycle. Paint is coming off.');
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('75.0'); // height
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('220.0'); // width
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('35.0'); // depth
-		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1884'); // year
+		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('75.0'); // height
+		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('220.0'); // width
+		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('35.0'); // depth
+		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1884'); // year
 		await page.getByRole('radio', { name: 'CE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2007-05-09');
 		await page.getByRole('slider', { name: 'Condition' }).fill('4');
@@ -339,10 +342,10 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 	test('Create Polynesian Canoe', async ({ page }) => {
 		await page.getByRole('textbox', { name: 'Short name *' }).fill('Polynesian Canoe');
 		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A well preserved canoe used between islands.');
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('65.0'); // height
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('388.0'); // width
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('75.0'); // depth
-		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1701'); // year
+		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('65.0'); // height
+		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('388.0'); // width
+		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('75.0'); // depth
+		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1701'); // year
 		await page.getByRole('radio', { name: 'CE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('1977-06-14');
 		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
@@ -357,10 +360,10 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 	test('Create Viking Silver Armband', async ({ page }) => {
 		await page.getByRole('textbox', { name: 'Short name *' }).fill('Viking Silver Armband');
 		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A twisted silver armband with runic inscriptions, likely used as currency or status symbol in 9th century Scandinavia. Shows intricate craftsmanship with geometric patterns.');
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('8.5'); // height
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('12.0'); // width
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('1.2'); // depth
-		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('875'); // year
+		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('8.5'); // height
+		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('12.0'); // width
+		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('1.2'); // depth
+		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('875'); // year
 		await page.getByRole('radio', { name: 'CE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2025-07-10');
 		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
@@ -420,7 +423,7 @@ test.describe('Data entry for Exhibits', () => {
 		await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
 		await page.getByRole('textbox', { name: 'Name *' }).fill('History through the Ages');
 		await page.getByLabel('Curator').selectOption('Curator One');
-		await page.locator('input[type=text]').nth(1).fill('modern');
+		await autocompleteBox(page, 'exhibits_collections').fill('modern');
 		// handle the conditional behaviour that happens when Modern History is selected
 		await conditionalElementReady(
 			page,
@@ -430,33 +433,33 @@ test.describe('Data entry for Exhibits', () => {
 			}
 		);
 		// handle the conditional behaviour that happens when Ancient History is selected
-		await page.locator('input[type=text]').nth(1).fill('an');
+		await autocompleteBox(page, 'exhibits_collections').fill('an');
 		await conditionalElementReady(
 			page,
 			'exhibits_artifacts',
 			() => page.getByText('Ancient History', { exact: true }).click()
 		);
-		await page.locator('input[type=text]').nth(2).fill('roman');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('roman');
   	await page.getByText('Roman Coin').click();
-		await page.locator('input[type=text]').nth(2).fill('per');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('per');
 		await page.getByText('Persian necklace').click();
-		await page.locator('input[type=text]').nth(2).fill('chin');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('chin');
 		await page.getByText('Chinese Sword').click();
-		await page.locator('input[type=text]').nth(2).fill('egyptian');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('egyptian');
 		await page.getByText('Egyptian Chariot').click();
-		await page.locator('input[type=text]').nth(2).fill('bab');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('bab');
 		await page.getByText('Babylonian Spoon').click();
-		await page.locator('input[type=text]').nth(2).fill('flor');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('flor');
 		await page.getByText('Florentine Book').click();
-		await page.locator('input[type=text]').nth(2).fill('fren');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('fren');
 		await page.getByText('French Musket').click();
-		await page.locator('input[type=text]').nth(2).fill('japa');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('japa');
 		await page.getByText('Japanese Coin').click();
-		await page.locator('input[type=text]').nth(2).fill('amer');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('amer');
 		await page.getByText('American Bicycle').click();
-		await page.locator('input[type=text]').nth(2).fill('poly');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('poly');
 		await page.getByText('Polynesian Canoe').click();
-		await page.locator('input[type=text]').nth(2).fill('vik');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('vik');
 		await page.getByText('Viking Silver Armband').click();
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
@@ -470,23 +473,23 @@ test.describe('Data entry for Exhibits', () => {
 		await page.getByRole('textbox', { name: 'Name *' }).fill('Ancient Wonders');
 		await page.getByLabel('Curator').selectOption('Curator One');
 		// handle the conditional behaviour that happens when Ancient History is selected
-		await page.locator('input[type=text]').nth(1).fill('an');
+		await autocompleteBox(page, 'exhibits_collections').fill('an');
 		await conditionalElementReady(
 			page,
 			'exhibits_artifacts',
 			() => page.getByText('Ancient History', { exact: true }).click()
 		);
-		await page.locator('input[type=text]').nth(2).fill('roman');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('roman');
   	await page.getByText('Roman Coin').click();
-		await page.locator('input[type=text]').nth(2).fill('per');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('per');
 		await page.getByText('Persian necklace').click();
-		await page.locator('input[type=text]').nth(2).fill('chin');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('chin');
 		await page.getByText('Chinese Sword').click();
-		await page.locator('input[type=text]').nth(2).fill('egyptian');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('egyptian');
 		await page.getByText('Egyptian Chariot').click();
-		await page.locator('input[type=text]').nth(2).fill('bab');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('bab');
 		await page.getByText('Babylonian Spoon').click();
-		await page.locator('input[type=text]').nth(2).fill('M');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('M');
 		await expect(page.getByText('No match found')).toBeVisible();
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
@@ -500,25 +503,25 @@ test.describe('Data entry for Exhibits', () => {
 		await page.getByRole('textbox', { name: 'Name *' }).fill('Modern Amazements');
 		await page.getByLabel('Curator').selectOption('Curator One');
 		// handle the conditional behaviour that happens when Modern History is selected
-		await page.locator('input[type=text]').nth(1).fill('mo');
+		await autocompleteBox(page, 'exhibits_collections').fill('mo');
 		await conditionalElementReady(
 			page,
 			'exhibits_artifacts',
 			() => page.getByText('Modern History', { exact: true }).click()
 		);
-		await page.locator('input[type=text]').nth(2).fill('flor');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('flor');
 		await page.getByText('Florentine Book').click();
-		await page.locator('input[type=text]').nth(2).fill('fren');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('fren');
 		await page.getByText('French Musket').click();
-		await page.locator('input[type=text]').nth(2).fill('japa');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('japa');
 		await page.getByText('Japanese Coin').click();
-		await page.locator('input[type=text]').nth(2).fill('amer');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('amer');
 		await page.getByText('American Bicycle').click();
-		await page.locator('input[type=text]').nth(2).fill('poly');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('poly');
 		await page.getByText('Polynesian Canoe').click();
-		await page.locator('input[type=text]').nth(2).fill('vik');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('vik');
 		await page.getByText('Viking Silver Armband').click();
-		await page.locator('input[type=text]').nth(2).fill('M');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('M');
 		await expect(page.getByText('No match found')).toBeVisible();
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
@@ -532,17 +535,17 @@ test.describe('Data entry for Exhibits', () => {
 		await page.getByRole('textbox', { name: 'Name *' }).fill('Heroic and Horrible Hand Weapons');
 		await page.getByLabel('Curator').selectOption('Curator Two');
 		// handle the conditional behaviour that happens when Weapons is selected
-		await page.locator('input[type=text]').nth(1).fill('weapons');
+		await autocompleteBox(page, 'exhibits_collections').fill('weapons');
 		await conditionalElementReady(
 			page,
 			'exhibits_artifacts',
 			() => page.getByText('Weapons').click()
 		);
-		await page.locator('input[type=text]').nth(2).fill('chin');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('chin');
 		await page.getByText('Chinese Sword').click();
-		await page.locator('input[type=text]').nth(2).fill('fren');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('fren');
 		await page.getByText('French Musket').click();
-		await page.locator('input[type=text]').nth(2).fill('M');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('M');
 		await expect(page.getByText('Egyptian Chariot')).toBeVisible();
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
@@ -556,17 +559,17 @@ test.describe('Data entry for Exhibits', () => {
 		await page.getByRole('textbox', { name: 'Name *' }).fill('Pennies from the Past');
 		await page.getByLabel('Curator').selectOption('Curator Two');
 		// handle the conditional behaviour that happens when Coins is selected
-		await page.locator('input[type=text]').nth(1).fill('coins');
+		await autocompleteBox(page, 'exhibits_collections').fill('coins');
 		await conditionalElementReady(
 			page,
 			'exhibits_artifacts',
 			() => page.getByText('Coins').click()
 		);
-		await page.locator('input[type=text]').nth(2).fill('roman');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('roman');
   	await page.getByText('Roman Coin').click();
-		await page.locator('input[type=text]').nth(2).fill('japa');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('japa');
 		await page.getByText('Japanese Coin').click();
-		await page.locator('input[type=text]').nth(2).fill('M');
+		await autocompleteBox(page, 'exhibits_artifacts').fill('M');
 		await expect(page.getByText('No match found')).toBeVisible();
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
@@ -697,10 +700,10 @@ test.describe('New donation inside Donor record', () => {
 		await page.getByRole('tab').first().click(); // BUG - new entry showing up at top of list, sorting order is by aquisition date, no acquisition date yet so this is first in list, and by default UI opens the last entry in list because when sorted by creation order (which is default) the last entry in list would be the new one. Yuck.
 		await page.getByRole('textbox', { name: 'Short name *' }).fill('Candide - first edition');
 		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('Pristine copy, signed by the author');
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(0).fill('25'); // height
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(1).fill('10'); // width
-		await page.locator('.formulize-grid').nth(0).locator('input[type="number"]').nth(2).fill('3'); // depth
-		await page.locator('.formulize-grid').nth(1).locator('input[type="number"]').nth(0).fill('1759'); // year
+		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('25'); // height
+		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('10'); // width
+		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('3'); // depth
+		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1759'); // year
 		await page.getByRole('radio', { name: 'CE', exact: true }).check();
 		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2025-11-29');
 		await page.getByRole('slider', { name: 'Condition' }).fill('10');
@@ -718,9 +721,7 @@ test.describe('New donation inside Donor record', () => {
 		await expect(page.getByRole('radio', { name: 'Yes' })).toBeChecked();
 		await expect(page.locator('.form-row:has(.formulize-label-artifacts_donor) select option[selected]')).toContainText('François-Marie Arouet');
 		// leave the entry, which releases the lock on it
-		await page.waitForLoadState('load');
-		await ensureMainMenuOpen(page);
-		await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
+		await leavePage(page, listOf('Artifacts'));
 		await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
 	}),
 	test('Verify Add button limitation setting works as expected', async ({ page }) => {
@@ -740,9 +741,9 @@ test.describe('New donation inside Donor record', () => {
 	  await page.getByRole('link', { name: 'Donated Artifacts', exact: true }).click();
 		await expect(page.getByText('Candide')).toBeVisible(); // check for something that is in the page, to make sure that the page has actually loaded... the not.toBeVisible() check below is not sufficient, because it will pass if the page hasn't totally finished loading yet and it's not visible just because of timing issues
 		await expect(page.getByText('Add new artifact')).not.toBeVisible();
-		// The subform draws the donor's artifacts as forms the webmaster can edit, which locks them, Roman Coin among them.
-		// Leaving the page releases them, so let it finish loading first, and then leave.
-		await page.waitForLoadState('load');
+		// The subform draws the donor's artifacts as forms the webmaster can edit, which locks them, Roman Coin among them,
+		// and leaving the page releases them. The front page has the Admin link the test started from.
+		await leavePage(page, '/');
 		await page.getByRole('link', { name: 'Admin' }).click();
 		await page.getByRole('link', { name: 'Museum' }).click();
 	  await page.getByRole('link', { name: 'Elements' }).nth(2).click();
@@ -757,10 +758,8 @@ test.describe('New donation inside Donor record', () => {
 		await page.getByRole('row', { name: 'François-Marie Arouet' }).getByRole('link').first().click();
 	  await page.getByRole('link', { name: 'Donated Artifacts', exact: true }).click();
 		await expect(page.getByText('Add new artifact')).toBeVisible();
-		// leave, as above, or 045 finds Roman Coin locked by the webmaster
-		await page.waitForLoadState('load');
-		await ensureMainMenuOpen(page);
-		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
+		// leave, as above, or 022 and 045 find Roman Coin locked by the webmaster
+		await leavePage(page, listOf('Donors'));
 		await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
 	})
 })

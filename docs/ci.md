@@ -49,6 +49,25 @@ The run also uses a PHP error reporter (`tests/e2e/php-error-reporter.js`), so P
 
 Because the suite runs on `master`, a red build means master is broken, and that is what the badge on the repository readme is showing.
 
+### Measuring coverage
+
+Run the workflow by hand with **coverage** ticked to find out which lines of PHP the suite runs. It counts every PHP test and every request the Playwright specs make, so the numbers are for the whole suite. The option is in the workflow on branches that have `tests/coverage/`, so choose one of those under **Use workflow from**, as well as the branch to test.
+
+The run's summary page shows:
+
+* the share of the lines that can run that the suite ran, by folder
+* what each set of tests ran, and what no other set ran
+* the files with the most lines that didn't run
+* the lines that differ from where the branch left **coverage_base**, `master` unless you change it, that can run, and that no test ran. This is the list to check before merging a branch: a changed line on it isn't tested by anything.
+
+The **coverage-report** artifact has those as Markdown, along with `files.md`, every file and its share, `coverage.json`, which has the lines for each file and set of tests, and `lcov.info`. Editors can show `lcov.info` beside the code. In VS Code, put it in the root of the repository and use the Coverage Gutters extension.
+
+A coverage run is slower, because PHP runs more slowly while it's measured, so a spec close to its time limit can fail in a coverage run when it passes otherwise. Use the ordinary run to decide whether a branch passes.
+
+A line counts as run if any request ran it. That doesn't mean a test checked what the line did.
+
+How it works is in `tests/coverage/`. `prepend.php` runs before every request and records the lines it ran, and `merge.php` makes the report.
+
 ## Deploy Jekyll site to Pages
 
 **`jekyll.yml`** — builds this documentation site and deploys it to GitHub Pages. It runs on pushes to `master`, can be run by hand, and is also fired by Formulize itself: the News form on formulize.net POSTs a `repository_dispatch` with the type `formulize-news-updated` when a story is saved, because news is baked into the site at build time and only reaches it on a rebuild.

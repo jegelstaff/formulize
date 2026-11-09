@@ -127,8 +127,6 @@ if (! empty( $_SESSION['redirect_message'] )) {
 	$xoTheme->addScript(ICMS_URL . '/libraries/jquery/ui/ui.min.js', array( 'type' => 'text/javascript'));
 	$xoTheme->addScript(ICMS_URL . '/libraries/jquery/helptip.js', array( 'type' => 'text/javascript'));
 	$xoTheme->addStylesheet(ICMS_URL . '/libraries/jquery/ui/css/ui-smoothness/ui.css', array('media' => 'screen'));
-	$xoTheme->addStylesheet(ICMS_LIBRARIES_URL.'/jquery/colorbox/colorbox.css');
-	$xoTheme->addScript(ICMS_LIBRARIES_URL.'/jquery/colorbox/jquery.colorbox-min.js');
 
 	/*	$jscript = '';
 	 if(class_exists('icms_form_elements_Dhtmltextarea')){

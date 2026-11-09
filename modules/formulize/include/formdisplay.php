@@ -702,7 +702,7 @@ function getDynamicDefaultValue($elementIdentifier, $currentEntryId = 'new' ) {
 		AND $sourceElementObject = _getElementObject($elementObject->getVar('ele_dynamicdefault_source'))
 		AND $sourceFormObject = $formHandler->get($sourceElementObject->getVar('fid'))) {
 		list($conditionsWhereClauseAll, $conditionsWhereClauseOOM, $parentFormFrom) = buildConditionsFilterSQL($elementObject->getVar('ele_dynamicdefault_conditions'), $sourceFormObject->getVar('fid'), $currentEntryId, curlyBracketForm: $elementObject->getVar('fid'), targetAlias: 't1');
-		$sql = "SELECT `".formulize_db_escape($sourceElementObject->getVar('ele_handle'))."` FROM " . $xoopsDB->prefix('formulize_'.$sourceFormObject->getVar('form_handle')) . " as t1 $parentFormFrom WHERE entry_id > 0 $conditionsWhereClauseAll $conditionsWhereClauseOOM";
+		$sql = "SELECT t1.`".formulize_db_escape($sourceElementObject->getVar('ele_handle'))."` FROM " . $xoopsDB->prefix('formulize_'.$sourceFormObject->getVar('form_handle')) . " as t1 $parentFormFrom WHERE t1.entry_id > 0 $conditionsWhereClauseAll $conditionsWhereClauseOOM";
 		if($res = $xoopsDB->query($sql)) {
 			if($xoopsDB->getRowsNum($res) == 1) {
 				$array = $xoopsDB->fetchArray($res);

@@ -19,7 +19,7 @@
     <!--<p><a href="ui.php?page=screen&tab=fltr_grps&aid=<{$content.aid}>&fid=<{$content.fid}>&acid=<{$content.acid}>&op=new">Create a new filters and grouping</a></p>-->
 
 <div id="sortable-list">
-<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/advanced_calculation_fltr_grp_sections.html" sections=$content.fltr_grps}>
+<{include file="db:admin/ui-accordion.html" sectionTemplate="db:admin/advanced_calculation_fltr_grp_sections.html" sections=$content.fltr_grps reorderable=1}>
 </div>
 
 

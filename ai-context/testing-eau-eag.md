@@ -15,7 +15,7 @@ The Staff form gets its user account elements when `entries_are_users` is turned
 | First Name | "First Name *" | `uname` (first part) | |
 | Last Name | "Last Name *" | `uname` (last part) | |
 
-`uname` is the display name, first name and last name together, and `login_name` is the login. So First Name "Curator" and Last Name "One" gives `uname = 'Curator One'`.
+So First Name "Curator" and Last Name "One" gives `uname = 'Curator One'`. See [The name columns in the users table](entries-are-users-and-groups.md#the-name-columns-in-the-users-table).
 
 Formulize also creates a plain text "Login name" element, separate from the Username element. It's the form's principal identifier, shown in the list of entries. **Both "Username" and "Login name" must be filled** when creating a Staff entry.
 

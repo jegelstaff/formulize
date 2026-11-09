@@ -1,0 +1,10 @@
+# Adds coverage to the web container, on top of docker-compose.yaml, from the root of the repository:
+#   docker compose -f docker-compose.yaml -f tests/coverage/docker-compose.coverage.yaml up -d
+# Paths here are from the root of the repository, because Compose reads them from the folder of the first file.
+# The coverage data goes in FORMULIZE_COVERAGE_DIR on the host, which has to exist, with a data folder in it that the
+# web server can write to. It's outside the repository, so the data isn't in the folder the web server serves.
+services:
+  web:
+    volumes:
+      - ./tests/coverage/coverage.ini:/usr/local/etc/php/conf.d/zz-formulize-coverage.ini
+      - ${FORMULIZE_COVERAGE_DIR:-/tmp/formulize-coverage}:/var/www/coverage

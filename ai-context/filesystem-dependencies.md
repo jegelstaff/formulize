@@ -12,7 +12,10 @@ Formulize keeps some working state in files on purpose. It runs on an ordinary L
 
 The web server must be able to write to these. `writableFilesAndFolders.json` at the repo root is the full list of what must be writable. See [Writable files and folders](../docs/writable_folders.md).
 
-**Who can delete a lock:** `formulize_deleteEntryLock.php` only deletes a lock whose uid matches `$userPassedUid`. `ignore_editing_lock` skips the lock check but not the write, so a webmaster overwrites the lock with their own uid. Without the uid check, the regular user's token could clear the webmaster's lock and let both edit at once.
+**Who can delete a lock:** a lock file holds the uid, the token of the page load that drew the entry, and the username, and `include/entryLocks.php` is the only code that names, writes or reads one. A release only deletes a lock its own page load still holds: the uid and the token both have to match.
+- A page's release is sent as the page goes away, after the server has drawn the next page. A reload, or a link to the same entry, is a new page load that has already rewritten the lock with its own token, so the old page's late release leaves it alone. Matching on the uid alone used to let that release delete the new page's lock, and then a second person could open the entry for editing as well.
+- `ignore_editing_lock` skips the lock check but not the write, so a webmaster overwrites the lock and takes it over. The other person's release doesn't match it any more.
+- An element redrawn on its own, such as a conditional element, is part of a page that's still showing. It leaves a lock the person already has, and a lock it writes has no token, which any of that person's page loads that drew the entry can release. Locks written before the token was added work the same way.
 
 ## Uploaded files
 
