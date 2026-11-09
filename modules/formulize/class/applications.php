@@ -1075,8 +1075,8 @@ function resolveMenuLinkURL($menulink) {
     if($menuLinkScreenId) {
         $screen_handler = xoops_getmodulehandler('screen', 'formulize');
         $menuLinkScreen = $screen_handler->get($menuLinkScreenId);
-        if($menuLinkScreen && ($rewriteruleAddress = $menuLinkScreen->getVar('rewriteruleAddress'))) {
-            return XOOPS_URL . "/" . $rewriteruleAddress;
+        if($menuLinkScreen && ($alternateURL = formulize_buildAlternateURL(formulize_alternateURLParts($menuLinkScreen)))) {
+            return $alternateURL;
         }
     }
     return XOOPS_URL . "/modules/formulize/index.php?" . $screen_value;

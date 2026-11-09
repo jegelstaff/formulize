@@ -124,7 +124,14 @@ if(isset($screens['embedOrigins'])) { // left alone when the screen was saved fr
 	// them rather than watch them vanish. Only the entries that can be read are ever sent in the header.
 	$screen->setVar('embedOrigins', trim($screens['embedOrigins']));
 }
-$screen->setVar('rewriteruleAddress',formulizeScreen::sanitize_rewrite_address($screens['rewriteruleAddress']));
+$rewriteruleAddress = formulizeScreen::sanitize_rewrite_address($screens['rewriteruleAddress']);
+if(ctype_digit($rewriteruleAddress)) {
+	// a number would be read as a screen's id, which every screen can already be reached at, so the address is left as it was.
+	// evalnow, so that any reload printed below still happens
+	print "/* evalnow */ alert(".json_encode(sprintf(_AM_SCREEN_SETTINGS_URL_ALTERNATE_NUMERIC, $rewriteruleAddress)).");";
+} else {
+	$screen->setVar('rewriteruleAddress', $rewriteruleAddress);
+}
 $screen->setVar('rewriteruleElement', intval($screens['rewriteruleElement']));
 
 if(!$sid = $screen_handler->insert($screen)) {
