@@ -567,7 +567,8 @@
     // it came from; every other load starts at the top. See holdScrollPosition.
     function fetchIntoDrawer(url, fetchOpts, keepScroll) {
         if (!bodyEl) { return Promise.resolve(null); }
-        var scrollTo = keepScroll ? bodyEl.scrollTop : 0;
+        var scrollTop = bodyEl.scrollTop;
+        var scrollTo = keepScroll ? scrollTop : 0;
         stopHoldingScroll(); // the form a previous load was holding in place is on its way out
         var saving = !!(fetchOpts && String(fetchOpts.method || '').toUpperCase() === 'POST');
         showDrawerBusy(saving);
@@ -584,6 +585,14 @@
                 currentEntryNav = readNavMeta();
                 currentEntryButtons = readButtonMeta();
                 var meta = readDrawerMeta();
+                // A subform "Add" whose element shows new entries as rows comes back as the
+                // parent's page, with the new rows in its subform, rather than as the new sub
+                // entry addSubEntry made a frame for. So the parent is still the current
+                // entry, and stays where it was scrolled to, as full screen does.
+                if (meta && meta.newSubEntriesAsRows && drawerStack.length) {
+                    currentFrame = drawerStack.pop();
+                    scrollTo = scrollTop;
+                }
                 if (meta && typeof meta.title === 'string') { titleEl.textContent = meta.title; }
                 if (meta && currentFrame) {
                     // sync what the server actually rendered (it resolves screens/new ids itself)
@@ -1296,7 +1305,10 @@
     // "Add new" on a subform element: one request that saves the parent's page (when
     // changed, and always for a brand-new parent — it must exist to be linked to),
     // creates the linked sub entries server-side, and returns the first new sub
-    // entry's form, which becomes the drawer's current form.
+    // entry's form, which becomes the drawer's current form. When the subform element
+    // says new entries show up as rows, the server renders the parent's page again
+    // instead, with the new rows in its subform (see fetchIntoDrawer), so the request
+    // asks for the parent's page as it is, the way a subform delete or clone does.
     function addSubEntry(form, args) {
         form.querySelectorAll('input[type="hidden"]').forEach(function (i) { i.disabled = false; });
         var fd = new FormData(form);
@@ -1311,10 +1323,9 @@
         fd.set('numsubents', args.numEntries || 1);
         if (formHasChanges() || !parentEntryId) { fd.set('formulize_save', '1'); }
 
-        var url = writeAddress(form) +
-            '?fid=' + encodeURIComponent(parentFid) +
-            '&frid=' + encodeURIComponent(parentFrid) +
-            '&formname=' + FORM_NAME;
+        var parentParams = currentFrame ? currentFrame.params : { fid: parentFid, frid: parentFrid };
+        var parentPage = (currentFrame && currentFrame.page > 1) ? currentFrame.page : 0;
+        var url = buildEntryUrl(parentParams, parentPage, writeAddress(form));
 
         releaseEntryLocks();
         var parentFrame = currentFrame;

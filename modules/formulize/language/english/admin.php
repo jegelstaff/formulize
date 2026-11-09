@@ -634,6 +634,15 @@ define("_AM_ELE_SUBFORM_ADD_PARENT", "Yes, only if the user can add entries in t
 define("_AM_ELE_SUBFORM_EDITICONSTYLE", "Which icon should the <i>View</i> button use?");
 define("_AM_ELE_SUBFORM_EDITICONSTYLE_PEN", "Pen icon");
 define("_AM_ELE_SUBFORM_EDITICONSTYLE_MAGNIFIER", "Magnifying glass icon");
+define("_AM_ELE_SUBFORM_VIEWENTRIES", "When users click <i>View</i>, open the entry:");
+define("_AM_ELE_SUBFORM_VIEWENTRIES_FULLSCREEN", "Full screen");
+define("_AM_ELE_SUBFORM_VIEWENTRIES_DRAWER", "In a drawer");
+define("_AM_ELE_SUBFORM_NEWENTRIES", "When users add an entry:");
+define("_AM_ELE_SUBFORM_NEWENTRIES_OPEN", "Open it, the same way as <i>View</i>");
+define("_AM_ELE_SUBFORM_NEWENTRIES_FULLSCREEN", "Open it full screen");
+define("_AM_ELE_SUBFORM_NEWENTRIES_DRAWER", "Open it in a drawer");
+define("_AM_ELE_SUBFORM_NEWENTRIES_ROW", "Add it as a new row");
+define("_AM_ELE_SUBFORM_INDRAWER_HELP", "When the main form is shown in a drawer, entries open in that drawer.");
 
 
 // grids

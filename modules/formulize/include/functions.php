@@ -4196,6 +4196,27 @@ function resolveEffectiveSingle($singleArray, $userGroups=null) {
 }
 
 /**
+ * Where a subform element shows the entries users add through it: ele_value[3] when it shows View buttons (1 opens
+ * new entries full screen, 2 in the drawer, 3 and 4 add them as rows), and new_entry_mode when it does not. These are
+ * the same rules the full screen form uses (drawSubLinks and displayForm), for the drawer's add flow.
+ * @param array $ele_value The subform element's ele_value
+ * @return string 'drawer', 'full_screen' or 'row'
+ */
+function formulize_subformNewEntryMode($ele_value) {
+	switch(intval($ele_value[3] ?? 0)) {
+		case 1:
+			return 'full_screen';
+		case 2:
+			return 'drawer';
+		case 0:
+			$newEntryMode = $ele_value['new_entry_mode'] ?? 'row';
+			return in_array($newEntryMode, array('drawer', 'full_screen'), true) ? $newEntryMode : 'row';
+		default:
+			return 'row';
+	}
+}
+
+/**
  * Check for singleentry status and returns the appropriate entry in the form if there is one
  * Or return false if there is no single entry that applies to this user for this form
  * @param int fid - the form id

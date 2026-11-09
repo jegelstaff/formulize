@@ -606,7 +606,12 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 				// View buttons are off, as if the old "don't show View buttons" radio had been
 				// clicked, regardless of whatever the now-hidden view-button-mode radios hold
 				$ele_value[3] = FORMULIZE_EDIT_ICON_STYLE_OFF;
-			} elseif(!$_POST['elements-ele_value'][3]) {
+			} elseif(isset($_POST['subform_view_entries']) OR isset($_POST['subform_new_entries'])) {
+				// the admin UI's two choices, how View opens entries and what happens to new entries, map onto ele_value[3]
+				$inDrawer = ($_POST['subform_view_entries'] ?? '') == 'drawer';
+				$asRows = ($_POST['subform_new_entries'] ?? '') == 'row';
+				$ele_value[3] = $asRows ? ($inDrawer ? 3 : 4) : ($inDrawer ? 2 : 1);
+			} elseif(!intval($ele_value[3] ?? 0)) {
 				$ele_value[3] = 1; // safety net: icons are on, but no view-button-mode radio was submitted
 			}
 			// where new entries appear when there are no View buttons (ele_value[3] is 0). Kept even while
