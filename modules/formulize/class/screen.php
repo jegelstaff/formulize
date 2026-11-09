@@ -587,6 +587,7 @@ class formulizeScreenHandler {
 		if(!$result = $this->db->query($sql2)) {
 			return false;
 		}
+		$this->deleteTemplateFiles($sid);
 		return true;
 	}
 
@@ -767,6 +768,27 @@ class formulizeScreenHandler {
                     error_log("ERROR: Could not copy template file $sourceFile for cloned screen $newsid");
                 }
             }
+        }
+    }
+
+    /**
+     * Remove a deleted screen's own template files, in every theme that has them - templates/screens/<theme>/<sid>/ -
+     * and the folders they were in, so they are not left behind, or picked up by a new screen that gets the same sid.
+     * @param int $sid The screen that has been deleted.
+     * @return void
+     */
+    function deleteTemplateFiles($sid) {
+        if(!$sid = intval($sid)) {
+            return;
+        }
+        $screensDir = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/";
+        foreach((array) glob($screensDir."*/".$sid, GLOB_ONLYDIR) as $folder) {
+            foreach((array) glob($folder."/*") as $file) {
+                if(is_file($file) AND !unlink($file)) {
+                    error_log("ERROR: Could not delete template file $file of deleted screen $sid");
+                }
+            }
+            formulize_removeScreenTemplateFolderIfEmpty($folder);
         }
     }
 

@@ -79,6 +79,10 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 	formulize_warn_about_missing_tokenizer();
 	formulize_warn_about_missing_image_support();
 
+	// Backslashes in static content and default values used to be removed when they were shown, and no longer are,
+	// so point out the ones that are there, every time, until someone has looked at them
+	formulize_warn_about_backslashes_in_authored_content();
+
 	// The web server config can change between updates too, so check every time that the uploads folder,
 	// where files people upload are stored, cannot be used to run programs.
 	formulize_warn_about_executable_uploads_folder();
@@ -296,6 +300,38 @@ function formulize_warn_about_missing_tokenizer() {
 		echo '<h3>Required PHP extension missing on this server: tokenizer</h3>';
 		echo '<p><b>Some parts of Formulize will stop with an error until it is installed:</b> forms with elements whose code refers to other elements, and changing an element&#039;s handle.</p>';
 		echo '<p>To fix this, ask your hosting provider or server administrator to enable the tokenizer extension for the version of PHP that runs this website (on some systems it is a separate package, such as php-tokenizer). Then run the Formulize update again, and this message will no longer appear.</p>';
+	}
+}
+
+/**
+ * List the static content and the text box and textarea default values that have a backslash in them.
+ *
+ * Formulize used to remove backslashes from these when it showed them, so an admin who wanted one to appear may have
+ * typed two, and those now show as two, or stop PHP code from running. Whether a backslash is meant can only be
+ * decided by a person, so this only points them out. It runs on every update, because nothing changes them by
+ * itself, and any of them could still be waiting for someone to look at it.
+ *
+ * @return void
+ */
+function formulize_warn_about_backslashes_in_authored_content() {
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$criteria = new icms_db_criteria_Item('ele_type', "('fullWidthContent', 'captionedContent', 'text', 'textarea')", 'IN');
+	$found = array();
+	foreach((array) $element_handler->getObjects($criteria) as $elementObject) {
+		$contentKey = in_array($elementObject->getVar('ele_type'), array('fullWidthContent', 'captionedContent')) ? ELE_VALUE_STATICCONTENT_CONTENT : $elementObject->defaultValueKey;
+		$ele_value = $elementObject->getVar('ele_value'); // includes the code from the element's code file, if it has one
+		if(is_array($ele_value) AND isset($ele_value[$contentKey]) AND strpos((string) $ele_value[$contentKey], '\\') !== false) {
+			$formObject = $form_handler->get($elementObject->getVar('id_form'));
+			$found[] = '<li>' . htmlspecialchars($formObject ? $formObject->getVar('title', 'n') : '') . ': '
+				. htmlspecialchars(strip_tags($elementObject->getVar('ele_caption', 'n'))) . ' (<code>' . htmlspecialchars($elementObject->getVar('ele_handle')) . '</code>, element id ' . intval($elementObject->getVar('ele_id')) . ')</li>';
+		}
+	}
+	if($found) {
+		echo '<h3>Backslashes in static content and default values:</h3>';
+		echo '<p>Formulize used to remove backslashes (\\) from static content, and from the default values of text boxes and textareas, when it showed them. It doesn&#039;t any more, so they now appear exactly as they were typed. If backslashes were doubled in any of these to make one appear, the extra ones will now show, or the PHP code may not run.</p>';
+		echo '<p>These elements have a backslash in them. Check each one, and change it if it needs changing:</p><ul>' . implode('', $found) . '</ul>';
+		echo '<p>This list appears after every update, for as long as these elements have backslashes in them.</p>';
 	}
 }
 

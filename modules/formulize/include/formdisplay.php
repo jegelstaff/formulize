@@ -2320,7 +2320,7 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 		} elseif(is_string($form_ele) OR is_array($form_ele)) {
 			$className = (is_array($form_ele) AND isset($form_ele[1]) AND $form_ele[1]) ? $form_ele[1] : "head";
 			$contents = (is_array($form_ele) AND isset($form_ele[0])) ? $form_ele[0] : $form_ele;
-			$form->insertBreakFormulize(trans(stripslashes($contents)), $className, $renderedElementMarkupName, $elementObject->getVar("ele_handle"));
+			$form->insertBreakFormulize(trans($contents), $className, $renderedElementMarkupName, $elementObject->getVar("ele_handle"));
 
 		// Option 3: regular element
 		} elseif($form_ele !== false) {

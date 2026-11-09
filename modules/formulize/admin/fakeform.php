@@ -80,7 +80,7 @@ foreach($elementObjects as $elementObject) {
 		$isDisabled = false;
 	}
 	if(is_array($form_ele)) {
-		$fakeForm->insertBreakFormulize(trans(stripslashes($form_ele[0])), $form_ele[1], 'markup-name-moot', $elementObject->getVar("ele_handle"));
+		$fakeForm->insertBreakFormulize(trans($form_ele[0]), $form_ele[1], 'markup-name-moot', $elementObject->getVar("ele_handle"));
 	} elseif($form_ele !== false) {
 		$req = !$isDisabled ? intval($elementObject->getVar('ele_required')) : 0;
 		$fakeForm->addElement($form_ele, $req);

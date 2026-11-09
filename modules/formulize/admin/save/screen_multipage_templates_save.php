@@ -38,8 +38,6 @@ if(!isset($processedValues)) {
 $aid = intval($_POST['aid']);
 $sid = $_POST['formulize_admin_key'];
 
-$screens = $processedValues['screens'];
-
 
 $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 $screen = $screen_handler->get($sid);
@@ -54,10 +52,7 @@ if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mi
   return;
 }  
 
-$screen->setVar('toptemplate',htmlspecialchars(trim($screens['toptemplate'])));
-$screen->setVar('elementtemplate',htmlspecialchars(trim($screens['elementtemplate'])));
-$screen->setVar('bottomtemplate',htmlspecialchars(trim($screens['bottomtemplate'])));
-
+// no properties to set, but insert() writes the posted templates to their files
 if(!$screen_handler->insert($screen)) {
   print "Error: could not save the screen properly: ".$xoopsDB->error();
 }

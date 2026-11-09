@@ -430,7 +430,7 @@ class formulizeHandler {
 	 * This is the high-level upsert apparatus for form screens, analogous to upsertFormSchemaAndResources for forms.
 	 * It handles create-vs-update, seeding sensible defaults for new screens, permission/lock checks,
 	 * the screen_handle a new screen ends up with, the multi-page insert() serialization quirk (array fields
-	 * must be set already-serialized), and the thankstext/introtext HTML encoding normalization.
+	 * must be set already-serialized), and thankstext/introtext, which are stored exactly as given.
 	 *
 	 * Callers (MCP tools, admin save handlers) pass INTERNAL object-var values as keys (e.g. navstyle,
 	 * showpagetitles as 0/1 (0=off, 1=on), buttontext as an array, etc.). The pages/pagetitles/conditions arrays should be
@@ -518,14 +518,11 @@ class formulizeHandler {
 			$screen->setVar('buttontext', serialize(array_merge($current, $incoming)));
 		}
 
-		// HTML text fields: insert() applies getVar(key,'e') encoding and assumes the value on the object is raw.
-		// When a new value is provided, set it raw (insert encodes once). When not provided on an update, normalize
-		// the loaded (already-encoded) value back to raw to avoid double-encoding on re-save.
+		// HTML text fields: insert() stores them exactly as they are on the object. A provided value is set as it is.
+		// One that was not provided keeps the value loaded from the database, which is already in that form.
 		foreach(array('thankstext', 'introtext') as $textField) {
 			if(array_key_exists($textField, $properties)) {
 				$screen->setVar($textField, $properties[$textField]);
-			} elseif(!$screenIsNew) {
-				$screen->setVar($textField, undoAllHTMLChars($screen->getVar($textField, 'e')));
 			}
 		}
 

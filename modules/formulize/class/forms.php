@@ -2041,12 +2041,14 @@ class formulizeFormsHandler {
 		$sql = "SELECT sid, type FROM ".$this->db->prefix("formulize_screen")." WHERE fid=$fid";
 		if($res = $this->db->query($sql)) {
 			$application_handler = xoops_getmodulehandler('applications', 'formulize');
+			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 			while($array = $this->db->fetchArray($res)) {
 				$sql = "DELETE FROM ".$this->db->prefix("formulize_screen_".strtolower($array['type']))." WHERE sid=".intval($array['sid']);
 				if(!$this->db->query($sql)) {
 					throw new Exception("Could not delete screen ".intval($array['sid'])." for form $fid. ".$this->db->error());
 				}
 				$application_handler->deleteMenuLinkByScreen("sid=".intval($array['sid']));
+				$screen_handler->deleteTemplateFiles($array['sid']);
 			}
 			$sql = "DELETE FROM ".$this->db->prefix("formulize_screen")." WHERE fid=$fid";
 			if(!$this->db->query($sql)) {

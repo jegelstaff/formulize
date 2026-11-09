@@ -525,8 +525,8 @@ function readScreenId($id, $fid) {
         $multiPageData = array();
         $multiPageData[$fid]['pages'] = $pages;
         $multiPageData[$fid]['conditions'] = $conditions;
-        $multiPageData[$fid]['introtext'] = $screen->getVar('introtext');
-        $multiPageData[$fid]['thankstext'] = $screen->getVar('thankstext');
+        $multiPageData[$fid]['introtext'] = $screen->getVar('introtext', 'n');
+        $multiPageData[$fid]['thankstext'] = $screen->getVar('thankstext', 'n');
         $multiPageData[$fid]['printall'] = $screen->getVar('printall');
         return $multiPageData;
     } else {

@@ -174,11 +174,11 @@ if ($screen_id != 'new') {
 // prepare data for sub-page
 if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // display data
-  $templates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate', $screen->getVar('theme')));
-  $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
-  $templates['listtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('listtemplate', $screen->getVar('theme')));
-  $templates['openlisttemplate'] = str_replace("&", "&amp;", $screen->getTemplate('openlisttemplate', $screen->getVar('theme')));
-  $templates['closelisttemplate'] = str_replace("&", "&amp;", $screen->getTemplate('closelisttemplate', $screen->getVar('theme')));
+  $templates['toptemplate'] = htmlspecialchars((string) $screen->getTemplate('toptemplate', $screen->getVar('theme')));
+  $templates['bottomtemplate'] = htmlspecialchars((string) $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
+  $templates['listtemplate'] = htmlspecialchars((string) $screen->getTemplate('listtemplate', $screen->getVar('theme')));
+  $templates['openlisttemplate'] = htmlspecialchars((string) $screen->getTemplate('openlisttemplate', $screen->getVar('theme')));
+  $templates['closelisttemplate'] = htmlspecialchars((string) $screen->getTemplate('closelisttemplate', $screen->getVar('theme')));
   $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate'] OR $templates['listtemplate'] OR $templates['openlisttemplate'] OR $templates['closelisttemplate']);
 
   // view data
@@ -414,17 +414,18 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
 
     // text data
     $multipageText = array();
-    $multipageText['introtext'] = undoAllHTMLChars($screen->getVar('introtext', "e"));
-    $multipageText['thankstext'] = undoAllHTMLChars($screen->getVar('thankstext', "e")); // need the e to make sure it doesn't convert links to clickable HTML!
+    // stored exactly as typed, so escape once for the textarea, which shows it as it was typed
+    $multipageText['introtext'] = htmlspecialchars((string) $screen->getVar('introtext', 'n'));
+    $multipageText['thankstext'] = htmlspecialchars((string) $screen->getVar('thankstext', 'n'));
 
     // template data
     updateMultipageTemplates($screen);
-    $templates['toptemplate'] =  str_replace("&", "&amp;", $screen->getTemplate('toptemplate', $screen->getVar('theme')));
-    $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
-    $templates['elementtemplate1'] = str_replace("&", "&amp;", $screen->getTemplate('elementtemplate1', $screen->getVar('theme')));
-    $templates['elementtemplate2'] = str_replace("&", "&amp;", $screen->getTemplate('elementtemplate2', $screen->getVar('theme')));
-    $templates['elementcontainero'] = str_replace("&", "&amp;", $screen->getTemplate('elementcontainero', $screen->getVar('theme')));
-    $templates['elementcontainerc'] = str_replace("&", "&amp;", $screen->getTemplate('elementcontainerc', $screen->getVar('theme')));
+    $templates['toptemplate'] =  htmlspecialchars((string) $screen->getTemplate('toptemplate', $screen->getVar('theme')));
+    $templates['bottomtemplate'] = htmlspecialchars((string) $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
+    $templates['elementtemplate1'] = htmlspecialchars((string) $screen->getTemplate('elementtemplate1', $screen->getVar('theme')));
+    $templates['elementtemplate2'] = htmlspecialchars((string) $screen->getTemplate('elementtemplate2', $screen->getVar('theme')));
+    $templates['elementcontainero'] = htmlspecialchars((string) $screen->getTemplate('elementcontainero', $screen->getVar('theme')));
+    $templates['elementcontainerc'] = htmlspecialchars((string) $screen->getTemplate('elementcontainerc', $screen->getVar('theme')));
     $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate'] OR $templates['elementtemplate1'] OR $templates['elementtemplate2'] OR $templates['elementcontainero'] OR $templates['elementcontainerc']);
 
     // pages data
@@ -516,20 +517,20 @@ if ($screen_id != "new" && $settings['type'] == 'form') {
     $templates['displayType'] = $screen->getVar('displayType');
     $templates['displayType'] = $templates['displayType'] ? $templates['displayType'] : 'block';
 
-    $templates['toptemplate'] =  str_replace("&", "&amp;", $screen->getTemplate('toptemplate', $screen->getVar('theme')));
-    $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
-    $templates['elementtemplate1'] = str_replace("&", "&amp;", $screen->getTemplate('elementtemplate1', $screen->getVar('theme')));
-    $templates['elementtemplate2'] = str_replace("&", "&amp;", $screen->getTemplate('elementtemplate2', $screen->getVar('theme')));
-    $templates['elementcontainero'] = str_replace("&", "&amp;", $screen->getTemplate('elementcontainero', $screen->getVar('theme')));
-    $templates['elementcontainerc'] = str_replace("&", "&amp;", $screen->getTemplate('elementcontainerc', $screen->getVar('theme')));
+    $templates['toptemplate'] =  htmlspecialchars((string) $screen->getTemplate('toptemplate', $screen->getVar('theme')));
+    $templates['bottomtemplate'] = htmlspecialchars((string) $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
+    $templates['elementtemplate1'] = htmlspecialchars((string) $screen->getTemplate('elementtemplate1', $screen->getVar('theme')));
+    $templates['elementtemplate2'] = htmlspecialchars((string) $screen->getTemplate('elementtemplate2', $screen->getVar('theme')));
+    $templates['elementcontainero'] = htmlspecialchars((string) $screen->getTemplate('elementcontainero', $screen->getVar('theme')));
+    $templates['elementcontainerc'] = htmlspecialchars((string) $screen->getTemplate('elementcontainerc', $screen->getVar('theme')));
     $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate'] OR $templates['elementtemplate1'] OR $templates['elementtemplate2'] OR $templates['elementcontainero'] OR $templates['elementcontainerc']);
 }
 
 
 if ($screen_id != "new" && $settings['type'] == 'template') {
     $screen = $screen_handler->get($screen_id);
-    $templates['custom_code'] = str_replace("&", "&amp;", ensureOpeningPHPTag($screen_handler->getCustomCode($screen, $screen->getVar('theme')))); // admin UI so load based on current theme set in the admin UI for this screen
-    $templates['template'] = str_replace("&", "&amp;", $screen_handler->getTemplateHtml($screen, $screen->getVar('theme'))); // admin UI so load based on current theme set in the admin UI for this screen
+    $templates['custom_code'] = htmlspecialchars((string) ensureOpeningPHPTag($screen_handler->getCustomCode($screen, $screen->getVar('theme')))); // admin UI so load based on current theme set in the admin UI for this screen
+    $templates['template'] = htmlspecialchars((string) $screen_handler->getTemplateHtml($screen, $screen->getVar('theme'))); // admin UI so load based on current theme set in the admin UI for this screen
     $templates['donedest'] = $screen->getVar('donedest');
     $templates['savebuttontext'] = $screen->getVar('savebuttontext');
     $templates['donebuttontext'] = $screen->getVar('donebuttontext');
@@ -550,8 +551,8 @@ if ($screen_id != "new" && $settings['type'] == 'template') {
 if ($screen_id != "new" && $settings['type'] == 'calendar') {
     $screen = $screen_handler->get($screen_id);
     $form_id = $screen->getVar('fid');
-    $templates['toptemplate'] = str_replace("&", "&amp;", $screen->getTemplate('toptemplate', $screen->getVar('theme')));
-    $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
+    $templates['toptemplate'] = htmlspecialchars((string) $screen->getTemplate('toptemplate', $screen->getVar('theme')));
+    $templates['bottomtemplate'] = htmlspecialchars((string) $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
     $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['bottomtemplate']);
     $templates['caltype'] = $screen->getVar('caltype');
     $data = array();
@@ -636,9 +637,9 @@ if ($screen_id != "new" && $settings['type'] == 'map') {
     $mapSettings['sid']  = $screen_id;
 
     $templates['selectedTheme'] = $screen->getVar('theme');
-    $templates['toptemplate']    = str_replace("&", "&amp;", $screen->getTemplate('toptemplate', $screen->getVar('theme')));
-    $templates['maptemplate']    = str_replace("&", "&amp;", $screen->getTemplate('maptemplate', $screen->getVar('theme')));
-    $templates['bottomtemplate'] = str_replace("&", "&amp;", $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
+    $templates['toptemplate']    = htmlspecialchars((string) $screen->getTemplate('toptemplate', $screen->getVar('theme')));
+    $templates['maptemplate']    = htmlspecialchars((string) $screen->getTemplate('maptemplate', $screen->getVar('theme')));
+    $templates['bottomtemplate'] = htmlspecialchars((string) $screen->getTemplate('bottomtemplate', $screen->getVar('theme')));
     $templates['usingTemplates'] = ($templates['toptemplate'] OR $templates['maptemplate'] OR $templates['bottomtemplate']);
 }
 

@@ -159,14 +159,16 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		// standard flags used by xoopsobject class
 
         // cleanvars not called, so serialize must be used below to construct the query
+        // introtext and thankstext are stored exactly as the admin typed them, so entities like &nbsp; survive.
+        // They are escaped once when shown in the admin textarea, and printed or run unchanged on the front end.
 
 		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI
 		if (!$update) {
                  $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, donedest, buttontext, finishisdone, pages, pagetitles, conditions, disabledpages, printall, paraentryform, paraentryrelationship, navstyle, displaycolumns, column1width, column2width, showpagetitles, showpageindicator, showpageselector, displayheading, reloadblank, elementdefaults, formorder) VALUES (%u, %s, %s, %s, %s, %u, %s, %s, %s, %s, %u, %u, %u, %u, %u, %s, %s, %u, %u, %u, %u, %u, %s, %s)",
                     $this->db->prefix('formulize_screen_multipage'),
                     $screen->getVar('sid'),
-                    $this->db->quoteString($screen->getVar('introtext', "e")),
-                    $this->db->quoteString($screen->getVar('thankstext', "e")),
+                    $this->db->quoteString($screen->getVar('introtext', "n")),
+                    $this->db->quoteString($screen->getVar('thankstext', "n")),
                     $this->db->quoteString($screen->getVar('donedest')),
                     $this->db->quoteString(serialize($screen->getVar('buttontext'))),
                     $screen->getVar('finishisdone'),
@@ -191,7 +193,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
                     );
                     //nmc 2007.03.24 added 'printall' & fixed pagetitles
              } else {
-                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, disabledpages = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u, navstyle = %u, displaycolumns = %u, column1width = %s, column2width = %s, showpagetitles = %u, showpageindicator = %u, showpageselector = %u, displayheading = %u, reloadblank = %u, elementdefaults = %s, formorder = %s WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "e")), $this->db->quoteString($screen->getVar('thankstext', "e")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString(serialize($screen->getVar('buttontext'))), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $this->db->quoteString(serialize($screen->getVar('disabledpages'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('navstyle'),  $screen->getVar('displaycolumns'), $this->db->quoteString($screen->getVar('column1width')), $this->db->quoteString($screen->getVar('column2width')), $screen->getVar('showpagetitles'), $screen->getVar('showpageindicator'), $screen->getVar('showpageselector'), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('elementdefaults'))), $this->db->quoteString(serialize($screen->getVar('formorder'))), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
+                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, disabledpages = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u, navstyle = %u, displaycolumns = %u, column1width = %s, column2width = %s, showpagetitles = %u, showpageindicator = %u, showpageselector = %u, displayheading = %u, reloadblank = %u, elementdefaults = %s, formorder = %s WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "n")), $this->db->quoteString($screen->getVar('thankstext', "n")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString(serialize($screen->getVar('buttontext'))), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $this->db->quoteString(serialize($screen->getVar('disabledpages'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('navstyle'),  $screen->getVar('displaycolumns'), $this->db->quoteString($screen->getVar('column1width')), $this->db->quoteString($screen->getVar('column2width')), $screen->getVar('showpagetitles'), $screen->getVar('showpageindicator'), $screen->getVar('showpageselector'), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('elementdefaults'))), $this->db->quoteString(serialize($screen->getVar('formorder'))), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
              }
 					if($force) {
 						$result = $this->db->queryF($sql);
@@ -413,7 +415,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
     updateMultipageTemplates($screen);
 
-		displayFormPages($formframe, $entry, $mainform, $pages, $pageConditions, html_entity_decode(html_entity_decode($screen->getVar('introtext', "e")), ENT_QUOTES), html_entity_decode(html_entity_decode($screen->getVar('thankstext', "e")), ENT_QUOTES), $doneDest, $thankYouLinkText, $settings,"", $screen->getVar('printall'), $screen, $screen->getVar('buttontext'), $elements_only); //nmc 2007.03.24 added 'printall' & 2 empty params
+		displayFormPages($formframe, $entry, $mainform, $pages, $pageConditions, $screen->getVar('introtext', "n"), $screen->getVar('thankstext', "n"), $doneDest, $thankYouLinkText, $settings,"", $screen->getVar('printall'), $screen, $screen->getVar('buttontext'), $elements_only); //nmc 2007.03.24 added 'printall' & 2 empty params
     $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
 	}
 
