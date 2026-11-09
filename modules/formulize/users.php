@@ -53,6 +53,10 @@ if (!$fid) {
 // reroute ventry to the EAU entry and use the EAU form's default screen for display.
 $eauViewEntryScreenId = 0;
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
+// a link to a user's account, from userinfo.php, is the same as clicking on the user in the list
+if (empty($_POST['ventry']) && isset($_GET['ve']) && is_numeric($_GET['ve'])) {
+	$_POST['ventry'] = intval($_GET['ve']);
+}
 if (!empty($_POST['ventry']) && is_numeric($_POST['ventry'])) {
 	$eauFids = getEntriesAreUsersForms();
 	// First, if there's been a user account form submission....

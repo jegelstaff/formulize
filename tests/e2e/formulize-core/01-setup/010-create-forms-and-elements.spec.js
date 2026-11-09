@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, openElementAccordion, deleteElement, setCodeMirrorValue } from '../../utils';
+import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, openElementAccordion, deleteElement, setCodeMirrorValue, showPermissionsFor } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -615,9 +615,7 @@ test.describe('Set Special Survey Permissions', async () => {
 		await page.getByRole('link', { name: 'Application: Museum' }).click();
 	  await page.locator('div[id^=form-details-box-]').nth(4).getByText('Surveys').first().click();
   	await page.getByRole('link', { name: 'Permissions', exact: true }).click();
-		await page.locator('#groups').selectOption({label: 'All Staff'});
-		await page.getByRole('button', { name: 'Show permissions for these' }).click();
-		await waitForAdminPageReady(page);
+		await showPermissionsFor(page, ['All Staff']);
 		// The per-group entry-filter ("conditions") UI is in the group's panel in
 		// regular mode and is functional (its selects are enabled). The redesigned
 		// permissions panel added a hidden groupscope-selector box, so the old

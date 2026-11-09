@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, waitForAdminPageReady } from '../../utils';
+import { login, saveAdminForm, waitForAdminPageReady, showPermissionsFor } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -33,9 +33,7 @@ test.describe('Permission inheritance', () => {
 		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
 
 		// Show the template group's panel (which carries the entry-group-selector widget).
-		await page.locator('#groups').selectOption(['Departments - All Users']);
-		await page.getByRole('button', { name: 'Show permissions for these' }).click();
-		await waitForAdminPageReady(page);
+		await showPermissionsFor(page, ['Departments - All Users']);
 
 		// The permissions panels (incl. the egs widget) are in the DOM but display:none;
 		// clicking the Permissions tab triggers jQuery-UI to reveal them (no page reload),

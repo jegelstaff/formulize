@@ -19,6 +19,7 @@ The Formulize admin UI does a lot of asynchronous work: AJAX saves, fades, accor
 - **A green save-type test with no assertion after the save is a latent bug.** Re-navigate to the page, reopen the tab or panel, and assert that the values are there.
 - **Never end a test on the save trigger.** If the last thing a test does is click Save, Playwright can tear down the page before the request goes out. Follow the save with a wait or assertion that depends on the save having finished.
 - **For saves that later tests depend on, use save, re-navigate, verify, retry.** `setMenuEntryGroups()` in `utils.js` is the model.
+- **Some buttons save the whole page and reload it, without saying so.** "Show permissions for these groups" on a form's Permissions tab is one: what it shows is only on the reloaded page. Wait for the page to be ready before the click, because the button's handler is bound by a script at the end of the page, and wait for the `load` event after it. `showPermissionsFor()` does both.
 - **Reopen with a direct URL.** Capture `page.url()` right after opening a form, and `page.goto()` it. Admin nav links aren't there from every state after a save. Checkbox and select assertions work on attached elements, so they don't need the tab to be active.
 
 **How `saveAdminForm()` waits.** The admin's Save fades `div.admin-ui` to 0.5, posts each tab's form to `save.php` in turn, with a PHP syntax check first on screen and template saves, and returns to full opacity when they're all done. So the opacity is what says the save is finished. If the save asks for a reload, the page stays faded until the reload replaces it. The helper's `networkidle` wait only counts after a reload, because `networkidle` fires once per page.
@@ -58,6 +59,22 @@ await conditionalElementReady(
 - **Only use it when the element will change.** If the action leaves the element's HTML as it was, the wait for a change times out.
 - **It doesn't work for an element that disappears.** For that, use `await expect(locator).not.toBeVisible()`, which retries through the fade.
 
+### Reads that don't wait
+
+`count()`, `isVisible()`, `isHidden()`, `all()`, `allTextContents()`, `allInnerTexts()` and `evaluateAll()` answer at once with what's on the page at that moment. Right after an action, nothing there can just mean it hasn't arrived yet. `textContent()`, `inputValue()` and `getAttribute()` wait for their element, and assertions like `toHaveText()` retry.
+
+Before one of the reads that doesn't wait, wait for something that proves the content has arrived, or use an assertion that retries. Check what the wait really proves. The page settings popup on a screen's Pages tab loads over AJAX after the click, so reading it straight away finds an empty list, with nothing wrong in the app. Waiting for "Title for page number" works there because the popup's contents arrive all at once.
+
+### Accordion drawers
+
+A drawer slides for 300ms, and the one closing and the one opening are both on the page until it's over. A locator for something that's in every drawer, like "Edit this page", matches two links during that time, and that's a strict mode violation. Look inside the drawer you want. `editScreenPage()` does this for a screen's pages, and `openElementAccordion()` and `openMenuAccordion()` do it for elements and menu entries.
+
+The accordion ignores clicks while a drawer is moving. Playwright usually gets past this, because it waits for a heading to stop moving before clicking it, but a heading above the drawers that are moving is already still. If the click was ignored, an unscoped locator can go on to act on the wrong drawer without any error, and a scoped one times out.
+
+Only accordions that save their order can be dragged. A heading's link has `draggable="false"`, because otherwise Chromium starts its own drag of the link, the sortable stops getting mouse events, and the accordion stops responding to clicks. `dragDrawer()` in `070-admin-page-reload-keeps-drawer-open.spec.js` shows how to drag one: the sortable needs a mouse that moves in steps, which `dragTo()` doesn't do.
+
+When an admin page reloads, the drawer that was open stays open. A page with no drawer to go back to opens its first drawer, unless the accordion is one that starts closed, and the first one slides open while the page settles.
+
 ### Lists
 
 `waitForWorkingMessage(page)` is only for after a list action: search, sort, page jump, view change. A plain navigation to a list renders on the server and never shows the working message, so wait for the "Showing entries" footer instead.
@@ -80,6 +97,8 @@ await Promise.all([
 A test that opens an entry must leave the page the way a person would, then check something on the page it arrives at. Use `leavePage(page, url)`, or click a link. A test that just ends still holds the lock, and the next test to open that entry as a different user finds it read-only, possibly in another spec file. See [Entry locks](../docs/creating_tests.md#entry-locks).
 
 - The lock is a file in `modules/formulize/temp/`, set when an element renders as editable, and released by a `fetch(keepalive:true)` on the `pagehide` event. Closing the browser at the end of a test doesn't release it.
+- **The release lands after the next page has loaded,** by about 200ms locally. Playwright doesn't report it, and in CI it goes through the [installable app's worker](installable-app.md), which stops when the browser closes. So a test that clicks a link and ends at once can lose it, and a later test finds the entry locked. `leavePage()` waits until the server has handled the release: the page's code names a file, `<token><uid>.token` in `temp/`, that lists what it locked, and the release deletes it. Leave with `leavePage()` at the end of a test, and reload with `reloadPage()` when a test checks the lock after a reload.
+- **In CI a release sometimes never arrives,** with the browser still open and the page fully loaded. Run 42543820246 is one: the worker sent the earlier pages' releases, and the last page's appears nowhere. It doesn't happen locally. So `leavePage()` waits ten seconds and then lets the test carry on, with an annotation saying what's still locked. `entry-lock-reporter.js` lists those at the end of the run, and in the GitHub Actions summary. A form drawn read-only in a later test is the usual consequence, so check that list first.
 - A page that's still loading can't release its locks yet. `leavePage()` does that wait. If you click a link instead, call `await page.waitForLoadState('load')` first.
 - `users.php` renders the System Users form for every listed user, and the entry id in that form is the uid. If elements render as editable, an admin who only visits `users.php` locks all of those entries, and a user can then be blocked from editing their own profile.
 - Don't add a function to core for tests to call. That would mean "leaving releases the lock" is never tested.

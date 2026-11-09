@@ -2644,6 +2644,12 @@ class formulizeFormsHandler {
 				$termToUse = date("Y-m-d", $timestamp + $offset);
 			}
 			if($termToUse == "{BLANK}") {
+					// a date can't be compared with '', so a blank date is found the way an empty term is, below
+					$blankDateClause = in_array($filterSettings[1][$i], array("=", "NOT", "!=")) ? $this->buildPerGroupFilterDateClause($elementObject, $filterSettings[0][$i], $filterSettings[1][$i], "", "", $formAlias) : false;
+					if($blankDateClause) {
+						$perGroupFilter .= $blankDateClause;
+						continue;
+					}
 					$secondOp = $filterSettings[1][$i] == "=" ? " IS " : " IS NOT ";
 					$perGroupFilter .= "($formAlias`".$filterSettings[0][$i]."` ".htmlspecialchars_decode($filterSettings[1][$i]) . " '' OR $formAlias`".$filterSettings[0][$i]."` $secondOp NULL)";
 			} else {
@@ -2661,6 +2667,9 @@ class formulizeFormsHandler {
 							$fieldToUse = "$formAlias`{$filterSettings[0][$i]}`";
 							$perGroupFilter .= "($fieldToUse $opToUse '$likeBits*=+*:$termToUse*=+*:$likeBits' OR $fieldToUse $opToUse '$likeBits*=+*:$termToUse')";
 							continue; // in this case, skip the rest, we don't want to set the $perGroupFilter in the normal way below
+					} elseif($dateClause = $this->buildPerGroupFilterDateClause($elementObject, $filterSettings[0][$i], $filterSettings[1][$i], $termToUse, $likeBits, $formAlias)) {
+							$perGroupFilter .= $dateClause;
+							continue; // a date that needed handling of its own, the usual comparison below is for a term that's a date already
 					} else {
 							$termToUse = $elementObject ? prepareLiteralTextForDB($elementObject, $termToUse) : $termToUse; // this function call could/should replace most of what is above?? But this is a very special context for constructing the per-group-filter-query, so don't want to mess with it at the moment.
 							if(is_array($termToUse)) {
@@ -2674,6 +2683,41 @@ class formulizeFormsHandler {
 		}
 
 		return $perGroupFilter;
+	}
+
+	/**
+	 * Build the part of a per-group filter for a condition on a date, when the term can't go into the SQL as it is. A date in the database can only be compared
+	 * with a date: MySQL gives an error for anything else, where MariaDB compares them as text. So the term is read the way a search of a list reads it, ie: a
+	 * whole year or month is a range of days, and a blank or a term that isn't a date is decided in PHP (see formulize_tryDelegatedSearchWhere and
+	 * formulize_metadataDateSearchWhere). Not the way a condition reads it, because a negative condition takes in entries with no date, and a negative
+	 * comparison in a per-group filter never has.
+	 *
+	 * @param object|false $elementObject The element the condition is on, or false for a metadata field
+	 * @param string $handle The element's handle, or the name of the metadata field
+	 * @param string $operator The condition's operator, as it's stored, ie: NOT or &lt;=
+	 * @param string $term The term, with {USER} and {TODAY} already resolved
+	 * @param string $likeBits The wildcards for LIKE, if any
+	 * @param string $formAlias The alias of the form in the query, with its dot, or nothing
+	 * @return string|false The SQL, or false if the condition isn't on a date, or the term is a date that the usual comparison works with
+	 */
+	function buildPerGroupFilterDateClause($elementObject, $handle, $operator, $term, $likeBits, $formAlias) {
+		if(!_conditionIsOnADate($elementObject, $handle)) {
+			return false;
+		}
+		$operator = htmlspecialchars_decode($operator);
+		$operator = $operator == "NOT" ? "!=" : $operator; // searches don't know NOT
+		$field = "$formAlias`$handle`";
+		$clause = $elementObject
+			? formulize_tryDelegatedSearchWhere('date', $term, $operator, "'", $likeBits, $elementObject->getVar('id_form'), 'main', $field)
+			: formulize_metadataDateSearchWhere($term, $operator, "'", $likeBits, 0, $field);
+		if($clause === false) {
+			return false;
+		}
+		// every date is not equal to a term that isn't one. A negative comparison in a per-group filter has never taken in entries with no date, so it doesn't here either
+		if(trim($clause) == "1=1") {
+			$clause = " $field IS NOT NULL ";
+		}
+		return "($clause)";
 	}
 
 	function cloneForm($fid, $clonedata=false) {

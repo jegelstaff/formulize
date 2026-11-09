@@ -281,6 +281,8 @@ if (isset($breadcrumbtrail))
 $xoopsTpl->assign('scrollx', (isset($_POST['scrollx']) ? intval($_POST['scrollx']) : (isset($_GET['scrollx']) ? intval($_GET['scrollx']) : 0)));
 $accordion_active = (isset($_POST['accordion_active']) AND $_POST['accordion_active'] !== "" AND $_POST['accordion_active'] !== "false") ? intval($_POST['accordion_active']) : "false";
 $xoopsTpl->assign('accordion_active', $accordion_active);
+// the accordion that was open is the one on the selected tab. Tabs are numbered from 1 in the templates, and tabselected counts from 0.
+$xoopsTpl->assign('accordion_active_tab', isset($adminPage['tabselected']) ? $adminPage['tabselected'] + 1 : '');
 
 // if we detect we're in the test environment, disable floating save button because it Selenium on Sauce cannot handle it obscuring clickable elements
 // send snippet that will cause javascript evaluation to always fail

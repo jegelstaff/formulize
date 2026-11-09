@@ -160,6 +160,8 @@ $data = gatherDataset($fid, scope: $scope);
 
 Use `getValue()` and `getEntryIds()` to work with the result.
 
+**Two ways to build the query.** When the main form has one connected form or none, `dataExtraction()` runs one query, with every sort and filter in it. When it has more than one (`count($linkformids) > 1`), it puts the main form's entry ids into a temporary table, `formulize_temp_extract_<timestamp>`, in sorted order, then runs one query for each connected form, joined to that table and ordered by its `mastersort` column. Anything the temporary table can't hold, such as a sort on a connected form's field, has to be added to each connected form's own query, or it's lost. Adding a connection to a form can switch its lists from one way to the other, so a list can behave differently with no change to the list itself. To see which way a list takes, log the queries. See [Trace a Query](coding-guidelines.md#trace-a-query).
+
 ---
 
 ## State Management Through HTTP POST

@@ -1,4 +1,4 @@
-const { expect } = require('@playwright/test')
+const { expect, test } = require('@playwright/test')
 
 export const ElementType = {
 	'text': 'element-text',
@@ -532,6 +532,40 @@ export async function waitForAdminPageReady(page) {
 }
 
 /**
+ * Open the settings popup of a page of a multi-page screen, from the Pages tab. The page's drawer has to be closed, because
+ * clicking an open drawer closes it. A drawer that's closing and one that's opening are both on the page for a moment, so
+ * "Edit this page" on its own can match two links. This uses the one in the page's own drawer, so a click that the accordion
+ * ignored because it was still moving can't end up editing a different page.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} title - The title of the page, as it shows on its drawer
+ */
+export async function editScreenPage(page, title) {
+	const drawer = page.locator('[id^="drawer-"]').filter({ has: page.getByRole('link', { name: title, exact: true }) });
+	await drawer.getByRole('link', { name: title, exact: true }).click();
+	await drawer.getByRole('link', { name: 'Edit this page' }).click();
+}
+
+/**
+ * Show some groups' permissions on a form's Permissions tab. "Show permissions for these groups" saves the page, which then
+ * reloads with those groups' panels, so this waits for the reload, and for each group's panel to be there. The button only
+ * works once the script at the end of the page has run, so this waits for the page to be ready first.
+ * @param {import('@playwright/test').Page} page
+ * @param {string[]} groups - The names of the groups, as the list shows them
+ */
+export async function showPermissionsFor(page, groups) {
+	await waitForAdminPageReady(page);
+	await page.locator('#groups').selectOption(groups.map(label => ({ label })));
+	await Promise.all([
+		page.waitForEvent('load', { timeout: 60000 }),
+		page.getByRole('button', { name: 'Show permissions for these' }).click(),
+	]);
+	await waitForAdminPageReady(page);
+	for (const group of groups) {
+		await expect(page.getByRole('group', { name: group }).locator('legend')).toBeVisible();
+	}
+}
+
+/**
  * Waits for a conditional element to appear or be updated after a trigger action
  * Does not work for conditional elements that disappear on a trigger action - will need a different function for that
  * @param {Page} page - Playwright page object
@@ -574,8 +608,18 @@ export async function conditionalElementReady(page, handle, triggerAction) {
 	// Wait for the child to fade in
 	await expect(page.locator(childSelector)).toHaveCSS('opacity', '1');
 
-	// Wait for conditionalCheckInProgress to be stable at 0
-	// Because we might have cascading deferred conditional checks :(
+	await conditionalChecksFinished(page);
+}
+
+/**
+ * Wait for conditionalCheckInProgress to be stable at 0, because we might have cascading deferred conditional checks :(
+ * conditionalElementReady() does this. Use it directly, after the check has come back, for an action that might leave the
+ * conditional element exactly as it was, which conditionalElementReady() can't wait for.
+ * @param {Page} page - Playwright page object
+ */
+export async function conditionalChecksFinished(page) {
+	// a page stays open across checks, so the timer from the last check doesn't count for this one
+	await page.evaluate(() => { window._stableCheckStart = null; });
 	await page.waitForFunction(() => {
 		// Store the stable check start time on window object
 		if (!window._stableCheckStart) {
@@ -1082,19 +1126,109 @@ export async function setMenuEntryGroups(page, appName, accordionName, groupsSel
 }
 
 /**
+ * An element's row on a form, found by its handle, so a field can be found inside it rather than by counting fields on the page
+ * @param {import('@playwright/test').Page} page
+ * @param {string} handle - The element's handle
+ */
+export function elementRow(page, handle) {
+	return page.locator(`.form-row:has(.formulize-label-${handle})`);
+}
+
+/**
+ * The box to type in, of an autocomplete element. Its row also has hidden inputs that hold what was chosen.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} handle - The element's handle
+ */
+export function autocompleteBox(page, handle) {
+	return elementRow(page, handle).locator('input.formulize_autocomplete');
+}
+
+/**
  * Leave the page by going somewhere else, the way a person does, so the entries it locked are released.
  *
  * A form showing an entry for editing locks it, and the page releases the lock as it goes away. So a test that
  * opens an entry must leave it, or the next person to open the entry finds it locked. Closing the browser at the
  * end of a test doesn't count as leaving. The page can only release its locks once it has finished loading, so
- * this waits for that first. The release is sent as the page goes away, and in practice it has been handled by
- * the time the next page has loaded, which page.goto waits for.
+ * this waits for that first.
+ *
+ * The release is a request the page sends as it goes away. Playwright doesn't report it, and it can still be on
+ * its way after the next page has loaded, so a test that ends then can close the browser before it's sent. So this
+ * waits until the server has handled it, which shows because the file listing what the page locked is gone.
+ *
+ * In CI a release sometimes never arrives, with the browser still open. Often nothing depends on that lock, so the
+ * test carries on, with a note of what's still locked, and entry-lock-reporter.js lists those in the run's summary.
+ * A later test that opens one of those entries as someone else finds it read-only.
  *
  * @param {string} url - Where to go. Assert something on that page afterwards, as after any navigation.
  */
 export async function leavePage(page, url = '/') {
+	await leaveWith(page, () => page.goto(url));
+}
+
+/**
+ * Reload the page, the way a person does, and wait until the server has handled the release of the entries it
+ * locked, as leavePage does. The release arrives after the new page was drawn.
+ */
+export async function reloadPage(page) {
+	await leaveWith(page, () => page.reload());
+}
+
+async function leaveWith(page, navigation) {
 	await page.waitForLoadState('load');
-	await page.goto(url);
+	const lockLists = await entryLockListFiles(page);
+	const leftUrl = page.url();
+	await navigation();
+	let unreleased = lockLists;
+	for (const waited of [0, 100, 250, 500, 1000, 2000, 3000, 3000]) { // ten seconds in all
+		await new Promise(resolve => setTimeout(resolve, waited));
+		const tempFiles = serverTempFiles();
+		unreleased = unreleased.filter(file => tempFiles.includes(file));
+		if (unreleased.length === 0) {
+			return;
+		}
+	}
+	noteUnreleasedLocks(leftUrl, unreleased);
+}
+
+// The annotation entry-lock-reporter.js looks for
+const UNRELEASED_LOCKS_NOTE = 'entry locks not released';
+
+// Note on the test what the page that was left still has locked, which is in its list files
+function noteUnreleasedLocks(leftUrl, lockLists) {
+	const entries = [];
+	for (const file of lockLists) {
+		let list = '';
+		try {
+			list = execFileSync('docker', ['exec', webContainer(), 'cat', `/var/www/html/modules/formulize/temp/${file}`], { encoding: 'utf8' });
+		} catch (e) {
+			continue; // released after all, just now
+		}
+		// a serialized PHP array of form ids, each with an array of entry ids
+		for (const [, fid, entryList] of list.matchAll(/i:(\d+);a:\d+:\{([^}]*)\}/g)) {
+			for (const [, entry] of entryList.matchAll(/i:(\d+);b:1;/g)) {
+				entries.push(`entry ${entry} in form ${fid}`);
+			}
+		}
+	}
+	const left = leftUrl.replace(/^https?:\/\/[^/]+/, '');
+	test.info().annotations.push({
+		type: UNRELEASED_LOCKS_NOTE,
+		description: `Left ${left}, and its release never reached the server, so these stay locked: ${entries.join(', ') || 'none any more'}`,
+	});
+}
+
+// The files on the server that list what a page locked, which the page's release deletes. There's one for the page and
+// one for the form last shown in its drawer, named by the token and uid in the code that sends the release. A page
+// that locked nothing has the code but no file.
+async function entryLockListFiles(page) {
+	const html = await page.content();
+	const files = [...html.matchAll(/'formulize_entry_lock_token', '([0-9a-f]+)'\);\s*fd\.append\('formulize_entry_lock_uid', '(\d+)'\)/g)]
+		.map(([, token, uid]) => `${token}${uid}.token`);
+	return [...new Set(files)];
+}
+
+function serverTempFiles() {
+	return execFileSync('docker', ['exec', webContainer(), 'ls', '/var/www/html/modules/formulize/temp'], { encoding: 'utf8' }).split('\n');
 }
 
 /**
@@ -1138,7 +1272,7 @@ export async function ensureMainMenuOpen(page) {
 // ============================================================================
 
 const { execFileSync } = require('child_process');
-const { dbContainer } = require('./docker-containers');
+const { dbContainer, webContainer } = require('./docker-containers');
 
 const DB_ROOT_PASS = process.env.E2E_DB_ROOT_PASS || 'abc123';
 const DB_NAME = process.env.E2E_DB_NAME || 'formulize';

@@ -766,6 +766,32 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 
 }
 
+/**
+ * Limit the entries in a subform to the ones that meet the conditions on the subform element
+ *
+ * @param array $subformEntryIds The entries in the subform, that are connected to the main form entry
+ * @param array $subformConditions The conditions on the subform element
+ * @param int $subform_id The form id of the subform
+ * @param int|string $entry The main form entry, which { } terms in the conditions refer to, or 'new'
+ * @param int $mainFormOwner The owner of the main form entry. The comparison id for {USER}, so that the included entries are consistent when an admin looks at a set of entries made by someone else.
+ * @param int $fid The form id of the main form
+ * @return array The entries that meet the conditions
+ */
+function formulize_subformEntriesMeetingConditions($subformEntryIds, $subformConditions, $subform_id, $entry, $mainFormOwner, $fid) {
+	global $xoopsDB;
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	list($conditionsFilter, $conditionsFilterOOM, $curlyBracketFormFrom) = buildConditionsFilterSQL($subformConditions, $subform_id, $entry, $mainFormOwner, $fid, 'subform');
+	$subformObject = $form_handler->get($subform_id);
+	$sql = "SELECT subform.entry_id FROM ".$xoopsDB->prefix("formulize_".$subformObject->getVar('form_handle'))." as subform $curlyBracketFormFrom WHERE subform.entry_id IN (".implode(", ", array_map('intval', $subformEntryIds)).") $conditionsFilter $conditionsFilterOOM";
+	$entriesMeetingConditions = array();
+	if($res = $xoopsDB->query($sql)) {
+		while($array = $xoopsDB->fetchArray($res)) {
+			$entriesMeetingConditions[] = $array['entry_id'];
+		}
+	}
+	return $entriesMeetingConditions;
+}
+
 function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry,
 	$customCaption = "", $customElements = "", $defaultblanks = 0, $showViewButtons = 1, $captionsForHeadings = 0,
 	$overrideOwnerOfNewEntries = "", $mainFormOwner = 0, $hideaddentries = "", $subformConditions = null, $subformElementId = 0,
@@ -799,15 +825,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 	// limit the sub_entries array to just the entries that match the conditions, if any
 	if(is_array($subformConditions) AND isset($sub_entries[$subform_id]) AND is_array($sub_entries[$subform_id]) AND count($sub_entries[$subform_id]) > 0) {
-		list($conditionsFilter, $conditionsFilterOOM, $curlyBracketFormFrom) = buildConditionsFilterSQL($subformConditions, $subform_id, $entry, $mainFormOwner, $fid); // pass in mainFormOwner as the comparison ID for evaluating {USER} so that the included entries are consistent when an admin looks at a set of entries made by someone else.
-		$subformObject = $form_handler->get($subform_id);
-		$sql = "SELECT subform.entry_id FROM ".$xoopsDB->prefix("formulize_".$subformObject->getVar('form_handle'))." as subform $curlyBracketFormFrom WHERE subform.entry_id IN (".implode(", ", array_map('intval', $sub_entries[$subform_id])).") $conditionsFilter $conditionsFilterOOM";
-		$sub_entries[$subform_id] = array();
-		if($res = $xoopsDB->query($sql)) {
-			while($array = $xoopsDB->fetchArray($res)) {
-				$sub_entries[$subform_id][] = $array['entry_id'];
-			}
-		}
+		$sub_entries[$subform_id] = formulize_subformEntriesMeetingConditions($sub_entries[$subform_id], $subformConditions, $subform_id, $entry, $mainFormOwner, $fid);
 	}
 
 	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";

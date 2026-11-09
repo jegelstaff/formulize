@@ -430,7 +430,12 @@ class formulizeElementsHandler {
 			$operators = $properties['ele_filtersettings'][1];
 			$types = $properties['ele_filtersettings'][3];
 			foreach($elements as $i => $element) {
-				if(!($conditionElementObject = _getElementObject($element))) {
+				// the fields every entry has, ie: creation_datetime, are not elements, and are stored by name, the same as the admin UI does
+				if(isMetaDataField($element)) {
+					$conditionElementId = $element;
+				} elseif($conditionElementObject = _getElementObject($element)) {
+					$conditionElementId = $conditionElementObject->getVar('ele_id');
+				} else {
 					throw new Exception("You have specified an invalid element in display conditions");
 				}
 				if(!in_array($operators[$i], array('=', '!=', 'NOT', '<', '>', '<=', '>=', 'LIKE', 'NOT LIKE', 'IN'))) {
@@ -440,7 +445,7 @@ class formulizeElementsHandler {
 					throw new Exception("You have specified an invalid type in display conditions");
 				}
 				// store element references as IDs, the canonical format used by the admin UI and import/export (conversion is idempotent if an ID was passed)
-				$properties['ele_filtersettings'][0][$i] = $conditionElementObject->getVar('ele_id');
+				$properties['ele_filtersettings'][0][$i] = $conditionElementId;
 			}
 		} elseif(!isset($properties['ele_filtersettings']) AND $existingElement) {
 			$properties['ele_filtersettings'] = $existingElement->getVar('ele_filtersettings');

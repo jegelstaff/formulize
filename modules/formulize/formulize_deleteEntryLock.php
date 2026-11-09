@@ -7,6 +7,9 @@
 // IF THE WEBMASTER IS BUILDING A CUSTOM INTERFACE RELYING ON RENDERING ELEMENTS ON THEIR OWN, LOCKS WILL NOT WORK RIGHT
 // Custom screens (and template screens?) won't have the beacon in place for handling unload events in the window and they don't pass the token through POST like a standard screen does
 
+// when requested directly, the rest of Formulize isn't loaded
+require_once __DIR__.'/include/entryLocks.php';
+
 $userPassedUid = false;
 if(!defined('XOOPS_MAINFILE_INCLUDED')) { // if we're requested directly, setup stuff...
     ignore_user_abort(true);
@@ -31,14 +34,8 @@ if(isset($_POST['formulize_entry_lock_token'])) {
         unset($_POST['formulize_entry_lock_token']);
         foreach($entriesThatWereLockedThatPageLoad as $thisForm=>$theseEntries) {
             foreach(array_keys($theseEntries) as $entry_id) {
-                $fileName = __DIR__."/temp/entry_".$entry_id."_in_form_".$thisForm."_is_locked_for_editing";
-                if(file_exists($fileName)) {
-										// Only delete the lock file if the uid matches, to prevent a situation where a user with override entry locks permission has taken over the lock... an original user who had the lock should not be able to clear the now overriden lock.
-                    list($lockFileUid) = explode(",", file_get_contents($fileName));
-                    if(intval($lockFileUid) === intval($userPassedUid)) {
-                        unlink($fileName);
-                    }
-                }
+                // Only if this page load still holds the lock. A later page load can have taken it over: the same person's, if they reloaded the entry or followed a link to it, since this release is sent after that page was drawn, or a webmaster's, who overrode the lock.
+                formulize_releaseEntryLock($entry_id, $thisForm, $userPassedUid, $token);
             }
         }
     }

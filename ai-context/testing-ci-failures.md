@@ -23,10 +23,12 @@ For how CI runs the suite, see [Concurrency](testing-robust-specs.md#concurrency
 
 ## Common causes
 
-**A form drawn read-only.** There are many possible causes, and one is an entry lock left by an earlier test. Look for the lock message in the page's HTML in the trace. Subform entries lock too, not just the main entry. To find which test left it, search `logs/formulize_log_active.log` for `rendering-form` events for that entry, and see which session drew it last. See [Entry locks](testing-robust-specs.md#entry-locks).
+**A form drawn read-only.** There are many possible causes, and one is an entry lock left by an earlier test. Look for the lock message in the page's HTML in the trace, and at "Entry locks not released" in the run's summary, which lists the pages tests left whose release never arrived. Subform entries lock too, not just the main entry. To find which test left it, search `logs/formulize_log_active.log` for `rendering-form` events for that entry, and see which session drew it last. See [Entry locks](testing-robust-specs.md#entry-locks).
 
 **CI fails and live sites work.** Suspect a static file that live browsers have cached, while CI's fresh browser gets the new one. A script loaded with no `?v=` can stay cached for weeks. Load scripts with `formulize_get_file_version()`.
 
 **One bad ready handler.** A jQuery error inside a `jQuery(document).ready()` aborts every later ready handler on the page, so the symptom appears far from the cause. An `.on()` in the admin UI is the usual culprit, because the [admin runs jQuery 1.4.2](coding-guidelines.md#javascript-in-admin-templates).
+
+**A list with the wrong entries or the wrong order.** Log the query that ran, as in [Trace a Query](coding-guidelines.md#trace-a-query), rather than reasoning about the code. If it works on master with the same code, check whether a spec on the branch added a connection to the list's form, which changes how the query is built.
 
 **An id that changed.** Admin `#form-N` and `#tabs-N` ids are tab positions, so adding a tab renumbers them. Select by field name.

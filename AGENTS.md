@@ -30,6 +30,7 @@ The files in `ai-context/` are a general guide and may not match every case. Che
 - **`docs/` is the public formulize.org website** (Jekyll). Write it for the people using Formulize. See [writing-user-docs](ai-context/writing-user-docs.md) and [docs-site-verification](ai-context/docs-site-verification.md).
 - **Test Formulize by using it.** Set up, act and tidy up through the admin UI and screens, the way a person would. Don't write to the database or disk to get a state, even to check a change by hand. The PHP tests in `tests/` cover internal pieces and don't replace this. See [testing-through-the-application](ai-context/testing-through-the-application.md).
 - **Run end-to-end tests from `tests/e2e/`** with `npm test --`, not `npx playwright` from the repo root. See [local-environment-and-testing](ai-context/local-environment-and-testing.md).
+- **When a test fails, read its trace before forming a theory,** whether it failed in CI, in a downloaded report or locally. See [testing-ci-failures](ai-context/testing-ci-failures.md).
 - **Don't build on one theme's internals.** Anari was introduced for Formulize 7. Lyris was introduced with Formulize 8.30 and is intended as the standard theme into the future; use Formulize-level contracts. See [themes-anari-and-lyris](ai-context/themes-anari-and-lyris.md).
 - **Front-facing markup and styling follow Formulize UI.** Read its reference before writing HTML or CSS for anything users see, use only the `fz-` classes and tokens it lists, and say in your report that you followed it. See [formulize-ui](ai-context/formulize-ui.md).
 
@@ -91,10 +92,11 @@ See [agent-conduct](ai-context/agent-conduct.md) for these rules in full.
 | Changing the Public API or the MCP server | [mcp-and-public-api](ai-context/mcp-and-public-api.md) |
 | Using the Public API, MCP and the AI assistant | [docs/public_api.md](docs/public_api.md), [docs/AI-advanced.md](docs/AI-advanced.md), [docs/AI-mcp-reference.md](docs/AI-mcp-reference.md) |
 | User-visible words and translations | [docs/translating_text.md](docs/translating_text.md) |
+| The museum system the e2e tests build, in CI and locally: its forms, users, groups and permissions | [testing-museum-system](ai-context/testing-museum-system.md) |
 | Running tests, the Docker setup | [local-environment-and-testing](ai-context/local-environment-and-testing.md), [docs/testing.md](docs/testing.md) |
 | Writing Playwright specs | [testing-through-the-application](ai-context/testing-through-the-application.md), [testing-robust-specs](ai-context/testing-robust-specs.md), [docs/creating_tests.md](docs/creating_tests.md) |
 | Writing specs for users, groups and accounts | [testing-eau-eag](ai-context/testing-eau-eag.md) |
-| A failed CI run | [testing-ci-failures](ai-context/testing-ci-failures.md) |
+| A failed test: a CI run, a Playwright report or a trace | [testing-ci-failures](ai-context/testing-ci-failures.md) |
 | Front-facing markup and CSS | [formulize-ui](ai-context/formulize-ui.md), [docs/templates.md](docs/templates.md) |
 | Themes, the Login block and the open menu | [themes-anari-and-lyris](ai-context/themes-anari-and-lyris.md), [docs/themes.md](docs/themes.md) |
 | Template changes not showing, `templates_c` | [compiled-templates-theme-fromfile](ai-context/compiled-templates-theme-fromfile.md) |

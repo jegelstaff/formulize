@@ -117,9 +117,6 @@ if (! empty( $_SESSION['redirect_message'])) {
 	unset( $_SESSION['redirect_message'] ) ;
 }
 
-$xoTheme->addStylesheet(ICMS_LIBRARIES_URL . '/jquery/colorbox/colorbox.css');
-$xoTheme->addScript(ICMS_LIBRARIES_URL . '/jquery/colorbox/jquery.colorbox-min.js');
-
 if (@is_object($xoTheme->plugins['icms_view_PageBuilder'])) {
 	$aggreg =& $xoTheme->plugins['icms_view_PageBuilder'];
 	$xoopsTpl->assign_by_ref('xoBlocks', $aggreg->blocks);

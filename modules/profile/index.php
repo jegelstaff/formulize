@@ -321,6 +321,8 @@ $icmsTpl->assign('image_cancel', ICMS_IMAGES_SET_URL."/actions/button_cancel.png
 // Comments
 include ICMS_ROOT_PATH.'/include/comment_view.php';
 // adding PM javascript
+$xoTheme->addStylesheet(ICMS_LIBRARIES_URL . '/jquery/colorbox/colorbox.css');
+$xoTheme->addScript(ICMS_LIBRARIES_URL . '/jquery/colorbox/jquery.colorbox-min.js');
 $xoTheme->addScript('', array('type' => 'text/javascript'), 'jQuery(document).ready(function(){jQuery("a.profile-pm").colorbox({width:600, height:395, iframe:true});});');
 // Closing the page
 include 'footer.php';
