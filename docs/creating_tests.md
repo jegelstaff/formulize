@@ -89,6 +89,8 @@ The page releases its locks as it goes away, so a test that opens an entry must 
 
 The release can still be on its way after the next page has loaded, and a test that ends then can close the browser before it's sent. `leavePage` waits until the server has handled it, so use it to leave an entry at the end of a test. Clicking a link doesn't wait.
 
+Sometimes a release never arrives, even with the browser open. If it hasn't arrived after ten seconds, `leavePage` lets the test carry on, and notes on it which entries are still locked. The end of the run lists those notes, and so does the summary of a run in GitHub Actions. When a test finds a form drawn read-only, look there first.
+
 Wait for the page to finish loading before you leave it. A page that is still loading isn't ready to release its locks yet. `leavePage` does that wait for you. If you leave by clicking a link instead, call `await page.waitForLoadState('load')` first.
 
 Where a whole describe block opens entries, leave in an `afterEach`:

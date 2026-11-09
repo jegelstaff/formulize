@@ -27,7 +27,7 @@ module.exports = defineConfig({
 	maxFailures: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
 	reporter: process.env.GITHUB_ACTIONS ?
-		[['list'], ['github'], ['html', { outputFolder: './test-report' }], ['./php-error-reporter.js']] : [['list'], ['html', { outputFolder: './test-report' }], ['./php-error-reporter.js']],
+		[['list'], ['github'], ['html', { outputFolder: './test-report' }], ['./php-error-reporter.js'], ['./entry-lock-reporter.js']] : [['list'], ['html', { outputFolder: './test-report' }], ['./php-error-reporter.js'], ['./entry-lock-reporter.js']],
 	/* Adjust the timeout for slow tests. E2E_TEST_TIMEOUT in .env overrides it, for slow machines. */
 	timeout: Number(process.env.E2E_TEST_TIMEOUT) || 120000,
   retries: 0,
