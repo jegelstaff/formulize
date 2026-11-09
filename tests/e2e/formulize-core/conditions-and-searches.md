@@ -717,6 +717,9 @@ The group is Auditors, and its one member is auditor1, someone from outside the 
 | J6 | Date of acquisition = {BLANK} |  | Unknown Shard | blank |
 | J7 | Date of acquisition != {BLANK} |  | Everything except Unknown Shard | not blank |
 | J8 | creation_datetime <= {TODAY} |  | Everything | when an entry was made, all of today |
+| J9 | Date of acquisition = 2002-12-02 |  | Persian necklace, Persian necklace - number 2 | a whole date, which is compared as it is |
+| J10 | Date of acquisition IN 2002-12-02, bread |  | Persian necklace, Persian necklace - number 2 | a list, where the term that isn't a date is left out |
+| J11 | Date of acquisition IN bread |  | Nothing | a list with no dates in it |
 
 ## 12. What `=` conditions give a new entry
 
@@ -806,6 +809,10 @@ What no row checks yet, and what checking it would take. Then problems found whi
 
 A gap matters most where it's code the branch changed. If no row runs that code, the gap has to be closed before the tests cover the branch. If other rows run the same code, it can wait. A run of the suite with coverage on lists the lines a branch changed that no test runs, which is the way to check. See Measuring coverage in `docs/ci.md`.
 
+The first complete run with coverage, 42561306189, ran 598 of the 668 changed lines that can run. The gaps below name the lines that a row could reach. Of the rest:
+- 36 are a function's closing brace, which never runs when every way through the function returns before it
+- the others in the condition code are safety checks the screens can't reach, ie: a `{ }` that refers to an entry that doesn't exist, or to something that isn't an element, or an operator that's turned away earlier. In `functions.php`, they're in `_buildConditionsFilterSQL()`, `_entryIdsInLinkedValue()`, `_valuesInReferenceForMultiValueElement()`, `_dateRangeComparisonForConditionsFilterSQL()`, `_convertLiteralTermForConditionsFilterSQL()` and `formulize_dateSpanComparison()`.
+
 ### Gaps
 
 - **A group's filter on anything but a date.** Section 11 covers dates. A group's filter makes its own SQL, in `buildPerGroupFilterWhereClause()` in `forms.php`, and its rules for other fields aren't the rules conditions have either:
@@ -816,7 +823,12 @@ A gap matters most where it's code the branch changed. If no row runs that code,
 
   This branch didn't change those, and nothing checks them but 042, which uses the filter 015 gives All Staff on Surveys, on a Yes/No. To close: J rows on a text box, a Yes/No and a linked element.
 
-- **Applying a default to the entries that already exist.** `applyDefaultToEntries()` in `data.php` runs when a webmaster saves a default and asks for it to go into the existing entries. It now decides what's blank with `formulize_blankValueComparison()`, so a number field holding 0 isn't blank any more. S18 to S28 run that function, including 0 in S24 and S27. To close: rows that save a default with that box ticked and then check which entries got it, with a field that holds NULL, `''` and 0 across the entries. This writes to entries, so it needs a field nothing else reads, and has to put the values back through the UI.
+- **Applying a default to the entries that already exist.** `applyDefaultToEntries()` in `data.php` runs when a webmaster saves a default and asks for it to go into the existing entries. It now decides what's blank with `formulize_blankValueComparison()`, so a number field holding 0 isn't blank any more. S18 to S28 run that function, including 0 in S24 and S27. The coverage run of 42561306189 shows no test reaching the line in `applyDefaultToEntries()`. To close, without changing the museum's data:
+  - make a text box and a number box on Artifacts with MCP, for 045 alone
+  - with MCP, give a few artifacts an empty value in the text box, and 0 in the number box, and leave others with no value
+  - give each a default, and tick "Apply the default value to existing entries" on the Options tab
+  - check which artifacts got the default
+  - then delete the two elements with MCP, which takes their values with them
 
 - **Display conditions on a new entry, and after something changes on screen.** Every V row opens a saved artifact. To close: rows that open a new Artifact, and rows with an On screen cell, like section 3. The display condition would refer to a field on the same page, so `conditional.js` checks it again when that field changes.
 
@@ -856,11 +868,11 @@ A gap matters most where it's code the branch changed. If no row runs that code,
   - a list's fundamental filters, when an entry is added from the list (`readelements.php`). It uses the same `getFilterValuesForEntry()`.
   - the blank entries a subform shows, once they're filled in and the page is saved (`synchSubformBlankDefaults()`). It has a loop of its own, which calls `formulize_conditionValueCanBeSaved()` too.
 
-  To close: K rows that add an artifact from the Catalogue list, with fundamental filters on it, and K rows that fill in a blank entry in a subform that shows them, ie: Donated artifacts in a Donor.
+  The coverage run of 42561306189 shows no test reaching the lines in `synchSubformBlankDefaults()`. No subform in the museum shows blank entries yet. To close: K rows that add an artifact from the Catalogue list, with fundamental filters on it, and K rows that fill in a blank entry in a subform that shows them, ie: the Surveys subform in Exhibits, which has editable rows, with its blank entries turned on for the rows and off again after.
 
 - **`proxy` and `new_0` entries.** `buildConditionsFilterSQL()` treats these markers as `new`: `proxy` is an entry someone makes on behalf of another user, and `new_0` comes from code that makes several entries at once. On-screen values stay under the marker the page used. No row opens a page with either one, so the values are always under the same key as the entry. To close: a user who may make entries for others, and N rows that open a new Loan Request made on someone's behalf.
 
-- **"Nothing" rows that aren't proved.** F22, B1, B17, B19, B21, B23, B24, B53, B70, B84, E2 and J4 find nothing, and they aren't loaded a second time. A query that fails shows no entries, so these rows would pass anyway. To close: in section 6, put the row's conditions in the "one or more" set, alongside one that must match, the way sections 1, 3 and 4 do. In section 7, search again with `OR` in front of each of the row's terms, and `ORRoman Coin` in the Short name box, then check that Roman Coin is there. A row that already uses `OR` or `EMPTYSET` needs some other way.
+- **"Nothing" rows that aren't proved.** F22, B1, B17, B19, B21, B23, B24, B53, B70, B84, E2, J4 and J11 find nothing, and they aren't loaded a second time. A query that fails shows no entries, so these rows would pass anyway. To close: in section 6, put the row's conditions in the "one or more" set, alongside one that must match, the way sections 1, 3 and 4 do. In section 7, search again with `OR` in front of each of the row's terms, and `ORRoman Coin` in the Short name box, then check that Roman Coin is there. A row that already uses `OR` or `EMPTYSET` needs some other way.
 
 - **MySQL.** CI runs on MariaDB only. MySQL 8 refuses comparisons that MariaDB lets through, ie: a date with text, so a row can pass here and fail there. To close: a CI run on MySQL. There's a plan for one in `mysql-ci-plan.md` at the root of the repository.
 
@@ -872,11 +884,13 @@ A gap matters most where it's code the branch changed. If no row runs that code,
 
   The fix for all of these is in `extract.php`, and isn't small. `formulize_parseFilter()` turns each set into a piece for each form before it knows how the forms are joined, and `dataExtraction()` ANDs the pieces. Instead, `formulize_parseFilter()` would hand back each set as it is, with its own AND or OR and its terms grouped by form, for fundamental filters and searches alike. Then `dataExtraction()`, once it has each connected form's alias and join, would build each set in one place: the main form's terms as they are, each connected form's terms in the set in one EXISTS on that form, and the set's own AND or OR between them. The same sets would decide which entries of each connected form are shown. The F18 fix is the special case that fits the code as it is now.
 
-- **A value taken out on screen in a saved entry.** In a new entry, a value taken out on screen has no value, which is what master does (N19, N20, N25, N31 and N32). No row empties a field on screen in a saved entry, where the `{ }` could mean the blank on screen or the value that's saved. To close: rows that open a saved Loan Request and empty a date, checkboxes and linked checkboxes on screen, and expect what master does.
+- **A value taken out on screen in a saved entry.** In a new entry, a value taken out on screen has no value, which is what master does (N19, N20, N25, N31 and N32). No row empties a field on screen in a saved entry, where the `{ }` could mean the blank on screen or the value that's saved. This branch changed one line that only that runs: `=` compared with the value that's saved, in `_nullAwareComparisonWithReference()` in `functions.php`, which the coverage run of 42561306189 shows no test reaching. To close: rows in section 2 with an On screen cell, which open a saved Loan Request and empty a date, checkboxes and linked checkboxes on screen, and expect what master does.
 
 - **Forms that link to themselves.** A form with a list of its own entries isn't in the museum. It was, as Part of a set with, a list on Artifacts of other artifacts, and section 4 had rows for it. But that link from Artifacts to itself was in the relationship the Catalogue list uses, and it broke every fundamental filter on that list: F1 to F11 and F23 to F26, in run 42398600775, on master, which has the same code. `formulize_parseFilter()` gives each form in a fundamental filter its alias in the query: `main` for the list's own form, then `f` and a number for each form linked to it. Artifacts was in both places, so `f2` replaced `main`, and the query that counts the entries failed with "Unknown column 'f2.artifacts_catalogued_by'". Forms that link to themselves are the subject of `self-referential-forms-plan.md`, at the root of the repository, which has this. To close: once that work is done, a form of its own with a list of its own entries, and rows like the ones that were here, ie: `Era = {artifacts_era}` and `Donor = {artifacts_donor}`. The list shouldn't offer the entry that's open, and should always offer the one that's selected.
 
 ### Problems found
+
+- **A letter or two can mean Yes or No in a condition.** A condition's term on a Yes/No now goes through the element's own conversion, which was written for searches. It matches part of the word, so in a condition `= e` or `= s` means Yes, and `= n` or `= o` means No, where master finds nothing. `1` and `2` are still the stored values, and a term that's neither is left as it is (S41 and S42). It's unlikely anyone has a condition like that. To fix: in `ynElement.php`, match part of the word only when the term is a partial match, ie: LIKE.
 
 - **A Short date format with a backslash in it isn't kept.** From run 42554478615. Section 10 first used `jS \o\f F Y`, so the site would write "of" as it is. After the Settings page saved that, the box didn't show it again, so the backslashes were lost or changed on the way. A PHP date format uses a backslash for a letter that's written as it is, ie: `j \d\e F` for 21 de agosto. The readout kept only the first lines of the error, so what the box held isn't known yet. Section 9's `d/m/Y` is saved and used as it should be.
 
