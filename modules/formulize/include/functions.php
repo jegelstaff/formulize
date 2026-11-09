@@ -1194,7 +1194,8 @@ function availReports($uid, $groups=array(), $fid=0, $frid=0) {
     } elseif ($frid) {
         $saved_reports = q("SELECT sv_id, sv_name FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$frid' AND sv_mainform='$fid' AND sv_owner_uid='$uid'");
     } else {
-        $saved_reports = q("SELECT sv_id, sv_name FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$fid' AND sv_owner_uid='$uid'");
+        // without a relationship, sv_formframe is the form only when sv_mainform is blank, otherwise it's a relationship id
+        $saved_reports = q("SELECT sv_id, sv_name FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$fid' AND (sv_mainform IS NULL OR sv_mainform = 0) AND sv_owner_uid='$uid'");
     }
 
     // get new published reports
@@ -1206,7 +1207,7 @@ function availReports($uid, $groups=array(), $fid=0, $frid=0) {
     } elseif ($frid) {
         $published_reports = q("SELECT sv_id, sv_name, sv_pubgroups, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$frid' AND sv_mainform='$fid' AND sv_pubgroups != \"\"");
     } else {
-        $published_reports = q("SELECT sv_id, sv_name, sv_pubgroups, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$fid' AND sv_pubgroups != \"\"");
+        $published_reports = q("SELECT sv_id, sv_name, sv_pubgroups, sv_owner_uid FROM " . $xoopsDB->prefix("formulize_saved_views") . " WHERE sv_formframe='$fid' AND (sv_mainform IS NULL OR sv_mainform = 0) AND sv_pubgroups != \"\"");
     }
 
     // cull published reports to ones that are published to a group that the user belongs to
