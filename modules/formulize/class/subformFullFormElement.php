@@ -79,7 +79,7 @@ class formulizeSubformFullFormElementHandler extends formulizeSubformListingsEle
 
 	public function getDefaultEleValue() {
 		$ele_value = parent::getDefaultEleValue();
-		$ele_value[3] = 0; // 0 - do not show the View Entry link at all, editing only by inline editing of elements, if it is an editable row subform, 1 - View buttons, and new entries open, 4 - View buttons, and new entries show up as rows. Whether entries open in the drawer or full screen is ele_value['open_in_drawer'] (older elements stored the drawer as 2 and 3 here)
+		$ele_value[3] = 0; // 0 - do not show the View Entry link at all, editing only by inline editing of elements, if it is an editable row subform, 1 - edit entries, and open new entries, in the full form, 2 - edit entries, and open new entries, in the right drawer, 3 - edit entries in the drawer (new entries show up as rows), 4 - edit entries by full screen (new entries show up as rows)
 		$ele_value[8] = 'form'; // if subformFullForm default to collapsable forms ('form'), otherwise 'flatform' is non collapsable. 'row' or empty string/non value is for subformEditableRow and subformListings.
 		return $ele_value;
 	}

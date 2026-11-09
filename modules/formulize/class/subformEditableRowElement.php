@@ -80,7 +80,7 @@ class formulizeSubformEditableRowElementHandler extends formulizeSubformListings
 
 	public function getDefaultEleValue() {
 		$ele_value = parent::getDefaultEleValue();
-		$ele_value[3] = 0; // 0 - do not show the View Entry link at all, editing only by inline editing of elements, as the MCP tool description promises for editable row subforms. 1 - View buttons, and new entries open, 4 - View buttons, and new entries show up as rows. Whether entries open in the drawer or full screen is ele_value['open_in_drawer'] (older elements stored the drawer as 2 and 3 here)
+		$ele_value[3] = 0; // 0 - do not show the View Entry link at all, editing only by inline editing of elements, as the MCP tool description promises for editable row subforms. 1 - edit entries, and open new entries, in the full form, 2 - edit entries, and open new entries, in the right drawer, 3 - edit entries in the drawer (new entries show up as rows), 4 - edit entries by full screen (new entries show up as rows)
 		return $ele_value;
 	}
 

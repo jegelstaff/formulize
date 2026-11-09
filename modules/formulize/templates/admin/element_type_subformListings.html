@@ -105,26 +105,22 @@
                         <div class="form-radios">
                             <label for="elements-ele_value[edit_icon_style]-2"><input type="radio" id="elements-ele_value[edit_icon_style]-2" name="elements-ele_value[edit_icon_style]" value="<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER}>"<{if $content.ele_value[3] AND $content.ele_value.edit_icon_style eq $smarty.const.FORMULIZE_EDIT_ICON_STYLE_MAGNIFIER}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_EDITICONSTYLE_MAGNIFIER}> <i class="icon-magnifier"></i></label>
                         </div>
-                        <div class="description"><{$smarty.const._AM_ELE_SUBFORM_EDITICONSTYLE_HELP}></div>
-                    </div>
-
-                    <div class="form-item" id="open-in-drawer-wrapper">
-                        <p><{$smarty.const._AM_ELE_SUBFORM_OPENINDRAWER}></p>
-                        <div class="form-radios">
-                            <label for="elements-ele_value[open_in_drawer]-0"><input type="radio" id="elements-ele_value[open_in_drawer]-0" name="elements-ele_value[open_in_drawer]" value="0"<{if !$content.ele_value.open_in_drawer}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_OPENINDRAWER_NO}></label><br>
-                            <label for="elements-ele_value[open_in_drawer]-1"><input type="radio" id="elements-ele_value[open_in_drawer]-1" name="elements-ele_value[open_in_drawer]" value="1"<{if $content.ele_value.open_in_drawer}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_OPENINDRAWER_YES}></label>
-                        </div>
-                        <div class="description"><{$smarty.const._AM_ELE_SUBFORM_OPENINDRAWER_HELP}></div>
                     </div>
 
                     <div class="form-item" id="view-button-mode-wrapper"<{if !$content.ele_value[3]}> style="display:none;"<{/if}>>
                     <div class="view-button-mode-inner">
+                        <{* these two choices are stored together in ele_value[3]: 1 full screen + open, 2 drawer + open, 3 drawer + row, 4 full screen + row (see adminSave) *}>
+                        <p><{$smarty.const._AM_ELE_SUBFORM_VIEWENTRIES}></p>
+                        <div class="form-radios">
+                            <label for="subform_view_entries-full_screen"><input type="radio" id="subform_view_entries-full_screen" name="subform_view_entries" value="full_screen"<{if $content.ele_value[3] != 2 AND $content.ele_value[3] != 3}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_VIEWENTRIES_FULLSCREEN}></label><br>
+                            <label for="subform_view_entries-drawer"><input type="radio" id="subform_view_entries-drawer" name="subform_view_entries" value="drawer"<{if $content.ele_value[3] == 2 OR $content.ele_value[3] == 3}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_VIEWENTRIES_DRAWER}></label>
+                        </div>
                         <p><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES}></p>
                         <div class="form-radios">
-                            <label for="elements-ele_value[3]-1"><input type="radio" id="elements-ele_value[3]-1" name="elements-ele_value[3]" value="1"<{if $content.ele_value[3] ne 4}> checked="checked"<{/if}>/><span class="fz-new-entries-open-label"><{if $content.ele_value.open_in_drawer}><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_OPEN_DRAWER}><{else}><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_OPEN_FULLSCREEN}><{/if}></span></label><br>
-                            <label for="elements-ele_value[3]-4"><input type="radio" id="elements-ele_value[3]-4" name="elements-ele_value[3]" value="4"<{if $content.ele_value[3] == 4 }> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_ROW}></label>
+                            <label for="subform_new_entries-open"><input type="radio" id="subform_new_entries-open" name="subform_new_entries" value="open"<{if $content.ele_value[3] != 3 AND $content.ele_value[3] != 4}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_OPEN}></label><br>
+                            <label for="subform_new_entries-row"><input type="radio" id="subform_new_entries-row" name="subform_new_entries" value="row"<{if $content.ele_value[3] == 3 OR $content.ele_value[3] == 4}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_ROW}></label>
                         </div>
-                        <div class="description"><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_HELP}></div>
+                        <div class="description"><{$smarty.const._AM_ELE_SUBFORM_INDRAWER_HELP}></div>
                     </div>
                     </div>
 
@@ -132,10 +128,11 @@
                     <div class="new-entry-mode-inner">
                         <p><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES}></p>
                         <div class="form-radios">
-                            <label for="elements-ele_value[new_entry_mode]-full_screen"><input type="radio" id="elements-ele_value[new_entry_mode]-full_screen" name="elements-ele_value[new_entry_mode]" value="full_screen"<{if $content.ele_value.new_entry_mode eq 'full_screen'}> checked="checked"<{/if}>/><span class="fz-new-entries-open-label"><{if $content.ele_value.open_in_drawer}><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_OPEN_DRAWER}><{else}><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_OPEN_FULLSCREEN}><{/if}></span></label><br>
-                            <label for="elements-ele_value[new_entry_mode]-row"><input type="radio" id="elements-ele_value[new_entry_mode]-row" name="elements-ele_value[new_entry_mode]" value="row"<{if $content.ele_value.new_entry_mode ne 'full_screen'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_ROW}></label>
+                            <label for="elements-ele_value[new_entry_mode]-full_screen"><input type="radio" id="elements-ele_value[new_entry_mode]-full_screen" name="elements-ele_value[new_entry_mode]" value="full_screen"<{if $content.ele_value.new_entry_mode eq 'full_screen'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_FULLSCREEN}></label><br>
+                            <label for="elements-ele_value[new_entry_mode]-drawer"><input type="radio" id="elements-ele_value[new_entry_mode]-drawer" name="elements-ele_value[new_entry_mode]" value="drawer"<{if $content.ele_value.new_entry_mode eq 'drawer'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_DRAWER}></label><br>
+                            <label for="elements-ele_value[new_entry_mode]-row"><input type="radio" id="elements-ele_value[new_entry_mode]-row" name="elements-ele_value[new_entry_mode]" value="row"<{if $content.ele_value.new_entry_mode ne 'drawer' AND $content.ele_value.new_entry_mode ne 'full_screen'}> checked="checked"<{/if}>/><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_ROW}></label>
                         </div>
-                        <div class="description"><{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_HELP}></div>
+                        <div class="description"><{$smarty.const._AM_ELE_SUBFORM_INDRAWER_HELP}></div>
                     </div>
                     </div>
 										<br />
@@ -408,10 +405,6 @@
 				$wrapper.slideUp(fzEditIconStyleDur);
 			});
 		}
-		// new entries that open go where the drawer setting says, so the choice for them names that place
-		$("input[name=elements-ele_value\\[open_in_drawer\\]]").change(function() {
-			$(".fz-new-entries-open-label").text($("input[name=elements-ele_value\\[open_in_drawer\\]]:checked").val() == '1' ? '<{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_OPEN_DRAWER|escape:'javascript'}>' : '<{$smarty.const._AM_ELE_SUBFORM_NEWENTRIES_OPEN_FULLSCREEN|escape:'javascript'}>');
-		});
 		function fzUpdateViewAndNewEntryModes() {
 			var iconsOff = $("input[name=elements-ele_value\\[edit_icon_style\\]]:checked").val() == '<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_OFF}>';
 			var addButtonOn = $("input[name=elements-ele_value\\[6\\]]:checked").val() != 'hideaddentries';

@@ -1547,7 +1547,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 								if($plainScreenObject->getVar('type') == 'multiPage') {
 										$subformElementEleValue = $candidate->getVar('ele_value');
 										$subformId = $subformElementEleValue[0];
-										$newEntriesFullScreen = (formulize_subformNewEntryMode($subformElementEleValue) == 'full_screen');
+										$newEntriesFullScreen = ($subformElementEleValue[3] == 1 OR (!$subformElementEleValue[3] AND isset($subformElementEleValue['new_entry_mode']) AND $subformElementEleValue['new_entry_mode'] == 'full_screen'));
 										if($newEntriesFullScreen AND isset($formulize_newSubformEntries[$subformId])) {
 												$newSubEntry = $formulize_newSubformEntries[$subformId][0]; // go to the first entry created in the subform
 												$newSubEntryScreen_handler = xoops_getmodulehandler($plainScreenObject->getVar('type').'Screen', 'formulize');
@@ -3267,7 +3267,7 @@ function $actionFunctionName"."() {
 ?>
 
 // Open a sub entry in the right slide-out drawer. This is the subform interface's
-// "open entries in the drawer" setting (see formulize_subformOpensInDrawer), which used to be a
+// "view entries in a drawer" setting (ele_value[3] of 2 or 3), which used to be a
 // jQuery UI modal dialog. The drawer component (modules/formulize/include/js/drawer.js,
 // published site-wide by footer.php) owns the panel, the form load, the footer
 // controls, validation, saving, entry locks and any deeper subform drill-down - the
