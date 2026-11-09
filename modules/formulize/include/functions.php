@@ -4636,15 +4636,14 @@ function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentVa
 		// cataloguing entirely — there is no on-screen element and no screen for them to catalogue against.
 		$renderedElementMarkupName = $catalogAsConditionalElement ? ("de_".$form_id."_".$entry_id."_".$elementObject->getVar('ele_id')) : "";
 		$configuredDefaultValue = ($elementObject->getVar('ele_type') == 'text') ? $ele_value[2] : $ele_value[0];
-		$textboxValueIsConfiguredDefault = ((string)$textboxValue === (string)$configuredDefaultValue OR (string)$textboxValue === stripslashes((string)$configuredDefaultValue));
+		$textboxValueIsConfiguredDefault = ((string)$textboxValue === (string)$configuredDefaultValue);
 		// Decide PHP-ness from the raw, admin-authored default (pre-substitution) — NOT the post-substitution
 		// string — so a user-controlled {ref} value can never introduce the $default trigger on its own.
 		// Mirrors the static content / help-text handling (see baseClassForStaticContent::render()).
 		$isPHPDefault = ($textboxValueIsConfiguredDefault AND strstr($configuredDefaultValue, "\$default"));
     if ($isPHPDefault) { // php default value
 				// Eval the admin-authored default taken straight from the element object (it is provably the
-				// configured default here). Reverse any legacy storage-slashing of the admin CODE first, then
-				// hand it to the canonical evaluator, which binds the {ref} values to variables rather than
+				// configured default here), exactly as the admin wrote it, and hand it to the canonical evaluator, which binds the {ref} values to variables rather than
 				// substituting them into the code as text, so a user-controlled referenced value is supplied
 				// to the admin's code as data and can never alter the code's structure.
 				//
@@ -4659,7 +4658,7 @@ function interpretTextboxValue($elementIdentifier, $entry_id = 'new', $currentVa
 				// $makeValuesSafeForDisplay=false for the same reason as the plain-default branch below: this
 				// return value is also stored as the entry's default, and its display sink escapes already.
 				list($evaluatedDefault, $evalSucceeded) = $elementRenderer->evalAdminPHPWithReferences(
-					stripslashes(removeOpeningPHPTag($configuredDefaultValue)), $entry_id, $form_id, $renderedElementMarkupName, $screen, 'default', $extraScope, true, false);
+					removeOpeningPHPTag($configuredDefaultValue), $entry_id, $form_id, $renderedElementMarkupName, $screen, 'default', $extraScope, true, false);
 				if($evalSucceeded) {
 					$textboxValue = $evaluatedDefault;
 				} else {

@@ -1784,6 +1784,12 @@ That makes the template groups the right place to set and change permissions tha
 							$processedFields[$field] = true;
 						}
 					}
+					// the loop below decodes every text field not marked as processed. A form screen's intro and thanks
+					// text are stored exactly as typed, so they are marked here to keep them out of it.
+					if($row['type'] == 'multiPage') {
+						$processedFields['introtext'] = true;
+						$processedFields['thankstext'] = true;
+					}
 					foreach($screenTypeData as $field=>$value) {
 						if(!isset($processedFields[$field]) AND is_string($value)) {
 							$screenTypeData[$field] = undoAllHTMLChars($value);

@@ -94,8 +94,7 @@ if(isset($page_number)) {
 }
 
 // delegate persistence to the shared upsert apparatus. We only own pages/pagetitles/conditions/disabledpages here;
-// introtext/thankstext are left out of $properties, and upsert normalizes them so they are not double-encoded
-// on this re-save (this replaces the manual undoAllHTMLChars() workaround that used to live here).
+// introtext/thankstext are left out of $properties, so they keep the values already stored.
 $properties = array(
     'pages' => $pages,
     'pagetitles' => $pagetitles,

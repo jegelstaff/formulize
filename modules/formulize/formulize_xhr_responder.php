@@ -697,7 +697,7 @@ function renderElement($elementObject, $entryId, $frid, $screenObject) {
 		if(is_object($elementContents)) {
 			$html = $form->_drawElementElementHTML($elementContents);
 		} elseif($elementContents !== false) {
-			$form->insertBreakFormulize(trans(stripslashes($elementContents)), $breakClass, $renderedElementMarkupName, $elementObject->getVar("ele_handle"));
+			$form->insertBreakFormulize(trans($elementContents), $breakClass, $renderedElementMarkupName, $elementObject->getVar("ele_handle"));
 			$hidden = '';
 			$html = '';
 			list($html, $hidden) = $form->_drawElements($form->getElements(), $html, $hidden);

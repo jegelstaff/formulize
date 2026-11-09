@@ -124,8 +124,8 @@ if($currentPage == $thanksPage) {
 
 		$entry = $entry_id; // legacy support because there used to be a version of entry id just called entry that was in scope at this point.
 
+		// thanks text is stored exactly as the admin typed it, so it is printed or run as it is
 		if(is_array($thankstext)) {
-            $thankstext[1] = undoAllHTMLChars($thankstext[1]);
 			if($thankstext[0] === "PHP"){
                 eval($thankstext[1]);
             } elseif(substr($thankstext[1], 0, 5)=='<?php') {
@@ -134,7 +134,6 @@ if($currentPage == $thanksPage) {
 				print str_replace("{thankYouNav}", $thankYouNav, $thankstext[1]);
 			}
         } else {
-            $thankstext = undoAllHTMLChars($thankstext);
             if(substr($thankstext, 0, 5)=='<?php') {
                 eval(substr($thankstext,5)); // strip out opening PHP tag
             } else { // HTML

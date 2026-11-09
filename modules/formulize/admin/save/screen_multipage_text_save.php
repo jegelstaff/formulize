@@ -53,7 +53,7 @@ if($formObject->getVar('lockedform')) {
 if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
   return;
 }
-// delegate persistence to the shared upsert apparatus (introtext/thankstext are passed raw; upsert/insert encode once)
+// delegate persistence to the shared upsert apparatus (introtext/thankstext are passed and stored exactly as typed)
 $properties = array(
     'introtext' => $screens['introtext'],
     'thankstext' => $screens['thankstext'],
