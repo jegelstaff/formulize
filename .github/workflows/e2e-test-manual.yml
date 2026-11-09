@@ -24,7 +24,7 @@ on:
         default: false
         type: boolean
       coverage_base:
-        description: 'With coverage, also list the lines changed since this branch that no test ran'
+        description: 'With coverage, the branch to compare with. The report lists the lines this branch changed that no test ran'
         required: false
         default: 'master'
         type: string
@@ -50,7 +50,7 @@ on:
         default: false
         type: boolean
       coverage_base:
-        description: 'With coverage, also list the lines changed since this branch that no test ran'
+        description: 'With coverage, the branch to compare with. The report lists the lines this branch changed that no test ran'
         required: false
         default: 'master'
         type: string
