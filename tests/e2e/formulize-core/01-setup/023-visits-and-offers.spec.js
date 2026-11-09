@@ -1,7 +1,11 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, dbQuery, dbPrefix } from '../../utils';
+import {
+	login, saveFormulizeForm, saveAdminForm, waitForAdminPageReady, createMuseumForm, dbQuery, dbPrefix, sqlEscape, leavePage, showPermissionsFor,
+	selectAutocompleteOption, getUserByLogin, getUserGroupIds,
+} from '../../utils';
 import { formId, startElement, finishElement, makeRequired, linkToSource, inheritPermissionsFromArtifacts, setElementsOnOnlyPage, saveAndClose } from './museum-forms';
+import { namesIn, namesOnPage } from '../condition-cases';
 
 // Donors' visits to the museum, and the things they offer to give while they're there, added so that a condition can go
 // through a linked element to the form the { } is in. conditions-and-searches.md lists what the conditions should find, in
@@ -19,6 +23,11 @@ import { formId, startElement, finishElement, makeRequired, linkToSource, inheri
 // Visits links to Donors, the same as Artifacts and Loan Requests do. There are no menu entries for these forms, so the menus
 // other specs check don't change. They inherit their permissions from Artifacts, so curator1 can see them and add to them,
 // the same as the forms 022 adds.
+//
+// Then Auditors, a group, and auditor1, its one member, who comes from outside the museum to check its records. They can see
+// every artifact, and they aren't staff, so they're added on the Groups and Users pages, not through the forms the staff are
+// entries in. Section 11 of conditions-and-searches.md gives Auditors a filter on Artifacts, and auditor1 opens the Catalogue
+// list to see which artifacts it leaves them. A group's filter applies to everyone in the group, so no one else is in it.
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -172,5 +181,72 @@ test.describe('What was built', () => {
 
 	test('Nothing is chosen in Follow up on', () => {
 		expect(dbQuery(`SELECT COUNT(*) FROM ${dbPrefix()}_formulize_visits WHERE visits_follow_up IS NOT NULL AND visits_follow_up != ''`)[0][0]).toBe('0');
+	});
+});
+
+const AUDITORS = 'Auditors';
+const AUDITOR = 'auditor1';
+
+const auditorsGroupId = () => parseInt(dbQuery(`SELECT groupid FROM ${dbPrefix()}_groups WHERE name = '${sqlEscape(AUDITORS)}'`)[0][0], 10);
+
+test.describe('Auditors, who check the artifacts from outside the museum', () => {
+
+	test.beforeEach(async ({ page }) => {
+		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	});
+
+	test('Create the Auditors group on the Groups page', async ({ page }) => {
+		await page.goto('/modules/formulize/groups.php');
+		await page.locator('#formulize_addButton').click();
+		await page.getByRole('textbox', { name: 'Group Name' }).fill(AUDITORS);
+		await saveFormulizeForm(page, 'Save');
+		// the new group's form stays open after the save, so go back to the list to see it there
+		await page.goto('/modules/formulize/groups.php');
+		await page.waitForLoadState('networkidle');
+		await expect(page.getByRole('rowgroup').last()).toContainText(AUDITORS);
+	});
+
+	test('Add auditor1 on the Users page, in Auditors and no other group', async ({ page }) => {
+		await page.goto('/modules/formulize/users.php');
+		await page.locator('#formulize_addButton').click();
+		await page.getByRole('textbox', { name: 'First Name' }).fill('Auditor');
+		await page.getByRole('textbox', { name: 'Last Name' }).fill('One');
+		await page.getByRole('textbox', { name: 'Username' }).fill(AUDITOR);
+		await page.getByRole('textbox', { name: 'Email Address' }).fill(`${AUDITOR}@museum.formulize.net`);
+		// a password box and the box to type it again
+		const passwordBoxes = page.locator('input[type="password"]');
+		await passwordBoxes.nth(0).fill('12345');
+		await passwordBoxes.nth(1).fill('12345');
+		const groupsBox = page.locator('.form-row').filter({ hasText: 'Group Memberships' }).locator('input.formulize_autocomplete');
+		await selectAutocompleteOption(page, groupsBox, AUDITORS);
+		await expect(page.locator('p.auto_multi .auto_multi_label', { hasText: new RegExp(`^${AUDITORS}$`) })).toBeVisible();
+		await saveFormulizeForm(page, 'Save');
+		await leavePage(page); // users.php locks the users it shows
+		const auditor = getUserByLogin(AUDITOR);
+		expect(auditor, `${AUDITOR} should have an account`).not.toBeNull();
+		expect(getUserGroupIds(auditor.uid)).toContain(auditorsGroupId());
+	});
+
+	test('Auditors can see every artifact', async ({ page }) => {
+		const artifacts = formId('Artifacts');
+		const aid = dbQuery(`SELECT appid FROM ${dbPrefix()}_formulize_application_form_link WHERE fid = ${artifacts}`)[0][0];
+		await page.goto(`/modules/formulize/admin/ui.php?page=form&fid=${artifacts}&aid=${aid}`);
+		await waitForAdminPageReady(page);
+		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
+		await showPermissionsFor(page, [AUDITORS]);
+		const auditors = page.getByRole('group', { name: AUDITORS });
+		await auditors.locator('input[name$="_view_form"]').first().check();
+		await auditors.locator('input[name$="_view_globalscope"]').first().check();
+		await saveAdminForm(page);
+	});
+
+	test('auditor1 sees every artifact in the Catalogue list', async ({ page }) => {
+		const catalogue = dbQuery(`SELECT sid FROM ${dbPrefix()}_formulize_screen WHERE screen_handle = 'artifact_catalogue'`)[0][0];
+		await page.goto('/user.php?op=logout');
+		await login(page, AUDITOR, '12345');
+		await page.goto(`/modules/formulize/index.php?sid=${catalogue}`);
+		await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
+		const everything = namesIn('Artifact');
+		expect(await namesOnPage(page.locator('[id^="celladdress_"]'), everything)).toEqual([...everything].sort());
 	});
 });
