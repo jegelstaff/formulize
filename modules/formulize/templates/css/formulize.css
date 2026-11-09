@@ -855,6 +855,65 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
   color: var(--fz-color-text-muted, #5b6068);
 }
 
+/* The Search box (formulize_buildQSSearchBox and SearchBox in filterpopovers.js): a box to type in, which stays where
+   it is, with the values picked shown as a badge under it. The values that match what is typed open in a panel, which
+   uses the rules above. */
+.formulize-searchbox {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--fz-spacing, 0.25rem) * 1);
+  min-width: 0;
+}
+
+.formulize-searchbox .formulize-searchbox-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.formulize-searchbox-picked {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+  min-width: 0;
+}
+
+.formulize-searchbox-picked .fz-badge {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.formulize-searchbox-picked .fz-btn {
+  flex: none;
+}
+
+/* shorter than other panels, since it opens under a box near the top of the list and is often read while typing */
+.formulize-searchbox-panel {
+  max-height: min(20rem, calc(100vh - var(--fz-spacing, 0.25rem) * 4));
+}
+
+.formulize-searchbox-panel .formulize-searchbox-options {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
+}
+
+.formulize-searchbox-panel .fz-choice {
+  padding: 0.3em 0.4em;
+  border-radius: var(--fz-radius-sm, 0.25rem);
+  white-space: normal;
+}
+
+.formulize-searchbox-panel .fz-choice:hover {
+  background: var(--fz-color-surface-3, #f1f1ed);
+}
+
+.formulize-searchbox-status {
+  margin: 0.5em 0.4em;
+  color: var(--fz-color-text-muted, #5b6068);
+}
+
 /* From and To at the top of the date panel, side by side, each word over its date */
 .formulize-filter-panel .formulize-daterange {
   flex-direction: row;

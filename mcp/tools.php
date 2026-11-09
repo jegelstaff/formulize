@@ -2998,8 +2998,8 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 						],
 						'search_type' => [
 							'type' => 'string',
-							'enum' => ['search_box', 'dropdown', 'dropdown_exclude', 'checkboxes', 'date_range', 'month_current_year', 'month_last_12_months'],
-							'description' => "Optional. The kind of Quicksearch control at the top of this column. Only has an effect when show_search_boxes is on.Valid options are: 'search_box' (default) = type in some text to match; 'dropdown' = pick one of the values present in the entries; 'dropdown_exclude' = pick a value to leave out; 'checkboxes' = check off any number of values to include; 'date_range' = a from/to pair of dates; 'month_current_year' = pick a whole month from January to December of the current year; 'month_last_12_months' = pick a whole month from the last twelve, starting with the current one. The last three only work on a column that holds dates."
+							'enum' => array_keys(formulizeHandler::listScreenSearchTypes()),
+							'description' => "Optional. The kind of Quicksearch control at the top of this column. Only has an effect when show_search_boxes is on. Leave it out to use the one the element is set to use (its list_search_interface, see get_element_details), which is what you want unless the user asks for something else. Valid options are: 'search_box' = a box to type a search term into, which also shows the values that match what is typed so any number of them can be picked; 'simple_text_box' = a plain box to type a search term into; 'dropdown' = pick one of the values present in the entries; 'dropdown_exclude' = pick a value to leave out; 'date_range' = a from/to pair of dates; 'month_current_year' = pick a whole month from January to December of the current year; 'month_last_12_months' = pick a whole month from the last twelve, starting with the current one. The last three only work on a column that holds dates."
 						],
 						'sort_direction' => [
 							'type' => 'string',
@@ -3627,6 +3627,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 			$display_conditions = $arguments['display_conditions'];
 		}
 		$disabled = isset($arguments['disabled']) ? ($arguments['disabled'] ? 1 : 0) : null;
+		$listSearchInterface = (isset($arguments['list_search_interface']) AND $arguments['list_search_interface'] !== '') ? (string) $arguments['list_search_interface'] : null;
 		$order = $arguments['placement'] ?? null;
 
 		$makeSubformInterface = false;
@@ -3788,6 +3789,10 @@ Do not use foreign key values with linked elements; use the readable value inste
 			$elementObjectProperties[$key] = $value;
 		}
 
+		if($listSearchInterface !== null) {
+			$elementObjectProperties['ele_searchtype'] = $this->validateListSearchInterface($listSearchInterface, $elementObject, $type, $data_type);
+		}
+
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$element_handler->renameWarnings = array(); // only this save's rename, if it makes one
 		$elementObject = formulizeHandler::upsertElementSchemaAndResources($elementObjectProperties, dataType: $data_type, pi: $pi, makeSubformInterface: $makeSubformInterface);
@@ -3801,6 +3806,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 			'column_heading' => $elementObject->getVar('ele_colhead'),
 			'help_text_for_users' => $elementObject->getVar('ele_desc'),
 			'required' => $elementObject->getVar('ele_required') ? true : false,
+			'list_search_interface' => array_search($elementObject->listSearchType(), formulizeHandler::listScreenSearchTypes()),
 			// in the same shape this tool accepts, when the element type can report it that way
 			'properties' => $this->publicElementProperties($elementObject->getValues(null, 'n')) ?? $elementObject->getVar('ele_value'),
 			'display_conditions' => $this->tidyUpOldConditionsArrayFormat($elementObject->getVar('ele_filtersettings'))
@@ -7257,6 +7263,35 @@ Do not use foreign key values with linked elements; use the readable value inste
 	}
 
 	/**
+	 * Check a list_search_interface asked for in an element tool, and turn it into the value stored in ele_searchtype.
+	 * The date oriented interfaces are refused for elements that don't hold dates, since they would draw nothing.
+	 * @param string $listSearchInterface The tool's name for the interface
+	 * @param object|null $elementObject The element being updated, or null when one is being created
+	 * @param string $type The element type
+	 * @param string|false $dataType The data type asked for in the same call, if any
+	 * @return string The stored value
+	 */
+	private function validateListSearchInterface($listSearchInterface, $elementObject, $type, $dataType) {
+		$searchTypes = formulizeHandler::listScreenSearchTypes();
+		if(!isset($searchTypes[$listSearchInterface])) {
+			throw new FormulizeMCPException("'$listSearchInterface' is not a valid list_search_interface. Use one of: ".implode(', ', array_keys($searchTypes)).".", 'invalid_data');
+		}
+		$storedValue = $searchTypes[$listSearchInterface];
+		if(in_array($storedValue, formulizeHandler::dateOnlySearchTypes(), true)) {
+			$elementForCheck = $elementObject;
+			if(!$elementForCheck AND $typeHandler = xoops_getmodulehandler($type.'Element', 'formulize')) {
+				$elementForCheck = $typeHandler->create();
+			}
+			$holdsDates = (($elementForCheck AND $elementForCheck->holdsDates())
+				OR (is_string($dataType) AND formulizeElement::isDateDataType($dataType)));
+			if(!$holdsDates) {
+				throw new FormulizeMCPException("'$listSearchInterface' only works for elements that hold dates, and this one does not. Use 'search_box', 'simple_text_box', 'dropdown' or 'dropdown_exclude'.", 'invalid_data');
+			}
+		}
+		return $storedValue;
+	}
+
+	/**
 	 * Build the create_form_element and update_form_element tool schema with dynamic element discovery
 	 * @return array Tool schema for creating form elements
 	 */
@@ -7283,6 +7318,11 @@ Do not use foreign key values with linked elements; use the readable value inste
 			'disabled' => [
 				'type' => 'boolean',
 				'description' => 'Optional. Whether the REPLACEWITHSINGLUARCATEGORYNAME element is disabled (visible but not usable) in the form. Default: false.'
+			],
+			'list_search_interface' => [
+				'type' => 'string',
+				'enum' => array_keys(formulizeHandler::listScreenSearchTypes()),
+				'description' => "Optional. The Quicksearch control at the top of this REPLACEWITHSINGLUARCATEGORYNAME's column whenever it appears in a list, unless the list screen chooses a different one for that column. Leave it out to keep the default, which is 'date_range' for elements that hold dates and 'search_box' for everything else. Options: 'search_box' = a box to type a search term into, which also shows the values that match what is typed so any number of them can be picked; 'simple_text_box' = a plain box to type a search term into; 'dropdown' = pick one of the values present in the entries; 'dropdown_exclude' = pick a value to leave out; 'date_range', 'month_current_year' and 'month_last_12_months' = for elements that hold dates only."
 			]
 		];
 

@@ -237,24 +237,10 @@ function displayMap($frid = 0, $fid = 0, $screen = null) {
             }
             $heading     = htmlspecialchars(isset($raw_headings[$handle]) ? $raw_headings[$handle] : $handle, ENT_QUOTES);
             $current_val = isset($searches[$handle]) ? $searches[$handle] : '';
-            switch ($search_type) {
-                case 'Filter':
-                    $input = formulize_buildQSFilter($handle, $current_val);
-                    break;
-                case 'NegativeFilter':
-                    $input = formulize_buildQSFilter($handle, $current_val, negativeFilter: true);
-                    break;
-                case 'MultiFilter':
-                    $input = formulize_buildQSFilterMulti($handle, $current_val);
-                    break;
-                case 'DateRange':
-                    $input = formulize_buildDateRangeFilter($handle, $current_val);
-                    break;
-                case 'Box':
-                default:
-                    $input = '<input type="text" name="search_' . htmlspecialchars($handle, ENT_QUOTES) . '" value="' . htmlspecialchars($current_val, ENT_QUOTES) . '">';
-                    break;
-            }
+            // the same search UI a list column with this search type shows, so a map's filters work the way a list's
+            // do; a Search box submits the map's filter form, which holds it
+            $built = $search_type == 'Box' ? array() : formulize_buildQuickSearchOfType($search_type, $handle, htmlspecialchars($current_val), $fid, 'this.form.submit();');
+            $input = $built ? reset($built) : '<input type="text" name="search_' . htmlspecialchars($handle, ENT_QUOTES) . '" value="' . htmlspecialchars($current_val, ENT_QUOTES) . '">';
             $filters[$heading] = $input;
         }
     }
@@ -346,6 +332,8 @@ HTML;
         'introductoryText'   => $screen ? $screen->introductoryText() : '',
     ));
     echo "</form>\n";
+    // the Search box and the date ranges in the filters open as popovers, as they do in a list
+    formulize_printFilterPopoverScript($screen, $fid);
     formulize_screenMapTemplate($screen, 'map', array('renderedMap' => $renderedMap));
     formulize_screenMapTemplate($screen, 'bottom', array(
         'title'              => $title,

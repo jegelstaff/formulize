@@ -711,6 +711,14 @@ trait resources {
 			'element_id' => $row['ele_id'],
 			'form_id' => $row['id_form']
 		];
+		// the search interface the element gets in lists, in the vocabulary the element tools accept, as it is in
+		// effect: the one chosen, or the default for this kind of element when none has been chosen
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		if(($elementObject = $element_handler->get($row['ele_id'])) AND $elementObject->hasData) {
+			$additionalFields['list_search_interface'] = array_search($elementObject->listSearchType(), formulizeHandler::listScreenSearchTypes());
+			$additionalFields['list_search_interface_is_default'] = ((string) ($row['ele_searchtype'] ?? '') === '');
+		}
+		unset($row['ele_searchtype']);
 		// the settings the update tools can change, in exactly the shape those tools accept, so a setting can be
 		// read, changed and sent back - and so the AI assistant can see which settings exist, even unused ones.
 		// Done before anything below alters the row, so it gets the same values as an element object's getValues(null, 'n')
@@ -1844,7 +1852,7 @@ That makes the template groups the right place to set and change permissions tha
 			// id-to-handle translation the object does in its accessors has to be repeated
 			$reportedColumn = [
 				'element' => formulizeHandler::resolveElementHandle($column[0]),
-				'search_type' => $searchTypes[$column[3] ?? 'Box'] ?? 'search_box'
+				'search_type' => $searchTypes[$column[3] ?? 'Box'] ?? 'simple_text_box'
 			];
 			// 1 is a legacy way of saying ascending, from before the direction was stored as a word.
 			// Always reported, including 'off', so the shape matches what the write side accepts.

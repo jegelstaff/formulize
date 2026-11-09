@@ -90,6 +90,22 @@
 </div>
 <{/if}>
 
+<{if $content.searchtype_on}>
+<div class="accordion-box">
+	<div class="form-item">
+		<fieldset>
+			<legend><label for="elements-ele_searchtype" class="question"><{$smarty.const._AM_ELE_SEARCHTYPE}></label></legend>
+			<select id="elements-ele_searchtype" name="elements-ele_searchtype" size="1">
+				<{html_options options=$content.searchtypeoptions selected=$content.searchtype}>
+			</select>
+			<div class="description">
+				<p><{$smarty.const._AM_ELE_SEARCHTYPE_DESC}></p>
+			</div>
+		</fieldset>
+	</div>
+</div>
+<{/if}>
+
 <div class="accordion-box">
 	<div class="form-item">
    	<fieldset>

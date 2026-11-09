@@ -82,6 +82,7 @@ if($op != "check_for_unique_value"
 	 AND $op != 'render_conditions_filter_ui'
 	 AND $op != 'embed_session_check'
 	 AND $op != 'get_element_usage'
+	 AND $op != 'get_quicksearch_options'
   ) {
   exit();
 }
@@ -108,6 +109,35 @@ switch($op) {
 		header('Content-Type: text/plain');
 		header('Cache-Control: no-store, no-cache, must-revalidate');
 		print ((isset($_COOKIE[icms_core_Session::cookieName()]) OR formulize_anonBindCookieValue()) ? 1 : 0);
+		break;
+
+	// The values a column's Search box offers that match what someone has typed, as JSON. Asked for as they type,
+	// so the page never has to hold every value a column has. See formulize_buildQSSearchBox().
+	//   handle - the column: an element handle, or a metadata field name
+	//   fid    - the form, needed for a metadata field, and checked against the element's own form otherwise
+	//   term   - what has been typed so far
+	// Only someone who can see the form, and that column in it, gets anything back. The values themselves come
+	// from the entries the person can see, the way a list's filters always have.
+	case 'get_quicksearch_options':
+		header('Content-Type: application/json');
+		header('Cache-Control: no-store');
+		include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
+		$qsHandle = isset($_GET['handle']) ? (string) $_GET['handle'] : '';
+		$qsFid = isset($_GET['fid']) ? intval($_GET['fid']) : 0;
+		$qsTerm = isset($_GET['term']) ? mb_substr(trim((string) $_GET['term']), 0, 255) : '';
+		if(!isMetaDataField($qsHandle)) {
+			$qsElement_handler = xoops_getmodulehandler('elements', 'formulize');
+			$qsElement = $qsHandle !== '' ? $qsElement_handler->get($qsHandle) : false;
+			$qsFid = $qsElement ? intval($qsElement->getVar('id_form')) : 0;
+		}
+		$qsAllowedColumns = $qsFid ? getAllAllowedColHandles($qsFid) : array();
+		if(!$qsFid OR !security_check($qsFid) OR !isset($qsAllowedColumns[$qsHandle])) {
+			http_response_code(403);
+			print json_encode(array('options' => array(), 'more' => false));
+			break;
+		}
+		$qsLimit = 50;
+		print json_encode(formulize_getQuickSearchOptions($qsHandle, $qsFid, $qsTerm, $qsLimit) + array('limit' => $qsLimit));
 		break;
 
 	case 'render_conditions_filter_ui':

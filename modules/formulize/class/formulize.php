@@ -1096,7 +1096,8 @@ class formulizeHandler {
 	 *
 	 * Each column definition is an associative array:
 	 *   - element (required): an ele_id, an element handle, or a metadata field name
-	 *   - search_type: 'search_box' (default) | 'dropdown' | 'dropdown_exclude' | 'checkboxes' | 'date_range' | 'month_current_year' | 'month_last_12_months'
+	 *   - search_type: 'search_box' | 'simple_text_box' | 'dropdown' | 'dropdown_exclude' | 'date_range' | 'month_current_year' | 'month_last_12_months'.
+	 *     Left out, the column gets the search type its element is set to use (see formulize_defaultSearchTypeForColumn())
 	 *   - sort_direction: 'ASC' | 'DESC' | 'off' (the default - the list does not start out sorted by this column)
 	 *   - default_search_value: a value to pre-fill this column's Quicksearch with, so the list starts out filtered
 	 *
@@ -1122,9 +1123,14 @@ class formulizeHandler {
 				throw new Exception("Every column must specify an element.");
 			}
 			$handle = self::resolveElementHandle($columnDef['element']);
-			$searchTypeKey = isset($columnDef['search_type']) ? $columnDef['search_type'] : 'search_box';
-			if(!isset($searchTypes[$searchTypeKey])) {
-				throw new Exception("'$searchTypeKey' is not a valid search_type. Use one of: ".implode(', ', array_keys($searchTypes)).".");
+			if(isset($columnDef['search_type']) AND $columnDef['search_type'] !== '') {
+				$searchTypeKey = $columnDef['search_type'];
+				if(!isset($searchTypes[$searchTypeKey])) {
+					throw new Exception("'$searchTypeKey' is not a valid search_type. Use one of: ".implode(', ', array_keys($searchTypes)).".");
+				}
+				$searchType = $searchTypes[$searchTypeKey];
+			} else {
+				$searchType = formulize_defaultSearchTypeForColumn($handle);
 			}
 			$sortKey = isset($columnDef['sort_direction']) ? $columnDef['sort_direction'] : 'off';
 			if(!array_key_exists($sortKey, $sorts)) {
@@ -1134,7 +1140,7 @@ class formulizeHandler {
 				$handle,
 				isset($columnDef['default_search_value']) ? $columnDef['default_search_value'] : '',
 				$sorts[$sortKey],
-				$searchTypes[$searchTypeKey]
+				$searchType
 			);
 		}
 		return $advanceview;
@@ -1148,14 +1154,40 @@ class formulizeHandler {
 	 */
 	public static function listScreenSearchTypes() {
 		return array(
-			'search_box' => 'Box',
+			'search_box' => 'MultiFilter',
+			'simple_text_box' => 'Box',
 			'dropdown' => 'Filter',
 			'dropdown_exclude' => 'NegativeFilter',
-			'checkboxes' => 'MultiFilter',
 			'date_range' => 'DateRange',
 			'month_current_year' => 'MonthCurrentYear',
 			'month_last_12_months' => 'MonthLast12Months'
 		);
+	}
+
+	/**
+	 * What the admin UI calls each search type, in the order it offers them. The stored values are the same ones
+	 * listScreenSearchTypes() maps to, so the screen settings, the map settings and the element setting all offer the
+	 * same choices under the same names.
+	 * @return array storedValue => label
+	 */
+	public static function listScreenSearchTypeLabels() {
+		return array(
+			'MultiFilter' => _AM_FORMULIZE_SEARCH_TYPE_SEARCHBOX,
+			'Box' => _AM_FORMULIZE_SEARCH_TYPE_BOX,
+			'Filter' => _AM_FORMULIZE_SEARCH_TYPE_FILTER,
+			'NegativeFilter' => _AM_FORMULIZE_SEARCH_TYPE_NEGATIVEFILTER,
+			'DateRange' => _AM_FORMULIZE_SEARCH_TYPE_DATERANGE,
+			'MonthCurrentYear' => _AM_FORMULIZE_SEARCH_TYPE_MONTHCURRENTYEAR,
+			'MonthLast12Months' => _AM_FORMULIZE_SEARCH_TYPE_MONTHLAST12MONTHS
+		);
+	}
+
+	/**
+	 * The search types that only work on a column that holds dates. They draw nothing on any other column.
+	 * @return array Stored values
+	 */
+	public static function dateOnlySearchTypes() {
+		return array('DateRange', 'MonthCurrentYear', 'MonthLast12Months');
 	}
 
 	/**

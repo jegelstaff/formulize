@@ -1005,31 +1005,8 @@ class formulizeDataHandler {
             }
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
 			$formObject = $form_handler->get($this->fid);
-            $scope = '';
-            if(is_array($scope_group_ids) AND count($scope_group_ids)>0) {
-                $scopeWhere = array();
-                $scope_group_ids = array_unique($scope_group_ids);
-                foreach($scope_group_ids as $gid) {
-                    if(is_numeric($gid)) {
-                        $scopeWhere[] = " eog.groupid = $gid ";
-                    }
-                }
-                if(count($scopeWhere)>0) {
-                    $scope = "WHERE EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS eog WHERE eog.fid = ".$this->fid." AND eog.entry_id = f.entry_id AND (".implode('OR',$scopeWhere)."))";
-                }
-            }
-            $uidFilter = $this->_buildScopeFilter($scope_uids);
-            $uidFilter = $scope ? $uidFilter : str_replace(' AND ', ' WHERE ', $uidFilter);
-            $uidFilter = str_replace('creation_uid', 'f.creation_uid', $uidFilter);
-            $perGroupFilters = "";
-            if($usePerGroupFilters) {
-                $form_handler = xoops_getmodulehandler('forms', 'formulize');
-                $perGroupFilters = $form_handler->getPerGroupFilterWhereClause($this->fid, 'f');
-                if(!$scope AND !$uidFilter) {
-                    $perGroupFilters = "WHERE 1 ".$perGroupFilters;
-                }
-            }
-			$sql = "SELECT f.`$handle`, f.`entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS f $scope $uidFilter $perGroupFilters $sort";
+			$where = $this->_valuesForFieldWhere($scope_group_ids, $scope_uids, $usePerGroupFilters);
+			$sql = "SELECT f.`$handle`, f.`entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS f $where $sort";
 			if($res = $xoopsDB->query($sql)) {
 				while($array = $xoopsDB->fetchArray($res)) {
 					$cachedValues[$cacheFid][$handle][$array['entry_id']] = $array[$handle];
@@ -1041,6 +1018,81 @@ class formulizeDataHandler {
 		return $cachedValues[$cacheFid][$handle];
 	}
 
+	/**
+	 * The distinct values stored in a field that contain a term, in the entries a scope allows, sorted, and at most a
+	 * certain number of them. For the Search box, which shows the values that match what someone types, so it asks
+	 * the database for those rather than reading every value in the form.
+	 * @param string $handle The element handle
+	 * @param string $term Optional. Only values containing this. Blank for any value.
+	 * @param int $maxValues Optional. At most this many. 0 for no limit.
+	 * @param array $scope_group_ids As in findAllValuesForField()
+	 * @param array $scope_uids As in findAllValuesForField()
+	 * @param bool $usePerGroupFilters As in findAllValuesForField()
+	 * @return array|bool The values, or false if they could not be read
+	 */
+	function findDistinctValuesForField($handle, $term="", $maxValues=0, $scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false) {
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(!$formObject = $form_handler->get($this->fid)) {
+			return false;
+		}
+		if(!isMetaDataField($handle) AND _getElementObject($handle) === false) {
+			return false;
+		}
+		$handle = str_replace('`', '', (string) $handle);
+		$where = $this->_valuesForFieldWhere($scope_group_ids, $scope_uids, $usePerGroupFilters);
+		$where = $where ? $where." AND " : "WHERE ";
+		$where .= "f.`$handle` IS NOT NULL AND f.`$handle` != ''";
+		if((string) $term !== '') {
+			// the term is matched as it is, so its own % and _ are not wildcards
+			$likeTerm = str_replace(array("\\", "%", "_"), array("\\\\", "\\%", "\\_"), (string) $term);
+			$where .= " AND f.`$handle` LIKE '%".formulize_db_escape($likeTerm)."%'";
+		}
+		$limit = intval($maxValues) > 0 ? " LIMIT ".intval($maxValues) : "";
+		$sql = "SELECT DISTINCT f.`$handle` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS f $where ORDER BY f.`$handle` ASC$limit";
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$values = array();
+		while($row = $xoopsDB->fetchRow($res)) {
+			$values[] = $row[0];
+		}
+		return $values;
+	}
+
+	/**
+	 * The WHERE clause that limits a read of a field's values to the entries a scope allows, shared by
+	 * findAllValuesForField() and findDistinctValuesForField(). The form's table is aliased f.
+	 * @return string The clause, starting with WHERE, or empty if nothing limits the entries
+	 */
+	function _valuesForFieldWhere($scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false) {
+		global $xoopsDB;
+		$scope = '';
+		if(is_array($scope_group_ids) AND count($scope_group_ids)>0) {
+			$scopeWhere = array();
+			$scope_group_ids = array_unique($scope_group_ids);
+			foreach($scope_group_ids as $gid) {
+				if(is_numeric($gid)) {
+					$scopeWhere[] = " eog.groupid = $gid ";
+				}
+			}
+			if(count($scopeWhere)>0) {
+				$scope = "WHERE EXISTS(SELECT 1 FROM ".$xoopsDB->prefix("formulize_entry_owner_groups")." AS eog WHERE eog.fid = ".$this->fid." AND eog.entry_id = f.entry_id AND (".implode('OR',$scopeWhere)."))";
+			}
+		}
+		$uidFilter = $this->_buildScopeFilter($scope_uids);
+		$uidFilter = $scope ? $uidFilter : str_replace(' AND ', ' WHERE ', $uidFilter);
+		$uidFilter = str_replace('creation_uid', 'f.creation_uid', $uidFilter);
+		$perGroupFilters = "";
+		if($usePerGroupFilters) {
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			$perGroupFilters = $form_handler->getPerGroupFilterWhereClause($this->fid, 'f');
+			if(!$scope AND !$uidFilter) {
+				$perGroupFilters = "WHERE 1 ".$perGroupFilters;
+			}
+		}
+		return trim("$scope $uidFilter $perGroupFilters");
+	}
 
 	function _buildScopeFilter($scope_uids, $scope_group_ids=array()) {
 		if(is_array($scope_uids)) {

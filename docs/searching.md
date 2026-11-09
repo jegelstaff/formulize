@@ -10,6 +10,20 @@ title: Searching
 
 There are a lot of different search terms that you can type in the “quicksearch” boxes at the top of each column in the list of entries pages.  Here is a brief summary:
 
+## Typing a search, or picking values
+
+Most columns have a search box at the top. Type a search term and press Enter, and the list shows the entries that match. Everything on this page works in that box.
+
+As you type, the values in that column that match what you've typed appear in a list under the box. To see the entries with particular values, tick them and click **Apply**, or press Enter. You can tick as many as you like, and the list shows the entries that have any of them.
+
+- Once you've ticked a value, the ticks are your search. Typing after that only narrows the list of values to tick.
+- The values you've ticked show under the box. Click the **×** beside them to clear them.
+- Tick **Show Blanks** to include the entries that have nothing in that column.
+- If a column has a lot of values, only the first 50 that match are listed. Type more to narrow them down.
+- Click **Cancel**, press Esc or click somewhere else on the page to close the list without changing your search.
+
+Some columns have a different search instead, such as a dropdown list to choose from, a pair of dates, or a plain box to type in.
+
 ## The basics
 
  **This search term:**	| **Means this:** 											| **It will find:**
@@ -137,6 +151,27 @@ A few things to know about EMPTYSET:
 - Entries with nothing connected to them at all are always found. A customer who has never placed an order would be included, regardless of the search term.
 - You can search for anything you would normally type, not just plain words.  EMPTYSET:>100 on an Amount column finds the entries with no connected record with an amount over 100.
 - EMPTYSET terms are always combined with “and”.
+
+
+## Choosing the search for each column
+
+This section is for people who set up forms and lists.
+
+Each column in a list can have one of these searches at the top:
+
+ **Search** | **What people can do with it**
+:-----------|:-------------------------------
+ Search box | Type a search term, or tick any of the values that match what they type. This is the default.
+ Simple text box | Type a search term.
+ Dropdown list - select value | Choose one of the values in the entries.
+ Dropdown list - exclude value | Choose a value to leave out.
+ Date range | Choose a from date and a to date. Only for elements that hold dates.
+ Month selection - current year | Choose a month of this year. Only for elements that hold dates.
+ Month selection - last 12 months | Choose one of the last twelve months. Only for elements that hold dates.
+
+**For an element**, set **How people search this element in lists** on the element's **Settings** tab. That search is used wherever the element appears in a list, unless the list chooses a different one. If you leave it, elements that hold dates get **Date range** and everything else gets the **Search box**.
+
+**For a list screen**, the **Display only these columns** section of the screen's **Entries** tab has a **Search Interface** for each column. When you add a column there, it starts with the element's own search, and you can change it. Columns you haven't listed there, including ones people add with **Change columns**, use the element's own search. Map screens choose the search for each filter the same way, in the **Filter Type** of each filter on their **Map Options** tab.
 
 
 ## Advanced developer-focused search terms

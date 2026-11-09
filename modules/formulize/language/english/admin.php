@@ -164,11 +164,6 @@ define("_AM_MAP_ADD_FILTER_COLUMN","Add Filter Column");
 define("_AM_MAP_COLUMN_HEADING","Column");
 define("_AM_MAP_DEFAULT_SEARCH_TERM_HEADING","Default Search Term");
 define("_AM_MAP_FILTER_TYPE_HEADING","Filter Type");
-define("_AM_MAP_SEARCH_TYPE_BOX","Search Box");
-define("_AM_MAP_SEARCH_TYPE_FILTER","Dropdown List - select value");
-define("_AM_MAP_SEARCH_TYPE_NEG_FILTER","Dropdown List - exclude value");
-define("_AM_MAP_SEARCH_TYPE_MULTI","Checkboxes");
-define("_AM_MAP_SEARCH_TYPE_DATE","Date Range");
 define("_AM_MAP_FUNDAMENTAL_FILTERS_HEADING","Fundamental Filters");
 define("_AM_MAP_FUNDAMENTAL_FILTERS_DESC","These filters are always applied and are never shown to end users. New entries created through this screen will have values set based on any 'Match all' filters using the equals operator.");
 define("_AM_MAP_ENTRY_SCREEN_LEGEND","Entry Screen");
@@ -1060,10 +1055,10 @@ define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2", "<span style=\"font-weight: no
 </table>
 <p>Formulize provides 'Quick Search Boxes' and 'Quick Search Filters', as variables, that you can include however you want in your Top Templates.</p>\n
 <ul>
-<li>Use quickSearchBox_<i>handle</i> for a simple search box, ie: \$quickSearchBox_profile_dept</li>
+<li>Use quickSearchBox_<i>handle</i> for a simple text box, ie: \$quickSearchBox_profile_dept</li>
 <li>Use quickSearchFilter_<i>handle</i> for a dropdown filter, ie: \$quickSearchFilter_profile_dept</li>
 <li>Use quickSearchNegativeFilter_<i>handle</i> for a dropdown filter that excludes values, ie: \$quickSearchNegativeFilter_profile_dept</li>
-<li>Use quickSearchMultiFilter_<i>handle</i> for a checkbox filter where the user selects multiple values, ie: \$quickSearchMultiFilter_profile_dept</li>
+<li>Use quickSearchMultiFilter_<i>handle</i> for a search box where the user can type a search term, or pick any number of the values that match it, ie: \$quickSearchMultiFilter_profile_dept</li>
 <li>Use quickSearchDateRange_<i>handle</i> for a date range filter (only on Date elements), ie: \$quickSearchDateRange_profile_dept</li>
 <li>Use quickSearchMonthCurrentYear_<i>handle</i> for a dropdown of the months of the current year (only on Date elements), ie: \$quickSearchMonthCurrentYear_startdate</li>
 <li>Use quickSearchMonthLast12Months_<i>handle</i> for a dropdown of the last twelve months (only on Date elements), ie: \$quickSearchMonthLast12Months_startdate</li>
@@ -1106,6 +1101,16 @@ define("_AM_FORMULIZE_SCREEN_LOE_DISPLAY_ONLY_COLUMNS", "Display only these colu
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_COLUMNS", "Column");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_BY", "Search by this");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_TYPE", "Search Interface");
+// the search interfaces a column in a list or map screen can have, also offered as the default for each element
+define("_AM_FORMULIZE_SEARCH_TYPE_SEARCHBOX", "Search box");
+define("_AM_FORMULIZE_SEARCH_TYPE_BOX", "Simple text box");
+define("_AM_FORMULIZE_SEARCH_TYPE_FILTER", "Dropdown list - select value");
+define("_AM_FORMULIZE_SEARCH_TYPE_NEGATIVEFILTER", "Dropdown list - exclude value");
+define("_AM_FORMULIZE_SEARCH_TYPE_DATERANGE", "Date range");
+define("_AM_FORMULIZE_SEARCH_TYPE_MONTHCURRENTYEAR", "Month selection - current year");
+define("_AM_FORMULIZE_SEARCH_TYPE_MONTHLAST12MONTHS", "Month selection - last 12 months");
+define("_AM_ELE_SEARCHTYPE", "How people search this element in lists:");
+define("_AM_ELE_SEARCHTYPE_DESC", "The search interface at the top of this element's column, whenever it appears in a list. A list screen can still choose a different one for its own columns. The Search box lets people type a search term, or pick from the values that match what they type. Date range and the month selections are only available for elements that hold dates.");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SORT_BY", "Sort by this");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DELETE_COLUMN", "Remove column");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DESCRIPTION", "If you add columns here this will become the default view. The 'search by this' and 'sort by this' are optional fields");

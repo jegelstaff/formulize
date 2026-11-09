@@ -1617,31 +1617,32 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 		print "<input type=hidden name=currentview id=currentview value=\"$currentview\"></input>\n";
 	}
 
-	// every type except the plain box: every column gets one of those anyway, and its 'quickSearch' prefix would swallow
-	// the start of every long form name ('quickSearchFilter_x' would be read as the box for a column called 'Filter_x')
-	$filterTypes = array();
+	// which kinds of search UI to build for which handles, so that nothing is built that the page won't show:
+	// what the templates ask for by name, and what each column's search cell shows.
+	// Every type except the plain box is looked for in the templates: every column gets one of those anyway, and its
+	// 'quickSearch' prefix would swallow the start of every long form name ('quickSearchFilter_x' would be read as the
+	// box for a column called 'Filter_x')
+	$filterHandles = array();
 	foreach(formulize_quickSearchTypeNames() as $storedValue=>$typeNames) {
-		if($storedValue != 'Box') {
-			foreach($typeNames['prefixes'] as $prefix) {
-				$filterTypes[] = '\$'.$prefix;
+		if($storedValue == 'Box') {
+			continue;
+		}
+		$prefixes = array();
+		foreach($typeNames['prefixes'] as $prefix) {
+			$prefixes[] = '\$'.$prefix;
+		}
+		foreach(array('toptemplate', 'listtemplate', 'bottomtemplate', 'openlisttemplate', 'closelisttemplate') as $templateName) {
+			foreach(extractHandles($prefixes, getTemplateToRender($templateName, $screenOrScreenType)) as $templateHandle) {
+				$filterHandles[$templateHandle][$storedValue] = true;
 			}
 		}
 	}
-	$filterHandles = extractHandles($filterTypes, getTemplateToRender('toptemplate', $screenOrScreenType));
-	$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, getTemplateToRender('listtemplate', $screenOrScreenType)));
-	$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, getTemplateToRender('bottomtemplate', $screenOrScreenType)));
-	$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, getTemplateToRender('openlisttemplate', $screenOrScreenType)));
-	$filterHandles = array_merge($filterHandles, extractHandles($filterTypes, getTemplateToRender('closelisttemplate', $screenOrScreenType)));
-    // add any columns for which the advanceview settings call for not just a box
-    if($screen AND is_array($screen->getVar('advanceview'))) {
-        foreach($screen->getVar('advanceview') as $avData) {
-            if(isset($avData[3]) AND $avData[3] != 'Box') {
-                if(!in_array($avData[0], $filterHandles)) {
-                    $filterHandles[] = $avData[0];
-                }
-            }
-        }
-    }
+	foreach(formulize_columnSearchTypes($settings['columns'], $screen, true) as $columnHandle=>$columnType) {
+		if($columnType != 'Box') {
+			$filterHandles[$columnHandle][$columnType] = true;
+		}
+	}
+	$filterHandles = array_map('array_keys', $filterHandles);
 
 	$quickSearches = createQuickSearches($searches, $settings, $hiddenQuickSearches, $filterHandles, $fid);
 
@@ -1831,7 +1832,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 	$useSearchCalcMsgs = 1;
 	$inlineButtons = array();
 	$hiddenColumns = array();
-  $searchTypes = array_fill_keys($cols, 'Box');
+	$searchTypes = formulize_columnSearchTypes($cols, $screen);
 	if($screen) {
 		$useScrollBox = $screen->getVar('usescrollbox');
 		$useHeadings = $screen->getVar('useheadings');
@@ -1858,11 +1859,6 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 				if($caCode) {
 					$inlineButtons[$caid] = $thisCustomAction;
 				}
-			}
-		}
-		if(is_array($screen->getVar('advanceview'))) {
-			foreach($screen->getVar('advanceview') as $avData) {
-					$searchTypes[$avData[0]] = isset($avData[3]) ? $avData[3] : 'Box'; // default to quickSearch boxes, otherwise use type specified in screen settings
 			}
 		}
 	}
@@ -2516,26 +2512,187 @@ function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(),
 
 // go make all the necessary searches/filters for a given element
 // the keys used here are the ones formulize_quickSearchTypeNames() derives from formulizeHandler::listScreenSearchTypes(),
-// so a new type needs a line here and an entry there, and the rest of the file picks it up on its own
+// so a new type needs a case in formulize_buildQuickSearchOfType() and an entry there, and the rest of the file picks it up on its own
+// $filtersRequired is true to build every type for every handle, or handle => the stored search types to build for it.
+// A plain list of handles builds every type for those handles, as it always has.
 function packageSearches($handle, $search_text, $filtersRequired=true, $boxid="", $clear_help_javascript="", $fid=0) {
 	$quickSearches = array();
 	global $myts;
 	$box_search_text = $myts->htmlSpecialChars(undoAllHTMLChars((string) $search_text));
 	$quickSearches['search'] = "<input type=text $boxid enterkeyhint='search' name='search_$handle' value=\"$box_search_text\" $clear_help_javascript onchange=\"javascript:window.document.controls.ventry.value = '';\"></input>\n";
-	if($filtersRequired === true OR (is_array($filtersRequired) AND in_array($handle, $filtersRequired))) {
-		$quickSearches['filter'] = formulize_buildQSFilter($handle, $search_text, false, false, $fid);
-		$quickSearches['negativeFilter'] = formulize_buildQSFilter($handle, $search_text, negativeFilter: true, fid: $fid);
-		$quickSearches['dateRange'] = formulize_buildDateRangeFilter($handle, $search_text);
-		$quickSearches['monthCurrentYear'] = formulize_buildMonthSelectionFilter($handle, $search_text, false);
-		$quickSearches['monthLast12Months'] = formulize_buildMonthSelectionFilter($handle, $search_text, true);
-		$quickSearches['multiFilter'] = formulize_buildQSFilterMulti($handle, $search_text, $fid);
+	$allTypes = array_values(formulizeHandler::listScreenSearchTypes());
+	if($filtersRequired === true) {
+		$types = $allTypes;
+	} elseif(is_array($filtersRequired) AND array_is_list($filtersRequired)) {
+		$types = in_array($handle, $filtersRequired) ? $allTypes : array();
+	} else {
+		$types = (is_array($filtersRequired) AND isset($filtersRequired[$handle])) ? (array) $filtersRequired[$handle] : array();
+	}
+	// the first column's box says where to search, and so does its Search box if it has one
+	$placeholder = $boxid ? _formulize_DE_SEARCH_HELP : '';
+	foreach($types as $type) {
+		$quickSearches += formulize_buildQuickSearchOfType($type, $handle, $search_text, $fid, placeholder: $placeholder);
 	}
 	return $quickSearches;
 }
 
-// create a multi filter
-function formulize_buildQSFilterMulti($handle, $search_text, $fid=0) {
-	return formulize_buildQSFilter($handle, $search_text, true, false, $fid);
+/**
+ * Build one kind of search UI for a column, keyed the way packageSearches() packages them.
+ * @param string $type A stored search type, as in formulizeHandler::listScreenSearchTypes()
+ * @param string $handle The column
+ * @param string $search_text The search in effect on the column
+ * @param int $fid The form a metadata field belongs to
+ * @param string $submitScript The JavaScript a Search box runs to submit its search
+ * @param string $placeholder Optional. Text a Search box shows until something is typed in it
+ * @return array The quickSearches key => markup, or nothing for the plain box, which packageSearches() always builds
+ */
+function formulize_buildQuickSearchOfType($type, $handle, $search_text, $fid=0, $submitScript='showLoading();', $placeholder='') {
+	switch($type) {
+		case 'Filter':
+			return array('filter' => formulize_buildQSFilter($handle, $search_text, false, false, $fid));
+		case 'NegativeFilter':
+			return array('negativeFilter' => formulize_buildQSFilter($handle, $search_text, negativeFilter: true, fid: $fid));
+		case 'DateRange':
+			return array('dateRange' => formulize_buildDateRangeFilter($handle, $search_text));
+		case 'MonthCurrentYear':
+			return array('monthCurrentYear' => formulize_buildMonthSelectionFilter($handle, $search_text, false));
+		case 'MonthLast12Months':
+			return array('monthLast12Months' => formulize_buildMonthSelectionFilter($handle, $search_text, true));
+		case 'MultiFilter':
+			return array('multiFilter' => formulize_buildQSSearchBox($handle, $search_text, $fid, $submitScript, $placeholder));
+	}
+	return array();
+}
+
+/**
+ * The search type each column of a list shows in its search cell: the one the screen chose for it, among the columns
+ * it lists, and otherwise the one its element uses (see formulize_defaultSearchTypeForColumn()). A column the screen
+ * lists without saying which type, from before there was a choice, keeps the plain box it has always had.
+ * @param array $cols The columns being shown
+ * @param object|false $screen The list screen, if there is one
+ * @param bool $includeScreenColumnsNotShown Optional. Include the columns the screen chose a type for even if they are not being shown, so their search UI can still be used in a template, as it always could
+ * @return array handle => stored search type
+ */
+function formulize_columnSearchTypes($cols, $screen, $includeScreenColumnsNotShown=false) {
+	$searchTypes = array();
+	foreach((array) $cols as $col) {
+		$searchTypes[$col] = formulize_defaultSearchTypeForColumn($col);
+	}
+	if($screen AND is_array($screen->getVar('advanceview'))) {
+		foreach($screen->getVar('advanceview') as $avData) {
+			if(isset($searchTypes[$avData[0]]) OR $includeScreenColumnsNotShown) {
+				$searchTypes[$avData[0]] = isset($avData[3]) ? $avData[3] : 'Box';
+			}
+		}
+	}
+	return $searchTypes;
+}
+
+// create a multi filter, which is the Search box: see formulize_buildQSSearchBox()
+function formulize_buildQSFilterMulti($handle, $search_text, $fid=0, $submitScript='showLoading();') {
+	return formulize_buildQSSearchBox($handle, $search_text, $fid, $submitScript);
+}
+
+/**
+ * THIS FUNCTION CREATES THE HTML FOR A SEARCH BOX
+ *
+ * A box to type a search term into, which searches the column the way the simple text box does, with everything the
+ * search parser understands (=Jim, Big AND Small, {TODAY} and so on). As someone types, filterpopovers.js shows the
+ * values that match, fetched from formulize_xhr_responder.php, and any number of them can be picked instead. Picked
+ * values replace the typed term as the search, written as one set of OR'd conditions, ORSET<n>:, the way the checkbox
+ * filters write them.
+ *
+ * The page holds no list of values, only the ones already picked, with their labels, so the box costs nothing to
+ * draw however many values the column has.
+ *
+ * @param string $handle The handle of the column
+ * @param string $search_text The search in effect on the column
+ * @param int $fid The form a metadata field belongs to
+ * @param string $submitScript The JavaScript that submits the search: showLoading() in a list, the form's own submit elsewhere
+ * @param string $placeholder Optional. Text the box shows until something is typed in it
+ * @return string HTML markup
+ */
+function formulize_buildQSSearchBox($handle, $search_text, $fid=0, $submitScript='showLoading();', $placeholder='') {
+	global $myts, $xoopsUser;
+	$search_text = undoAllHTMLChars((string) $search_text);
+	// the older form of a set, ORSET1x, read as ORSET1:x, as buildFilter() does
+	$search_text = preg_replace('/ORSET(\d)(?=[^:\d])/', 'ORSET$1:', $search_text);
+
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$elementObject = isMetaDataField($handle) ? false : $element_handler->get($handle);
+	if(!$elementObject AND !isMetaDataField($handle)) {
+		return '';
+	}
+	// values in an element that can hold several of them are matched within the field, so they have no equals sign
+	$operator = ($elementObject AND $elementObject->canHaveMultipleValues) ? '' : '=';
+	$orset = 'ORSET'.formulize_nextOrsetNumber().':';
+
+	// the values picked already, if the search in effect is a set of them
+	$picked = array();
+	$typed = $search_text;
+	if(substr($search_text, 0, 5) == 'ORSET' AND substr($search_text, -2) == '//') {
+		$typed = '';
+		$pickedValues = array();
+		$containsValues = array();
+		foreach(explode('//', substr($search_text, 0, -2)) as $part) {
+			if(preg_match('/^ORSET\d+:(.*)$/s', $part, $matches)) {
+				$value = $matches[1];
+				// {BLANK} is always written with an equals sign, other values with this element's operator, except the
+				// ones matched as contained in the field (see formulize_getQuickSearchOptions()), which have none
+				if(substr($value, 0, 1) == '=' AND ($operator == '=' OR $value == '={BLANK}')) {
+					$value = substr($value, 1);
+				} elseif($operator == '=') {
+					$containsValues[$value] = true;
+				}
+				$pickedValues[] = $value;
+			}
+		}
+		$labels = array();
+		if(in_array('{BLANK}', $pickedValues, true)) {
+			$labels['{BLANK}'] = _SHOW_BLANKS;
+		}
+		$otherValues = array_diff($pickedValues, array('{BLANK}'));
+		if($otherValues) {
+			$found = formulize_getQuickSearchOptions($handle, $fid, onlyValues: $otherValues);
+			foreach($found['options'] as $option) {
+				$labels[$option['value']] = $option['label'];
+			}
+		}
+		foreach($pickedValues as $value) {
+			$pickedValue = array('value' => $value, 'label' => isset($labels[$value]) ? $labels[$value] : $value);
+			if(isset($containsValues[$value])) {
+				$pickedValue['contains'] = true;
+			}
+			$picked[] = $pickedValue;
+		}
+	}
+
+	$uid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
+	$optionsUrl = XOOPS_URL.'/modules/formulize/formulize_xhr_responder.php?uid='.$uid.'&op=get_quicksearch_options&handle='.urlencode($handle).'&fid='.intval($fid);
+	$headings = getHeaders(array($handle));
+	$columnName = trans(strip_tags((string) ($headings[$handle] ?? $handle)));
+	$attributes = array(
+		'data-options-url' => $optionsUrl,
+		'data-orset' => $orset,
+		'data-operator' => $operator,
+		'data-picked' => json_encode($picked),
+		'data-blank-label' => _SHOW_BLANKS,
+	);
+	$attributeMarkup = '';
+	foreach($attributes as $name=>$value) {
+		$attributeMarkup .= " $name=\"".htmlspecialchars((string) $value)."\"";
+	}
+	// The box people type in carries the search under the column's name, search_<handle>, the same as a simple text
+	// box, so it works as one even without filterpopovers.js. When values are picked, the hidden field carries them
+	// under that name instead, and the box has none, so what is typed then only narrows the values to pick from.
+	$fieldName = 'search_'.htmlspecialchars($handle);
+	$hiddenName = $picked ? " name='$fieldName'" : "";
+	$boxName = $picked ? "" : " name='$fieldName'";
+	return "<div class='formulize-searchbox' data-name='$fieldName'$attributeMarkup>"
+		."<input type='hidden'$hiddenName class='formulize-searchbox-value' value=\"".($picked ? $myts->htmlSpecialChars($search_text) : "")."\">"
+		."<input type='search'$boxName class='fz-input formulize-searchbox-input' enterkeyhint='search' autocomplete='off'".($placeholder ? " placeholder=\"".htmlspecialchars($placeholder)."\"" : "")." aria-label=\"".htmlspecialchars(sprintf(_formulize_SEARCHBOX_LABEL, $columnName))."\" value=\"".$myts->htmlSpecialChars($typed)."\">"
+		."<input type='button' class='formulize-filter-apply' style='display: none' value='"._formulize_SUBMITTEXT."' onclick=\"".htmlspecialchars($submitScript)."\">"
+		."</div>\n";
 }
 
 // THIS FUNCTION CREATES THE QUICKFILTER BOXES
@@ -2569,11 +2726,7 @@ function formulize_buildQSFilter($handle, $search_text, $multi=false, $negativeF
 // THIS FUNCTION CREATES THE HTML FOR A DATE RANGE FILTER
 function formulize_buildDateRangeFilter($handle, $search_text) {
 		$search_text = ($search_text === "" AND isset($_POST['search_'.$handle])) ? $_POST['search_'.$handle] : $search_text;
-    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    $elementObject = false;
-    if($handle == 'creation_datetime' OR $handle == 'mod_datetime' OR $elementObject = $element_handler->get($handle)) {
-        $typeInfo = $elementObject ? $elementObject->getDataTypeInformation() : true;
-        if($typeInfo == true OR $typeInfo['dataType'] == 'date') {
+    if(formulize_handleIsDateColumn($handle)) {
 						$search_text = htmlspecialchars_decode($search_text);
 						$search_text_parts = explode('//', $search_text);
 						if(count($search_text_parts) == 2) {
@@ -2688,27 +2841,8 @@ function formulize_buildDateRangeFilter($handle, $search_text) {
             }
             // each label wraps its date, so clicking the word focuses the date. formulize.css puts the word beside the date when there's room, and above it when there isn't
             return "<div class='formulize-daterange'>\n<label class='formulize-daterange-field'><span>"._formulize_FROM."</span>".$startDateElement->render()."</label>\n<label class='formulize-daterange-field'><span>"._formulize_TO."</span>".$endDateElement->render()."</label>\n<input type=button style='display: none;' id='formulize_daterange_button_".$handle."' class='formulize-small-button formulize-filter-apply' name=qdrGoButton value='" . _formulize_SUBMITTEXT . "' onclick=\"javascript:showLoading();\"></input>\n<input type='hidden' id='formulize_hidden_daterange_".$handle."' name='search_".$handle."' value='".htmlspecialchars($search_text)."' ></input></div>\n$js";
-        }
     }
     return "";
-}
-
-/**
- * Is this column a date, and so a candidate for the date oriented quicksearch filters?
- *
- * @param string $handle An element handle, or one of the date metadata field names
- * @return bool
- */
-function formulize_handleIsDateColumn($handle) {
-    if($handle == 'creation_datetime' OR $handle == 'mod_datetime') {
-        return true;
-    }
-    $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    if(!$elementObject = $element_handler->get($handle)) {
-        return false;
-    }
-    $typeInfo = $elementObject->getDataTypeInformation();
-    return (isset($typeInfo['dataType']) AND ($typeInfo['dataType'] == 'date' OR $typeInfo['dataType'] == 'datetime'));
 }
 
 /**
@@ -3785,13 +3919,18 @@ $output
 	formulize_benchmark("after creating file");
 }
 
-// this function includes the javascript necessary make the interface operate properly
-// note the mandatory clearing of the ventry value upon loading of the page.  Necessary to make the back button work right (otherwise ventry setting is retained from the previous loading of the page and the form is displayed after the next submission of the controls form)
-function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $lockedColumns, $screen=null, $restoreScrollPosition=false, $buttonCodeArray=array()) {
-
-	$autocompleteJsVersion = formulize_get_file_version('/modules/formulize/include/js/autocomplete.js');
-	print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js?v=".$autocompleteJsVersion."'></script>";
-
+/**
+ * Print the script that turns the Search box, and the checkbox and date range filters in a list's column search cells,
+ * into their popovers (see filterpopovers.js), with the words it shows. Lists and map screens both use it.
+ * @param object|null $screen The screen, if there is one
+ * @param int $fid The form, for a list with no screen
+ */
+function formulize_printFilterPopoverScript($screen, $fid) {
+	static $printed = false;
+	if($printed) {
+		return;
+	}
+	$printed = true;
 	// the checkbox and date range filters in the column search cells open as popovers (see filterpopovers.js)
 	$filterPopoverLang = array(
 		'anyDate' => _formulize_FILTERPOP_ANY_DATE,
@@ -3817,6 +3956,11 @@ function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $l
 		'numberOfDays' => _formulize_FILTERPOP_NUMBER_OF_DAYS,
 		'typeSearch' => _formulize_FILTERPOP_TYPE_SEARCH,
 		'pickInstead' => _formulize_FILTERPOP_PICK_INSTEAD,
+		'searchLoading' => _formulize_SEARCHBOX_LOADING,
+		'searchMore' => _formulize_SEARCHBOX_MORE,
+		'searchHint' => _formulize_SEARCHBOX_TYPE_TO_PICK,
+		'searchClear' => _formulize_SEARCHBOX_CLEAR,
+		'searchError' => _formulize_SEARCHBOX_ERROR,
 	);
 	// webmasters can swap a popover for a box to type any search term into, like {TODAY-7}; the script remembers
 	// that per screen, so screen tells it which screen this is (or which form, for a list with no screen)
@@ -3828,6 +3972,16 @@ function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $l
 	$filterPopoversJsVersion = formulize_get_file_version('/modules/formulize/include/js/filterpopovers.js');
 	print "<script type='text/javascript'>window.formulizeFilterPopoverLang = ".json_encode($filterPopoverLang)."; window.formulizeFilterPopoverSettings = ".json_encode($filterPopoverSettings).";</script>\n";
 	print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/filterpopovers.js?v=".$filterPopoversJsVersion."'></script>";
+}
+
+// this function includes the javascript necessary make the interface operate properly
+// note the mandatory clearing of the ventry value upon loading of the page.  Necessary to make the back button work right (otherwise ventry setting is retained from the previous loading of the page and the form is displayed after the next submission of the controls form)
+function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $lockedColumns, $screen=null, $restoreScrollPosition=false, $buttonCodeArray=array()) {
+
+	$autocompleteJsVersion = formulize_get_file_version('/modules/formulize/include/js/autocomplete.js');
+	print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js?v=".$autocompleteJsVersion."'></script>";
+
+	formulize_printFilterPopoverScript($screen, $fid);
 
 	global $formulizeRemoveEntryIdentifier;
 	if($formulizeRemoveEntryIdentifier) {

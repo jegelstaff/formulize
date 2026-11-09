@@ -266,6 +266,16 @@ $names['defaultsort'] = $defaultSort;
 $names['principalidentifier_off'] = ($defaultpi != $ele_id AND ($ele_id != 'new' OR count($formObject->getVar('elements')) > 0)) ? " checked='checked' " : "";
 $names['principalidentifier_on'] = ($defaultpi == $ele_id OR ($ele_id == 'new' AND count($formObject->getVar('elements')) == 0)) ? " checked='checked' " : "";
 
+// the search interface this element gets in lists, offered for any element that has data to search
+$names['searchtype_on'] = false;
+$searchTypeElement = $elementObject ? $elementObject : $customTypeObject;
+if($searchTypeElement AND $searchTypeElement->hasData) {
+    $names['searchtype_on'] = true;
+    $searchTypeLabels = formulizeHandler::listScreenSearchTypeLabels();
+    $names['searchtypeoptions'] = array_intersect_key($searchTypeLabels, array_flip($searchTypeElement->allowedListSearchTypes()));
+    $names['searchtype'] = $searchTypeElement->listSearchType();
+}
+
 // common values should be assigned to all tabs
 $common['name'] = '';
 $common['ele_id'] = $ele_id;

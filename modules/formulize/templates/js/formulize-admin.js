@@ -51,3 +51,31 @@ function getCookie(name) {
 	}
 	return null;
 }
+
+/**
+ * On a list or map screen's settings, choosing the element for a column row sets the row's search interface to the
+ * one that element uses by default, and makes the date oriented interfaces available only for columns that hold
+ * dates. Rows are only changed when someone chooses a column, so a screen's existing settings stay as they are.
+ *
+ * defaults: handle => {type: stored search type, dates: bool}, from formulize_columnSearchDefaults()
+ * dateOnlyTypes: the stored search types that only work on dates, from formulizeHandler::dateOnlySearchTypes()
+ *
+ * Written for jQuery 1.4.2, which the admin UI runs.
+ */
+function formulizeBindColumnSearchDefaults(defaults, dateOnlyTypes) {
+	jQuery('table.advanceview select[id^=cols-]').live('change', function() {
+		var column = defaults[jQuery(this).val()];
+		var typeSelect = jQuery(this).closest('tr').find('select[name^=search-type]');
+		if(!column || typeSelect.length == 0) {
+			return;
+		}
+		typeSelect.find('option').each(function() {
+			if(jQuery.inArray(jQuery(this).attr('value'), dateOnlyTypes) != -1 && !column.dates) {
+				jQuery(this).attr('disabled', 'disabled');
+			} else {
+				jQuery(this).removeAttr('disabled');
+			}
+		});
+		typeSelect.val(column.type);
+	});
+}
