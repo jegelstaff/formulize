@@ -27,7 +27,10 @@ print "
 
 		if($searchesShown) {
 
-			print "<tr class='lyris-search-row' hidden>";
+			// the filter row starts open, unless the screen says to hide it until the user opens it ($searchesShown is 2)
+			// any choice the user makes with the filter toggle is remembered and applied on load (see bottomtemplate.php)
+			$searchRowHidden = $searchesShown == 2 ? ' hidden' : '';
+			print "<tr class='lyris-search-row'$searchRowHidden>";
 
 			if($searchHelp OR $toggleSearches) {
 				print "<td class='lyris-cb head' id='celladdress_1_margin'>$toggleSearches $searchHelp</td>";
