@@ -23,7 +23,7 @@ For how CI runs the suite, see [Concurrency](testing-robust-specs.md#concurrency
 
 ## Common causes
 
-**A form drawn read-only.** There are many possible causes, and one is an entry lock left by an earlier test. Look for the lock message in the page's HTML in the trace. Subform entries lock too, not just the main entry. To find which test left it, search `logs/formulize_log_active.log` for `rendering-form` events for that entry, and see which session drew it last. See [Entry locks](testing-robust-specs.md#entry-locks).
+**A form drawn read-only.** There are many possible causes, and one is an entry lock left by an earlier test. Look for the lock message in the page's HTML in the trace, and at "Entry locks not released" in the run's summary, which lists the pages tests left whose release never arrived. Subform entries lock too, not just the main entry. To find which test left it, search `logs/formulize_log_active.log` for `rendering-form` events for that entry, and see which session drew it last. See [Entry locks](testing-robust-specs.md#entry-locks).
 
 **CI fails and live sites work.** Suspect a static file that live browsers have cached, while CI's fresh browser gets the new one. A script loaded with no `?v=` can stay cached for weeks. Load scripts with `formulize_get_file_version()`.
 

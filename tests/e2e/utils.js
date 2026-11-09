@@ -1,4 +1,4 @@
-const { expect } = require('@playwright/test')
+const { expect, test } = require('@playwright/test')
 
 export const ElementType = {
 	'text': 'element-text',
@@ -1157,14 +1157,86 @@ export async function setMenuEntryGroups(page, appName, accordionName, groupsSel
  * A form showing an entry for editing locks it, and the page releases the lock as it goes away. So a test that
  * opens an entry must leave it, or the next person to open the entry finds it locked. Closing the browser at the
  * end of a test doesn't count as leaving. The page can only release its locks once it has finished loading, so
- * this waits for that first. The release is sent as the page goes away, and in practice it has been handled by
- * the time the next page has loaded, which page.goto waits for.
+ * this waits for that first.
+ *
+ * The release is a request the page sends as it goes away. Playwright doesn't report it, and it can still be on
+ * its way after the next page has loaded, so a test that ends then can close the browser before it's sent. So this
+ * waits until the server has handled it, which shows because the file listing what the page locked is gone.
+ *
+ * In CI a release sometimes never arrives, with the browser still open. Often nothing depends on that lock, so the
+ * test carries on, with a note of what's still locked, and entry-lock-reporter.js lists those in the run's summary.
+ * A later test that opens one of those entries as someone else finds it read-only.
  *
  * @param {string} url - Where to go. Assert something on that page afterwards, as after any navigation.
  */
 export async function leavePage(page, url = '/') {
+	await leaveWith(page, () => page.goto(url));
+}
+
+/**
+ * Reload the page, the way a person does, and wait until the server has handled the release of the entries it
+ * locked, as leavePage does. The release arrives after the new page was drawn.
+ */
+export async function reloadPage(page) {
+	await leaveWith(page, () => page.reload());
+}
+
+async function leaveWith(page, navigation) {
 	await page.waitForLoadState('load');
-	await page.goto(url);
+	const lockLists = await entryLockListFiles(page);
+	const leftUrl = page.url();
+	await navigation();
+	let unreleased = lockLists;
+	for (const waited of [0, 100, 250, 500, 1000, 2000, 3000, 3000]) { // ten seconds in all
+		await new Promise(resolve => setTimeout(resolve, waited));
+		const tempFiles = serverTempFiles();
+		unreleased = unreleased.filter(file => tempFiles.includes(file));
+		if (unreleased.length === 0) {
+			return;
+		}
+	}
+	noteUnreleasedLocks(leftUrl, unreleased);
+}
+
+// The annotation entry-lock-reporter.js looks for
+const UNRELEASED_LOCKS_NOTE = 'entry locks not released';
+
+// Note on the test what the page that was left still has locked, which is in its list files
+function noteUnreleasedLocks(leftUrl, lockLists) {
+	const entries = [];
+	for (const file of lockLists) {
+		let list = '';
+		try {
+			list = execFileSync('docker', ['exec', webContainer(), 'cat', `/var/www/html/modules/formulize/temp/${file}`], { encoding: 'utf8' });
+		} catch (e) {
+			continue; // released after all, just now
+		}
+		// a serialized PHP array of form ids, each with an array of entry ids
+		for (const [, fid, entryList] of list.matchAll(/i:(\d+);a:\d+:\{([^}]*)\}/g)) {
+			for (const [, entry] of entryList.matchAll(/i:(\d+);b:1;/g)) {
+				entries.push(`entry ${entry} in form ${fid}`);
+			}
+		}
+	}
+	const left = leftUrl.replace(/^https?:\/\/[^/]+/, '');
+	test.info().annotations.push({
+		type: UNRELEASED_LOCKS_NOTE,
+		description: `Left ${left}, and its release never reached the server, so these stay locked: ${entries.join(', ') || 'none any more'}`,
+	});
+}
+
+// The files on the server that list what a page locked, which the page's release deletes. There's one for the page and
+// one for the form last shown in its drawer, named by the token and uid in the code that sends the release. A page
+// that locked nothing has the code but no file.
+async function entryLockListFiles(page) {
+	const html = await page.content();
+	const files = [...html.matchAll(/'formulize_entry_lock_token', '([0-9a-f]+)'\);\s*fd\.append\('formulize_entry_lock_uid', '(\d+)'\)/g)]
+		.map(([, token, uid]) => `${token}${uid}.token`);
+	return [...new Set(files)];
+}
+
+function serverTempFiles() {
+	return execFileSync('docker', ['exec', webContainer(), 'ls', '/var/www/html/modules/formulize/temp'], { encoding: 'utf8' }).split('\n');
 }
 
 /**
@@ -1208,7 +1280,7 @@ export async function ensureMainMenuOpen(page) {
 // ============================================================================
 
 const { execFileSync } = require('child_process');
-const { dbContainer } = require('./docker-containers');
+const { dbContainer, webContainer } = require('./docker-containers');
 
 const DB_ROOT_PASS = process.env.E2E_DB_ROOT_PASS || 'abc123';
 const DB_NAME = process.env.E2E_DB_NAME || 'formulize';
