@@ -3,7 +3,11 @@ const fs = require('fs');
 const path = require('path');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
 import {
-	login, saveFormulizeForm, saveAdminForm, waitForAdminPageReady, dbQuery, dbPrefix, renameElementHandle, elementId,
+	asAdmin, asCurator, openArtifact, rowOf, formIdOf, expectYearEraToFollowTheYear, expectANewArtifactToGetItsIdNumber,
+	expectTheDonorListToWork, expectSurveyToOfferTheExhibitsArtifacts, leaveWithoutSaving,
+} from './museum-checks';
+import {
+	saveFormulizeForm, saveAdminForm, waitForAdminPageReady, dbQuery, dbPrefix, renameElementHandle, elementId,
 	openArtifactOriginsMap, expectArtifactOriginsMap, loadSavedView, expectCoinsByName, expectArtifactOriginsList,
 	conditionalElementReady, leavePage, setCodeMirrorValue, autocompleteBox,
 } from '../../utils';
@@ -23,9 +27,6 @@ import {
 
 const codeDir = path.resolve(__dirname, '../../../../modules/formulize/code');
 
-function rowOf(table, keyColumn, key, columns) {
-	return dbQuery(`SELECT ${columns} FROM ${dbPrefix()}_${table} WHERE ${keyColumn} = ${key}`)[0];
-}
 function eleValueOf(handleOrId) {
 	const where = /^\d+$/.test(String(handleOrId)) ? `ele_id = ${handleOrId}` : `ele_handle = '${handleOrId}'`;
 	return dbQuery(`SELECT ele_value FROM ${dbPrefix()}_formulize WHERE ${where}`)[0][0];
@@ -210,12 +211,7 @@ test.describe.serial('Renaming element handles', () => {
 		expect(eleValueOf('artifacts_donor')).toContain(`"${source}"`); // which a rename does not change
 		expect(fs.existsSync(path.join(codeDir, 'derived_donors_full_name.php'))).toBe(true);
 		expect(fs.existsSync(path.join(codeDir, 'derived_donors_name.php'))).toBe(false);
-		await asCurator(page);
-		await openArtifact(page, 'M001');
-		await expect(page.getByLabel('Donor').locator('option', { hasText: 'François-Marie Arouet' })).toHaveCount(1);
-		await expect(page.getByLabel('Donor').locator('option:checked')).toHaveText('François-Marie Arouet');
-		await page.getByRole('link', { name: 'Save and Close' }).click();
-		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
+		await expectTheDonorListToWork(page);
 		// and back
 		await asAdmin(page);
 		expect(await renameElementHandle(page, 'donors_full_name', 'donors_name')).toBeNull();
@@ -242,25 +238,6 @@ test.describe.serial('Renaming element handles', () => {
 			await expect(page.getByText('No match found')).toBeVisible();
 			await leaveWithoutSaving(page);
 		};
-		// A survey of Ancient Wonders offers the artifacts that exhibit shows, as limited by the {surveys_exhibit} term
-		const surveySid = dbQuery(`SELECT s.sid FROM ${dbPrefix()}_formulize_screen s WHERE s.fid = ${formIdOf('Surveys')} AND s.type = 'multiPage' ORDER BY s.sid LIMIT 1`)[0][0];
-		const expectSurveyToOfferTheExhibitsArtifacts = async () => {
-			await page.goto('/user.php?op=logout');
-			await page.goto(`/modules/formulize/index.php?sid=${surveySid}`);
-			await page.getByLabel('Which exhibit did you see?').selectOption('Ancient Wonders');
-			const favourite = page.getByLabel('Which was your favourite');
-			await expect(async () => {
-				const offered = await favourite.locator('option').allTextContents();
-				for (const name of ancient) {
-					expect(offered).toContain(name);
-				}
-				for (const name of modern) {
-					expect(offered).not.toContain(name);
-				}
-			}).toPass();
-			await leaveWithoutSaving(page);
-		};
-
 		await asAdmin(page);
 		expect(await renameElementHandle(page, 'exhibits_collections', 'exhibits_collection_list')).toBeNull();
 		expect(eleValueOf('exhibits_artifacts')).toContain('{exhibits_collection_list}');

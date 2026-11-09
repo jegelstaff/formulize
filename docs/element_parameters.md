@@ -86,10 +86,10 @@ Only element handles are updated. Element ID numbers are always left alone.
 
 ## Checking your declarations
 
-Run the logic test from the root of the repository on your command line:
+Run this test against your local Formulize, which has to be installed:
 
 ```bash
-php tests/element_references_test.php
+docker exec formulize-web-1 php /var/www/html/tests/element_handle_code_test.php
 ```
 
 It fails if a declaration names a parameter the function doesn't have, or a shape that doesn't exist, or

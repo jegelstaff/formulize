@@ -16,7 +16,7 @@ if (!defined('XOOPS_ROOT_PATH')) {
 // successfully dbversion advances to 2 and it never runs again. Files that could not be written are
 // reported for manual migration rather than triggering a destructive retry.
 //
-// ORDERING, the other side: this must also run BEFORE 002_always_run's hyphenated handle migration.
+// ORDERING, the other side: this must also run BEFORE 002_always_run's element handle normalization.
 // Stage 2 below matches the handle strings written in the old code files against the handles in the DB,
 // so those handles must still be hyphenated at this point. A handle that is still "my-handle" here is
 // emitted as $my-handle, which is not valid PHP on its own - 002_always_run rewrites it to $my_handle

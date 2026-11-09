@@ -149,6 +149,10 @@ class formulizeElementHandleCode {
 	 * moved out of the way first, to the first $newhandle_1, $newhandle_2... that none of the texts uses and that is
 	 * not a name Formulize sets itself in this code. Otherwise the two would become one variable.
 	 *
+	 * The exception is an old handle that sanitizes to the new one. Both names are then spellings of one element, so
+	 * becoming one variable is what is wanted. Only the update patch renames those - see
+	 * formulize_normalize_element_handles() - since a rename in the admin UI starts from a handle already sanitized.
+	 *
 	 * @param array $texts key => text, all sharing their variables.
 	 * @param string $oldHandle
 	 * @param string $newHandle
@@ -178,7 +182,7 @@ class formulizeElementHandleCode {
 			}
 			return false;
 		};
-		if($inUse($newHandle)) {
+		if($inUse($newHandle) AND formulizeElement::sanitize_handle_name($oldHandle) !== $newHandle) {
 			$suffix = 1;
 			while($inUse($newHandle.'_'.$suffix) OR in_array($newHandle.'_'.$suffix, $unavailable, true)) {
 				$suffix++;
