@@ -6775,6 +6775,14 @@ function formulize_nextOrsetNumber() {
 }
 
 /**
+ * How many values the Search box lists at once: the ones drawn with the page, and the ones that match what is typed.
+ * @return int
+ */
+function formulize_searchBoxOptionLimit() {
+    return 50;
+}
+
+/**
  * The options the Search box on a column offers, as values and the labels people see, the same values buildFilter()
  * would give its checkboxes, so a search picked in either one means the same thing.
  *
@@ -6999,7 +7007,9 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 							// a term to match is matched by the database, when the columns shown hold text rather than references to
 							// other entries or users, which only mean something once prepvalues() has turned them into names
 							$whereClauses = "$extra_clause $conditionsfilter $conditionsfilter_oom $limitConditionWhere";
-							$termLimit = "";
+							// with no term, only so many are wanted, and the database can stop there. With a term the database
+							// can't match, every value has to be read, for the term to be matched once they're names.
+							$termLimit = ((string) $term === '' AND intval($maxOptions) > 0) ? " LIMIT ".intval($maxOptions) : "";
 							if((string) $term !== '') {
 									$termMatches = array();
 									// the term is matched as it is, so its own % and _ are not wildcards

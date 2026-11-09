@@ -170,6 +170,7 @@ test.describe('The Search box in a list', () => {
 
 	test('A column the screen doesn\'t list uses its element\'s Search box, and a typed search works as it always has', async ({ page }) => {
 		await artifactsListWithEraAndDonor(page);
+		const everything = await page.getByText(/Showing entries:/).first().textContent();
 		const eraBox = page.locator('input[name="search_artifacts_era"]');
 		await expect(eraBox).toHaveClass(/formulize-searchbox-input/);
 
@@ -185,6 +186,19 @@ test.describe('The Search box in a list', () => {
 		await page.locator('input[name="search_artifacts_era"]').press('Enter');
 		await waitForWorkingMessage(page);
 		await expect(page.getByText('Showing entries: 1 to 8 of 8.')).toBeVisible();
+
+		// Show all and Show Blanks head the list, and Show all clears the typed search
+		await page.locator('input[name="search_artifacts_era"]').click();
+		const panel = page.locator('.formulize-searchbox-panel:popover-open');
+		const choices = panel.locator('.fz-choice');
+		await expect(choices.nth(0)).toHaveText('Show all');
+		await expect(choices.nth(1)).toHaveText('Show Blanks');
+		await expect(choices.nth(0).getByRole('checkbox')).not.toBeChecked();
+		await choices.nth(0).click();
+		await expect(page.locator('input[name="search_artifacts_era"]')).toHaveValue('');
+		await panel.getByRole('button', { name: 'Apply' }).click();
+		await waitForWorkingMessage(page);
+		await expect(page.getByText(/Showing entries:/).first()).toHaveText(everything);
 	});
 
 	test('Ticking values searches for exactly those values, and clearing them shows everything again', async ({ page }) => {
@@ -203,14 +217,20 @@ test.describe('The Search box in a list', () => {
 		// Roman Coin, Babylonian Spoon, Polynesian Canoe and Candide
 		await expect(page.getByText('Showing entries: 1 to 4 of 4.')).toBeVisible();
 		const donorCell = page.locator('.formulize-searchbox').filter({ has: page.locator('.formulize-searchbox-value[name="search_artifacts_donor"]') });
-		await expect(donorCell.locator('.formulize-searchbox-picked .fz-badge')).toHaveText('François-Marie Arouet');
-		// the picked value is the search, so the box is empty, and opening it again shows the value ticked
+		// the picked value shows inside the box, which is otherwise empty, since the picked value is the search
+		await expect(donorCell.locator('.formulize-searchbox-picked-text')).toHaveText('François-Marie Arouet');
 		await expect(donorCell.locator('.formulize-searchbox-input')).toHaveValue('');
-		await donorCell.locator('.formulize-searchbox-input').click();
-		await expect(page.locator('.formulize-searchbox-panel:popover-open').getByRole('checkbox', { name: 'François-Marie Arouet' })).toBeChecked();
-		// closing without applying changes nothing
-		await page.keyboard.press('Escape');
+		// clicking it opens the list, with the value ticked
+		await donorCell.locator('.formulize-searchbox-picked-text').click();
+		const reopened = page.locator('.formulize-searchbox-panel:popover-open');
+		await expect(reopened.getByRole('checkbox', { name: 'François-Marie Arouet' })).toBeChecked();
+		await expect(reopened.getByRole('checkbox', { name: 'Show all' })).not.toBeChecked();
+		// Cancel closes it, and it stays closed, with the value still picked
+		await reopened.getByRole('button', { name: 'Cancel' }).click();
 		await expect(page.locator('.formulize-searchbox-panel:popover-open')).toHaveCount(0);
+		await expect(donorCell.locator('.formulize-searchbox-input')).toBeFocused();
+		await expect(page.locator('.formulize-searchbox-panel:popover-open')).toHaveCount(0);
+		await expect(donorCell.locator('.formulize-searchbox-picked-text')).toHaveText('François-Marie Arouet');
 
 		await donorCell.getByRole('button', { name: 'Clear the values picked' }).click();
 		await waitForWorkingMessage(page);

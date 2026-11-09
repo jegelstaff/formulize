@@ -169,7 +169,7 @@ Each column in a list can have one of these searches at the top:
  Month selection - current year | Choose a month of this year. Only for elements that hold dates.
  Month selection - last 12 months | Choose one of the last twelve months. Only for elements that hold dates.
 
-**For an element**, set **How people search this element in lists** on the element's **Settings** tab. That search is used wherever the element appears in a list, unless the list chooses a different one. If you leave it, elements that hold dates get **Date range** and everything else gets the **Search box**.
+**For an element**, set **How people search this element in lists** on the element's **Settings** tab. That search is used wherever the element appears in a list, unless the list chooses a different one. If you leave it, elements that hold dates get **Date range**, numbers that people type in, like a number box or a slider, get the **Simple text box**, and everything else gets the **Search box**.
 
 **For a list screen**, the **Display only these columns** section of the screen's **Entries** tab has a **Search Interface** for each column. When you add a column there, it starts with the element's own search, and you can change it. Columns you haven't listed there, including ones people add with **Change columns**, use the element's own search. Map screens choose the search for each filter the same way, in the **Filter Type** of each filter on their **Map Options** tab.
 

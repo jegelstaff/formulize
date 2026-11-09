@@ -979,6 +979,5 @@ define("_formulize_FILTERPOP_UNTIL_DATE", "Until %s");
 define("_formulize_SEARCHBOX_LABEL", "Search %s");
 define("_formulize_SEARCHBOX_LOADING", "Finding matches...");
 define("_formulize_SEARCHBOX_MORE", "Showing the first %s. Type more to narrow them down.");
-define("_formulize_SEARCHBOX_TYPE_TO_PICK", "Type to find values to pick, or press Enter to search for what you typed.");
 define("_formulize_SEARCHBOX_CLEAR", "Clear the values picked");
 define("_formulize_SEARCHBOX_ERROR", "The values could not be found. You can still search for what you typed.");

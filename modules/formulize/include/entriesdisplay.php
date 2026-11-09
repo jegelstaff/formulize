@@ -2671,11 +2671,17 @@ function formulize_buildQSSearchBox($handle, $search_text, $fid=0, $submitScript
 	$optionsUrl = XOOPS_URL.'/modules/formulize/formulize_xhr_responder.php?uid='.$uid.'&op=get_quicksearch_options&handle='.urlencode($handle).'&fid='.intval($fid);
 	$headings = getHeaders(array($handle));
 	$columnName = trans(strip_tags((string) ($headings[$handle] ?? $handle)));
+	// the first values the column has, so the list is there as soon as the box is opened; only typing asks for others
+	$initialOptions = formulize_getQuickSearchOptions($handle, $fid, '', formulize_searchBoxOptionLimit());
 	$attributes = array(
 		'data-options-url' => $optionsUrl,
 		'data-orset' => $orset,
 		'data-operator' => $operator,
 		'data-picked' => json_encode($picked),
+		'data-options' => json_encode($initialOptions['options']),
+		'data-more' => $initialOptions['more'] ? '1' : '',
+		'data-limit' => formulize_searchBoxOptionLimit(),
+		'data-all-label' => _formulize_QSF_DefaultText,
 		'data-blank-label' => _SHOW_BLANKS,
 	);
 	$attributeMarkup = '';
@@ -2683,14 +2689,15 @@ function formulize_buildQSSearchBox($handle, $search_text, $fid=0, $submitScript
 		$attributeMarkup .= " $name=\"".htmlspecialchars((string) $value)."\"";
 	}
 	// The box people type in carries the search under the column's name, search_<handle>, the same as a simple text
-	// box, so it works as one even without filterpopovers.js. When values are picked, the hidden field carries them
+	// box, so it works as one even without filterpopovers.js. It is the same kind of input as the simple text box,
+	// with no class of its own to style it, so each theme draws it the way it draws that box. When values are picked, the hidden field carries them
 	// under that name instead, and the box has none, so what is typed then only narrows the values to pick from.
 	$fieldName = 'search_'.htmlspecialchars($handle);
 	$hiddenName = $picked ? " name='$fieldName'" : "";
 	$boxName = $picked ? "" : " name='$fieldName'";
 	return "<div class='formulize-searchbox' data-name='$fieldName'$attributeMarkup>"
 		."<input type='hidden'$hiddenName class='formulize-searchbox-value' value=\"".($picked ? $myts->htmlSpecialChars($search_text) : "")."\">"
-		."<input type='search'$boxName class='fz-input formulize-searchbox-input' enterkeyhint='search' autocomplete='off'".($placeholder ? " placeholder=\"".htmlspecialchars($placeholder)."\"" : "")." aria-label=\"".htmlspecialchars(sprintf(_formulize_SEARCHBOX_LABEL, $columnName))."\" value=\"".$myts->htmlSpecialChars($typed)."\">"
+		."<input type='text'$boxName class='formulize-searchbox-input' enterkeyhint='search' autocomplete='off'".($placeholder ? " placeholder=\"".htmlspecialchars($placeholder)."\"" : "")." aria-label=\"".htmlspecialchars(sprintf(_formulize_SEARCHBOX_LABEL, $columnName))."\" value=\"".$myts->htmlSpecialChars($typed)."\">"
 		."<input type='button' class='formulize-filter-apply' style='display: none' value='"._formulize_SUBMITTEXT."' onclick=\"".htmlspecialchars($submitScript)."\">"
 		."</div>\n";
 }
@@ -3958,7 +3965,6 @@ function formulize_printFilterPopoverScript($screen, $fid) {
 		'pickInstead' => _formulize_FILTERPOP_PICK_INSTEAD,
 		'searchLoading' => _formulize_SEARCHBOX_LOADING,
 		'searchMore' => _formulize_SEARCHBOX_MORE,
-		'searchHint' => _formulize_SEARCHBOX_TYPE_TO_PICK,
 		'searchClear' => _formulize_SEARCHBOX_CLEAR,
 		'searchError' => _formulize_SEARCHBOX_ERROR,
 	);

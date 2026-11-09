@@ -136,7 +136,7 @@ switch($op) {
 			print json_encode(array('options' => array(), 'more' => false));
 			break;
 		}
-		$qsLimit = 50;
+		$qsLimit = formulize_searchBoxOptionLimit();
 		print json_encode(formulize_getQuickSearchOptions($qsHandle, $qsFid, $qsTerm, $qsLimit) + array('limit' => $qsLimit));
 		break;
 

@@ -189,25 +189,26 @@ class formulizeElement extends FormulizeObject {
 	 * @return boolean Returns true or false
 	 */
 	function hasNumericDataType() {
-		$numericDataTypes = array('decimal'=>0, 'float'=>0, 'numeric'=>0, 'double'=>0, 'int'=>0, 'mediumint'=>0, 'tinyint'=>0, 'bigint'=>0, 'smallint'=>0, 'integer'=>0);
 		$dataTypeInfo = $this->getDataTypeInformation();
-		return isset($numericDataTypes[$dataTypeInfo['dataType']]);
+		return self::isNumericDataType($dataTypeInfo['dataType']);
 	}
 
 	/**
-	 * Does this element hold dates? It does if its field in the database has a date or datetime type, whatever kind of
-	 * element it is, because the date oriented searches build SQL that only works on those types. An element that
-	 * has no field yet, because it is being created, holds dates if the field it will get has one of those types.
+	 * The type of this element's field in the database. An element that has no field yet, because it is being created,
+	 * gets the type its field will be created with, which its class declares (see upsertElementSchemaAndResources()).
 	 * The fields of a form's data table are read once per request, for all its elements at once, since lists and the
 	 * screen settings ask this of every column.
-	 * @return bool
+	 * @return string The type, ie: date, int(11), varchar(255), or blank if the element has no field
 	 */
-	function holdsDates() {
+	function fieldDataType() {
 		if(!$this->hasData) {
-			return false;
+			return '';
 		}
 		if(!$this->getVar('ele_id') OR !$this->getVar('id_form')) {
-			return self::isDateDataType((string) $this->overrideDataType);
+			if(method_exists($this, 'getDefaultDataType')) {
+				return (string) $this->getDefaultDataType();
+			}
+			return (string) $this->overrideDataType;
 		}
 		static $fieldTypesByForm = array();
 		$fid = intval($this->getVar('id_form'));
@@ -223,7 +224,61 @@ class formulizeElement extends FormulizeObject {
 				}
 			}
 		}
-		return self::isDateDataType($fieldTypesByForm[$fid][$this->getVar('ele_handle')] ?? '');
+		return $fieldTypesByForm[$fid][$this->getVar('ele_handle')] ?? '';
+	}
+
+	/**
+	 * Does this element hold dates? It does if its field in the database has a date or datetime type, whatever kind of
+	 * element it is, because the date oriented searches build SQL that only works on those types.
+	 * @return bool
+	 */
+	function holdsDates() {
+		return self::isDateDataType($this->fieldDataType());
+	}
+
+	/**
+	 * Does this element hold numbers? It does if its field in the database has a numeric type.
+	 * @return bool
+	 */
+	function holdsNumbers() {
+		return self::isNumericDataType($this->fieldDataType());
+	}
+
+	/**
+	 * Are this element's values a set of labelled choices: the entries a linked element points to, the users a user list
+	 * can name, options of the element's own, like a yes/no or a radio button's, or stored values that have ui text,
+	 * the text people see in place of what is stored? Those suit picking from a list in a search. Values people type
+	 * in, like names or numbers, do not have labels of their own.
+	 * @return bool
+	 */
+	function hasLabelledValues() {
+		if($this->isLinked OR $this->isUserList) {
+			return true;
+		}
+		$uiText = $this->getVar('ele_uitext');
+		if(is_array($uiText) AND count(array_filter($uiText, function($text) { return trim((string) $text) !== ''; }))) {
+			return true;
+		}
+		// the type's handler knows what its options are. A new element has no type recorded yet, so it comes from the class.
+		$type = (string) $this->getVar('ele_type');
+		if($type === '' AND substr(get_class($this), 0, 9) == 'formulize') {
+			$type = lcfirst(substr(get_class($this), 9, -7));
+		}
+		if($type === '' OR !file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".basename($type)."Element.php")) {
+			return false;
+		}
+		$typeHandler = xoops_getmodulehandler(basename($type).'Element', 'formulize', true);
+		return ($typeHandler AND method_exists($typeHandler, 'getFilterOptions') AND !empty($typeHandler->getFilterOptions($this)));
+	}
+
+	/**
+	 * The type at the start of a database type, ie: datetime for datetime(6), and int for int(10) unsigned
+	 * @param string $dataType A type as the database reports it, or as an element type declares it
+	 * @return string
+	 */
+	static function baseDataType($dataType) {
+		$parts = preg_split('/[\s(]/', strtolower(trim((string) $dataType)));
+		return $parts[0] ?? '';
 	}
 
 	/**
@@ -232,8 +287,16 @@ class formulizeElement extends FormulizeObject {
 	 * @return bool
 	 */
 	static function isDateDataType($dataType) {
-		$baseType = strtolower(trim(strtok((string) $dataType, '(')));
-		return ($baseType === 'date' OR $baseType === 'datetime');
+		return in_array(self::baseDataType($dataType), array('date', 'datetime'), true);
+	}
+
+	/**
+	 * Is a database type numeric, with or without a size or sign, ie: decimal(10,2) or int(10) unsigned?
+	 * @param string $dataType A type as the database reports it, or as an element type declares it
+	 * @return bool
+	 */
+	static function isNumericDataType($dataType) {
+		return in_array(self::baseDataType($dataType), array('decimal', 'float', 'numeric', 'double', 'int', 'mediumint', 'tinyint', 'bigint', 'smallint', 'integer'), true);
 	}
 
 	/**
@@ -252,7 +315,8 @@ class formulizeElement extends FormulizeObject {
 	/**
 	 * The search interface this element gets in a list, when the list doesn't choose one itself: the one chosen in the
 	 * element's settings, or if none has been chosen (or the one chosen no longer suits the element), a date range for
-	 * elements that hold dates and the Search box for everything else.
+	 * elements that hold dates, the simple text box for numbers people type in, since picking from a list of them
+	 * makes little sense, and the Search box for everything else.
 	 * @return string A stored value, as in formulizeHandler::listScreenSearchTypes()
 	 */
 	function listSearchType() {
@@ -260,7 +324,13 @@ class formulizeElement extends FormulizeObject {
 		if($chosen !== '' AND in_array($chosen, $this->allowedListSearchTypes(), true)) {
 			return $chosen;
 		}
-		return $this->holdsDates() ? 'DateRange' : 'MultiFilter';
+		if($this->holdsDates()) {
+			return 'DateRange';
+		}
+		if($this->holdsNumbers() AND !$this->hasLabelledValues()) {
+			return 'Box';
+		}
+		return 'MultiFilter';
 	}
 
   function createIndex(){
