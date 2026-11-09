@@ -1,23 +1,23 @@
+<{if $allAppData}>
+<div class="formulize-app-links fz-auto-grid fz-auto-grid--wide">
 <{foreach item=appData from=$allAppData}>
-
-<table><tr><td class='appcatspacer'></td><td>
-<div class='applinks'>
-<h1><{$appData.app_name}></h1>
-
+	<section class="fz-card">
+		<h2 class="fz-card__title fz-text-lg"><{$appData.app_name}></h2>
 <{if $appData.noforms}>
-
-	<p><{$appData.noforms}></p>
-
+		<p class="fz-text-muted"><{$appData.noforms}></p>
 <{else}>
-
-<{foreach item=thisform from=$appData.formData}>
-
-	<p><a href="<{$thisform.url}>"><{$thisform.title}></a></p>
-
-<{/foreach}>
-
+<{* a long list of links goes into columns when its card is wide enough; a short one stays one list *}>
+<{if $appData.formData|@count > 8}>
+		<ul class="fz-auto-grid fz-gap-x-6 fz-gap-y-2 fz-list-none fz-p-0" style="--fz-auto-grid-min: 14rem">
+<{else}>
+		<ul class="fz-stack fz-gap-2 fz-list-none fz-p-0">
 <{/if}>
-</div>
-</td><td class='appcatspacer'></td></tr></table>
-
+<{foreach item=thisform from=$appData.formData}>
+			<li><a href="<{$thisform.url}>"><{$thisform.title}></a></li>
 <{/foreach}>
+		</ul>
+<{/if}>
+	</section>
+<{/foreach}>
+</div>
+<{/if}>
