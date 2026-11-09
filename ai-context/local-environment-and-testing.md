@@ -35,7 +35,7 @@ This access is for reading, to check what the application stored or to get somet
 
 ## What each set of tests needs
 
-The e2e tests build a system in order and then check it, so what a spec needs depends on where it sits. [docs/testing.md](../docs/testing.md) describes the system they build, which is called the museum system.
+The e2e tests build a system in order and then check it, so what a spec needs depends on where it sits. [docs/testing.md](../docs/testing.md) describes the system they build, which is called the museum system. For an outline of its forms, users and groups, see [testing-museum-system](testing-museum-system.md).
 
 | Tests | What they do | What they need first |
 |---|---|---|

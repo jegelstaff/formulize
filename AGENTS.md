@@ -92,6 +92,7 @@ See [agent-conduct](ai-context/agent-conduct.md) for these rules in full.
 | Changing the Public API or the MCP server | [mcp-and-public-api](ai-context/mcp-and-public-api.md) |
 | Using the Public API, MCP and the AI assistant | [docs/public_api.md](docs/public_api.md), [docs/AI-advanced.md](docs/AI-advanced.md), [docs/AI-mcp-reference.md](docs/AI-mcp-reference.md) |
 | User-visible words and translations | [docs/translating_text.md](docs/translating_text.md) |
+| The museum system the e2e tests build, in CI and locally: its forms, users, groups and permissions | [testing-museum-system](ai-context/testing-museum-system.md) |
 | Running tests, the Docker setup | [local-environment-and-testing](ai-context/local-environment-and-testing.md), [docs/testing.md](docs/testing.md) |
 | Writing Playwright specs | [testing-through-the-application](ai-context/testing-through-the-application.md), [testing-robust-specs](ai-context/testing-robust-specs.md), [docs/creating_tests.md](docs/creating_tests.md) |
 | Writing specs for users, groups and accounts | [testing-eau-eag](ai-context/testing-eau-eag.md) |
