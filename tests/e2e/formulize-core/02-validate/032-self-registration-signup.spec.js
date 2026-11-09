@@ -11,6 +11,7 @@ import {
 	deleteTestGroup,
 	deleteToken,
 	getTokenUses,
+	waitForFormulizeFormToken,
 } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
@@ -92,6 +93,10 @@ async function submitSignupForm(page, { firstName, lastName, username, email, pa
 	for (let i = 0; i < count; i++) {
 		await passInputs.nth(i).fill(password);
 	}
+
+	// The form's token is filled in 269ms after the first field is focused, and the fills take less than that.
+	// Without it, the submission is refused and the form is drawn again.
+	await waitForFormulizeFormToken(page);
 
 	// Submitting creates the (inactive) user and redirects to the confirmation step.
 	await Promise.all([
