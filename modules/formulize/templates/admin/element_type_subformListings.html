@@ -421,6 +421,34 @@
 		}
 		$("input[name=elements-ele_value\\[edit_icon_style\\]], input[name=elements-ele_value\\[6\\]]").change(fzUpdateViewAndNewEntryModes);
 
+		// the View radios (ele_value[3]) and the no-View radios (new_entry_mode) are separate settings, so when
+		// the View icon is turned off or on, carry the chosen behaviour over to the set that is about to show.
+		// No-View "add as a new row" leaves the View choice as it was (ele_value[3] 3 or 4), since there is no View behaviour to carry.
+		function fzCheckRadio(name, value) {
+			$("input[name='"+name+"'][value='"+value+"']").each(function() { this.checked = true; });
+		}
+		var fzIconsWereOff = $("input[name=elements-ele_value\\[edit_icon_style\\]]:checked").val() == '<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_OFF}>';
+		$("input[name=elements-ele_value\\[edit_icon_style\\]]").change(function() {
+			var iconsOff = $(this).val() == '<{$smarty.const.FORMULIZE_EDIT_ICON_STYLE_OFF}>';
+			var newEntryMode;
+			if(iconsOff && !fzIconsWereOff) {
+				newEntryMode = 'row';
+				if($("input[name=subform_new_entries]:checked").val() != 'row') {
+					newEntryMode = $("input[name=subform_view_entries]:checked").val() == 'drawer' ? 'drawer' : 'full_screen';
+				}
+				fzCheckRadio('elements-ele_value[new_entry_mode]', newEntryMode);
+			} else if(!iconsOff && fzIconsWereOff) {
+				newEntryMode = $("input[name=elements-ele_value\\[new_entry_mode\\]]:checked").val();
+				if(newEntryMode == 'row') {
+					fzCheckRadio('subform_new_entries', 'row');
+				} else {
+					fzCheckRadio('subform_new_entries', 'open');
+					fzCheckRadio('subform_view_entries', newEntryMode == 'drawer' ? 'drawer' : 'full_screen');
+				}
+			}
+			fzIconsWereOff = iconsOff;
+		});
+
     removeNonDisplayedElementsFromDisabledList()
 
 </script>
