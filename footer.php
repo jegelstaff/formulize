@@ -33,11 +33,7 @@ if(is_object($xoopsTpl) AND $icmsConfig['startpage'] == 'formulize') {
 		if($startSid) {
 			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 			if($screenObject = $screen_handler->get($startSid)) {
-				if($screenObject->getVar('rewriteruleAddress')) {
-					$logoURL = XOOPS_URL.'/'.urlencode(strip_tags($screenObject->getVar('rewriteruleAddress')));
-				} else {
-					$logoURL = XOOPS_URL.'/modules/formulize/index.php?sid='.$startSid;
-				}
+				$logoURL = formulize_screenURL($screenObject);
 			}
 		} elseif($startFid) {
 			$logoURL = XOOPS_URL.'/modules/formulize/index.php?fid='.$startFid;

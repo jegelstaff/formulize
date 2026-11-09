@@ -95,6 +95,14 @@ if ($screen_id == "new") {
             $elementLabel = $elementColheads[$elementId] ? $elementColheads[$elementId] : $elementLabel;
             $settings['rewriteruleElements'][$elementId] = $elementLabel;
         }
+        // every screen can also be reached at its id, and a screen showing a list's entries at the list's address
+        $sidURL = XOOPS_URL.'/'.$screen->getVar('sid').'/';
+        $settings['alternateURLDesc'] = sprintf(_AM_SCREEN_SETTINGS_URL_ALTERNATE_DESC, "<a href='".htmlspecialchars($sidURL)."' target='_blank'>".htmlspecialchars($sidURL)."</a>");
+        $settings['alternateURLListDescs'] = array();
+        foreach(formulize_alternateURLListsShowingEntriesIn($screen) as $listScreen) {
+            $listURL = htmlspecialchars(XOOPS_URL.'/'.formulize_alternateURLAddressForScreen($listScreen).'/')."<i>"._AM_SCREEN_SETTINGS_URL_ENTRY_PLACEHOLDER."</i>/";
+            $settings['alternateURLListDescs'][] = sprintf(_AM_SCREEN_SETTINGS_URL_ALTERNATE_LIST_DESC, htmlspecialchars(trans($listScreen->getVar('title', 'n'))), $listURL);
+        }
     }
 
     if ($settings['type'] == 'listOfEntries') {

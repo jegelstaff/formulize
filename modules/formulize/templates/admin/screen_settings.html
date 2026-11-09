@@ -51,7 +51,9 @@
 	<fieldset>
 		<legend><{$smarty.const._AM_SCREEN_SETTINGS_URLS_LEGEND}></legend>
 		<p><{$smarty.const._AM_SCREEN_SETTINGS_URL_DEFAULT}> <a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}>" target="_blank"><{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}></a></p>
-		<{if $content.alternateURLsOn eq 1}><p><{$smarty.const._AM_SCREEN_SETTINGS_URL_ALTERNATE}> <{$xoops_url}>/<input type='text' name='screens-rewriteruleAddress' value='<{$content.rewriteruleAddress}>'</p>
+		<{if $content.alternateURLsOn eq 1}><p><{$smarty.const._AM_SCREEN_SETTINGS_URL_ALTERNATE}> <{$xoops_url}>/<input type='text' name='screens-rewriteruleAddress' value='<{$content.rewriteruleAddress}>'></p>
+        <{if $content.alternateURLDesc}><div class="description"><{$content.alternateURLDesc}></div><{/if}>
+        <{foreach from=$content.alternateURLListDescs item=alternateURLListDesc}><div class="description"><{$alternateURLListDesc}></div><{/foreach}>
         <p><{$smarty.const._AM_SCREEN_SETTINGS_URL_ALTERNATE_ELEMENT}> <{html_options name='screens-rewriteruleElement' options=$content.rewriteruleElements selected=$content.rewriteruleElement}></p>
         <{/if}>
 	</fieldset>

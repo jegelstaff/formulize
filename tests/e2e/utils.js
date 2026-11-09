@@ -532,6 +532,19 @@ export async function waitForAdminPageReady(page) {
 }
 
 /**
+ * Wait until no jQuery animation is running on the page. Use it after a click that starts a slide or a
+ * show (an accordion section opening, a panel growing), before clicking something that the animation moves.
+ * Playwright's own stability check looks at one element over a couple of frames, and can pass part way
+ * through a slow animation on a busy CI runner.
+ * jQuery adds an element to its animation timers as soon as the animation is called, so a wait made right
+ * after the click that starts it can't return before it begins.
+ * @param {Page} page - Playwright page object
+ */
+export async function waitForJQueryAnimations(page) {
+	await page.waitForFunction(() => window.jQuery && jQuery(':animated').length === 0);
+}
+
+/**
  * Open the settings popup of a page of a multi-page screen, from the Pages tab. The page's drawer has to be closed, because
  * clicking an open drawer closes it. A drawer that's closing and one that's opening are both on the page for a moment, so
  * "Edit this page" on its own can match two links. This uses the one in the page's own drawer, so a click that the accordion
@@ -989,6 +1002,8 @@ export async function createMuseumForm(page, title, piCaption = null) {
 	await page.getByRole('textbox', { name: 'Form title:' }).fill(title);
 	if (piCaption) {
 		await page.locator('input[name="pi_new_caption"]').fill(piCaption);
+		// typing in the caption ticks "yes" through keyup/change handlers, which fill() does not reliably set off before the save
+		await page.locator('#pi-new-yes').check();
 	}
 	await saveAdminForm(page);
 	// Resolve by the form's HANDLE, read back off the re-rendered settings panel - see
@@ -1014,6 +1029,10 @@ export async function deleteMuseumForm(page, fid, opts = {}) {
 	await waitForAdminPageReady(page);
 	await page.getByRole('link', { name: 'Application: Museum' }).click();
 	await waitForAdminPageReady(page);
+	// The application's accordion section slides open (jQuery UI animates its height and padding), and the
+	// form boxes inside move down while it does. A click on a form's name during the slide can land between
+	// boxes and open nothing, so wait for the slide to finish first.
+	await waitForJQueryAnimations(page);
 
 	// The Delete link is in the DOM for every form, but it lives inside the form's details panel, which
 	// is hidden until the form's box in the listing is clicked (clickFormDetails() in
@@ -1028,6 +1047,8 @@ export async function deleteMuseumForm(page, fid, opts = {}) {
 	// form we made and not any other form in the Museum application.
 	const deleteLink = page.locator(`a.deleteformlink[target="${fid}"]`);
 	await expect(deleteLink).toBeVisible();
+	// The panel grows open with an animation too, so let it finish before clicking inside it
+	await waitForJQueryAnimations(page);
 
 	// The click raises a confirm() dialog warning that the data will be lost. Playwright dismisses
 	// dialogs by default (which would cancel the delete), so accept it explicitly.

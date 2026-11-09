@@ -1236,6 +1236,14 @@ define("_AM_SCREEN_SETTINGS_URLS_LEGEND", "URLs for this screen");
 define("_AM_SCREEN_SETTINGS_URL_DEFAULT", "The default URL for this screen:");
 define("_AM_SCREEN_SETTINGS_URL_ALTERNATE", "Set an alternate URL for accessing this screen:");
 define("_AM_SCREEN_SETTINGS_URL_ALTERNATE_ELEMENT", "With an alternate URL, identify entries based on their value in this element:");
+// %s is the screen's address made from its id, as a link
+define("_AM_SCREEN_SETTINGS_URL_ALTERNATE_DESC", "Whether or not you set one, this screen can also be reached at %s");
+// %1$s is the title of a list screen, %2$s is the list's address with the place for the entry marked
+define("_AM_SCREEN_SETTINGS_URL_ALTERNATE_LIST_DESC", "If you leave the alternate URL blank, entries opened from the list \"%1\$s\" are shown at %2\$s");
+// marks the place in an address where the entry goes
+define("_AM_SCREEN_SETTINGS_URL_ENTRY_PLACEHOLDER", "entry");
+// %s is the number that was typed
+define("_AM_SCREEN_SETTINGS_URL_ALTERNATE_NUMERIC", "The alternate URL was not changed to \"%s\". It can't be only a number, because screens can already be reached at their id number.");
 
 define("_AM_SCREEN_SETTINGS_PHP_LEGEND", "PHP code for including this screen anywhere");
 define("_AM_SCREEN_SETTINGS_PHP_DESC", "You can embed this screen in any PHP application or web page that is running on the same web server.");

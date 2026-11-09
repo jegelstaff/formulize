@@ -946,6 +946,8 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 					// display screen may be for another form in the active relationship, in which case show the entry in the set that's for the form this screen is based on
 					$this_ent = determineViewEntryScreenEntryId($frid, $fid, $this_ent, $displayScreen);
 				}
+				// the screen is showing an entry of this list, so it can be reached at the list's alternate URL (see formulize_alternateURLListScreenFor)
+				$GLOBALS['formulize_alternateURLListScreen'] = $screen;
 				$viewEntryScreen_handler->render($displayScreen, $this_ent, $settings);
 				global $renderedFormulizeScreen; // picked up at the end of initialize.php so we set the right info in the template when the whole page is rendered
 				$renderedFormulizeScreen = $displayScreen;
@@ -2170,15 +2172,22 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 							$selectionCheckbox = "<input type=checkbox title='" . _formulize_DE_DELBOXDESC . "' class='formulize_selection_checkbox' name='delete_" . $entry_id . "' id='delete_" . $entry_id . "' value='delete_" . $entry_id . "'>";
 						}
 
-						$viewEntryLinkCode = "<a href='" . trim($currentURL, '/');
-						global $formulizeCanonicalURI;
-						if($formulizeCanonicalURI) {
-							$entryIdentifier = $entry_id;
+						// the entry's alternate URL, if the list has one, with the entry identified after the list's own address
+						$entryAlternateURL = '';
+						if($screen AND !formulize_isEmbeddedRequest()) {
+							$entryAlternateURLParts = formulize_alternateURLParts($screen, $entry_id);
 							if($rewriteruleElement = $element_handler->get($screen->getVar('rewriteruleElement'))) {
-								$entryIdentifier = urlencode(getValue($entry, $rewriteruleElement->getVar('ele_handle')));
+								// the value is in the dataset already, so there is no need to look it up again
+								$entryIdentifier = getValue($entry, $rewriteruleElement->getVar('ele_handle'));
+								$entryIdentifier = is_array($entryIdentifier) ? (isset($entryIdentifier[0]) ? $entryIdentifier[0] : '') : $entryIdentifier;
+								$entryAlternateURLParts['entryIdentifier'] = htmlspecialchars_decode((string) $entryIdentifier);
 							}
-							$viewEntryLinkCode .= '/'.$entryIdentifier.'/';
+							$entryAlternateURL = formulize_buildAlternateURL($entryAlternateURLParts);
+						}
+						if($entryAlternateURL) {
+							$viewEntryLinkCode = "<a href='" . $entryAlternateURL;
 						} else {
+							$viewEntryLinkCode = "<a href='" . trim($currentURL, '/');
 							if(strstr($currentURL, "?")) { // if params are already part of the URL...
 								$viewEntryLinkCode .= "&";
 							} else {

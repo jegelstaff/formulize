@@ -56,8 +56,9 @@ if($icmsConfig['startpage'] == 'formulize') {
 		if($startSid) {
 			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 			if($screenObject = $screen_handler->get($startSid)) {
-				if($screenObject->getVar('rewriteruleAddress')) {
-					header('Location: '.ICMS_URL.'/'.urlencode(strip_tags($screenObject->getVar('rewriteruleAddress'))));
+				// only to an address typed for the screen, since the site's own address is tidier than the screen's id
+				if($screenObject->getVar('rewriteruleAddress') AND $alternateURL = formulize_buildAlternateURL(formulize_alternateURLParts($screenObject))) {
+					header('Location: '.$alternateURL);
 					exit();
 				}
 			}
