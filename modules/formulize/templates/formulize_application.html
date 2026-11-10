@@ -1,6 +1,8 @@
 <{if $allAppData}>
+<{* every section's card is the same height; one with more links than fit opens over the cards below it (fz-expand-card) *}>
 <div class="formulize-app-links fz-auto-grid fz-auto-grid--wide">
 <{foreach item=appData from=$allAppData}>
+	<div class="fz-expand-card">
 	<section class="fz-card">
 		<div class="fz-card__header fz-flex-nowrap fz-pb-3 fz-border-b">
 			<div class="fz-flex fz-items-center fz-gap-3 fz-min-w-0">
@@ -14,14 +16,14 @@
 <{if $appData.noforms}>
 		<p class="fz-text-muted"><{$appData.noforms}></p>
 <{else}>
-<{* a long list of links goes into columns when its card is wide enough; a short one stays one list *}>
-		<ul class="fz-link-list<{if $appData.formData|@count > 8}> fz-link-list--columns<{/if}>">
+		<ul class="fz-link-list">
 <{foreach item=thisform from=$appData.formData}>
 			<li><a href="<{$thisform.url}>"><{$thisform.title}></a></li>
 <{/foreach}>
 		</ul>
 <{/if}>
 	</section>
+	</div>
 <{/foreach}>
 </div>
 <{/if}>

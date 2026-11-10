@@ -347,6 +347,7 @@ function formulize_uiCatalog() {
                     '--fz-field-label-width' => 'On `fz-field--horizontal`: the width of the label. 12rem.',
                     '--fz-tone' => 'On `fz-badge`, `fz-callout`, `fz-bar-list__row`, `fz-progress` or `fz-matrix__cell`: the colour, for a tone of your own when none of the tone modifiers is the right one, such as the steps of a scale. Set it in a style attribute, or in a class of your own. Set `--fz-tone-soft` with it on a badge or a callout.',
                     '--fz-tone-soft' => 'On `fz-badge` or `fz-callout`: the pale tint that goes with `--fz-tone`.',
+                    '--fz-expand-card-height' => 'On `fz-expand-card`, or on an element around it: the height of the card. 18rem.',
                     '--fz-code-block-max-height' => 'On `fz-code-block`: the tallest it can be, after which it scrolls. No limit unless it is set.',
                     '--fz-depth' => 'On `fz-tree__cell`: how deep its row is in the tree, 0 for a row at the top. Every row needs it.',
                     '--fz-level' => 'On `fz-tree__line`: the depth of the column the line is drawn in. See Tree for which level each line has.',
@@ -362,6 +363,7 @@ function formulize_uiCatalog() {
                     '--fz-gap-x' => 'Set by the `fz-gap-x-`* utilities.',
                     '--fz-gap-y' => 'Set by the `fz-gap-y-`* utilities.',
                     '--fz-auto-grid-max' => 'Set by the --max-N modifiers of `fz-auto-grid` and `fz-grid-list`.',
+                    '--fz-expand-card-full-height' => 'Set on each `fz-expand-card` by Formulize\'s script: how tall its card is when it is open.',
                 ),
             ),
             array(
@@ -770,7 +772,6 @@ HTML
                 'summary' => 'Links to other pages, one to a row, each with an arrow at its end: the screens in a section of the menu, or a set of places to go next.',
                 'classes' => array(
                     'fz-link-list' => 'On a `<ul>` or `<ol>`, with an `<a>` in each `<li>`. Each link fills its row and is shaded under the pointer.',
-                    'fz-link-list--columns' => 'The links in columns when there is room, each at least 14rem wide, reading down each column. For a long list.',
                 ),
                 'notes' => array(
                     'The links need no classes of their own.',
@@ -789,15 +790,58 @@ HTML
   </section>
   <section class="fz-card">
     <h3 class="fz-card__title">Reports</h3>
-    <ul class="fz-link-list fz-link-list--columns">
+    <ul class="fz-link-list">
       <li><a href="#">Enrolment by program</a></li>
       <li><a href="#">Attendance summary</a></li>
-      <li><a href="#">Revenue by month</a></li>
-      <li><a href="#">Outstanding invoices</a></li>
-      <li><a href="#">Volunteer hours</a></li>
-      <li><a href="#">Retention</a></li>
     </ul>
   </section>
+</div>
+HTML
+            ),
+            array(
+                'id' => 'expand-card',
+                'name' => 'Expanding card',
+                'summary' => 'Cards that are all the same height, side by side in a grid, however much each one holds. One with more than fits opens over the cards below it, so nothing on the page moves.',
+                'classes' => array(
+                    'fz-expand-card' => 'On each child of the grid, with one `fz-card` in it. It keeps its place and its height in the grid, and the card is laid over it.',
+                    'fz-expand-card--overflows' => 'The card has more than fits: it is cut off under a fade with a chevron pointing down. Added by Formulize\'s script, `formulize-ui.js`; don\'t add it yourself.',
+                    'fz-expand-card--open' => 'Opened by a tap. Added and taken away by the script.',
+                    'fz-expand-card--closed' => 'Closed with Esc, until the pointer or the focus leaves it or the focus moves on inside it. Added and taken away by the script.',
+                ),
+                'notes' => array(
+                    'A card with more than fits opens to its full height under the pointer, when anything in it has the keyboard\'s focus, and when it is tapped. The first tap on it opens it, and doesn\'t follow the link under the finger; a tap anywhere else closes it. Esc closes it too.',
+                    'An open card is raised over what is below it, with a shadow. A very long one is no taller than most of the window, and scrolls inside.',
+                    'A card whose contents fit has no fade and doesn\'t open.',
+                    'Everything in a card is on the page when it is closed, so a screen reader reads all of it and the Tab key reaches all of it.',
+                    'It is 18rem tall: a header and six links of an `fz-link-list` fit, at the default sizes. For another height, set `--fz-expand-card-height` on each one, or on the grid.',
+                    'On paper, every card shows all of what it holds.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-auto-grid fz-auto-grid--max-2 fz-auto-grid--wide">
+  <div class="fz-expand-card">
+    <section class="fz-card">
+      <h3 class="fz-card__title">Programs</h3>
+      <ul class="fz-link-list">
+        <li><a href="#">Applications</a></li>
+        <li><a href="#">Interview schedule</a></li>
+      </ul>
+    </section>
+  </div>
+  <div class="fz-expand-card">
+    <section class="fz-card">
+      <h3 class="fz-card__title">Reports</h3>
+      <ul class="fz-link-list">
+        <li><a href="#">Enrolment by program</a></li>
+        <li><a href="#">Attendance summary</a></li>
+        <li><a href="#">Revenue by month</a></li>
+        <li><a href="#">Outstanding invoices</a></li>
+        <li><a href="#">Volunteer hours</a></li>
+        <li><a href="#">Retention</a></li>
+        <li><a href="#">Donations by campaign</a></li>
+        <li><a href="#">Membership renewals</a></li>
+      </ul>
+    </section>
+  </div>
 </div>
 HTML
             ),

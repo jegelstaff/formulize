@@ -1092,9 +1092,7 @@
    set of places to go next. On a <ul> or <ol>, with a link in each <li>. Each
    link fills its row, is shaded under the pointer, and has an arrow at its end.
    In a card, the list reaches a little into the card's padding, so the links'
-   text lines up with the card's title while their shading has room around it.
-   fz-link-list--columns puts the links in columns when there is room, reading
-   down each column. */
+   text lines up with the card's title while their shading has room around it. */
 .fz-link-list {
   display: flex;
   flex-direction: column;
@@ -1109,12 +1107,6 @@
 .fz-card > .fz-link-list {
   margin-inline: calc(var(--fz-spacing) * -2.5);
 }
-.fz-link-list--columns {
-  display: block;
-  columns: 14rem;
-  column-gap: calc(var(--fz-spacing) * 4);
-}
-.fz-link-list--columns > * { break-inside: avoid; }
 .fz-link-list :where(li > a) {
   box-sizing: border-box;
   display: flex;
@@ -1162,6 +1154,139 @@
   box-shadow: var(--fz-focus-ring);
 }
 .fz-link-list :where(li > a):focus-visible::after { background-color: currentColor; }
+
+/* ---- Expanding card ---------------------------------------------------------
+   Cards of one fixed height, side by side in a grid, however much each holds.
+   fz-expand-card goes on the grid's child, with one fz-card in it. It keeps
+   its place and its height in the grid, and the card inside it is laid over
+   it. A card with more than fits is cut off at the bottom under a fade with a
+   chevron, and opens to its full height under the pointer, when something in
+   it has the keyboard's focus, or when it is tapped. It opens over whatever is
+   below it, so nothing on the page moves; a very long one scrolls inside.
+   formulize-ui.js tells which cards have more than fits (--overflows), opens
+   one when it is tapped (--open), and closes one with Esc (--closed); the
+   cards open on hover and focus without it. --fz-expand-card-height sets the
+   height: 18rem fits a header and six links at the default sizes; when there
+   are more, the sixth shows faded, under the chevron. */
+.fz-expand-card {
+  --fz-expand-card-height: 18rem;
+  --fz-expand-card-full-height: 0px; /* set by formulize-ui.js */
+  position: relative;
+  z-index: 0;
+  min-width: 0;
+  height: var(--fz-expand-card-height);
+  /* while it closes, it stays over the cards below until it is closed */
+  transition: z-index 0s linear var(--fz-duration);
+}
+.fz-expand-card > .fz-card {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 100%;
+  overflow: clip;
+  transition: box-shadow var(--fz-duration) var(--fz-ease-out);
+}
+/* open: on hover (only where there is a pointer that hovers, so a tap on a
+   phone doesn't open a card and follow a link at once), with the focus in it,
+   or tapped */
+@media (hover: hover) {
+  .fz-expand-card:hover:not(.fz-expand-card--closed) {
+    z-index: 2;
+    transition-delay: 0s;
+  }
+  .fz-expand-card:hover:not(.fz-expand-card--closed) > .fz-card {
+    height: auto;
+    min-height: 100%;
+    max-height: max(100%, 70vh);
+    overflow-y: auto;
+  }
+}
+.fz-expand-card:where(:focus-within, .fz-expand-card--open):not(.fz-expand-card--closed) {
+  z-index: 2;
+  transition-delay: 0s;
+}
+.fz-expand-card:where(:focus-within, .fz-expand-card--open):not(.fz-expand-card--closed) > .fz-card {
+  height: auto;
+  min-height: 100%;
+  max-height: max(100%, 70vh);
+  overflow-y: auto;
+}
+/* while it is open, the page reaches a little past its bottom, so the last
+   row's cards can be scrolled into view with room under them. The script sets
+   --fz-expand-card-full-height; without it there is no room under them. */
+.fz-expand-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+@media (hover: hover) {
+  .fz-expand-card--overflows:hover:not(.fz-expand-card--closed)::after {
+    height: calc(min(var(--fz-expand-card-full-height), max(100%, 70vh)) + var(--fz-spacing) * 4);
+  }
+}
+.fz-expand-card--overflows:where(:focus-within, .fz-expand-card--open):not(.fz-expand-card--closed)::after {
+  height: calc(min(var(--fz-expand-card-full-height), max(100%, 70vh)) + var(--fz-spacing) * 4);
+}
+/* raised above the cards around it while it is open */
+@media (hover: hover) {
+  .fz-expand-card--overflows:hover:not(.fz-expand-card--closed) > .fz-card { box-shadow: var(--fz-shadow-lg); }
+}
+.fz-expand-card--overflows:where(:focus-within, .fz-expand-card--open):not(.fz-expand-card--closed) > .fz-card {
+  box-shadow: var(--fz-shadow-lg);
+}
+/* the sign that there is more: a fade over the bottom of the card, and a
+   chevron pointing down. A tap on the fade opens the card; it doesn't follow
+   the link half hidden under it. */
+.fz-expand-card--overflows > .fz-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: calc(var(--fz-spacing) * 14);
+  background: linear-gradient(to bottom, transparent, var(--fz-card-bg) 70%);
+}
+.fz-expand-card--overflows > .fz-card::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  bottom: calc(var(--fz-spacing) * 2);
+  left: calc(50% - var(--fz-spacing) * 2.5);
+  width: calc(var(--fz-spacing) * 5);
+  height: calc(var(--fz-spacing) * 5);
+  background-color: var(--fz-color-text-muted);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3.5 6 4.5 4.5L12.5 6'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3.5 6 4.5 4.5L12.5 6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+@media (hover: hover) {
+  .fz-expand-card:hover:not(.fz-expand-card--closed) > .fz-card::before,
+  .fz-expand-card:hover:not(.fz-expand-card--closed) > .fz-card::after { content: none; }
+}
+.fz-expand-card:where(:focus-within, .fz-expand-card--open):not(.fz-expand-card--closed) > .fz-card::before,
+.fz-expand-card:where(:focus-within, .fz-expand-card--open):not(.fz-expand-card--closed) > .fz-card::after { content: none; }
+/* it grows and shrinks, unless the person has asked for less motion */
+@media (prefers-reduced-motion: no-preference) {
+  .fz-expand-card {
+    interpolate-size: allow-keywords;
+  }
+  .fz-expand-card > .fz-card {
+    transition: box-shadow var(--fz-duration) var(--fz-ease-out),
+                height var(--fz-duration) var(--fz-ease-out);
+  }
+}
+/* on paper, every card shows all of what it holds */
+@media print {
+  .fz-expand-card { height: auto; }
+  .fz-expand-card > .fz-card {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
+  .fz-expand-card > .fz-card::before,
+  .fz-expand-card > .fz-card::after { content: none; }
+}
 
 /* ---- Table ------------------------------------------------------------------
    A plain data table: a header row, a line under each row, and rows the row
@@ -2138,6 +2263,8 @@
   .fz-radio,
   .fz-toggle::before,
   .fz-card--interactive,
+  .fz-expand-card,
+  .fz-expand-card > .fz-card,
   .fz-link-list :where(li > a),
   .fz-link-list :where(li > a)::after { transition: none; }
   .fz-link-list :where(li > a):hover::after { transform: none; }
