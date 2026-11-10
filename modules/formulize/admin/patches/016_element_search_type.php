@@ -9,11 +9,11 @@ if (!defined('XOOPS_ROOT_PATH')) {
 //
 // A new site gets the column from sql/mysql.sql.
 //
-// Gated to run once, when the stored dbversion is below 29.
+// Gated to run once, when the stored dbversion is below 30.
 function formulize_patch_016_element_search_type($prev_dbversion, $required_dbversion) {
     global $xoopsDB;
 
-    if ($prev_dbversion >= 29) {
+    if ($prev_dbversion >= 30) {
         return true; // already applied
     }
 
