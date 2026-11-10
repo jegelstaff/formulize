@@ -11,7 +11,8 @@ import { museumAppId } from '../01-setup/museum-forms';
 // in one or the other, as its Display Format says. Whatever the formats are, a time has to read the same everywhere it's
 // shown, and come back to the same time wherever it's read:
 //   - lists show it in the element's format, and a time element that can't be changed shows it the same way on the form
-//   - a search typed the way the list shows it finds it
+//   - a search typed the way the list shows it finds it, and so does part of a time as it's shown: 5 anywhere in it, 1: as the
+//     hour, so not 11, or pm. A time typed in the other format finds it too.
 //   - a condition on the time, which is checked against the entry when its form is drawn, compares it as a time, so 9:05 in
 //     the morning is before 12:00 however it's written
 // The checks run three times: with the formats a new site has, with formats a site might choose, one of which strtotime
@@ -226,6 +227,10 @@ test('with the formats a new site has, times read as they always have', async ({
 	await expectListToShow(page, '9:05am', '1:30pm');
 	await expectSearchToFind(page, '1:30pm', AFTERNOON);
 	await expectSearchToFind(page, '9:05am', MORNING);
+	// part of a time, as it's shown: 5 is anywhere in it, 1: is the hour, so not 11, and pm is the afternoon
+	await expectSearchToFind(page, '5', MORNING);
+	await expectSearchToFind(page, '1:', AFTERNOON);
+	await expectSearchToFind(page, 'pm', AFTERNOON);
 	await expectEntryToShow(page, MORNING, '9:05am', false);
 	await expectEntryToShow(page, AFTERNOON, '1:30pm', true);
 });
@@ -246,6 +251,7 @@ test('with formats a site chooses, times show and read in those formats', async 
 
 	await expectListToShow(page, '9:05 AM', '1:30 PM');
 	await expectSearchToFind(page, '1:30 PM', AFTERNOON);
+	await expectSearchToFind(page, 'am', MORNING);
 	await expectEntryToShow(page, MORNING, '9:05 AM', false);
 	await expectEntryToShow(page, AFTERNOON, '1:30 PM', true);
 });
@@ -258,6 +264,9 @@ test('with the element set to 24-hour, times show and read in the 24-hour format
 	await expectListToShow(page, '09h05', '13h30');
 	await expectSearchToFind(page, '13h30', AFTERNOON);
 	await expectSearchToFind(page, '09:05', MORNING);
+	// part of a time, as this format shows it: 9h is the hour, and 3 is only in 13h30
+	await expectSearchToFind(page, '9h', MORNING);
+	await expectSearchToFind(page, '3', AFTERNOON);
 	await expectEntryToShow(page, MORNING, '09h05', false);
 	await expectEntryToShow(page, AFTERNOON, '13h30', true);
 });

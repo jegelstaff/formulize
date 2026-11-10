@@ -188,10 +188,9 @@ class formulizeDateElementHandler extends formulizeElementsHandler {
 	// $value is the value that was retrieved from the database for this element in the active entry.  It is a raw value, no processing has been applied, it is exactly what is in the database (as prepared in the prepareDataForSaving method and then written to the DB)
 	// $entry_id is the ID of the entry being loaded
 	function loadValue($element, $value, $entry_id) {
+		// The saved value replaces the default, even when nothing is saved, including a default like {TODAY} or {elementHandle}. loadValue() in
+		// formdisplay.php has already kept the default for a blank value, if the element is set to use it then, and render() works it out.
 		$ele_value = $element->getVar('ele_value');
-		if(!$value AND substr($ele_value[0],0,1) == '{' AND substr($ele_value[0],-1) == '}') {
-			$value = $ele_value[0];
-		}
 		$ele_value[0] = $value;
 		return $ele_value;
 	}

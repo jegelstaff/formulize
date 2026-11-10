@@ -149,11 +149,18 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 		$ele_value = $element->getVar('ele_value');
 
 		$totalMinutes = 0;
+		$somethingTyped = false;
 
 		foreach ($this->timeUnits as $unit => $multiplier) {
 			if (isset($value[$unit]) && is_numeric($value[$unit])) {
 				$totalMinutes += $value[$unit] * $multiplier;
+				$somethingTyped = true;
 			}
+		}
+
+		// boxes left blank are no duration, which is saved as nothing, not raised to the minimum
+		if (!$somethingTyped) {
+			return NULL;
 		}
 
 		// Validate min/max duration

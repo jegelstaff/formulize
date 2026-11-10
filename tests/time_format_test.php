@@ -87,19 +87,25 @@ function extractFunctionSource($source, $functionName) {
     return false;
 }
 
-$code = extractFunctionSource(file_get_contents($functionsFile), 'formulize_timeValueAsISO');
-if ($code === false) {
-    fwrite(STDERR, "Could not extract formulize_timeValueAsISO()\n");
-    exit(2);
+$functionsSource = file_get_contents($functionsFile);
+foreach (array('formulize_timeValueAsISO', 'formulize_mysqlTimeFormat', 'formulize_timeSearchTerm', 'formulize_timeLikeComparison', 'formulize_timeMatchesSearch') as $name) {
+    $code = extractFunctionSource($functionsSource, $name);
+    if ($code === false) {
+        fwrite(STDERR, "Could not extract $name()\n");
+        exit(2);
+    }
+    eval($code);
 }
-eval($code);
+
+// Times contain nothing that needs escaping, and the patterns only have backslashes, so this stands in faithfully for the real one.
+function formulize_db_escape($value) { return addslashes($value); }
 
 // The real methods, wrapped in a bare class so they can be called without the module bootstrap. getEffectiveTimeFormat()
 // reads the element and the site's settings, which need the bootstrap, so this stands in for it: the "element" is just
 // '12' or '24', or null for the site's setting, which is $GLOBALS['__siteTimeFormat'].
 $timeSource = file_get_contents($timeFile);
 $methodSources = '';
-foreach (array('getTimeFormatStrings', 'formatTime', 'prepareLiteralTextForDB', 'convert12To24HourTime') as $name) {
+foreach (array('getTimeFormatStrings', 'formatTime', 'prepareLiteralTextForDB', 'convert12To24HourTime', 'buildSearchWhereClause') as $name) {
     $code = extractFunctionSource($timeSource, $name);
     if ($code === false) {
         fwrite(STDERR, "Could not extract $name() from $timeFile\n");
@@ -110,6 +116,7 @@ foreach (array('getTimeFormatStrings', 'formatTime', 'prepareLiteralTextForDB', 
 $GLOBALS['__siteTimeFormat'] = '12';
 eval('class TimeHandlerUnderTest { ' . $methodSources . '
     function getEffectiveTimeFormat($element) { return $element === null ? $GLOBALS["__siteTimeFormat"] : $element; }
+    function elementForSearchColumn($column) { return null; }
 }');
 
 // ---- tiny assertion harness -------------------------------------------------
@@ -256,6 +263,63 @@ for ($i = 1; $i < count($shownInOrder); $i++) {
 }
 $term = formulize_timeValueAsISO($handler->prepareLiteralTextForDB('9:00', '12'));
 check('a typed 9:00 compared with 1:30pm', formulize_timeValueAsISO($handler->formatTime('13:30:00', '12')) > $term, true);
+
+// ---- searching for part of a time --------------------------------------------
+// What a LIKE search or condition finds, through formulize_timeMatchesSearch, which is how a condition is checked against one entry.
+// formulize_timeLikeComparison builds the same thing in SQL, which can't be run here, so its SQL is checked as text further down.
+function timesFoundBy($handler, $term, $elementFormat, $storedTimes) {
+    $formats = $handler->getTimeFormatStrings($elementFormat);
+    $search = formulize_timeSearchTerm($term, $handler->prepareLiteralTextForDB($term, $elementFormat, true), $formats);
+    $found = array();
+    foreach ($storedTimes as $stored) {
+        if (formulize_timeMatchesSearch($handler->formatTime($stored, $elementFormat), $stored, $search)) {
+            $found[] = $stored;
+        }
+    }
+    return $found;
+}
+// a time typed the way the element shows it finds that time, and only that time
+foreach (array('12', '24') as $elementFormat) {
+    foreach ($storedTimes as $stored) {
+        $shown = $handler->formatTime($stored, $elementFormat);
+        check("searching for $shown on a $elementFormat-hour element", timesFoundBy($handler, $shown, $elementFormat, $storedTimes), array($stored));
+    }
+}
+// a time typed in the other format finds it too, ie: 13:30 on an element that shows 1:30pm
+foreach ($storedTimes as $stored) {
+    $shown24 = $handler->formatTime($stored, '24');
+    check("searching for $shown24 on a 12-hour element", in_array($stored, timesFoundBy($handler, $shown24, '12', $storedTimes)), true);
+}
+check('blank finds nothing', timesFoundBy($handler, '', '12', $storedTimes), array());
+check('a blank time is never found', formulize_timeMatchesSearch('', '', formulize_timeSearchTerm('5', '5', array(_12HTIMEFORMAT))), false);
+if ($isDefault) {
+    // 5 is anywhere in the time, as it's shown
+    $withFive = array_values(array_filter($storedTimes, function ($stored) use ($handler) { return strpos($handler->formatTime($stored, '12'), '5') !== false; }));
+    check('5 is anywhere in the time, as shown', timesFoundBy($handler, '5', '12', $storedTimes), $withFive);
+    check('5 finds 5:30pm', in_array('17:30:00', $withFive), true);
+    check('5 does not find 3:00pm, though 15:00 has a 5', in_array('15:00:00', timesFoundBy($handler, '5', '12', $storedTimes)), false);
+    // 5: is the hour, so 5am and 5pm on a 12-hour element, and only 5am on a 24-hour one
+    check('5: on a 12-hour element', timesFoundBy($handler, '5:', '12', $storedTimes), array('05:00:00', '05:05:00', '05:30:00', '05:59:00', '17:00:00', '17:05:00', '17:30:00', '17:59:00'));
+    check('5: on a 24-hour element', timesFoundBy($handler, '5:', '24', $storedTimes), array('05:00:00', '05:05:00', '05:30:00', '05:59:00'));
+    check('05: on a 24-hour element', timesFoundBy($handler, '05:', '24', $storedTimes), array('05:00:00', '05:05:00', '05:30:00', '05:59:00'));
+    check('1: is not 11 or 21', timesFoundBy($handler, '1:', '24', $storedTimes), array('01:00:00', '01:05:00', '01:30:00', '01:59:00'));
+    check('5:3 is the hour and the start of the minutes', timesFoundBy($handler, '5:3', '12', $storedTimes), array('05:30:00', '17:30:00'));
+    check('pm is the afternoon and evening', count(timesFoundBy($handler, 'pm', '12', $storedTimes)), 48);
+    check('PM is the same', count(timesFoundBy($handler, 'PM', '12', $storedTimes)), 48);
+    check('pm is nothing on a 24-hour element', timesFoundBy($handler, 'pm', '24', $storedTimes), array());
+    check('30pm is part of a time', count(timesFoundBy($handler, '30pm', '12', $storedTimes)), 12);
+    check("1pm is one o'clock", timesFoundBy($handler, '1pm', '12', $storedTimes), array('13:00:00'));
+    check('pm is left as typed for the database', $handler->prepareLiteralTextForDB('pm', '12', true), 'pm');
+    // the SQL
+    check('TIME_FORMAT for g:ia', formulize_mysqlTimeFormat('g:ia'), '%l:%i%p');
+    check('TIME_FORMAT for H:i', formulize_mysqlTimeFormat('H:i'), '%H:%i');
+    check('TIME_FORMAT for a literal letter', formulize_mysqlTimeFormat('H\hi'), '%Hh%i');
+    check('the SQL for 5:', $handler->buildSearchWhereClause('5:', 'LIKE', "'", '%', 1, 'main', 'main.`starts`', '5:'),
+        " ( LOWER(TIME_FORMAT(main.`starts`,'%l:%i%p')) REGEXP '(^|[^0-9:])0*5\\\\:' ) ");
+    check('the SQL for 1:30pm, which is a whole time', $handler->buildSearchWhereClause('13:30', 'NOT LIKE', "'", '%', 1, 'main', 'main.`starts`', '1:30pm'),
+        " ( NOT ( LOWER(TIME_FORMAT(main.`starts`,'%l:%i%p')) REGEXP '(^|[^0-9:])0*1\\\\:30pm' OR TIME_FORMAT(main.`starts`,'%H:%i') = '13:30' ) ) ");
+    check('= is not done here', $handler->buildSearchWhereClause('13:30', '=', "'", '', 1, 'main', 'main.`starts`', '1:30pm'), false);
+}
 
 // ---- derived values ----------------------------------------------------------
 // the defaults have always been readable by strtotime, which derived values that work out the time between two times rely on
