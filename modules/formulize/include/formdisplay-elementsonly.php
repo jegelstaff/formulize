@@ -440,6 +440,42 @@ $formHtml = "<form id='".htmlspecialchars($formname)."' data-fid='".intval($fid)
 // drawer builds its footer from this, which is what keeps the two surfaces consistent.
 $buttonMeta = formulize_elementsOnlyButtonMetaJs($screen, $fid);
 
+// The drawer's header and footer templates: where its title and controls go, and in what order.
+// They are the theme's own (templates/screens/<Theme>/default/drawer/headertemplate.php and
+// footertemplate.php) or else the system default (templates/screens/default/drawer/), which draw
+// the drawer as it has always been drawn. Each control is a placeholder here, which the drawer
+// swaps for the real one (see renderEntryFooter and layoutHeader in drawer.js), so the controls
+// themselves, and what they do, are the same whatever the template. A template that can't be
+// found, or fails, is left out and the drawer uses its built in layout.
+$drawerNavMeta = isset($GLOBALS['formulize_elementsOnlyNavMeta'][intval($sid)]) ? $GLOBALS['formulize_elementsOnlyNavMeta'][intval($sid)] : array();
+$drawerTemplateVariables = array(
+    'form_id' => intval($fid),
+    'screen_id' => intval($sid),
+    'entry_id' => $entry_id ? intval($entry_id) : 'new',
+    'currentPage' => isset($drawerNavMeta['currentPage']) ? $drawerNavMeta['currentPage'] : 1,
+    'totalPages' => isset($drawerNavMeta['totalPages']) ? $drawerNavMeta['totalPages'] : 1,
+);
+$drawerPlaceholder = function($slot) {
+    return "<span data-formulize-drawer-slot='$slot'></span>";
+};
+$drawerTemplates = array(
+    'header' => formulize_renderDrawerTemplate('headertemplate', $drawerTemplateVariables + array(
+        'backButton' => $drawerPlaceholder('back'),
+        'formTitle' => $drawerPlaceholder('title'),
+        'closeButton' => $drawerPlaceholder('close'),
+    )),
+    'footer' => formulize_renderDrawerTemplate('footertemplate', $drawerTemplateVariables + array(
+        'printableViewButton' => $drawerPlaceholder('printableview'),
+        'pageIndicator' => $drawerPlaceholder('pageindicator'),
+        'previousPageButton' => $drawerPlaceholder('prev'),
+        'closePageButton' => $drawerPlaceholder('close'),
+        'nextPageButton' => $drawerPlaceholder('next'),
+        'backButton' => $drawerPlaceholder('back'),
+        'savePageButton' => $drawerPlaceholder('save'),
+    )),
+);
+$drawerTemplatesJs = "<script type=\"application/json\" class=\"formulize-drawer-templates\">".json_encode($drawerTemplates)."</script>\n";
+
 // Rich-text (CKEditor) bootstrap. In a full page load formdisplay.php's drawJavascript()
 // loads the CKEditor library (via $xoTheme->addScript) and emits the initializeCKEditor /
 // updateCKEditors JS. In elements-only mode drawJavascript() is skipped and $xoTheme->addScript
@@ -558,6 +594,7 @@ print $saveMessages
     .$subformStubsJs
     .$formHtml
     .$buttonMeta
+    .$drawerTemplatesJs
     .$editorJs
     .$officeUseOnlyJs
     .$validationJs

@@ -297,6 +297,7 @@
         if (!ensureDom()) { return; }
         opts = opts || {};
         setDrawerMode('entry');
+        layoutHeader(null); // static content has no header template; an entry applies its own once open
         titleEl.textContent = opts.title || '';
         bodyEl.innerHTML = opts.html || '';
         footEl.innerHTML = opts.footerHtml || '';
@@ -331,6 +332,12 @@
     // the same code that builds the full screen form's button tray, so the drawer never
     // decides for itself which buttons exist or what they say.
     var currentEntryButtons = null;
+
+    // formulize-drawer-templates the endpoint emits: the theme's header and footer templates
+    // for the loaded entry form. entryHeaderTemplate keeps the last header template seen, so
+    // the header is laid out by it from the moment an entry is opened, not only once it loads.
+    var currentDrawerTemplates = null;
+    var entryHeaderTemplate = null;
 
     // Whether anything has been saved since this drawer session opened. A save that
     // leaves the drawer open still has to be reflected in the list behind it when the
@@ -372,6 +379,39 @@
         var el = bodyEl.querySelector('script.formulize-form-buttons');
         if (!el) { return null; }
         try { return JSON.parse(el.textContent); } catch (e) { return null; }
+    }
+
+    // Read the theme's header and footer templates the endpoint emits with each form,
+    // as {header, footer} markup with placeholders for the controls (null when absent).
+    function readDrawerTemplates() {
+        if (!bodyEl) { return null; }
+        var el = bodyEl.querySelector('script.formulize-drawer-templates');
+        if (!el) { return null; }
+        try { return JSON.parse(el.textContent) || null; } catch (e) { return null; }
+    }
+
+    // Lay out the header: by the header template when one is given, which is only ever
+    // while the drawer is showing an entry form, otherwise in the drawer's built in layout
+    // (the AI assistant, static content, an entry that could not be shown). The header's
+    // controls are built once, in ensureDom, and only moved here, so they keep their
+    // handlers. Back and close are always kept, so there is always a way out.
+    var currentHeaderTemplate = null;
+
+    function layoutHeader(template) {
+        template = template || null;
+        if (!drawer || template === currentHeaderTemplate) { return; }
+        currentHeaderTemplate = template;
+        var headEl = drawer.querySelector('.formulize-drawer__head');
+        if (template) {
+            var placed = fillTemplate(headEl, template, { back: backBtn, title: titleEl, close: closeBtn });
+            if (!placed.back) { headEl.appendChild(backBtn); }
+            if (!placed.close) { headEl.appendChild(closeBtn); }
+            return;
+        }
+        var spacer = document.createElement('div');
+        spacer.className = 'formulize-drawer__spacer';
+        headEl.innerHTML = '';
+        [backBtn, titleEl, spacer, closeBtn].forEach(function (el) { headEl.appendChild(el); });
     }
 
     // Where a form's writes go. The endpoint sends each form out addressed to a honeypot, as a
@@ -584,6 +624,7 @@
                 window.formulizechanged = 0;
                 currentEntryNav = readNavMeta();
                 currentEntryButtons = readButtonMeta();
+                currentDrawerTemplates = readDrawerTemplates();
                 var meta = readDrawerMeta();
                 // A subform "Add" whose element shows new entries as rows comes back as the
                 // parent's page, with the new rows in its subform, rather than as the new sub
@@ -604,6 +645,7 @@
                 }
                 if (currentFrame) { currentFrame.page = currentEntryNav ? currentEntryNav.currentPage : 0; }
                 renderPageTabs();
+                renderEntryHeader();
                 renderEntryFooter();
                 updateBackButton();
                 holdScrollPosition(scrollTo);
@@ -631,6 +673,7 @@
                                    subformElementId: opts.subformElementId,
                                    entryFid: opts.entryFid, entryFrid: opts.entryFrid }, page: 0 };
         openDrawer({ title: opts.title || '' });
+        layoutHeader(entryHeaderTemplate);
         updateBackButton();
         fetchIntoDrawer(buildEntryUrl(currentFrame.params));
     }
@@ -646,6 +689,7 @@
     function openAIInDrawer() {
         if (!ensureDom()) { return; }
         setDrawerMode('ai');
+        layoutHeader(null); // the AI panel keeps the built in header
         titleEl.textContent = S().aiTitle;
         footEl.innerHTML = '';
         backBtn.hidden = true;
@@ -791,6 +835,15 @@
         return !!(nav && nav.showTabs && nav.totalPages > 1 && nav.pages && nav.pages.length > 1);
     }
 
+    // Lay out the header for what just loaded: by the theme's header template when it is
+    // an entry form, otherwise in the built in layout.
+    function renderEntryHeader() {
+        if (drawerMode === 'ai') { return; } // the AI panel keeps the built in header
+        var template = (currentDrawerTemplates && bodyEl && bodyEl.querySelector('form')) ? currentDrawerTemplates.header : null;
+        if (template) { entryHeaderTemplate = template; }
+        layoutHeader(template);
+    }
+
     function renderEntryFooter() {
         if (!footEl || drawerMode === 'ai') { return; } // the AI panel has its own controls
         footEl.innerHTML = '';
@@ -800,10 +853,6 @@
         // needs. Left empty, the footer is hidden altogether (.formulize-drawer__foot:empty).
         if (!bodyEl || !bodyEl.querySelector('form')) { return; }
 
-        var notice = document.createElement('span');
-        notice.className = 'formulize-drawer__notice';
-        footEl.appendChild(notice);
-
         var nav = currentEntryNav;
         var multiPage = nav && nav.totalPages > 1;
         var inSub = drawerStack.length > 0;
@@ -811,39 +860,36 @@
         // pair the drawer offered before the screen's configuration reached it.
         var buttons = currentEntryButtons || { save: S().save, done: S().cancel };
 
-        // Page meta leads, as it does in the full screen bar (the Lyris bottomtemplate
-        // emits $pageIndicator/$pageSelector before any button). With tabs on show the
-        // strip already says which page you are on, so the footer does not repeat it.
-        // (The non-tab case is where a combined page indicator/selector control belongs
-        // - see issue #109.)
+        // The controls this page has, by the footer template placeholder each one fills.
+        // Where they go, and in what order, is up to the template (see placeFooterControls).
+        var controls = {};
+
+        // With tabs on show the strip already says which page you are on, so the footer
+        // does not repeat it. (The non-tab case is where a combined page indicator/selector
+        // control belongs - see issue #109.)
         if (multiPage && !drawerTabsVisible(nav)) {
             var indicator = document.createElement('span');
             indicator.className = 'formulize-drawer__page-indicator';
             indicator.textContent = (nav.pageWord || S().page) + ' ' + nav.currentPage + ' ' +
                                     (nav.ofWord || S().of) + ' ' + nav.totalPages;
-            footEl.appendChild(indicator);
+            controls.pageindicator = indicator;
         }
 
-        // The tray is laid out in the full screen action bar's order. The Lyris multiPage
-        // bottomtemplate emits `$pageIndicator $pageSelector $previousPageButton
-        // $closePageButton $nextPageButton $savePageButton`, so: page meta, then
-        // previous, close, next, and Save last (issue #1055). Following that here is
-        // what makes the two surfaces read the same. The printable view button has no
-        // slot in that bar (full screen puts it in its own #formulize-button-controls
-        // tray), so it leads.
+        // The printable view button has no slot in the full screen action bar (full screen
+        // puts it in its own #formulize-button-controls tray).
         if (buttons.printableView && buttons.printAction) {
-            footEl.appendChild(makeButton(buttons.printableView, 'printbutton', openPrintableView));
+            controls.printableview = makeButton(buttons.printableView, 'printbutton', openPrintableView);
         }
 
         var navButtons = drawerShowsNavButtons(nav);
         // The screen's button set for the page being shown, computed server side by
         // formulize_multipageButtonSet() — the very same call the full screen action bar
-        // is built from — and published in formulize-multipage-nav as ordered {slot, text}
-        // pairs. Rendering that set, with Save moved to the end, is what makes the drawer's
-        // footer the full screen footer: on the kitchen sink screen that is "Save and
-        // Close / Close / Save and Continue / Save" on page one, "Save and Go Back / Close
-        // / Save and Continue / Save" in the middle, and "... / Save and Finish / Save" on
-        // the last page, because that is what the screen's own settings resolve to there.
+        // is built from — and published in formulize-multipage-nav as {slot, text} pairs.
+        // Rendering that set is what makes the drawer's footer the full screen footer: on
+        // the kitchen sink screen that is "Save and Close / Close / Save and Continue /
+        // Save" on page one, "Save and Go Back / Close / Save and Continue / Save" in the
+        // middle, and "... / Save and Finish / Save" on the last page, because that is what
+        // the screen's own settings resolve to there.
         //
         // This replaces the drawer's old assembly of a button set out of two separate
         // pieces of metadata, which past page one produced a previous-page control AND a
@@ -852,22 +898,15 @@
         var navSet = (multiPage && navButtons && nav.buttons && nav.buttons.length) ? nav.buttons : null;
 
         if (navSet) {
-            // Save is held back and appended last, so it is the final button in the
-            // tray whatever order the slots arrive in (issue #1055).
-            var saveSlotButton = null;
             navSet.forEach(function (slotButton) {
-                var btn = makeButton(slotButton.text, slotButton.slot,
-                                     navSlotAction(slotButton.slot, nav, inSub));
-                if (slotButton.slot === 'save') { saveSlotButton = btn; return; }
-                footEl.appendChild(btn);
+                controls[slotButton.slot] = makeButton(slotButton.text, slotButton.slot,
+                                                       navSlotAction(slotButton.slot, nav, inSub));
             });
             // A screen with no close button still needs a way out of a sub entry.
-            if (inSub && !navSet.some(function (b) { return b.slot === 'close'; })) {
-                footEl.appendChild(makeButton(S().back, 'close', goBack));
+            if (inSub && !controls.close) {
+                controls.back = makeButton(S().back, 'close', goBack);
             }
-            if (saveSlotButton) {
-                footEl.appendChild(saveSlotButton);
-            }
+            placeFooterControls(controls);
             return;
         }
 
@@ -878,7 +917,7 @@
         // here — in the bar's "prev" slot, which is literally where full screen puts the
         // leave action when it renders it as a button.
         if (buttons.saveAndLeave) {
-            footEl.appendChild(makeButton(buttons.saveAndLeave, 'prev', saveEntryFromDrawer));
+            controls.prev = makeButton(buttons.saveAndLeave, 'prev', saveEntryFromDrawer);
         }
 
         // The done/close button leaves without saving. Inside a sub entry that means
@@ -886,18 +925,59 @@
         // screen with no close button still gets the Back control, so there is always a
         // way out of a sub entry. Both are the bar's name="close" slot.
         if (buttons.done) {
-            footEl.appendChild(makeButton(buttons.done, 'close', inSub ? goBack : closeEntryDrawer));
+            controls.close = makeButton(buttons.done, 'close', inSub ? goBack : closeEntryDrawer);
         } else if (inSub) {
-            footEl.appendChild(makeButton(S().back, 'close', goBack));
+            controls.back = makeButton(S().back, 'close', goBack);
         }
 
         // Save means save, as it does full screen: the entry is written and stays open for
         // more editing. This is the one accent/primary control in the bar, because it is
-        // the one full screen paints that way (Lyris keys off name^="save"). It is the
-        // last button in the tray, as it is in the full screen bar (issue #1055).
+        // the one full screen paints that way (Lyris keys off name^="save").
         if (buttons.save) {
-            footEl.appendChild(makeButton(buttons.save, 'save', saveAndStay));
+            controls.save = makeButton(buttons.save, 'save', saveAndStay);
         }
+        placeFooterControls(controls);
+    }
+
+    // The order the footer takes when there is no footer template to follow. The same
+    // order the system default footer template has (templates/screens/default/drawer/
+    // footertemplate.php): page meta, printable view, previous, close, next, Back, and
+    // Save last (issue #1055).
+    var DEFAULT_FOOTER_ORDER = ['pageindicator', 'printableview', 'prev', 'close', 'next', 'back', 'save'];
+
+    // Put the footer's controls where the theme's footer template says, or in the default
+    // order when there is none. The notice comes first either way.
+    function placeFooterControls(controls) {
+        var template = currentDrawerTemplates ? currentDrawerTemplates.footer : null;
+        if (template) {
+            fillTemplate(footEl, template, controls);
+        } else {
+            DEFAULT_FOOTER_ORDER.forEach(function (slot) {
+                if (controls[slot]) { footEl.appendChild(controls[slot]); }
+            });
+        }
+        var notice = document.createElement('span');
+        notice.className = 'formulize-drawer__notice';
+        footEl.insertBefore(notice, footEl.firstChild);
+    }
+
+    // Put a header or footer template's markup in the drawer and swap each placeholder in it
+    // (data-formulize-drawer-slot) for the control of that name. A placeholder with no
+    // control, because it does not apply to what is being shown, is removed. Returns the
+    // controls that were placed, by name.
+    function fillTemplate(container, html, controls) {
+        container.innerHTML = html;
+        var placed = {};
+        Array.prototype.forEach.call(container.querySelectorAll('[data-formulize-drawer-slot]'), function (placeholder) {
+            var slot = placeholder.getAttribute('data-formulize-drawer-slot');
+            if (controls[slot] && !placed[slot]) {
+                placeholder.parentNode.replaceChild(controls[slot], placeholder);
+                placed[slot] = true;
+            } else {
+                placeholder.parentNode.removeChild(placeholder);
+            }
+        });
+        return placed;
     }
 
     // What each slot of the multipage button set does, mirroring the onclick

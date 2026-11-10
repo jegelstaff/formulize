@@ -7,8 +7,10 @@
 // (`#multipage-controls`), not by reversing the flex direction here.
 //
 // Save is the last button in the bar (issue #1055), so the primary action sits at
-// the far right. The right drawer's footer (drawer.js renderEntryFooter) puts it
-// last too, so the two surfaces keep the same order.
+// the far right. The right drawer's footer puts it last too, so the two surfaces keep
+// the same order. The drawer's footer has its own template
+// (templates/screens/default/drawer/footertemplate.php, which a theme can override in
+// <Theme>/default/drawer/), so changing the order here means changing it there too.
 
 print "
 <div style='clear: both;'></div>

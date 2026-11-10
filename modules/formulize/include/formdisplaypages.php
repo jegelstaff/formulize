@@ -481,6 +481,8 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			'ofWord'             => _formulize_DMULTI_OF,
 		);
 		print "\n<script type=\"application/json\" class=\"formulize-multipage-nav\">".json_encode($navMeta)."</script>\n";
+		// kept for the drawer's header and footer templates, which get the page numbers (see formdisplay-elementsonly.php)
+		$GLOBALS['formulize_elementsOnlyNavMeta'][$navMeta['screenId']] = $navMeta;
 
 		// The form-level buttons the full page rendering shows alongside the paging
 		// controls: the screen's save and close buttons (savePageButton/closePageButton,
