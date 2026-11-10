@@ -83,6 +83,7 @@ class formulizeRadioElement extends formulizeElement {
 	function optionIsValid($option) {
 		$ele_value = $this->getVar('ele_value');
 		$uitext = $this->getVar('ele_uitext');
+		$uitext = is_array($uitext) ? $uitext : array(); // an element with no ui text saved unserializes to false
 		return (isset($ele_value[$option]) OR in_array($option, $uitext)) ? true : false;
 	}
 
@@ -494,7 +495,7 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 		$this->clickable = false;
 		$this->dataIsHtml = false; // plain text value - gets HTML-escaped
 		$this->length = $textWidth;
-		return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+		return parent::formatDataForList($value, $handle, $entry_id, $textWidth); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 
 }

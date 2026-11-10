@@ -86,9 +86,11 @@ class formulizeCheckboxElement extends formulizeElement {
 	// does not support linked values!!
 	function optionIsValid($option) {
 			$ele_value = $this->getVar('ele_value');
+			$uitext = $this->getVar('ele_uitext');
+			$uitext = is_array($uitext) ? $uitext : array(); // an element with no ui text saved unserializes to false
 			$option = is_array($option) ? $option : array($option);
 			foreach($option as $thisOption) {
-					if(!isset($ele_value[2][$thisOption]) AND !in_array($thisOption, $this->getVar('ele_uitext'))) {
+					if(!isset($ele_value[2][$thisOption]) AND !in_array($thisOption, $uitext)) {
 							return false;
 					}
 			}
@@ -768,7 +770,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 			$this->clickable = true; // make urls clickable
 			$this->striphtml = true; // remove html tags as a security precaution
 			$this->length = 1000; // truncate to a maximum of 100 characters, and append ... on the end
-			return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
+			return parent::formatDataForList($value, $handle, $entry_id, $textWidth); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
 	}
 
 	static function backwardsCompatibility($ele_value) {

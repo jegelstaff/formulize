@@ -72,6 +72,9 @@ Some callers compute a value, not display text. `interpretTextboxValue()` is the
 | What's being shown | Treatment | Where |
 |---|---|---|
 | A plain value in a list | Escape | `formatDataForList()` |
+| A value in a list that's exactly the text of one of a radio button's, a checkbox's or a select's options, or the UI text shown for one | Leave alone | `formatDataForList()`, when `valueIsAdminAuthored()` is true |
+| What a user typed for an "Other" option, and every value of a linked element or a list of users | Escape | `formatDataForList()` |
+| A new value a user typed in an autocomplete, which becomes one of its options | Decode every level of entities, strip tags, escape | `formulizeSelectElementHandler::prepareDataForSaving()` |
 | A value that's meant to be HTML in a list, such as a derived value or rich text | Purify | `formatDataForList()`, when `treatDataAsHtml()` is true |
 | A value in an editable field | Escape, exactly once | `icms_form_elements_Text::render()` and `Textarea::render()` |
 | A value in a disabled element or the print view | Purify | `makeValueSafeForReadOnlyDisplay()` |
@@ -95,7 +98,7 @@ Three rules explain that table:
 
 Each element type's `formatDataForList()` sets `$this->dataIsHtml`, and `formatDataForList()` in `class/elements.php` does the rest, in this order:
 
-1. Escape or purify. Every value goes through this, with no way to opt out.
+1. Escape or purify. Every value goes through this. The only value left alone is one the handler's `valueIsAdminAuthored()` says an admin wrote, which is decided for each value, not for the element type. The base says no. `formulizeBaseClassForListsElementHandler` says yes to a value that's exactly one of the element's own options or their UI text, checked with `optionIsValid()` against the element's settings, never against the options the form draws, because the form adds a saved value that's out of range to those. It says no for linked elements and lists of users. A user can add an option to a select by sending `newvalue:`, which an autocomplete that allows new values does. What they typed is fully decoded with `undoAllHTMLChars()`, then tag-stripped and escaped, before it's added. Escaping alone isn't enough, because the Options tab decodes one level of entities each time an admin saves the element there, so encoded tags would become markup. An admin's value with tags in it isn't truncated or made clickable.
 2. `composeMarkupForList()` wraps the safe value in the element's own markup.
 3. Truncate. HTML is never truncated, because `cutString()` would cut tags in half.
 4. Make links clickable.

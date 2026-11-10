@@ -2040,7 +2040,8 @@ class formulizeElementsHandler {
 	// this method is used by custom elements, to do final output from the "local" formatDataForList method, so the custom element developer can simply set booleans there, and they will be enforced here
 	//
 	// ORDER OF OPERATIONS IS SECURITY-CRITICAL - do not reorder:
-	//   1. make the value safe (escape plain text, or purify markup)  <- the ONE canonical safety step
+	//   1. make the value safe (escape plain text, or purify markup), unless it is exactly what an admin
+	//      wrote  <- the ONE canonical safety step
 	//   2. let the element compose its own markup AROUND the now-safe value
 	//   3. truncate (skipped for HTML - cutString is not tag-aware and would cut tags in half)
 	//   4. make URLs clickable (operates on already-safe text)
@@ -2050,6 +2051,8 @@ class formulizeElementsHandler {
 	// value was SAVED is therefore not a defence and must never be relied on here.
 	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
 		global $myts;
+		// decided before trans(), because an option's text can hold every language's version of it
+		$valueIsAdminAuthored = $this->valueIsAdminAuthored($value, $handle);
 		$value = trans($value);
 		if(!$this->length AND $this->length !== 0 AND $this->length !== '0') {
 			$this->length = 255;
@@ -2061,8 +2064,12 @@ class formulizeElementsHandler {
 		// handler, since one handler renders many entries per page.
 		$rawValue = $value;
 
-		// 1. THE canonical safety step. Applies to every value, every element type, no opt-out.
-		if($this->treatDataAsHtml()) {
+		// 1. THE canonical safety step. Applies to every value and every element type. The only value
+		// it leaves alone is one an admin wrote, such as the text of one of the element's options, which
+		// the form shows as written. See valueIsAdminAuthored().
+		if($valueIsAdminAuthored) {
+			// left as it is
+		} elseif($this->treatDataAsHtml()) {
 			// intentional markup (derived values, rich text): allow-list filter rather than escape,
 			// so admin-authored formatting survives while script vectors do not
 			$value = formulize_purifyHtmlValue($value, $handle, $entry_id);
@@ -2075,13 +2082,16 @@ class formulizeElementsHandler {
 		// sets length=0 so step 3 does not then truncate the markup it built) has what it needs.
 		$value = $this->composeMarkupForList($value, $handle, $entry_id, $rawValue, $textWidth);
 
+		// an admin's own text that has tags in it is finished markup, so it is neither cut nor linkified
+		$valueIsAdminMarkup = ($valueIsAdminAuthored AND is_string($rawValue) AND $rawValue !== strip_tags($rawValue));
+
 		// 3. truncation - never for HTML, since cutString() counts characters and would sever tags
-		if(!$this->treatDataAsHtml() AND $this->length > 0) {
+		if(!$this->treatDataAsHtml() AND !$valueIsAdminMarkup AND $this->length > 0) {
 			$value = printSmart($value,$this->length);
 		}
 
 		// 4.
-		if($this->clickable) {
+		if($this->clickable AND !$valueIsAdminMarkup) {
 			$value = formulize_text_to_hyperlink($value);
 		}
 		$value = formulize_handleRandomAndDateText($value);
@@ -2112,6 +2122,23 @@ class formulizeElementsHandler {
 			return ($this->striphtml === false); // legacy signal from element types predating $dataIsHtml
 		}
 		return (bool) $this->dataIsHtml;
+	}
+
+	/**
+	 * Is this value exactly what an admin wrote, so it can be shown in a list as it is, the way the form
+	 * shows it? An admin who can edit the element could put anything on the page anyway. The decision is
+	 * about one value, not the element type: the same element can hold what an admin wrote in one entry
+	 * and what a user typed in the next.
+	 *
+	 * The base says no, so every value is escaped or purified. An element type with options of its own
+	 * overrides this. See formulizeBaseClassForListsElementHandler::valueIsAdminAuthored().
+	 *
+	 * @param mixed $value The raw value, before trans()
+	 * @param string $handle The element handle. Without one, nothing can be checked, so the answer is no.
+	 * @return bool
+	 */
+	function valueIsAdminAuthored($value, $handle="") {
+		return false;
 	}
 
 	/**

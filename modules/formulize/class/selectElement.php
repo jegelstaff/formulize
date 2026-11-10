@@ -131,6 +131,7 @@ class formulizeSelectElement extends formulizeElement {
 	function optionIsValid($option) {
 		$ele_value = $this->getVar('ele_value');
 		$uitext = $this->getVar('ele_uitext');
+		$uitext = is_array($uitext) ? $uitext : array(); // an element with no ui text saved unserializes to false
 		return (isset($ele_value[2][$option]) OR in_array($option, $uitext)) ? true : false;
 	}
 
@@ -1600,16 +1601,22 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 
 				// not a linked element...
 				} else {
-					$newValue = htmlspecialchars($newValue);
-					if(!is_array($ele_value[ELE_VALUE_SELECT_OPTIONS]) OR !isset($ele_value[ELE_VALUE_SELECT_OPTIONS][$newValue])) {
-						$ele_value[ELE_VALUE_SELECT_OPTIONS][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
-						$element->setVar('ele_value', $ele_value);
-						$this->insert($element);
+					// What the user typed becomes one of the element's options, and lists show an option as an
+					// admin wrote it (see valueIsAdminAuthored()). So no tags can be left in it at any level of
+					// encoding. Escaping alone is not enough: the Options tab decodes one level each time the
+					// element is saved there, so encoded tags would turn into markup after a save or two.
+					$newValue = htmlspecialchars(strip_tags(undoAllHTMLChars($newValue)));
+					if(trim($newValue) !== '') { // nothing is left if all they typed was tags
+						if(!is_array($ele_value[ELE_VALUE_SELECT_OPTIONS]) OR !isset($ele_value[ELE_VALUE_SELECT_OPTIONS][$newValue])) {
+							$ele_value[ELE_VALUE_SELECT_OPTIONS][$newValue] = 0; // create new key in ele_value[2] for this new option, set to 0 to indicate it's not selected by default in new entries
+							$element->setVar('ele_value', $ele_value);
+							$this->insert($element);
+						}
+						$allValues = array_keys($ele_value[ELE_VALUE_SELECT_OPTIONS]);
+						$selectedKey = array_search($newValue, $allValues); // value to write is the number representing the position in the array of the key that is the text value the user made
+						$selectedKey = $element->canHaveMultipleValues ? $selectedKey : $selectedKey + 1; // because we add one to the key when evaluating against single option elements below and these thigns need to line up!! YUCK
+						$newWrittenValues[] = $selectedKey;
 					}
-					$allValues = array_keys($ele_value[ELE_VALUE_SELECT_OPTIONS]);
-					$selectedKey = array_search($newValue, $allValues); // value to write is the number representing the position in the array of the key that is the text value the user made
-					$selectedKey = $element->canHaveMultipleValues ? $selectedKey : $selectedKey + 1; // because we add one to the key when evaluating against single option elements below and these thigns need to line up!! YUCK
-					$newWrittenValues[] = $selectedKey;
 				}
 
 				// remove the candidate value from the original $value so we don't have a duplicate when trying to sort it out later

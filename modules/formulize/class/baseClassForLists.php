@@ -166,6 +166,31 @@ class formulizeBaseClassForListsElementHandler extends formulizeElementsHandler 
 		return $value;
 	}
 
+	/**
+	 * Is this value the text of one of the element's own options, or the text an admin set to show in
+	 * place of one? Then an admin wrote it, and the form shows it as written, markup and all, so a list
+	 * shows it the same way. See ai-context/xss-and-purification.md.
+	 *
+	 * Anything else is escaped as usual: what a user typed for an "Other" option, a saved value that is no
+	 * longer one of the options, and the values of linked elements and lists of users, which come from
+	 * other entries and from people's names. The check is against the element's settings, never against
+	 * the options the form draws, because the form adds a saved value that is out of range to those.
+	 *
+	 * @param mixed $value The raw value, before trans()
+	 * @param string $handle The element handle
+	 * @return bool
+	 */
+	function valueIsAdminAuthored($value, $handle="") {
+		if($handle === "" OR !(is_string($value) OR is_numeric($value)) OR trim((string) $value) === "") {
+			return false;
+		}
+		$element = $this->get($handle);
+		if(!$element OR $element->isLinked OR $element->isUserList) {
+			return false;
+		}
+		return $element->optionIsValid((string) $value);
+	}
+
 }
 
 
