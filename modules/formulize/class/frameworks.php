@@ -32,6 +32,8 @@
 ##  Project: Formulize                                                       ##
 ###############################################################################
 
+// Relationships between forms, which the code calls frameworks. See ai-context/relationships.md.
+
 require_once XOOPS_ROOT_PATH.'/kernel/object.php';
 include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 

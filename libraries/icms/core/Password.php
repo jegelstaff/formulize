@@ -13,6 +13,8 @@
 /**
  * Password generation and validation
  *
+ * See ai-context/password-hashing.md.
+ *
  * @category	ICMS
  * @package		Core
  *

@@ -15,6 +15,7 @@
 // Functions for the Users and Groups management feature.
 // Handles ad hoc table form registration, composite data gathering,
 // and the permanent menu section.
+// See ai-context/virtual-elements-and-system-table-forms.md and ai-context/entries-are-users-and-groups.md.
 
 if (!defined('XOOPS_ROOT_PATH')) {
 	exit();

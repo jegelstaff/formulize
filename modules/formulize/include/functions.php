@@ -1303,6 +1303,8 @@ function formulize_systemManagedFormAccessCheck($formObject, $entry_id, $user_id
  * the relaxation can never happen outside that page. It intentionally re-verifies "no logged-in
  * user" so a stray flag can never grant an authenticated user extra powers.
  *
+ * See ai-context/self-registration-signup.md.
+ *
  * @return bool True only during a valid anonymous signup request.
  */
 function formulize_selfRegistrationActive() {
@@ -1495,6 +1497,8 @@ function formulize_signAnonEntryToken($fid, $entry_id, $expires) {
  * Note that any framed page is an embedded one, including a Formulize screen framed by another page
  * of this same site. There is nothing in the request that tells those apart, and a screen inside a
  * frame wants the same chrome-free rendering either way.
+ *
+ * See ai-context/embedding-screens.md.
  *
  * @return bool TRUE if this request should be treated as embedded
  */
@@ -1860,6 +1864,8 @@ function formulize_verifyAnonEntryCookie($fid) {
  * holds an entry if they have a valid passcode in session that matches the entry, or a
  * validly-signed cookie for the entry. Bare "owned by uid 0" is NOT sufficient, since
  * uid 0 is every anonymous visitor.
+ *
+ * See ai-context/anonymous-entry-access.md.
  *
  * @param int $form_id The form ID
  * @param int $entry_id The entry ID being accessed
@@ -8111,6 +8117,8 @@ function formulize_enforceHtmlPurification() {
  * instead. Unpurified HTML is never returned. (This deliberately does not trust the enable_purifier
  * preference to keep us safe - that setting exists for content filtering, not for this.)
  *
+ * See ai-context/xss-and-purification.md.
+ *
  * @param string $value The raw value, as it will appear in the page
  * @param string $handle Optional. Element handle, used to tag the log events (never the value content)
  * @param int $entry_id Optional. Entry id, used to tag the log events
@@ -8342,6 +8350,7 @@ function catalogDynamicFilterConditionElements($renderedElementMarkupName, $cond
 
 /**
  * This function will build a SQL-ready string, based on a data from a standard Formulize Conditions UI
+ * See ai-context/conditions.md.
  *
  * @param array $conditions - the conditions as specified in the Formulize conditions UI, a multidimensional array, each condition is one element in the array, and each condition is made up of four elements itself: 0 - element id (the left side), 1 - operator, 2 - term (the right side), 3 - condition type (oom or all, 'match one or more' vs 'match all')
  * @param int|array $targetFormId - the id number of the form where things are being looked up. Or an array when doing an extraction query, in which the keys are the form ids and the values are the aliases of the forms in the query being constructed. If an array, the first key-value pair refers to the main form.
@@ -9921,6 +9930,7 @@ function convertSelectBoxToSingle($table, $column) {
  * Fundamentally, this applies the PDO quote method to the string, but then removes the beginning and ending single quotes!
  * The thinking at the time was that we have a lot of SQL that already has the quotes built in, and it would be too much work to refactor them all, so we'll strip the quotes out, and just be happy we have an escaped string.
  * For MariaDB/MySQL in PDO, ' come back escaped, and " come back escaped, and it doesn't matter what characters encapsulate the string in the query, because \' -> ' and \" -> " when the DB parses the string. Very handy lifesaver!
+ * See ai-context/escaping.md.
  * @param mixed value - The value to run through the database quote method (PDO quote currently)
  * @return string Returns a string of the passed in value, with characters escaped according to the rules of the database quote method
  */
@@ -10696,6 +10706,8 @@ function formulize_columnListScript() {
  *
  * Sets a global flag variable to indicate that we're in the middle of updating derived values for a given set of entry IDs and form/relationship, so that if any procedures or functions get triggered which also try to update derived values for the same set of entry IDs and form/relationship, we can avoid retriggering the same updates again and again in an infinite loop. This can happen if for example a before or after save procedure triggers updating derived values in the same form, so we want to make sure we don't retrigger the same updates again when we're already in the middle of doing them.
  *
+ * See ai-context/derived-values-and-custom-code.md.
+ *
  * @param mixed $entry_id_or_filter The entry ID or filter criteria for isolating the entries to update.
  * @param int $fid The form ID where the entry exists
  * @param int $frid The form relationship ID (optional, defaults to 0, no relationship)
@@ -11437,6 +11449,7 @@ function formulize_termIsADate($term) {
  * so a day is every moment in it, from its first second to its last, and not only midnight. The time is the server's, and each person sees it in their own
  * timezone (see getHTMLForList), so the days are that person's days. A date written out is read here, since metadata fields aren't elements, so nothing else has read it.
  * This is the one place that says what span a term names, for conditions, searches and per-group filters, and for conditions checked against an entry.
+ * See ai-context/conditions.md#dates.
  *
  * @param string $term The term
  * @param bool $columnHasTime Optional. True if the date has a time as well, which is when an entry was made or modified
@@ -14550,6 +14563,7 @@ function getSortTitleAndIcon($elementHandle) {
  * Evaluates a standard condition array, which is an array with the following keys: [elements[], ops[], terms[], types[]], where each of those is an array with the same number of items, and each item corresponds to a condition.  So elements[0], ops[0], terms[0], and types[0] together make up the first condition, and so on.
  * Compares a given entry to the conditions to see if they pass or not.
  * Used for element display conditions, and also for evaluating per-group conditions for entries_are_users default groups.
+ * See ai-context/conditions.md.
  * @param array $elementFilterSettings The filter settings array [elements[], ops[], terms[], types[]]
  * @param int $form_id The form ID
  * @param int|string $entry_id The entry ID or "new"

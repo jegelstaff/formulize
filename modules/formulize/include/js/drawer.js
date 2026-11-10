@@ -1,6 +1,8 @@
 /**
  * Formulize right slide-out drawer — the shared component.
  *
+ * See ai-context/drawer.md.
+ *
  * This is the drawer mechanism itself: the markup, the open/close/resize
  * interaction, the fetch-and-inject of server-rendered form fragments, the
  * multi-page paging, the subform drill-down, the save round trip, and the

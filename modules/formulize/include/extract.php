@@ -4061,6 +4061,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
 }
 
 
+// See ai-context/derived-values-and-custom-code.md.
 function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $fid)
 {
 	formulize_scandirAndClean(XOOPS_ROOT_PATH . '/modules/formulize/cache/', 'Derived_value_formula_for_', 3600);

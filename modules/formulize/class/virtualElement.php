@@ -26,6 +26,8 @@ require_once XOOPS_ROOT_PATH . "/modules/formulize/class/elements.php";
  * element picker. Subclass this to define a typed virtual column. Implement
  * buildSearchWhereClause() on the handler to enable search delegation from
  * parseTableFormFilter().
+ *
+ * See ai-context/virtual-elements-and-system-table-forms.md.
  */
 class formulizeVirtualElement extends formulizeElement {
 

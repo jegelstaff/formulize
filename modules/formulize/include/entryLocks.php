@@ -22,6 +22,8 @@
 // formulize_deleteEntryLock.php is requested on its own, without the rest of Formulize, so this file needs nothing
 // else, and has nothing in it but functions. functions.php requires it, so the functions are available wherever
 // functions.php is.
+//
+// See ai-context/filesystem-dependencies.md.
 
 /**
  * The file that holds the lock on an entry
