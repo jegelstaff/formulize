@@ -59,37 +59,102 @@ $(document).ready(function() {
 
 <!-- jquery for floating admin bar, added by S.Gray, April 11, 2011 -->
 <script type="text/javascript">
+// A toolbar that floats leaves a space where it was, as tall as it was, so the page under it stays where
+// it is. Otherwise everything below jumps up by the toolbar's height as the page scrolls past it, and a
+// click lands on whatever moved under the pointer.
+function floatAdminToolbar($toolbar) {
+	if (!$toolbar.length || $toolbar.hasClass('toolbar_fixed')) {
+		return;
+	}
+	var $after = $toolbar.nextAll(':visible:not(.toolbar_fixed)').first();
+	var before = $after.length ? $after.offset().top : 0;
+	var $space = $('<div class="toolbar-space"></div>').insertBefore($toolbar);
+	$toolbar.addClass('toolbar_fixed');
+	$toolbar.addClass('ui-corner-all');
+	if ($after.length) {
+		var gap = before - $after.offset().top;
+		$space.height(gap);
+		// measured again, since a space with a height stops the margins either side of it meeting, as they
+		// did through the toolbar
+		$space.height(gap + before - $after.offset().top);
+	}
+}
+
+function dockAdminToolbar($toolbar) {
+	if (!$toolbar.hasClass('toolbar_fixed')) {
+		return;
+	}
+	$toolbar.prev('.toolbar-space').remove();
+	$toolbar.removeClass('toolbar_fixed');
+	$toolbar.removeClass('ui-corner-all');
+}
+
+// What's in a toolbar, such as the save button
+function adminToolbarContents($toolbar) {
+	var $contents = $toolbar.children(':visible').first();
+	return $contents.length ? $contents : $toolbar;
+}
+
+// How far down the window a toolbar's contents are when it floats. Measured on a hidden copy, floating
+// where the toolbar would, since floating the toolbar itself to measure it would move the page.
+function adminToolbarFloatingTop($toolbar) {
+	if ($toolbar.data('floatingTop') === undefined) {
+		var $copy = $toolbar.clone().addClass('toolbar_fixed').addClass('ui-corner-all').css('visibility', 'hidden').insertAfter($toolbar);
+		$toolbar.data('floatingTop', adminToolbarContents($copy).offset().top - $(window).scrollTop());
+		$copy.remove();
+	}
+	return $toolbar.data('floatingTop');
+}
+
+// How far the page scrolls before a toolbar's contents reach where they are when it floats, so it floats
+// there and they don't jump. Worked out while the toolbar is in its place, and kept while it floats, when
+// the space it left is in its place.
+function adminToolbarFloatsAt($toolbar) {
+	if (!$toolbar.hasClass('toolbar_fixed')) {
+		$toolbar.data('floatsAt', adminToolbarContents($toolbar).offset().top - adminToolbarFloatingTop($toolbar));
+	}
+	return $toolbar.data('floatsAt');
+}
+
 $(document).ready(function() {
-	var offset = $('#admin_toolbar').offset();
 
-	  $(window).scroll(function () {
+	$(window).scroll(function () {
 		var scrollTop = $(window).scrollTop();
-		if (offset && offset.top<scrollTop <{$allowFloatingSave}>) {
-		  $('#admin_toolbar').addClass('toolbar_fixed');
-		  $('#admin_toolbar').addClass('ui-corner-all');
-		  $('#add-element-toolbar').addClass('toolbar_fixed');
-		  $('#add-element-toolbar').addClass('ui-corner-all');
-		  // Keep the floating "Add an element" box in line with the content area's right edge.
-		  // Derived from the live layout (no hard-coded margin) so it stays correct across themes,
-		  // zoom levels, resolutions and font sizes. The save button stays at its left edge for free
-		  // via its static position; the right edge needs this because a fixed element's auto right
-		  // offset resolves to the left instead.
-		  var $content = $('.admin-ui');
-		  if ($content.length) {
-		    var rightGap = $(window).width() - ($content.offset().left + $content.outerWidth());
-		    if (rightGap < 0) { rightGap = 0; }
-		    $('#add-element-toolbar').css('right', rightGap + 'px');
-		  }
+		// the Add element box first, since the save bar is what's below it
+		$.each(['#add-element-toolbar', '#admin_toolbar'], function(i, selector) {
+			var $toolbar = $(selector);
+			// not until the page is shown, since until then it has no place to measure
+			if (!$toolbar.length || !$toolbar.is(':visible')) {
+				return;
+			}
+			if (scrollTop > adminToolbarFloatsAt($toolbar) <{$allowFloatingSave}>) {
+				floatAdminToolbar($toolbar);
+			} else {
+				dockAdminToolbar($toolbar);
+			}
+		});
+		// Keep the floating "Add an element" box in line with the content area's right edge.
+		// Derived from the live layout (no hard-coded margin) so it stays correct across themes,
+		// zoom levels, resolutions and font sizes. The save button stays at its left edge for free
+		// via its static position; the right edge needs this because a fixed element's auto right
+		// offset resolves to the left instead.
+		var $addElement = $('#add-element-toolbar');
+		var $content = $('.admin-ui');
+		if ($addElement.hasClass('toolbar_fixed') && $content.length) {
+			var rightGap = $(window).width() - ($content.offset().left + $content.outerWidth());
+			if (rightGap < 0) { rightGap = 0; }
+			$addElement.css('right', rightGap + 'px');
 		} else {
-		  $('#admin_toolbar').removeClass('toolbar_fixed');
-		  $('#admin_toolbar').removeClass('ui-corner-all');
-		  $('#add-element-toolbar').removeClass('toolbar_fixed');
-		  $('#add-element-toolbar').removeClass('ui-corner-all');
-		  $('#add-element-toolbar').css('right', '');
-		};
-	  });
-
+			$addElement.css('right', '');
+		}
 	});
+
+	// the floating toolbar is measured in ems, so a change of size can change where its contents are
+	$(window).resize(function () {
+		$('#admin_toolbar, #add-element-toolbar').removeData('floatingTop');
+	});
+
+});
 </script>
 <!-- end jquery -->
 
