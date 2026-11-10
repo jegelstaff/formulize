@@ -975,6 +975,20 @@ define("_formulize_FILTERPOP_TYPE_SEARCH", "Type a search term");
 define("_formulize_FILTERPOP_PICK_INSTEAD", "Pick instead of typing");
 define("_formulize_FILTERPOP_FROM_DATE", "From %s");
 define("_formulize_FILTERPOP_UNTIL_DATE", "Until %s");
+// the Time range filter in a list's search cell
+define("_formulize_FILTERPOP_ANY_TIME", "Any time");
+define("_formulize_FILTERPOP_FROM_TIME", "From %s"); // %s is a time, ie: From 9:00am
+define("_formulize_FILTERPOP_UNTIL_TIME", "Until %s"); // %s is a time, ie: Until 5:00pm
+define("_formulize_FILTERPOP_NOW", "Now");
+define("_formulize_FILTERPOP_MINUTES_AGO", "%s minutes ago"); // %s is a box for the number of minutes
+define("_formulize_FILTERPOP_MINUTES_FROM_NOW", "%s minutes from now"); // %s is a box for the number of minutes
+define("_formulize_FILTERPOP_NUMBER_OF_MINUTES", "Number of minutes");
+define("_formulize_FILTERPOP_MORNING", "Morning"); // midnight to noon
+define("_formulize_FILTERPOP_AFTERNOON", "Afternoon"); // noon to 5pm
+define("_formulize_FILTERPOP_EVENING", "Evening"); // 5pm to midnight
+define("_formulize_FILTERPOP_LAST_HOUR", "In the last hour");
+define("_formulize_FILTERPOP_NEXT_HOUR", "In the next hour");
+define("_formulize_FILTERPOP_WHOLE_RANGE", "Parts of the day"); // names the group of shortcuts that set both times, for screen readers
 // the Search box at the top of a column: type a search term, or pick from the values that match it
 define("_formulize_SEARCHBOX_LABEL", "Search %s");
 define("_formulize_SEARCHBOX_LOADING", "Finding matches...");

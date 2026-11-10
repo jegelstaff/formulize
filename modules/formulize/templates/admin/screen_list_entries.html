@@ -224,7 +224,7 @@
 
   // the search interfaces a row can have, for rows added later
   var searchTypeOptions = '<{foreach from=$content.advanceviewsearchtypeoptions key=value item=label}><option value="<{$value|escape:"html"}>"><{$label|escape:"html"|escape:"javascript"}></option><{/foreach}>';
-  formulizeBindColumnSearchDefaults(<{$content.columnsearchdefaults}>, <{$content.dateonlysearchtypes}>);
+  formulizeBindColumnSearchDefaults(<{$content.columnsearchdefaults}>, <{$content.dateonlysearchtypes}>, <{$content.timeonlysearchtypes}>);
 
   function addAdvanceViewRow(number) {
     appendContents1 = '<td><span class="sorthandle">&equiv;</span> <select id="cols-'+number+'" name="col-value['+number+']"></select></td>';

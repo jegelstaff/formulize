@@ -773,6 +773,7 @@ define("_AM_FORMULIZE_SEARCH_TYPE_BOX", "Boîte de recherche - taper seulement")
 define("_AM_FORMULIZE_SEARCH_TYPE_FILTER", "Liste déroulante - choisir une valeur");
 define("_AM_FORMULIZE_SEARCH_TYPE_NEGATIVEFILTER", "Liste déroulante - exclure une valeur");
 define("_AM_FORMULIZE_SEARCH_TYPE_DATERANGE", "Plage de dates");
+define("_AM_FORMULIZE_SEARCH_TYPE_TIMERANGE", "Plage horaire");
 define("_AM_FORMULIZE_SEARCH_TYPE_MONTHCURRENTYEAR", "Choix du mois - année en cours");
 define("_AM_FORMULIZE_SEARCH_TYPE_MONTHLAST12MONTHS", "Choix du mois - 12 derniers mois");
 define("_AM_ELE_SEARCHTYPE", "L'interface de recherche à utiliser dans les listes :");
@@ -780,7 +781,8 @@ define("_AM_ELE_SEARCHTYPE", "L'interface de recherche à utiliser dans les list
 define("_AM_ELE_SEARCHTYPE_DESC_SEARCHBOX", "<b>Boîte de recherche - taper ou choisir des valeurs :</b> une zone où taper une recherche, et des cases à cocher pour les entrées qui correspondent.");
 define("_AM_ELE_SEARCHTYPE_DESC_BOX", "<b>Boîte de recherche - taper seulement :</b> une zone où taper une recherche, sans la liste de cases à cocher.");
 define("_AM_ELE_SEARCHTYPE_DESC_DROPDOWN", "<b>Liste déroulante :</b> une liste de toutes les valeurs disponibles; en choisir une affiche (ou masque) les entrées qui correspondent.");
-define("_AM_ELE_SEARCHTYPE_DESC_DATERANGE", "<b>Plage de dates :</b> des options pour choisir une plage de dates à afficher.");
+define("_AM_ELE_SEARCHTYPE_DESC_DATERANGE", "<b>Plage de dates :</b> une date de début et une date de fin, avec des raccourcis pour aujourd'hui, pour les jours avant et après aujourd'hui, etc.");
+define("_AM_ELE_SEARCHTYPE_DESC_TIMERANGE", "<b>Plage horaire :</b> une heure de début et une heure de fin, avec des raccourcis pour les moments de la journée et pour les heures autour de maintenant.");
 define("_AM_ELE_SEARCHTYPE_DESC_MONTH", "<b>Choix du mois :</b> une liste déroulante des mois à afficher.");
 
 // Time Selector elements

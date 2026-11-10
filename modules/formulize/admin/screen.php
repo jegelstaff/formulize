@@ -241,6 +241,7 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
   // what each column's search interface becomes when it is chosen for a row, see formulizeBindColumnSearchDefaults() in formulize-admin.js
   $entries['columnsearchdefaults'] = json_encode(formulize_columnSearchDefaults(array_keys($entries['advanceviewoptions'])));
   $entries['dateonlysearchtypes'] = json_encode(formulizeHandler::dateOnlySearchTypes());
+  $entries['timeonlysearchtypes'] = json_encode(formulizeHandler::timeOnlySearchTypes());
   $entries['advanceview'] = $advanceViewSelected;
   $entries['defaultview'] = $screen->getVar('defaultview');
   // Convert to arrays if a legacy value
@@ -609,6 +610,7 @@ if ($screen_id != "new" && $settings['type'] == 'map') {
     $mapSettings['columnsearchtypedescriptions'] = array_values(array_unique(formulizeHandler::listScreenSearchTypeDescriptions()));
     $mapSettings['columnsearchdefaults'] = json_encode(formulize_columnSearchDefaults(array_keys($mapSettings['columnoptions'])));
     $mapSettings['dateonlysearchtypes'] = json_encode(formulizeHandler::dateOnlySearchTypes());
+    $mapSettings['timeonlysearchtypes'] = json_encode(formulizeHandler::timeOnlySearchTypes());
 
     // build columns array for the template
     $cols = $screen->getVar('columns');

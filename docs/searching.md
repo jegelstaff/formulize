@@ -24,7 +24,7 @@ As you type, the values in that column that match what you've typed appear in a 
 - Click **Cancel** or press Esc to close the list and put your search back the way it was when you opened it.
 - Click somewhere else on the page to close the list and keep what you've typed or ticked. It's used the next time the list updates, such as when you press Enter or sort a column.
 
-Some columns have a different search instead, such as a dropdown list to choose from, a pair of dates, or a plain box to type in.
+Some columns have a different search instead, such as a dropdown list to choose from, a pair of dates or times, or a plain box to type in.
 
 ## The basics
 
@@ -59,6 +59,33 @@ Some columns have a different search instead, such as a dropdown list to choose 
  <2009-01//>2007-12 			| find dates in the year 2008 (see below for more info on using two terms at once) 	| Any date starting with 2008
  >=2008-10-01//<=2008-10-31 	| find dates in October 2008 (see below for more info on using two terms at once) 	| Any date starting with 2008-10
  2008-10 						| find dates in October 2008 														| Any date starting with 2008-10 (same as the previous, more complex search
+
+
+## Times
+
+Search for a time the way the list shows it. If the list shows 1:30pm, you can type 1:30pm, and you can also type 13:30.
+
+ **This search term:** 		| **Means this:** 														| **It will find:**
+:---------------------------|:----------------------------------------------------------------------|:------------------------------------------------
+ 5 							| find times with a 5 anywhere in them, as the list shows them			| 5:30pm <br/> 1:05am <br/> 12:50pm
+ 5: 						| find times in the 5 o'clock hour										| 5:00am <br/> 5:45pm <br/> (it won't find 15:30 or 11:55)
+ pm 						| find times in the afternoon and evening, if the list shows am and pm	| 12:15pm <br/> 7:00pm
+ 1:30pm <br/> 13:30 		| find exactly 1:30 in the afternoon, typed either way					| 1:30pm
+ >=9:00 					| find times at 9:00 in the morning or later							| 9:00am <br/> 11:20am <br/> 4:00pm
+ >=9:00//<=12:00 			| find times from 9:00 in the morning until noon						| 9:00am <br/> 10:45am <br/> 12:00pm
+ >=22:00//<=2:00 			| find times from 10:00 at night until 2:00 in the morning. When the first time is later than the second, the search goes past midnight. | 10:30pm <br/> 1:15am
+
+Whether a column shows 12-hour times, like 1:30pm, or 24-hour times, like 13:30, is set for each time element, and for the whole site under **Date & time formats** in the settings.
+
+### The Time range search
+
+A column can have a **Time range** search instead of a box. Click it to choose a **From** time and a **To** time, then click **Apply**.
+
+- **Morning**, **Afternoon** and **Evening** choose both times for you: midnight to noon, noon to 5pm, and 5pm to midnight.
+- **In the last hour** and **In the next hour** choose the hour before or after now.
+- Under each time, **Now** sets that time to now, and the box with a number sets it that many minutes before or after now. **Clear** leaves that side open, so the search has no start or no end.
+- Choices made from now keep their meaning. If you save the list, **In the next hour** is the hour after whenever the list is opened, not the hour after you saved it.
+- A **From** time later than the **To** time goes past midnight. From 10:00pm to 2:00am finds the times overnight.
 
 
 ## Duration
@@ -105,6 +132,7 @@ Remember that plain OR: terms all join one group no matter which column they are
  **This search term:**		| **Means this:** 											| **It will find:**
 :---------------------------|:----------------------------------------------------------|:--------------------------------------------------
  {TODAY} 					| find today's date 										| the text of today's date, in YYYY-mm-dd format
+ >={NOW-60}//<={NOW} 		| on a time, find the times in the last hour. {NOW+15} is 15 minutes from now. | the times between an hour ago and now
  >={TODAY-30} 				| find dates anytime from the past 30 days into the future 	| you get the idea
  >={TODAY-30} AND <={TODAY}	| find dates between 30 days ago and today
  >{TODAY+14} 				| Find dates more than 14 days in the future
@@ -168,10 +196,11 @@ Each column in a list can have one of these searches at the top:
  Dropdown list - select value | Choose one of the values in the entries.
  Dropdown list - exclude value | Choose a value to leave out.
  Date range | Choose a from date and a to date. Only for elements that hold dates.
+ Time range | Choose a from time and a to time, which can go past midnight. Only for elements that hold times.
  Month selection - current year | Choose a month of this year. Only for elements that hold dates.
  Month selection - last 12 months | Choose one of the last twelve months. Only for elements that hold dates.
 
-**For an element**, set **How people search this element in lists** on the element's **Settings** tab. That search is used wherever the element appears in a list, unless the list chooses a different one. If you leave it, elements that hold dates get **Date range**, numbers that people type in, like a number box or a slider, get **Search box - type only**, and everything else gets **Search box - type or pick values**.
+**For an element**, set **How people search this element in lists** on the element's **Settings** tab. That search is used wherever the element appears in a list, unless the list chooses a different one. If you leave it, elements that hold dates get **Date range**, elements that hold times get **Time range**, numbers that people type in, like a number box or a slider, get **Search box - type only**, and everything else gets **Search box - type or pick values**.
 
 **For a list screen**, the **Display only these columns** section of the screen's **Entries** tab has a **Search Interface** for each column. Hover over the help icon beside that heading to see what each one is. When you add a column there, it starts with the element's own search, and you can change it. Columns you haven't listed there, including ones people add with **Change columns**, use the element's own search. Map screens choose the search for each filter the same way, in the **Filter Type** of each filter on their **Map Options** tab.
 

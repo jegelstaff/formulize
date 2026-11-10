@@ -39,6 +39,17 @@ Conditions, searches, per-group filters and the check against one entry all read
 
 The callers differ in one way on purpose: a negative condition or search takes in entries with no date, and a negative per-group filter doesn't, so that a permission filter is never widened.
 
+## Times
+
+Times are stored as HH:MM:SS, and shown in the element's 12-hour or 24-hour format. Datasets hold the time as it's shown, so the check against one entry reads it back with `formulize_timeValueAsISO()` before comparing. MariaDB reads text it can't make a time of as midnight, `''` and `bread` alike, so those can't go into SQL as they are. Each rule is in one function:
+
+| Rule | Function |
+|---|---|
+| What LIKE finds: the term in the time as it's shown, an hour when the term starts with one (`5:`), or a whole time typed either way | `formulize_timeSearchTerm()`, then `formulize_timeLikeComparison()` in SQL and `formulize_timeMatchesSearch()` in PHP |
+| A term that isn't a time | `formulize_termIsATime()`, then the same operator rule as dates, `formulize_dateComparedWithTermThatIsNotADate()`. IN lists keep only their times |
+| What blank is | NULL, and only NULL, in `formulize_blankValueComparison()` |
+| A range in a search whose From is later than its To goes past midnight | `formulize_timeRangeAcrossMidnight()`, which makes the two terms an OR'd set. It works out `{NOW}` first, since a range like the next hour only crosses midnight at some times of day |
+
 ## Which form draws the JavaScript
 
 The code that shows and hides conditional elements is drawn once, by the outermost form on the page. `displayForm()` skips it inside an inline subform render, when `$GLOBALS['formulize_inlineSubformFrid']` is set, and for elements-only forms, unless the form is in the [drawer](drawer.md), where the elements-only form is the outermost one.

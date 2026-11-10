@@ -88,7 +88,8 @@ function extractFunctionSource($source, $functionName) {
 }
 
 $functionsSource = file_get_contents($functionsFile);
-foreach (array('formulize_timeValueAsISO', 'formulize_mysqlTimeFormat', 'formulize_timeSearchTerm', 'formulize_timeLikeComparison', 'formulize_timeMatchesSearch') as $name) {
+foreach (array('formulize_timeValueAsISO', 'formulize_mysqlTimeFormat', 'formulize_timeSearchTerm', 'formulize_timeLikeComparison', 'formulize_timeMatchesSearch',
+               'formulize_termIsATime', 'formulize_dateComparedWithTermThatIsNotADate') as $name) {
     $code = extractFunctionSource($functionsSource, $name);
     if ($code === false) {
         fwrite(STDERR, "Could not extract $name()\n");
@@ -105,7 +106,7 @@ function formulize_db_escape($value) { return addslashes($value); }
 // '12' or '24', or null for the site's setting, which is $GLOBALS['__siteTimeFormat'].
 $timeSource = file_get_contents($timeFile);
 $methodSources = '';
-foreach (array('getTimeFormatStrings', 'formatTime', 'prepareLiteralTextForDB', 'convert12To24HourTime', 'buildSearchWhereClause') as $name) {
+foreach (array('getTimeFormatStrings', 'formatTime', 'prepareLiteralTextForDB', 'convert12To24HourTime', 'buildSearchWhereClause', 'buildClauseForTermThatIsNotATime') as $name) {
     $code = extractFunctionSource($timeSource, $name);
     if ($code === false) {
         fwrite(STDERR, "Could not extract $name() from $timeFile\n");
@@ -318,8 +319,28 @@ if ($isDefault) {
         " ( LOWER(TIME_FORMAT(main.`starts`,'%l:%i%p')) REGEXP '(^|[^0-9:])0*5\\\\:' ) ");
     check('the SQL for 1:30pm, which is a whole time', $handler->buildSearchWhereClause('13:30', 'NOT LIKE', "'", '%', 1, 'main', 'main.`starts`', '1:30pm'),
         " ( NOT ( LOWER(TIME_FORMAT(main.`starts`,'%l:%i%p')) REGEXP '(^|[^0-9:])0*1\\\\:30pm' OR TIME_FORMAT(main.`starts`,'%H:%i') = '13:30' ) ) ");
-    check('= is not done here', $handler->buildSearchWhereClause('13:30', '=', "'", '', 1, 'main', 'main.`starts`', '1:30pm'), false);
+    check('= on a time is not done here', $handler->buildSearchWhereClause('13:30', '=', "'", '', 1, 'main', 'main.`starts`', '1:30pm'), false);
 }
+
+// ---- terms that aren't times ---------------------------------------------------
+// The database reads them as midnight, so time > bread would find every time, and time = bread the times at midnight. They're decided
+// the same way as for dates instead: nothing is equal to them, before or after them, or in a list of them, and everything is not equal to them.
+check('a time is a time', formulize_termIsATime('13:30'), true);
+check('a time with seconds is a time', formulize_termIsATime('13:30:00'), true);
+check('one digit hour is a time', formulize_termIsATime('9:00'), true);
+check('a word is not a time', formulize_termIsATime('bread'), false);
+check('a time as it is shown is not one the database can compare', formulize_termIsATime('1:30pm'), false);
+check('blank is not a time', formulize_termIsATime(''), false);
+check('25:00 is not a time', formulize_termIsATime('25:00'), false);
+check('= bread finds nothing', $handler->buildSearchWhereClause('bread', '=', "'", '', 1, 'main', 'main.`starts`', 'bread'), ' 1=0 ');
+check('> bread finds nothing', $handler->buildSearchWhereClause('bread', '>', "'", '', 1, 'main', 'main.`starts`', 'bread'), ' 1=0 ');
+check('!= bread finds everything', $handler->buildSearchWhereClause('bread', '!=', "'", '', 1, 'main', 'main.`starts`', 'bread'), ' 1=1 ');
+check('pm is not a time for =', $handler->buildSearchWhereClause($handler->prepareLiteralTextForDB('pm', '12'), '=', "'", '', 1, 'main', 'main.`starts`', 'pm'), ' 1=0 ');
+check('a whole time typed as shown carries on', $handler->buildSearchWhereClause($handler->prepareLiteralTextForDB('1:30pm', '12'), '>', "'", '', 1, 'main', 'main.`starts`', '1:30pm'), false);
+check('an IN list keeps its times', $handler->buildSearchWhereClause("('13:30','bread')", 'IN', '', '', 1, 'main', 'main.`starts`', ''), " main.`starts` IN ('13:30') ");
+check('an IN list of nothing but words finds nothing', $handler->buildSearchWhereClause("('bread','jam')", 'IN', '', '', 1, 'main', 'main.`starts`', ''), ' 1=0 ');
+check('a NOT IN list of nothing but words finds everything', $handler->buildSearchWhereClause("('bread')", 'NOT IN', '', '', 1, 'main', 'main.`starts`', ''), ' 1=1 ');
+check('an IN list of times carries on', $handler->buildSearchWhereClause("('13:30','09:00')", 'IN', '', '', 1, 'main', 'main.`starts`', ''), false);
 
 // ---- derived values ----------------------------------------------------------
 // the defaults have always been readable by strtotime, which derived values that work out the time between two times rely on

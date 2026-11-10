@@ -695,16 +695,18 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
   box-shadow: 0 0 0 0.3em var(--fz-field-bg, #fff); /* a ring of the list's background, so options don't show around the button's rounded corners */
 }
 
-/* Date range filters. Each label holds its word and its date: the word sits beside the date when
+/* Date range and time range filters. Each label holds its word and its date or time: the word sits beside the date when
    there's room, and wraps above it when there isn't, so a narrow column doesn't squeeze the date. */
-.formulize-daterange {
+.formulize-daterange,
+.formulize-timerange {
   display: flex;
   flex-direction: column;
   gap: 0.3em;
   max-width: 20em;
 }
 
-.formulize-daterange-field {
+.formulize-daterange-field,
+.formulize-timerange-field {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -712,22 +714,26 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
   margin: 0;
 }
 
-.formulize-daterange-field > span {
+.formulize-daterange-field > span,
+.formulize-timerange-field > span {
   flex: 0 0 auto;
   min-width: 2.6em;
 }
 
-.formulize-daterange-field > input {
+.formulize-daterange-field > input,
+.formulize-timerange-field > input {
   flex: 1 1 8.5em;
   min-width: 0;
 }
 
-.formulize-daterange .formulize-filter-apply {
+.formulize-daterange .formulize-filter-apply,
+.formulize-timerange .formulize-filter-apply {
   align-self: flex-start;
   margin-top: 0;
 }
 
-#listofentries td[id^="celladdress_1_"] .formulize-daterange .formulize-filter-apply {
+#listofentries td[id^="celladdress_1_"] .formulize-daterange .formulize-filter-apply,
+#listofentries td[id^="celladdress_1_"] .formulize-timerange .formulize-filter-apply {
   align-self: stretch;
   width: auto;
 }
@@ -824,7 +830,8 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
 }
 
 /* the find box and the dates are .fz-input fields; this only keeps the dates from stretching in their columns */
-.formulize-filter-panel .formulize-daterange-field > input {
+.formulize-filter-panel .formulize-daterange-field > input,
+.formulize-filter-panel .formulize-timerange-field > input {
   flex: none;
   min-width: 0;
 }
@@ -946,13 +953,15 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
 }
 
 /* From and To at the top of the date panel, side by side, each word over its date */
-.formulize-filter-panel .formulize-daterange {
+.formulize-filter-panel .formulize-daterange,
+.formulize-filter-panel .formulize-timerange {
   flex-direction: row;
   gap: 0.6em;
   max-width: none;
 }
 
-.formulize-filter-panel .formulize-daterange-field {
+.formulize-filter-panel .formulize-daterange-field,
+.formulize-filter-panel .formulize-timerange-field {
   flex: 1 1 0;
   flex-direction: column;
   align-items: stretch;

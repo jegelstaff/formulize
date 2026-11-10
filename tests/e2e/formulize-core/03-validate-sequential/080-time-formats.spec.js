@@ -15,6 +15,7 @@ import { museumAppId } from '../01-setup/museum-forms';
 //     hour, so not 11, or pm. A time typed in the other format finds it too.
 //   - a condition on the time, which is checked against the entry when its form is drawn, compares it as a time, so 9:05 in
 //     the morning is before 12:00 however it's written
+//   - the Time range finds the times between its From and To, and a From later than To goes past midnight
 // The checks run three times: with the formats a new site has, with formats a site might choose, one of which strtotime
 // can't read, and with the element set to 24-hour.
 //
@@ -81,8 +82,9 @@ async function setDisplayFormat(page, label) {
 	await expect(page.getByRole('radio', { name: label, exact: true })).toBeChecked();
 }
 
-// The list, with the event and its time as columns, since a new form's list doesn't show them
-async function openList(page) {
+// The list, with the event and its time as columns, since a new form's list doesn't show them. Its time column has a box to type in,
+// unless the element is set to the Time range, which is a button that opens it.
+async function openList(page, { timeRange = false } = {}) {
 	await page.goto(listUrl());
 	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
 	const popupPromise = page.context().waitForEvent('page');
@@ -93,7 +95,21 @@ async function openList(page) {
 	await popup.getByRole('checkbox', { name: 'Starts at', exact: true }).check();
 	await applyColumnChanges(popup);
 	await waitForWorkingMessage(page);
-	await expect(page.locator(`input[name="search_${STARTS_AT}"]`)).toBeVisible();
+	if (timeRange) {
+		await expect(timeRangeButton(page)).toBeVisible();
+	} else {
+		await expect(page.locator(`input[name="search_${STARTS_AT}"]`)).toBeVisible();
+	}
+}
+
+// the Time range's button in the time column's search cell, and the panel it opens
+const timeRangeButton = page => page.locator('td[id^="celladdress_1_"]').filter({ has: page.locator('input[id^="formulize_hidden_timerange_"]') }).locator('.formulize-filter-trigger');
+const openPanel = page => page.locator('.formulize-filter-panel:popover-open');
+
+// Apply submits the list, which is drawn again with the search in effect
+async function applyTimeRange(page, expectedCount) {
+	await openPanel(page).getByRole('button', { name: 'Apply', exact: true }).click();
+	await expect(page.getByText(`Showing entries: 1 to ${expectedCount} of ${expectedCount}.`).first()).toBeVisible();
 }
 
 const timeCell = (page, time) => page.locator(`[id^="celladdress_"]`).filter({ hasText: new RegExp(`^\\s*${time.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`) });
@@ -269,6 +285,36 @@ test('with the element set to 24-hour, times show and read in the 24-hour format
 	await expectSearchToFind(page, '3', AFTERNOON);
 	await expectEntryToShow(page, MORNING, '09h05', false);
 	await expectEntryToShow(page, AFTERNOON, '13h30', true);
+});
+
+test('a time range finds the times between its two, and the times past midnight when From is later than To', async ({ page }) => {
+	test.setTimeout(300000);
+	await login(page);
+	await page.goto(startsAtElementUrl());
+	await waitForAdminPageReady(page);
+	await page.locator('select[name="elements-ele_searchtype"]').selectOption({ label: 'Time range' });
+	await saveAdminForm(page);
+	await page.goto(startsAtElementUrl());
+	await waitForAdminPageReady(page);
+	await expect(page.locator('select[name="elements-ele_searchtype"] option:checked')).toHaveText('Time range');
+
+	// the afternoon is noon until 5pm, so only the afternoon tour
+	await openList(page, { timeRange: true });
+	await expect(timeRangeButton(page)).toHaveText(/Any time/);
+	await timeRangeButton(page).click();
+	await openPanel(page).getByRole('button', { name: 'Afternoon', exact: true }).click();
+	await applyTimeRange(page, 1);
+	await expect(page.locator('[id^="celladdress_"]').filter({ hasText: AFTERNOON })).toHaveCount(1);
+	await expect(timeRangeButton(page)).toHaveText(/Afternoon/);
+
+	// from 2pm until 10am goes past midnight, so it's the morning talk at 9:05, and not the tour at 1:30pm. The button shows the
+	// range the way the element shows times, which is the 24-hour format the tests before this one set, ie: 13h30
+	await timeRangeButton(page).click();
+	await openPanel(page).locator('input[id^="formulize_timerange_sta_"]').fill('14:00');
+	await openPanel(page).locator('input[id^="formulize_timerange_end_"]').fill('10:00');
+	await applyTimeRange(page, 1);
+	await expect(page.locator('[id^="celladdress_"]').filter({ hasText: MORNING })).toHaveCount(1);
+	await expect(timeRangeButton(page)).toHaveText(/14h00 – 10h00/);
 });
 
 test('put the site\'s formats back', async ({ page }) => {

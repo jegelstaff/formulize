@@ -1096,7 +1096,7 @@ class formulizeHandler {
 	 *
 	 * Each column definition is an associative array:
 	 *   - element (required): an ele_id, an element handle, or a metadata field name
-	 *   - search_type: 'search_box_with_checklist' | 'search_box' | 'dropdown' | 'dropdown_exclude' | 'date_range' | 'month_current_year' | 'month_last_12_months'.
+	 *   - search_type: 'search_box_with_checklist' | 'search_box' | 'dropdown' | 'dropdown_exclude' | 'date_range' | 'time_range' | 'month_current_year' | 'month_last_12_months'.
 	 *     Left out, the column gets the search type its element is set to use (see formulize_defaultSearchTypeForColumn())
 	 *   - sort_direction: 'ASC' | 'DESC' | 'off' (the default - the list does not start out sorted by this column)
 	 *   - default_search_value: a value to pre-fill this column's Quicksearch with, so the list starts out filtered
@@ -1159,6 +1159,7 @@ class formulizeHandler {
 			'dropdown' => 'Filter',
 			'dropdown_exclude' => 'NegativeFilter',
 			'date_range' => 'DateRange',
+			'time_range' => 'TimeRange',
 			'month_current_year' => 'MonthCurrentYear',
 			'month_last_12_months' => 'MonthLast12Months'
 		);
@@ -1177,6 +1178,7 @@ class formulizeHandler {
 			'Filter' => _AM_FORMULIZE_SEARCH_TYPE_FILTER,
 			'NegativeFilter' => _AM_FORMULIZE_SEARCH_TYPE_NEGATIVEFILTER,
 			'DateRange' => _AM_FORMULIZE_SEARCH_TYPE_DATERANGE,
+			'TimeRange' => _AM_FORMULIZE_SEARCH_TYPE_TIMERANGE,
 			'MonthCurrentYear' => _AM_FORMULIZE_SEARCH_TYPE_MONTHCURRENTYEAR,
 			'MonthLast12Months' => _AM_FORMULIZE_SEARCH_TYPE_MONTHLAST12MONTHS
 		);
@@ -1194,6 +1196,7 @@ class formulizeHandler {
 			'Filter' => _AM_ELE_SEARCHTYPE_DESC_DROPDOWN,
 			'NegativeFilter' => _AM_ELE_SEARCHTYPE_DESC_DROPDOWN,
 			'DateRange' => _AM_ELE_SEARCHTYPE_DESC_DATERANGE,
+			'TimeRange' => _AM_ELE_SEARCHTYPE_DESC_TIMERANGE,
 			'MonthCurrentYear' => _AM_ELE_SEARCHTYPE_DESC_MONTH,
 			'MonthLast12Months' => _AM_ELE_SEARCHTYPE_DESC_MONTH
 		);
@@ -1205,6 +1208,14 @@ class formulizeHandler {
 	 */
 	public static function dateOnlySearchTypes() {
 		return array('DateRange', 'MonthCurrentYear', 'MonthLast12Months');
+	}
+
+	/**
+	 * The search types that only work on a column that holds times of day. They draw nothing on any other column.
+	 * @return array Stored values
+	 */
+	public static function timeOnlySearchTypes() {
+		return array('TimeRange');
 	}
 
 	/**

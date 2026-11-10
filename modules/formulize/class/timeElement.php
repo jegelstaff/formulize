@@ -263,11 +263,47 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
 	 * @return string|false The where clause, or false if the search should carry on the way it would for any other element
 	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main', $queryElement = '', $rawTerm = '') {
-		if($likebits !== '%' OR !$queryElement) {
+		if(!$queryElement) {
 			return false;
 		}
-		$formats = $this->getTimeFormatStrings($this->elementForSearchColumn($queryElement));
-		return formulize_timeLikeComparison($operator, $queryElement, formulize_timeSearchTerm($rawTerm, $term, $formats), $formats[0]);
+		$operator = trim($operator);
+		if($operator == 'LIKE' OR $operator == 'NOT LIKE') {
+			if($likebits !== '%') {
+				return false;
+			}
+			$formats = $this->getTimeFormatStrings($this->elementForSearchColumn($queryElement));
+			return formulize_timeLikeComparison($operator, $queryElement, formulize_timeSearchTerm($rawTerm, $term, $formats), $formats[0]);
+		}
+		return $this->buildClauseForTermThatIsNotATime($term, $operator, $queryElement);
+	}
+
+	/**
+	 * Build the where clause for a search of a time with a term that isn't a time, ie: time > bread, which the database would read as midnight.
+	 * It's decided the same way as for dates, see formulize_dateComparedWithTermThatIsNotADate. An IN list keeps only the terms that are times.
+	 *
+	 * @param string $term The term, already passed through prepareLiteralTextForDB. An IN list is ('a','b').
+	 * @param string $operator The operator
+	 * @param string $queryElement The column
+	 * @return string|false The clause, or false if the term is a time, so the search carries on the way it would for any other element
+	 */
+	function buildClauseForTermThatIsNotATime($term, $operator, $queryElement) {
+		$everyEntryMatches = formulize_dateComparedWithTermThatIsNotADate($operator);
+		if($everyEntryMatches === null) {
+			return false;
+		}
+		if($operator == 'IN' OR $operator == 'NOT IN') {
+			preg_match_all("/'([^']*)'/", (string) $term, $listItems);
+			$times = array_values(array_filter($listItems[1], 'formulize_termIsATime'));
+			if(count($times) == count($listItems[1])) {
+				return false;
+			}
+			if(!empty($times)) {
+				return " $queryElement $operator ('".implode("','", array_map('formulize_db_escape', $times))."') ";
+			}
+		} elseif(formulize_termIsATime($term) OR trim((string) $term) === '') {
+			return false; // a blank is a search for blanks, which the search handles itself (see formulize_blankValueComparison)
+		}
+		return $everyEntryMatches ? " 1=1 " : " 1=0 ";
 	}
 
 	/**

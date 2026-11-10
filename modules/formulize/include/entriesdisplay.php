@@ -2555,6 +2555,8 @@ function formulize_buildQuickSearchOfType($type, $handle, $search_text, $fid=0, 
 			return array('negativeFilter' => formulize_buildQSFilter($handle, $search_text, negativeFilter: true, fid: $fid));
 		case 'DateRange':
 			return array('dateRange' => formulize_buildDateRangeFilter($handle, $search_text));
+		case 'TimeRange':
+			return array('timeRange' => formulize_buildTimeRangeFilter($handle, $search_text));
 		case 'MonthCurrentYear':
 			return array('monthCurrentYear' => formulize_buildMonthSelectionFilter($handle, $search_text, false));
 		case 'MonthLast12Months':
@@ -3932,7 +3934,75 @@ $output
 }
 
 /**
- * Print the script that turns the Search box, and the checkbox and date range filters in a list's column search cells,
+ * THIS FUNCTION CREATES THE HTML FOR A TIME RANGE FILTER
+ *
+ * Two times, From and To, in the browser's own time boxes, and a hidden field named for the column, search_<handle>, that carries
+ * the search: >=from//<=to, or just one of the two. Either can be {NOW}, give or take some minutes, ie: {NOW+60}, which the search
+ * works out when it runs, so a saved or reloaded list keeps meaning "the next hour". A From later than To goes past midnight, ie:
+ * from 10pm to 2am, which the search reads as after the From or before the To (see formulize_timeRangeAcrossMidnight).
+ *
+ * In a list's search cell, filterpopovers.js puts it in a popover, with shortcuts. Anywhere else, such as in a template, the times
+ * go into the search as they're changed, and the filter's own button submits it.
+ *
+ * @param string $handle The handle of the column
+ * @param string $search_text The search in effect on the column
+ * @return string HTML markup, or nothing if the column doesn't hold times
+ */
+function formulize_buildTimeRangeFilter($handle, $search_text) {
+	$search_text = ($search_text === "" AND isset($_POST['search_'.$handle])) ? $_POST['search_'.$handle] : $search_text;
+	if(!formulize_handleIsTimeColumn($handle)) {
+		return "";
+	}
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	$elementObject = $element_handler->get($handle);
+	$timeTypeHandler = xoops_getmodulehandler($elementObject->getVar('ele_type').'Element', 'formulize');
+	$timeFormats = $timeTypeHandler->getTimeFormatStrings($elementObject);
+	$search_text = htmlspecialchars_decode((string) $search_text);
+	$terms = array('from' => '', 'to' => '');
+	foreach(explode('//', $search_text) as $part) {
+		if(substr($part, 0, 2) == '>=') {
+			$terms['from'] = substr($part, 2);
+		} elseif(substr($part, 0, 2) == '<=') {
+			$terms['to'] = substr($part, 2);
+		}
+	}
+	// the boxes show the times the terms stand for now, as HH:MM, which is what a time box holds
+	$boxValues = array();
+	foreach($terms as $side => $term) {
+		$time = formulize_timeValueAsISO((string) $timeTypeHandler->prepareLiteralTextForDB(formulize_timeForNowTerm($term), $elementObject), $timeFormats);
+		$boxValues[$side] = formulize_termIsATime($time) ? substr($time, 0, 5) : '';
+	}
+
+	static $scriptPrinted = false;
+	$js = "";
+	if(!$scriptPrinted) {
+		$scriptPrinted = true;
+		// the times go into the search as they change. Heard on the document, since this is only printed once, after the first time range on the page.
+		$js = "<script type='text/javascript'>
+		document.addEventListener('change', function(event) {
+			var box = event.target;
+			if(!box.classList || !box.classList.contains('formulize-timerange-time')) { return; }
+			var range = box.closest('.formulize-timerange');
+			var start = range.querySelector('input[id^=\"formulize_timerange_sta_\"]').value;
+			var end = range.querySelector('input[id^=\"formulize_timerange_end_\"]').value;
+			range.querySelector('input[type=\"hidden\"]').value = (start ? '>='+start : '') + (start && end ? '//' : '') + (end ? '<='+end : '');
+			var apply = range.querySelector('.formulize-filter-apply');
+			if(apply) { apply.style.display = ''; }
+		});
+		</script>";
+	}
+	$id = htmlspecialchars($handle);
+	// each label wraps its time, so clicking the word focuses the time, as in a date range. The element's format goes with it, for the popover to show the range in.
+	return "<div class='formulize-timerange' data-time-format='".htmlspecialchars($timeFormats[0])."'>\n"
+		."<label class='formulize-timerange-field'><span>"._formulize_FROM."</span><input type='time' class='fz-input formulize-timerange-time' id='formulize_timerange_sta_$id' value='".htmlspecialchars($boxValues['from'])."'></label>\n"
+		."<label class='formulize-timerange-field'><span>"._formulize_TO."</span><input type='time' class='fz-input formulize-timerange-time' id='formulize_timerange_end_$id' value='".htmlspecialchars($boxValues['to'])."'></label>\n"
+		."<input type='button' style='display: none;' id='formulize_timerange_button_$id' class='formulize-small-button formulize-filter-apply' value='"._formulize_SUBMITTEXT."' onclick=\"javascript:showLoading();\">\n"
+		."<input type='hidden' id='formulize_hidden_timerange_$id' name='search_$id' value='".htmlspecialchars($search_text)."'>\n"
+		."</div>\n$js";
+}
+
+/**
+ * Print the script that turns the Search box, and the checkbox, date range and time range filters in a list's column search cells,
  * into their popovers (see filterpopovers.js), with the words it shows. Lists and map screens both use it.
  * @param object|null $screen The screen, if there is one
  * @param int $fid The form, for a list with no screen
@@ -3943,7 +4013,7 @@ function formulize_printFilterPopoverScript($screen, $fid) {
 		return;
 	}
 	$printed = true;
-	// the checkbox and date range filters in the column search cells open as popovers (see filterpopovers.js)
+	// the checkbox, date range and time range filters in the column search cells open as popovers (see filterpopovers.js)
 	$filterPopoverLang = array(
 		'anyDate' => _formulize_FILTERPOP_ANY_DATE,
 		'selected' => _formulize_FILTERPOP_SELECTED,
@@ -3966,6 +4036,19 @@ function formulize_printFilterPopoverScript($screen, $fid) {
 		'daysFromNow' => _formulize_FILTERPOP_DAYS_FROM_NOW,
 		'dec31' => _formulize_FILTERPOP_DEC_31,
 		'numberOfDays' => _formulize_FILTERPOP_NUMBER_OF_DAYS,
+		'anyTime' => _formulize_FILTERPOP_ANY_TIME,
+		'fromTime' => _formulize_FILTERPOP_FROM_TIME,
+		'untilTime' => _formulize_FILTERPOP_UNTIL_TIME,
+		'now' => _formulize_FILTERPOP_NOW,
+		'minutesAgo' => _formulize_FILTERPOP_MINUTES_AGO,
+		'minutesFromNow' => _formulize_FILTERPOP_MINUTES_FROM_NOW,
+		'numberOfMinutes' => _formulize_FILTERPOP_NUMBER_OF_MINUTES,
+		'morning' => _formulize_FILTERPOP_MORNING,
+		'afternoon' => _formulize_FILTERPOP_AFTERNOON,
+		'evening' => _formulize_FILTERPOP_EVENING,
+		'lastHour' => _formulize_FILTERPOP_LAST_HOUR,
+		'nextHour' => _formulize_FILTERPOP_NEXT_HOUR,
+		'wholeRange' => _formulize_FILTERPOP_WHOLE_RANGE,
 		'typeSearch' => _formulize_FILTERPOP_TYPE_SEARCH,
 		'pickInstead' => _formulize_FILTERPOP_PICK_INSTEAD,
 		'searchLoading' => _formulize_SEARCHBOX_LOADING,
@@ -3975,10 +4058,13 @@ function formulize_printFilterPopoverScript($screen, $fid) {
 	);
 	// webmasters can swap a popover for a box to type any search term into, like {TODAY-7}; the script remembers
 	// that per screen, so screen tells it which screen this is (or which form, for a list with no screen)
+	// and how many minutes the person's time zone is from UTC, so the date and time shortcuts work out today and now in the person's time
+	// zone, the same as the search does with {TODAY} and {NOW}, and not in the browser's
 	global $xoopsUser;
 	$filterPopoverSettings = array(
 		'typeSearch' => ($xoopsUser AND in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())),
 		'screen' => $screen ? 'sid'.$screen->getVar('sid') : 'fid'.intval($fid),
+		'utcOffsetMinutes' => intval(round(formulize_getUserUTCOffsetSecs() / 60)),
 	);
 	$filterPopoversJsVersion = formulize_get_file_version('/modules/formulize/include/js/filterpopovers.js');
 	print "<script type='text/javascript'>window.formulizeFilterPopoverLang = ".json_encode($filterPopoverLang)."; window.formulizeFilterPopoverSettings = ".json_encode($filterPopoverSettings).";</script>\n";
