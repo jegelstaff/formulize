@@ -1963,6 +1963,32 @@ function formulize_elementsOnlyButtonMetaJs($screen, $fid) {
 		.json_encode($GLOBALS['formulize_elementsOnlyButtonMeta'][$key])."</script>\n";
 }
 
+/**
+ * Render one of the drawer's header and footer templates: the theme's own, at
+ * templates/screens/<Theme>/default/drawer/<name>.php, or else the system default, at
+ * templates/screens/default/drawer/<name>.php.
+ *
+ * @param string $templateName 'headertemplate' or 'footertemplate'
+ * @param array $templateVariables the variables the template can use, by name
+ * @return string|null the template's output, or null if there is no template or it fails
+ */
+function formulize_renderDrawerTemplate($templateName, $templateVariables) {
+	$template = getDefaultTemplate($templateName, 'drawer');
+	if(formulize_screenTemplateIsEmpty($template)) {
+		return null;
+	}
+	extract($templateVariables);
+	ob_start();
+	try {
+		eval(removeOpeningPHPTag($template));
+	} catch (Throwable $e) {
+		ob_end_clean();
+		error_log('Formulize Error: the drawer '.$templateName.' failed, so the drawer used its built in layout: '.$e->getMessage());
+		return null;
+	}
+	return ob_get_clean();
+}
+
 // Work out the button configuration of an elements-only render and record it. The drawer
 // builds its footer from what this produces, so the buttons it offers -- and their text --
 // are the screen's configured ones, exactly as on the full screen form.
