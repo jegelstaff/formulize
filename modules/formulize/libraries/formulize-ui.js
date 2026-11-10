@@ -203,26 +203,42 @@
 	// CSS opens a card on hover and when something in it has the focus. This
 	// marks the cards that have more than fits (--overflows), which shows the
 	// fade and chevron, and measures how tall each is open, and which are too
-	// tall to open all the way and scroll instead (--scrolls); opens one when it
+	// tall to open all the way and scroll instead (--scrolls); marks the cards
+	// in a grid of one column, which are only as tall as they need to be, up
+	// to the height of the others (--single-column); opens one when it
 	// is tapped (--open), without following a link on that first tap; closes it
 	// when anything else is tapped; closes an open card with Esc (--closed)
 	// until the pointer or the focus leaves it, or the focus moves on inside it;
 	// and keeps the contents of a card still while it opens and closes (see the
 	// end).
 	(function () {
-		var CARD = 'fz-expand-card', OVERFLOWS = CARD + '--overflows', SCROLLS = CARD + '--scrolls', OPEN = CARD + '--open', CLOSED = CARD + '--closed';
+		var CARD = 'fz-expand-card', OVERFLOWS = CARD + '--overflows', SCROLLS = CARD + '--scrolls', SINGLE = CARD + '--single-column', OPEN = CARD + '--open', CLOSED = CARD + '--closed';
 		var canHover = window.matchMedia ? window.matchMedia('(hover: hover)') : { matches: true };
 		var lessMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 		var seen = typeof WeakSet === 'function' ? new WeakSet() : null;
 
+		// whether the card is in a grid of one column, as on a phone, where there
+		// is no row of cards for it to line up with. A grid's columns are listed
+		// one by one, those that auto-fit leaves empty too (as 0px), so a lone
+		// card in a wide grid is not in one column.
+		var oneColumn = function (slot) {
+			var grid = slot.parentElement, style = grid && getComputedStyle(grid);
+			var columns = style && style.display.indexOf('grid') !== -1 ? style.gridTemplateColumns.match(/[\d.]+px/g) : null;
+			return !!columns && columns.length === 1;
+		};
 		var measure = function (slot) {
 			var card = slot.firstElementChild, last = card && card.lastElementChild;
 			if (last) {
 				// how tall the card would be to show all of it, whether it is open,
-				// closed or scrolled, to the fraction of a pixel, against the room it
-				// has when closed
+				// closed or scrolled, to the fraction of a pixel
 				var style = getComputedStyle(card);
 				var needed = last.getBoundingClientRect().bottom - card.getBoundingClientRect().top + card.scrollTop + parseFloat(style.paddingBottom) + parseFloat(style.borderBottomWidth);
+				// the height it opens to; in one column, the height of its place
+				// when that is less than the others'; and so the page can be
+				// scrolled to a little past the bottom of an open card
+				slot.style.setProperty('--fz-expand-card-full-height', Math.ceil(needed) + 'px');
+				slot.classList.toggle(SINGLE, oneColumn(slot));
+				// against the room it has when closed
 				slot.classList.toggle(OVERFLOWS, needed > slot.clientHeight + 1);
 				// and against the most an open card may be (max(100%, 70vh) in the
 				// CSS; a phone's vh is at least its innerHeight, so this errs towards
@@ -235,9 +251,6 @@
 				} else if (needed < most) {
 					slot.classList.remove(SCROLLS);
 				}
-				// the height it opens to; and so the page can be scrolled to a little
-				// past the bottom of an open card
-				slot.style.setProperty('--fz-expand-card-full-height', Math.ceil(needed) + 'px');
 			}
 		};
 		var resized = typeof ResizeObserver === 'function' ? new ResizeObserver(function (entries) {
