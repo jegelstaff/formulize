@@ -364,6 +364,7 @@ function formulize_uiCatalog() {
                     '--fz-gap-y' => 'Set by the `fz-gap-y-`* utilities.',
                     '--fz-auto-grid-max' => 'Set by the --max-N modifiers of `fz-auto-grid` and `fz-grid-list`.',
                     '--fz-expand-card-full-height' => 'Set on each `fz-expand-card` by Formulize\'s script: how tall its card is when it is open.',
+                    '--fz-expand-card-open-overflow' => 'Set by `fz-expand-card` and its modifiers: whether an open card scrolls.',
                 ),
             ),
             array(
@@ -805,12 +806,14 @@ HTML
                 'classes' => array(
                     'fz-expand-card' => 'On each child of the grid, with one `fz-card` in it. It keeps its place and its height in the grid, and the card is laid over it.',
                     'fz-expand-card--overflows' => 'The card has more than fits: it is cut off under a fade with a chevron pointing down. Added by Formulize\'s script, `formulize-ui.js`; don\'t add it yourself.',
+                    'fz-expand-card--scrolls' => 'The card is too tall to open all the way: open, it is as tall as an open card may be, and scrolls inside. It keeps room for a scrollbar, open or closed, so its contents don\'t move when the scrollbar comes and goes. Added by the script.',
                     'fz-expand-card--open' => 'Opened by a tap. Added and taken away by the script.',
                     'fz-expand-card--closed' => 'Closed with Esc, until the pointer or the focus leaves it or the focus moves on inside it. Added and taken away by the script.',
                 ),
                 'notes' => array(
                     'A card with more than fits opens to its full height under the pointer, when anything in it has the keyboard\'s focus, and when it is tapped. The first tap on it opens it, and doesn\'t follow the link under the finger; a tap anywhere else closes it. Esc closes it too.',
-                    'An open card is raised over what is below it, with a shadow. A very long one is no taller than most of the window, and scrolls inside.',
+                    'An open card is raised over what is below it, with a shadow. A very long one is no taller than most of the window, and scrolls inside, once it has finished opening.',
+                    'Nothing else on the page moves while a card opens or closes, and nothing in the card moves either.',
                     'A card whose contents fit has no fade and doesn\'t open.',
                     'Everything in a card is on the page when it is closed, so a screen reader reads all of it and the Tab key reaches all of it.',
                     'It is 18rem tall: a header and six links of an `fz-link-list` fit, at the default sizes. For another height, set `--fz-expand-card-height` on each one, or on the grid.',

@@ -202,24 +202,41 @@
 	// ---- Expanding cards (fz-expand-card) ---------------------------------------
 	// CSS opens a card on hover and when something in it has the focus. This
 	// marks the cards that have more than fits (--overflows), which shows the
-	// fade and chevron; opens one when it is tapped (--open), without following
-	// a link on that first tap; closes it when anything else is tapped; and
-	// closes an open card with Esc (--closed) until the pointer or the focus
-	// leaves it, or the focus moves on inside it.
+	// fade and chevron, and measures how tall each is open, and which are too
+	// tall to open all the way and scroll instead (--scrolls); opens one when it
+	// is tapped (--open), without following a link on that first tap; closes it
+	// when anything else is tapped; closes an open card with Esc (--closed)
+	// until the pointer or the focus leaves it, or the focus moves on inside it;
+	// and keeps the contents of a card still while it opens and closes (see the
+	// end).
 	(function () {
-		var CARD = 'fz-expand-card', OVERFLOWS = CARD + '--overflows', OPEN = CARD + '--open', CLOSED = CARD + '--closed';
+		var CARD = 'fz-expand-card', OVERFLOWS = CARD + '--overflows', SCROLLS = CARD + '--scrolls', OPEN = CARD + '--open', CLOSED = CARD + '--closed';
 		var canHover = window.matchMedia ? window.matchMedia('(hover: hover)') : { matches: true };
+		var lessMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 		var seen = typeof WeakSet === 'function' ? new WeakSet() : null;
 
 		var measure = function (slot) {
 			var card = slot.firstElementChild, last = card && card.lastElementChild;
 			if (last) {
 				// how tall the card would be to show all of it, whether it is open,
-				// closed or scrolled, against the room it has when closed
+				// closed or scrolled, to the fraction of a pixel, against the room it
+				// has when closed
 				var style = getComputedStyle(card);
-				var needed = last.offsetTop + last.offsetHeight + parseFloat(style.paddingBottom) + parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+				var needed = last.getBoundingClientRect().bottom - card.getBoundingClientRect().top + card.scrollTop + parseFloat(style.paddingBottom) + parseFloat(style.borderBottomWidth);
 				slot.classList.toggle(OVERFLOWS, needed > slot.clientHeight + 1);
-				// so the page can be scrolled to a little past the bottom of an open card
+				// and against the most an open card may be (max(100%, 70vh) in the
+				// CSS; a phone's vh is at least its innerHeight, so this errs towards
+				// scrolling). A card that scrolls keeps room for a scrollbar, which
+				// can make it taller; it only stops scrolling once it fits with that
+				// room, so it doesn't flip back and forth.
+				var most = Math.max(slot.clientHeight, 0.7 * window.innerHeight);
+				if (needed > most + 1) {
+					slot.classList.add(SCROLLS);
+				} else if (needed < most) {
+					slot.classList.remove(SCROLLS);
+				}
+				// the height it opens to; and so the page can be scrolled to a little
+				// past the bottom of an open card
 				slot.style.setProperty('--fz-expand-card-full-height', Math.ceil(needed) + 'px');
 			}
 		};
@@ -256,6 +273,20 @@
 		} else {
 			scan();
 		}
+		// the window's height changes how tall an open card may be
+		var remeasuring = false;
+		window.addEventListener('resize', function () {
+			if (!remeasuring) {
+				remeasuring = true;
+				requestAnimationFrame(function () {
+					remeasuring = false;
+					var slots = doc.querySelectorAll('.' + CARD);
+					for (var i = 0; i < slots.length; i++) {
+						measure(slots[i]);
+					}
+				});
+			}
+		});
 		// cards that arrive later, with a screen loaded into the page
 		if (typeof MutationObserver === 'function' && seen) {
 			var queued = false;
@@ -273,11 +304,26 @@
 		var isOpen = function (slot) {
 			return !slot.classList.contains(CLOSED) && (slot.classList.contains(OPEN) || slot.matches(':focus-within') || (canHover.matches && slot.matches(':hover')));
 		};
+		// a card that has closed goes back to the top of what it holds: it
+		// scrolls back up while it shrinks
+		var rewind = function (slot) {
+			requestAnimationFrame(function () {
+				var card = slot.firstElementChild;
+				if (card && card.scrollTop && !isOpen(slot)) {
+					if (lessMotion.matches || !card.scrollTo) {
+						card.scrollTop = 0;
+					} else {
+						card.scrollTo({ top: 0, behavior: 'smooth' });
+					}
+				}
+			});
+		};
 		var closeOthers = function (keep) {
 			var open = doc.querySelectorAll('.' + OPEN);
 			for (var i = 0; i < open.length; i++) {
 				if (open[i] !== keep) {
 					open[i].classList.remove(OPEN);
+					rewind(open[i]);
 				}
 			}
 		};
@@ -306,6 +352,7 @@
 			} else if (slot.classList.contains(OPEN) && !event.target.closest('a')) {
 				// a tap on the open card, not on a link, closes it
 				slot.classList.remove(OPEN);
+				rewind(slot);
 			}
 		});
 		doc.addEventListener('keydown', function (event) {
@@ -317,6 +364,7 @@
 				if (isOpen(slots[i])) {
 					slots[i].classList.remove(OPEN);
 					slots[i].classList.add(CLOSED);
+					rewind(slots[i]);
 				}
 			}
 		});
@@ -330,7 +378,47 @@
 				}
 			}
 		};
+		// the contents of a card stay still while it opens. When the focus moves
+		// into a closed card, the browser scrolls the card to show what has the
+		// focus, while the card is still the height it has closed, and the
+		// contents would jump up and then slide back down as it grows. So that
+		// is undone before it shows, and once the card is open, what has the
+		// focus is scrolled into view if it still isn't. (With less motion, the
+		// card is open at once and the browser's own scrolling is right.)
+		doc.addEventListener('focusin', function (event) {
+			var slot = event.target.closest ? event.target.closest('.' + CARD) : null;
+			if (!slot || !slot.classList.contains(OVERFLOWS) || lessMotion.matches) {
+				return;
+			}
+			var from = event.relatedTarget;
+			var wasOpen = !slot.classList.contains(CLOSED) && (slot.classList.contains(OPEN) || (!!from && slot.contains(from)) || (canHover.matches && slot.matches(':hover')));
+			if (!wasOpen) {
+				var card = slot.firstElementChild;
+				requestAnimationFrame(function () {
+					card.scrollTop = 0;
+				});
+			}
+		});
+		doc.addEventListener('transitionend', function (event) {
+			var card = event.target, slot = card.parentElement, focused = doc.activeElement;
+			if (event.propertyName !== 'height' || !slot || !slot.classList || !slot.classList.contains(CARD) || !focused || !card.contains(focused) || !isOpen(slot)) {
+				return;
+			}
+			var box = card.getBoundingClientRect(), item = focused.getBoundingClientRect();
+			if (item.top < box.top || item.bottom > box.bottom) {
+				focused.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+			}
+		});
 		doc.addEventListener('focusin', reopen);
 		doc.addEventListener('pointerover', reopen);
+		// and it goes back to its top when it closes
+		var left = function (event) {
+			var slot = event.target.closest ? event.target.closest('.' + CARD) : null;
+			if (slot && !(event.relatedTarget && slot.contains(event.relatedTarget))) {
+				rewind(slot);
+			}
+		};
+		doc.addEventListener('focusout', left);
+		doc.addEventListener('pointerout', left);
 	})();
 })();

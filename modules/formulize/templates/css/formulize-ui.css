@@ -1171,6 +1171,7 @@
 .fz-expand-card {
   --fz-expand-card-height: 18rem;
   --fz-expand-card-full-height: 0px; /* set by formulize-ui.js */
+  --fz-expand-card-open-overflow: auto;
   position: relative;
   z-index: 0;
   min-width: 0;
@@ -1182,6 +1183,13 @@
   position: absolute;
   inset: 0 0 auto;
   height: 100%;
+  /* never shorter than its place, nor taller than an open card may be: open
+     or closed, and while it grows or shrinks between the two. Its height can
+     change on hover even when there is nothing more to show, and a card
+     leaving the pointer would otherwise shrink to its contents for a moment,
+     on its way back to the height of its place. */
+  min-height: 100%;
+  max-height: max(100%, 70vh);
   overflow: clip;
   transition: box-shadow var(--fz-duration) var(--fz-ease-out);
 }
@@ -1195,9 +1203,7 @@
   }
   .fz-expand-card:hover:not(.fz-expand-card--closed) > .fz-card {
     height: auto;
-    min-height: 100%;
-    max-height: max(100%, 70vh);
-    overflow-y: auto;
+    overflow-y: var(--fz-expand-card-open-overflow);
   }
 }
 .fz-expand-card:where(:focus-within, .fz-expand-card--open):not(.fz-expand-card--closed) {
@@ -1206,9 +1212,36 @@
 }
 .fz-expand-card:where(:focus-within, .fz-expand-card--open):not(.fz-expand-card--closed) > .fz-card {
   height: auto;
-  min-height: 100%;
-  max-height: max(100%, 70vh);
-  overflow-y: auto;
+  overflow-y: var(--fz-expand-card-open-overflow);
+}
+/* with the script, a card that has more than fits opens to the height the
+   script measured (or as far as an open card may go), which a browser can
+   animate without interpolate-size. Open, it shows all it holds, and doesn't
+   scroll, unless it is too tall for an open card (--scrolls). Then the space
+   for its scrollbar is kept for it, open or closed, so its contents are never
+   narrowed or widened by the scrollbar coming or going (it is no space at all
+   where scrollbars are laid over the page), and it only scrolls once it is
+   all the way open (see the transitions below), so no scrollbar shows while
+   it grows. overflow: hidden, not clip, which can't keep a scrollbar's space. */
+.fz-expand-card--overflows {
+  --fz-expand-card-open-overflow: hidden;
+}
+.fz-expand-card--overflows > .fz-card {
+  overflow: hidden;
+}
+.fz-expand-card--scrolls {
+  --fz-expand-card-open-overflow: auto;
+}
+.fz-expand-card--scrolls > .fz-card {
+  scrollbar-gutter: stable;
+}
+@media (hover: hover) {
+  .fz-expand-card--overflows:hover:not(.fz-expand-card--closed) > .fz-card {
+    height: min(var(--fz-expand-card-full-height), max(100%, 70vh));
+  }
+}
+.fz-expand-card--overflows:where(:focus-within, .fz-expand-card--open):not(.fz-expand-card--closed) > .fz-card {
+  height: min(var(--fz-expand-card-full-height), max(100%, 70vh));
 }
 /* while it is open, the page reaches a little past its bottom, so the last
    row's cards can be scrolled into view with room under them. The script sets
@@ -1275,6 +1308,22 @@
     transition: box-shadow var(--fz-duration) var(--fz-ease-out),
                 height var(--fz-duration) var(--fz-ease-out);
   }
+  /* it starts to scroll when it has finished opening, and stops as soon as
+     it starts to close */
+  @media (hover: hover) {
+    .fz-expand-card--scrolls:hover:not(.fz-expand-card--closed) > .fz-card {
+      transition: box-shadow var(--fz-duration) var(--fz-ease-out),
+                  height var(--fz-duration) var(--fz-ease-out),
+                  overflow 0s linear var(--fz-duration);
+      transition-behavior: allow-discrete;
+    }
+  }
+  .fz-expand-card--scrolls:where(:focus-within, .fz-expand-card--open):not(.fz-expand-card--closed) > .fz-card {
+    transition: box-shadow var(--fz-duration) var(--fz-ease-out),
+                height var(--fz-duration) var(--fz-ease-out),
+                overflow 0s linear var(--fz-duration);
+    transition-behavior: allow-discrete;
+  }
 }
 /* on paper, every card shows all of what it holds */
 @media print {
@@ -1282,7 +1331,9 @@
   .fz-expand-card > .fz-card {
     position: static;
     height: auto;
+    max-height: none;
     overflow: visible;
+    scrollbar-gutter: auto;
   }
   .fz-expand-card > .fz-card::before,
   .fz-expand-card > .fz-card::after { content: none; }
