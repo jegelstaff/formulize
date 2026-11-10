@@ -639,9 +639,10 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 	// was. Show all, at the top, clears every search on the column, typed or picked, and Show Blanks is always there too.
 	//
 	// The panel is a manual popover, not an auto one, because typing in the box would otherwise close it: the box is
-	// outside the panel. So this closes it itself, when something else on the page is clicked or Esc is pressed, and
-	// either of those puts back the values that were picked when it opened, the way Cancel does. What was typed stays,
-	// as it does in any search box, so someone can type a search and then sort a column, or type in the next box.
+	// outside the panel. So this closes it itself, when Esc is pressed or something else on the page is clicked. Esc and
+	// Cancel are undo: they put back what was typed and picked when the panel opened. Clicking elsewhere keeps whatever
+	// has been done, typed, deleted, picked or cleared by Show all, so someone can change a search and then sort a
+	// column, or move on to the next box, and the next submit carries it.
 
 	function jsonAttribute(root, name, fallback) {
 		try { return JSON.parse(root.getAttribute(name) || '') || fallback; } catch (e) { return fallback; }
@@ -738,6 +739,8 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 			box.open();
 		});
 		box.input.addEventListener('click', function () { box.open(); });
+		// typing into the box while the panel is closed opens it before the text changes, so Esc can put the text back
+		box.input.addEventListener('beforeinput', function () { box.open(); });
 		box.input.addEventListener('input', function () {
 			box.open();
 			box.writeSearch();
@@ -761,10 +764,10 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 				box.cancel();
 			}
 		});
-		// clicking anything else on the page puts the search back, as an auto popover would
+		// clicking anything else on the page closes the panel and keeps what has been done
 		document.addEventListener('mousedown', function (event) {
 			if(box.isOpen && !root.contains(event.target) && !box.panel.contains(event.target)) {
-				box.close(true);
+				box.close(false);
 			}
 		}, true);
 		window.addEventListener('resize', function () { box.fitBadge(); });
@@ -782,15 +785,10 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 		return { picked: this.picked.slice(), typed: this.input.value };
 	};
 
-	// The picked values go back the way they were. If there are some, what was typed was only narrowing the list of them,
-	// so it goes. If there are none, what was typed is the search, and stays, unless Show all cleared it, which is undone.
+	// Esc and Cancel: what was typed and picked go back to how they were when the panel opened
 	SearchBox.prototype.restoreSnapshot = function (snapshot) {
 		this.picked = snapshot.picked.slice();
-		if(this.picked.length) {
-			this.input.value = '';
-		} else if(this.input.value === '' && snapshot.typed !== '') {
-			this.input.value = snapshot.typed;
-		}
+		this.input.value = snapshot.typed;
 		this.writeSearch();
 	};
 
