@@ -47,6 +47,7 @@ The e2e tests build a system in order and then check it, so what a spec needs de
 
 ### Choosing where to start
 
+- **Before running any spec outside `04-appearance/`, check that the site is on Anari,** for the site and the admin, on **Admin > Appearance > Settings**. A `04-appearance/` spec that stopped partway can leave the site on Lyris, and the other specs then can't find what they look for. See [Which theme the suite covers](testing-robust-specs.md#which-theme-the-suite-covers).
 - **To run a validate spec:** if the museum system is intact, just run it. There's no cleanup to do first.
 - **If a `03-validate-sequential/` or `04-appearance/` spec stopped partway:** it may not have put things back, so restore a snapshot before running anything else.
 - **To re-run a `01-setup/` spec:** restore the snapshot from just before it.
