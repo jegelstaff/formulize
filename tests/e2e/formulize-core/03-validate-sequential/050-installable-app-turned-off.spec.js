@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { getSystemConfig, setSystemConfig } from '../../utils';
+import { getSystemConfig, setSystemConfig, aDayPassesForTheWorker } from '../../utils';
 
 // Turning off the site as an installed app. The rest of the app's tests are in
 // 02-validate/044-installable-app.spec.js. This one is here because it changes the setting for the whole
@@ -23,8 +23,9 @@ test.describe('Turning off the site as an installed app', () => {
 		try {
 			setSystemConfig('formulizePWAEnabled', 0);
 			expect((await request.get('/modules/formulize/pwa/manifest.php')).status()).toBe(404);
-			// the page no longer registers a worker; the installed one checks for itself, finds the one
-			// that removes itself, and that one takes over
+			// the page no longer registers a worker; the installed one checks for itself, within a day,
+			// finds the one that removes itself, and that one takes over
+			await aDayPassesForTheWorker(page);
 			await page.reload();
 			expect(await page.locator('link[rel="manifest"]').count()).toBe(0);
 			await expect.poll(async () => {

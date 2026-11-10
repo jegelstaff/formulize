@@ -77,6 +77,17 @@ test.describe('Installing the site as an app', () => {
 		expect(framed).not.toContain('navigator.serviceWorker.register');
 	});
 
+	// Otherwise the browser asks the server for the worker alongside every page, and each of those requests
+	// loads the site and the person's session as a page does
+	test('the browser checks for a new worker from its own cache, which keeps it for a day', async ({ request }) => {
+		const page = await (await request.get('/')).text();
+		expect(page).toContain("updateViaCache: 'all'");
+		const worker = await request.get('/modules/formulize/pwa/sw.php');
+		expect(worker.status()).toBe(200);
+		expect(worker.headers()['cache-control']).toBe('private, max-age=86400');
+		expect(worker.headers()['expires']).toBeUndefined();
+	});
+
 	test('the service worker registers, and keeps nothing but the offline page and its stylesheets', async ({ page }) => {
 		await page.goto('/');
 		expect(await waitForWorker(page)).toContain('/modules/formulize/pwa/sw.php');

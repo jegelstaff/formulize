@@ -93,17 +93,7 @@ class icms_AutologinEventHandler {
 			// authenticated one - mirrors the main login path (include/checklogin.php) so a
 			// session id fixed/known before autologin cannot survive elevation (session fixation).
 			session_regenerate_id(true);
-			if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
-				$session_secure = substr(ICMS_URL, 0, 5) == 'https';
-				setcookie($icmsConfig['session_name'], session_id(), array(
-					'expires' => time() + (60 * $icmsConfig['session_expire']),
-					'path' => '/',
-					'domain' => '',
-					'secure' => $session_secure,
-					'httponly' => true,
-					'samesite' => icms_core_Session::cookieSameSite($session_secure)
-				));
-			}
+			icms_core_Session::writeCookie();
 			//$_SESSION = array();
 			$_SESSION['xoopsUserId'] = $user->getVar('uid');
 			$_SESSION['xoopsUserGroups'] = $user->getGroups();

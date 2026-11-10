@@ -534,17 +534,7 @@ function formulize_signupLoginUser($user) {
 	$_SESSION['xoopsUserGroups'] = $user->getGroups();
 	$_SESSION['xoopsUserLastLogin'] = $user->getVar('last_login');
 
-	if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
-		$session_secure = substr(ICMS_URL, 0, 5) == 'https';
-		setcookie($icmsConfig['session_name'], session_id(), array(
-			'expires' => time() + (60 * $icmsConfig['session_expire']),
-			'path' => '/',
-			'domain' => '',
-			'secure' => $session_secure,
-			'httponly' => true,
-			'samesite' => icms_core_Session::cookieSameSite($session_secure)
-		));
-	}
+	icms_core_Session::writeCookie();
 	$user_theme = $user->getVar('theme');
 	if (in_array($user_theme, $icmsConfig['theme_set_allowed'])) {
 		$_SESSION['xoopsUserTheme'] = $user_theme;

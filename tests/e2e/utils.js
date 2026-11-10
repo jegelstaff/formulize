@@ -215,6 +215,19 @@ export async function login(page, username, password = '12345') {
 }
 
 /**
+ * A day passing, as far as the site's service worker goes. sw.php may be kept for a day, so a browser only
+ * finds a new worker, such as one with a new theme or one that removes itself, once its copy is a day old.
+ * Clearing the browser's cache is that copy running out. The next page opened has the browser check again.
+ * Chromium only.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function aDayPassesForTheWorker(page) {
+	const cdp = await page.context().newCDPSession(page);
+	await cdp.send('Network.clearBrowserCache');
+	await cdp.detach();
+}
+
+/**
  * Formulize Saving validation
  * @param {string} buttonText - The text of the button to click to trigger the save (default 'Save')
  * @param {number} timeout - Maximum time to wait for the saving process to complete (default 120000ms)

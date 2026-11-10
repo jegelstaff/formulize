@@ -68,8 +68,7 @@ Installing is turned on for every site that is served over https. The settings a
 
 - **Let people install this site as an app on their phone or computer.** Turn this off, and the
   site stops offering to be installed. Where it is already installed, it keeps working as a web page
-  in its own window, and the offline page is removed the next time the app is opened. The icon stays
-  on the device until the person removes it.
+  in its own window, and its icon stays on the device, until the person removes it.
 - **Name under the app's icon.** Phones cut long names short under an icon. If your site's name is
   long, give a shorter one here. When it's empty, the site's name is used.
 

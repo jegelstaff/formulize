@@ -35,14 +35,14 @@ class icms_core_Session {
 			array($instance, 'open'), array($instance, 'close'), array($instance, 'read'),
 			array($instance, 'write'), array($instance, 'destroy'), array($instance, 'gc')
 		);
-		$sslpost_name = isset($_POST[$icmsConfig['sslpost_name']]) ? $_POST[$icmsConfig['sslpost_name']] : "";
-		$instance->sessionStart($sslpost_name);
+		$instance->sessionStart();
 
 		// ADDED CODE BY FREEFORM SOLUTIONS, SUPPORTING INTEGRATION WITH OTHER SYSTEMS
 		// If this is a page load by another system, and we're being included, then we establish the user session based on the user id of the user in effect in the other system
 		// This approach assumes correspondence between the user ids.
     $externalUid = 0;
     $xoops_userid = 0;
+    $signedOutHere = false;
 
     include_once ICMS_ROOT_PATH . '/include/functions.php';
 
@@ -149,10 +149,10 @@ class icms_core_Session {
 			$xoops_userid = lookupBrightspaceUser($_SESSION['ext_d2l_orgdefinedid']);
 			if(!$xoops_userid) {
 				$externalUid = 0;
-				$cookie_time = time() - 10000;
-				$instance->update_cookie(session_id(), $cookie_time);
+				self::deleteCookie();
 				$instance->destroy(session_id());
 				unset($_SESSION['xoopsUserId']);
+				$signedOutHere = true;
 			}
 		}
 
@@ -161,10 +161,10 @@ class icms_core_Session {
 				$externalUid = $GLOBALS['formulizeHostSystemUserId'];
 			} else {
 				$externalUid = 0;
-				$cookie_time = time() - 10000;
-				$instance->update_cookie(session_id(), $cookie_time);
+				self::deleteCookie();
 				$instance->destroy(session_id());
 				unset($_SESSION['xoopsUserId']);
+				$signedOutHere = true;
 			}
 		}
 
@@ -212,10 +212,10 @@ class icms_core_Session {
 					$_SESSION['xoopsUserTheme'] = $xoops_user_theme;
 				}
 
+				// The cookie is written when the session gets its new id, above, and lasts until the browser
+				// is closed, as everywhere else. The host's session lifetime is kept on the server, through
+				// session.gc_maxlifetime, which decides when this session expires.
 				$instance->write(session_id(), session_encode());
-				$icms_session_expiry = ini_get("session.gc_maxlifetime") / 60; // need to use the current maxlifetime setting, which will be coming from Drupal, so the timing of the sessions is synched.
-				$cookie_time = time() + (60 * $icms_session_expiry);
-				$instance->update_cookie(session_id(), $cookie_time);
 			}
 
 			if (function_exists("i18n_get_lang")) { // set icms language to match the currently active Drupal language
@@ -228,8 +228,10 @@ class icms_core_Session {
 		// If there's no xoopsUserId set in the $_SESSION yet, and there's an ICMS session cookie present, then let's make one last attempt to load the session (could be because we're embedded in a system that doesn't have a parallel user table like what is used above)
 		// essentially, if session_start failed (which would happen if another system already started it) then we're trying again.
 		// Possibly, we should be appending the existing $_SESSION data somehow?? Don't want to clobber session data from host system??
+		// Not when the session was ended above because nobody is signed in: the session read here would
+		// be the one just ended, which readSession() still has, and it would sign the person back in.
 		$icms_session_name = self::cookieName();
-		if (!isset($_SESSION['xoopsUserId']) && isset($_COOKIE[$icms_session_name])) {
+		if (!$signedOutHere && !isset($_SESSION['xoopsUserId']) && isset($_COOKIE[$icms_session_name])) {
 			if ($icms_session_data = $instance->read($_COOKIE[$icms_session_name])) {
 				session_decode($icms_session_data); // put session data into $_SESSION, including the xoopsUserId if present, same as if session_start had been successful
 			}
@@ -244,27 +246,13 @@ class icms_core_Session {
 				$_SESSION = array();
 			} else {
 				icms::$user = $icms_user; // ALTERED BY FREEFORM SOLUTIONS TO AVOID NAMING CONFLICT WITH GLOBAL USER OBJECT FROM EXTERNAL SYSTEMS
-				if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
-					// we need to secure cookie when using SSL
-					$secure = self::siteIsSecure();
-					$arr_cookie_options = array (
-						'expires' => 0,
-						'path' => '/',
-						'domain' => '',
-						'secure' => ($secure ? true : false),
-						'httponly' => true,
-						'samesite' => self::cookieSameSite($secure) // Lax default; configurable via cookie_samesite preference (None auto-downgraded to Lax when not Secure)
-						);
-					setcookie($icmsConfig['session_name'], session_id(), $arr_cookie_options);
-				}
 				$icms_user->setGroups($_SESSION['xoopsUserGroups']); // ALTERED BY FREEFORM SOLUTIONS TO AVOID NAMING CONFLICT WITH GLOBAL USER OBJECT FROM EXTERNAL SYSTEMS
 				if (!isset($_SESSION['UserLanguage']) || empty($_SESSION['UserLanguage'])) {
 					$_SESSION['UserLanguage'] = $icms_user->getVar('language'); // ALTERED BY FREEFORM SOLUTIONS TO AVOID NAMING CONFLICT WITH GLOBAL USER OBJECT FROM EXTERNAL SYSTEMS
 				}
 			}
-		} else { // set anon session cookie - necessary for preserving state in LTI systems...some browsers set one by default anyway, but it won't be secure and Samesite=None
-      $instance->update_cookie();
-    }
+		}
+		self::writeCookieUnlessSent();
 
 		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/writeToFormulizeLog.php';
 		writeToFormulizeLog(array(
@@ -431,23 +419,72 @@ class icms_core_Session {
 	/**
 	 * Update cookie status for current session
 	 * To be refactored
+	 * The cookie lasts until the browser is closed, as it does wherever it is written. A session's expiry
+	 * is kept on the server. deleteCookie() takes the cookie away.
 	 * @param   string  $sess_id    session ID
-	 * @param   int     $expire     Time in seconds until a session expires
-	 * @return  bool
+	 * @return  void
 	 **/
-	public function update_cookie($sess_id = null, $expire = null) {
-		$secure = self::siteIsSecure(); // we need to secure cookie when using SSL
-		$session_name = self::cookieName();
-		$session_id = empty($sess_id) ? session_id() : $sess_id;
-        $arr_cookie_options = array (
-            'expires' => 0,
-            'path' => '/',
-            'domain' => '',
-            'secure' => ($secure ? true : false),
-            'httponly' => true,
-            'samesite' => self::cookieSameSite($secure) // Lax default; configurable via cookie_samesite preference (None auto-downgraded to Lax when not Secure)
-            );
-        setcookie($session_name, $session_id, $arr_cookie_options);
+	public function update_cookie($sess_id = null) {
+		self::writeCookie($sess_id);
+	}
+
+	/**
+	 * Take the session cookie away from the browser. ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE.
+	 *
+	 * @return void
+	 */
+	static public function deleteCookie() {
+		setcookie(self::cookieName(), '', array('expires' => time() - 3600) + self::cookieOptions());
+	}
+
+	/**
+	 * The attributes the session cookie has, wherever it is written, including by PHP itself. ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE.
+	 *
+	 * The cookie is only written when its id is new to the browser, and the browser keeps whatever it
+	 * was given last, so every place that writes it has to give it all of these. It lasts until the
+	 * browser is closed, and the session's own expiry is kept on the server.
+	 *
+	 * @return array The options for setcookie() and session_set_cookie_params(), without the expiry
+	 */
+	static public function cookieOptions() {
+		$secure = self::siteIsSecure();
+		return array(
+			'path' => '/',
+			'domain' => '',
+			'secure' => $secure,
+			'httponly' => true,
+			'samesite' => self::cookieSameSite($secure), // Lax default; configurable via cookie_samesite preference (None auto-downgraded to Lax when not Secure)
+		);
+	}
+
+	/**
+	 * Write the session cookie. ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE.
+	 *
+	 * @param string $sess_id The id to write, or the current session's id if empty
+	 * @param string $name The cookie's name, or this site's session cookie name if empty. For when the
+	 * name is changing, and the settings don't have the new one yet.
+	 * @return void
+	 */
+	static public function writeCookie($sess_id = null, $name = null) {
+		setcookie(empty($name) ? self::cookieName() : $name, empty($sess_id) ? session_id() : $sess_id, array('expires' => 0) + self::cookieOptions());
+	}
+
+	/**
+	 * Write the session cookie, unless the browser sent the id this request is using. ALTERED BY FREEFORM SOLUTIONS FOR FORMULIZE.
+	 *
+	 * A browser keeps the last cookie it was given, in whatever order the responses arrive. When a
+	 * request that is still running as someone signs in or out writes the id it started with, its
+	 * response can arrive after theirs, and put the old id back in the browser: the person is signed out
+	 * again just after signing in, or a session left behind is resumed. So a request writes the cookie
+	 * only when the id is new to the browser: a session just started, or given a new id here.
+	 *
+	 * @return void
+	 */
+	static public function writeCookieUnlessSent() {
+		$name = self::cookieName();
+		if (!isset($_COOKIE[$name]) OR $_COOKIE[$name] !== session_id()) {
+			self::writeCookie();
+		}
 	}
 
 	/**
@@ -552,9 +589,7 @@ class icms_core_Session {
 		$uid = (int)$uid;
 		session_regenerate_id(true);
 		$_SESSION = array();
-		if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '') {
-			setcookie($icmsConfig['session_name'], '', time()- 3600, '/',  '', 0, 0);
-		}
+		self::deleteCookie();
 		// clear entry from online users table
 		if ($uid > 0) {
 			$online_handler = icms::handler('icms_core_Online');
@@ -567,20 +602,19 @@ class icms_core_Session {
 	/**
 	 * Creates Session ID & Starts the session
 	 * removes Expired Custom Sessions after session Start
-	 * @param   string  $sslpost_name    sets the session_id as ssl Name defined in preferences (if SSL enabled)
+	 * The id only ever comes from the session cookie, never from a form, so a page elsewhere can't choose
+	 * which session a request runs as.
 	 * @return
 	 **/
-	public function sessionStart($sslpost_name = '') {
+	public function sessionStart() {
 		global $icmsConfig;
 
-		if ($icmsConfig['use_ssl'] && isset($sslpost_name) && $sslpost_name != '') {
-			session_id($sslpost_name);
-		} elseif ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != ''
+		if ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != ''
 			&& $icmsConfig['session_expire'] > 0)
 		{
-			if (isset($_COOKIE[$icmsConfig['session_name']])) {
-				session_id($_COOKIE[$icmsConfig['session_name']]);
-			}
+			// PHP reads the id from the cookie itself, by the session name set below. Not set here with
+			// session_id(), since then PHP can't tell the id came from the browser, and writes the cookie
+			// again in every response.
 			if (function_exists('session_cache_expire')) {
 				session_cache_expire($icmsConfig['session_expire']);
 			}
@@ -593,6 +627,11 @@ class icms_core_Session {
 			session_name($icmsConfig['session_name']);
 		} else {
 			session_name('ICMSSESSION');
+		}
+		// PHP writes the cookie itself when it starts a session or gives one a new id, so it has to
+		// write the same cookie this class does
+		if (session_status() !== PHP_SESSION_ACTIVE) {
+			session_set_cookie_params(array('lifetime' => 0) + self::cookieOptions());
 		}
 
 		session_start();

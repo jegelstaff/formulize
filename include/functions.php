@@ -433,11 +433,6 @@ function redirect_header($url, $time = 3, $message = '', $addredirect = true, $a
 		if(!strstr($url, '?')) {$url .= '?xoops_redirect='.urlencode($_SERVER['REQUEST_URI']);}
 		else {$url .= '&amp;xoops_redirect='.urlencode($_SERVER['REQUEST_URI']);}
 	}
-	if(defined('SID') && SID && (!isset($_COOKIE[session_name()]) || ($icmsConfig['use_mysession'] && $icmsConfig['session_name'] != '' && !isset($_COOKIE[$icmsConfig['session_name']]))))
-	{
-		if(!strstr($url, '?')) {$url .= '?' . SID;}
-		else {$url .= '&amp;'.SID;}
-	}
 	$url = preg_replace("/&amp;/i", '&', htmlspecialchars($url, ENT_QUOTES));
 	$xoopsTpl->assign('url', $url);
 	$message = trim($message) != '' ? $message : _TAKINGBACK;

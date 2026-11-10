@@ -349,11 +349,13 @@ function formulize_addAppHeadTags() {
             'close' => _formulize_PWA_INSTALL_CLOSE,
         ),
     );
-    // registered once the page has loaded, so it never competes with the page being drawn
+    // registered once the page has loaded, so it never competes with the page being drawn. updateViaCache
+    // 'all' lets the browser check for a new worker from its own cache, which sw.php allows for a day,
+    // instead of asking the server alongside every page.
     $xoTheme->addScript('', array('type' => 'text/javascript'),
         'window.formulize.pwa = ' . json_encode($config) . ';'
         . " if ('serviceWorker' in navigator) { window.addEventListener('load', function () {"
-        . " navigator.serviceWorker.register(window.formulize.pwa.serviceWorker, { scope: window.formulize.pwa.scope, updateViaCache: 'none' })"
+        . " navigator.serviceWorker.register(window.formulize.pwa.serviceWorker, { scope: window.formulize.pwa.scope, updateViaCache: 'all' })"
         . ".catch(function (error) { if (window.console) { console.warn('The service worker for the installed app could not be registered:', error); } });"
         . ' }); }');
     $xoTheme->addScript(XOOPS_URL . '/modules/formulize/include/js/pwa.js?v=' . formulize_get_file_version('/modules/formulize/include/js/pwa.js'), array('type' => 'text/javascript'));

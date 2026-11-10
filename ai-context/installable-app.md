@@ -19,6 +19,8 @@ if (request.keepalive) {
 
 When a request doesn't show up in the Apache log (`docker logs formulize-web-1`), suspect the worker. Playwright reports keepalive requests as `net::ERR_ABORTED` even when they succeed, so check the server log.
 
+**Browsers check for a new worker at most once a day.** `sw.php` is sent with `Cache-Control: private, max-age=86400`, and pages register with `updateViaCache: 'all'`, so the check comes from the browser's own cache. Without that, the browser asks the server for the worker alongside every page, and each request loads the site and the person's session, and lands at the same moment as the page's own requests. So a changed worker, a new look or the one that removes itself, reaches a device within a day. In a spec, `aDayPassesForTheWorker()` in `utils.js` clears the browser's cache to stand in for the day.
+
 **A new worker waits for the site to be closed before it takes over.** Don't add `skipWaiting()` or `clients.claim()` to `worker.js`. A page loading through the old worker while a new one takes over can be left hanging, and every save of a look changes the worker's bytes. `remove-worker.js` is different: it takes over at once, to remove the worker from devices when the setting goes off.
 
 A webmaster's page uses `theme_admin_set`, so anything that applies to the whole app reads the site's theme through `formulize_pwaSiteTheme()`.
