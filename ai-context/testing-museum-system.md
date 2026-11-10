@@ -61,7 +61,7 @@ Offers        -> Visits
 ## Screens, menus and other settings
 
 - Each form has its default form and list screens. The Museum forms' screens have chosen elements, columns and pages.
-- Other screens: **Artifact origins**, a map of where artifacts come from. **Catalogue** (`artifact_catalogue`), a list with every artifact on one page. **Donor artifacts** (`donor_artifacts`), a list of donors and their artifacts across the relationship. **Artifact Form - subform of Donors** (`artifacts_donor_subform`).
+- Other screens: **Artifact origins**, a map of where artifacts come from. **Catalogue** (`artifact_catalogue`), a list with every artifact on one page. Its Creation date column is set to Search box - type only, so section B of `conditions-and-searches.md` can type terms into it that a date range can't make. Its Last modification date keeps the date range it starts with, which section B picks from. **Donor artifacts** (`donor_artifacts`), a list of donors and their artifacts across the relationship. **Artifact Form - subform of Donors** (`artifacts_donor_subform`).
 - The Artifacts list has a custom button, Mark as in perfect condition, that sets Condition to 10.
 - The Museum menu has links to Artifacts, Donors, Collections, Exhibits, Surveys and Artifact origins, for Webmasters and Departments - All Users. The forms 022 and 023 add have no menu links, on purpose, so the menus other specs check don't change.
 - curator1 has two saved views of the Artifacts list, and there's a notification to Departments - Curators when an artifact in good condition is updated. 03-validate-sequential renames the elements these use, and checks they still work.

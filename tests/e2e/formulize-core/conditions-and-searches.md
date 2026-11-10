@@ -38,7 +38,7 @@ A row says what should be on the page. This table says where to look for it, and
 | C | A new Loan Request | `.form-row:has(.formulize-label-loans_collections) label` | Collection | The boxes are exactly the row's names |
 | V | Each artifact in the row's Open, on its Location and loans tab | `.form-row:has(.formulize-label-artifacts_curator_note) input[type="text"]` | Artifact | The box is on the page for exactly the row's names, out of the artifacts it opens |
 | F | The row's list | `[id^="celladdress_"]` | By list | The names in those cells are exactly the row's names |
-| B | The row's list, then what the row types in the search boxes | `[id^="celladdress_"]` | By list | The names in those cells are exactly the row's names, and each box still holds what was typed |
+| B | The row's list, then what the row types in the search boxes, or picks from a date range | `[id^="celladdress_"]` | By list | The names in those cells are exactly the row's names, and each box still holds what was typed or picked |
 | A | Each Loan Request in the row's Open | `.form-row:has(.formulize-label-loans_end_date) input:not([type="hidden"]):not([disabled])` | Loan Request | End date can be edited in exactly the row's names, out of the Loan Requests it opens |
 | E | The row's Loan Request | `.form-row:has(.formulize-label-loans_donor) select option:checked` | Donor | The donor selected is exactly the row's names |
 | M | The Weapons collection | `.formulize-subform td` | Artifact | The names in those cells are exactly the row's names, out of the artifacts in Weapons |
@@ -524,7 +524,7 @@ Set with `fundamental_filters` on the list screen. Lists go through a different 
 | F26 | Catalogue | Catalogued by = {USER} |  | Roman Coin, Persian necklace, Babylonian Spoon | a list of users, and {USER} |
 ## 7. Search boxes on a list
 
-As curator1. Each term goes in the search box at the top of that column, on the Catalogue list, the Donor artifacts list, or the Artifacts list. The Artifacts list is the Artifacts form's own list, from the menu, and it doesn't have Date of acquisition, so that column is added in Change columns each time it's opened. A term starting with `!` means the value doesn't have it, and `!=` means it isn't exactly that. Both find blanks, since they aren't a search for a value. `!{BLANK}` is not blank. `OR` in front of terms in several boxes means any one of them.
+As curator1. Each term goes in the search box at the top of that column, on the Catalogue list, the Donor artifacts list, or the Artifacts list. The Artifacts list is the Artifacts form's own list, from the menu, and it doesn't have Date of acquisition, so that column is added in Change columns each time it's opened. A column followed by picked has a date range, which opens from a button in its search cell, and the term is the search its From and To shortcuts make: `<={TODAY}` is Clear under From and Today under To. A picked search is the only one in its row. Creation date is typed into on the Catalogue, and picked from on Donor artifacts. A term starting with `!` means the value doesn't have it, and `!=` means it isn't exactly that. Both find blanks, since they aren't a search for a value. `!{BLANK}` is not blank. `OR` in front of terms in several boxes means any one of them.
 
 | Row | List | Typed in | Should show | What it tests |
 |---|---|---|---|---|
@@ -598,8 +598,8 @@ As curator1. Each term goes in the search box at the top of that column, on the 
 | B68 | Catalogue | Storage: `climate` | Roman Coin | text people see that's different from what's stored, part of it |
 | B69 | Catalogue | Storage: `!climate` | Everything except Roman Coin | not part of that text, and blanks |
 | B70 | Catalogue | Storage: `standard` | Nothing | Standard is stored as 1, and the Roman Coin's value is 11, which doesn't count |
-| B71 | Catalogue | creation_datetime: `<={TODAY}` | Everything | on or before a day is all of that day |
-| B72 | Catalogue | mod_datetime: `<={TODAY}` | Everything | when an entry was modified |
+| B71 | Donor artifacts | creation_datetime, picked: `<={TODAY}` | Everything | on or before a day is all of that day, picked from the date range |
+| B72 | Catalogue | mod_datetime, picked: `<={TODAY}` | Everything | when an entry was modified, picked from the date range |
 | B73 | Catalogue | Appraiser email: `<z` | Roman Coin, Japanese Coin | text, '' is blank, and nothing is before a blank |
 | B74 | Catalogue | Handling: `glove` | Roman Coin, Florentine Book, Silk Scroll | checkboxes with text people see |
 | B75 | Catalogue | Handling: `=1` | Roman Coin, Florentine Book, Silk Scroll | what's stored, so not Keep flat, which is 12 |

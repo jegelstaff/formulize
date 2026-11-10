@@ -473,6 +473,17 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 		// section B of conditions-and-searches.md relies on, and the dates people don't type into get a date range
 		await expect(page.locator('#search-type-3')).toHaveValue('Box');
 		await expect(page.locator('#search-type-16')).toHaveValue('DateRange');
+		await expect(page.locator('#search-type-17')).toHaveValue('DateRange');
+		// section B types terms into the creation date too, like {BLANK} and >2000, which a date range can't make, and
+		// it has no element to set, so this list is set to have it typed into. The modification date keeps its date
+		// range, which section B picks from.
+		await page.locator('#search-type-16').selectOption('Box');
+		await saveAdminForm(page);
+		await page.goto(screenAdminUrl('Artifacts', 'artifact_catalogue'));
+		await waitForAdminPageReady(page);
+		await page.getByRole('link', { name: 'Entries' }).click();
+		await expect(page.locator('#search-type-16')).toHaveValue('Box');
+		await expect(page.locator('#search-type-17')).toHaveValue('DateRange');
 	});
 
 	test('Donor artifacts list screen', async ({ page }) => {
@@ -491,7 +502,10 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 			'artifacts_short_name',
 			'artifacts_collections',
 			'artifacts_latitude',
+			'creation_datetime',
 		]);
+		// section B picks from the creation date's date range here, since the Catalogue's is typed into
+		await expect(page.locator('#search-type-9')).toHaveValue('DateRange');
 	});
 });
 

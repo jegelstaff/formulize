@@ -215,19 +215,26 @@ export function disagreementIn(row, expected, shown) {
 }
 
 /**
- * Type a row's searches in a list, on a fresh load of it. The boxes have to still hold what was typed afterwards, or a row
- * expecting everything would pass with no search at all.
+ * Type or pick a row's searches in a list, on a fresh load of it. The boxes have to still hold what was typed afterwards, or a
+ * row expecting everything would pass with no search at all.
  * @param {import('@playwright/test').Page} page
  * @param {() => Promise<void>} openList - Opens the list
- * @param {{handle: string, term: string}[]} searches - From searchesFor
+ * @param {{handle: string, term: string, picked: boolean}[]} searches - From searchesFor
  */
 export async function searchList(page, openList, searches) {
 	await openList();
 	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
-	for (const { handle, term } of searches) {
-		await page.locator(`input[name="search_${handle}"]`).fill(term);
+	if (searches.some(search => search.picked)) {
+		if (searches.length > 1) {
+			throw new Error('A search picked from a date range has to be the only one in its row, since its Apply searches the list');
+		}
+		await pickDateRange(page, searches[0]);
+	} else {
+		for (const { handle, term } of searches) {
+			await page.locator(`input[name="search_${handle}"]`).fill(term);
+		}
+		await page.locator(`input[name="search_${searches[searches.length - 1].handle}"]`).press('Enter');
 	}
-	await page.locator(`input[name="search_${searches[searches.length - 1].handle}"]`).press('Enter');
 	await waitForWorkingMessage(page);
 	await expect(page.getByText(/Showing entries:|No entries were found/).first()).toBeVisible();
 	for (const { handle, term } of searches) {
@@ -235,16 +242,59 @@ export async function searchList(page, openList, searches) {
 	}
 }
 
+// The shortcut on each side of a date range that makes each term the search can have there
+const DATE_RANGE_SHORTCUTS = { '{TODAY}': 'Today', '': 'Clear' };
+
 /**
- * The search terms in a row, from its Typed in cell, ie: Short name: `ORRoman`<br>Date of acquisition: `ORRoman`
+ * Pick a search from the date range in a column's search cell, and apply it. The cell has a button that opens the date range
+ * in a panel (see filterpopovers.js), and both of its dates start at today. The From and To shortcuts set each side, and the
+ * search they make goes into the column's hidden search field, which Apply submits.
+ * @param {import('@playwright/test').Page} page
+ * @param {{handle: string, term: string}} search - The search the date range has to make, ie: <={TODAY}
+ */
+async function pickDateRange(page, { handle, term }) {
+	const sides = { From: '', To: '' };
+	for (const part of term.split('//')) {
+		if (part.startsWith('>=')) {
+			sides.From = part.slice(2);
+		} else if (part.startsWith('<=')) {
+			sides.To = part.slice(2);
+		} else {
+			throw new Error(`A date range can't make the search ${term}`);
+		}
+	}
+	const hidden = page.locator(`input[name="search_${handle}"]`);
+	const trigger = page.locator('td[id^="celladdress_1_"]').filter({ has: hidden }).locator('button.formulize-filter-trigger');
+	await trigger.click();
+	const panel = page.locator(`#${await trigger.getAttribute('popovertarget')}`);
+	await expect(panel).toBeVisible();
+	for (const [side, value] of Object.entries(sides)) {
+		if (!(value in DATE_RANGE_SHORTCUTS)) {
+			throw new Error(`The date range has no shortcut for ${value} in ${term}`);
+		}
+		await panel.getByRole('group', { name: side, exact: true }).getByRole('button', { name: DATE_RANGE_SHORTCUTS[value], exact: true }).click();
+	}
+	await expect(hidden).toHaveValue(term);
+	// the hidden field already holds the search, so the list has to have reloaded with it before the field proves anything
+	const reloaded = page.waitForEvent('load');
+	await panel.locator('.formulize-filter-panel-apply').click();
+	await reloaded;
+	// and the date range, which the script draws again on the new page, shows the search in effect, rather than Any date
+	await expect(trigger).toBeVisible();
+	await expect(trigger).not.toHaveText('Any date');
+}
+
+/**
+ * The search terms in a row, from its Typed in cell, ie: Short name: `ORRoman`<br>Date of acquisition: `ORRoman`. A column
+ * followed by picked is a search picked from its date range, ie: mod_datetime, picked: `<={TODAY}`
  */
 export function searchesFor(row, elements) {
 	return row['Typed in'].split('<br>').map(search => {
-		const parts = search.match(/^(.+?): `(.*)`$/);
+		const parts = search.match(/^(.+?)(, picked)?: `(.*)`$/);
 		if (!parts || !elements[parts[1]]) {
 			throw new Error(`Could not read the search: ${search}`);
 		}
-		return { handle: elements[parts[1]], term: parts[2] };
+		return { handle: elements[parts[1]], term: parts[3], picked: Boolean(parts[2]) };
 	});
 }
 
