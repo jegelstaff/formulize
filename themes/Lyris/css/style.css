@@ -1466,6 +1466,14 @@ body:not(.formulize-inline) .lyris-page:has(> #listofentries .lyris-list-screen)
   min-width: 100%;
 }
 
+/* With the quicksearch setting "Yes, but hide the row", entriesdisplay.php puts a
+   .search-toggle-link in the filter row. It calls toggleSearches(), which only the
+   default and Anari templates define; Lyris opens and closes the filter row with its
+   own Filters button, so the link does nothing here and is hidden. */
+.lyris-search-row .search-toggle-link {
+  display: none;
+}
+
 .lyris-list-table .main-cell-div {
 	margin-top: 0.3em;
 	margin-bottom: 0.3em;
