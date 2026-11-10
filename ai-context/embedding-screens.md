@@ -12,8 +12,6 @@ Embedding lets a Formulize screen render inside an iframe on another website. Fo
 
 **Where the screen is embedded decides this, not SameSite alone.** The session cookie is `SameSite=Lax` by default (`icms_core_Session::cookieSameSite()`, configurable through the `cookie_samesite` preference). Lax blocks the cookie on **cross-site** framing only. A screen framed by a page on the **same registrable domain and same scheme** (`forms.example.com` inside `www.example.com`) IS same-site, so the cookie flows and the embedded screen is fully signed in. That's the configuration the docs tell people to build, so "embedded screens are always anonymous" is false for the recommended deployment. People can skip it if every visitor will be anonymous.
 
-`formulize_sortOriginsBySessionSharing()` and `formulize_hostSessionRelationship()` classify each listed website as same-site or cross-site against this site's own host, so the notice can be accurate per entry. A different scheme or an IP address is cross-site. No Public Suffix List is carried, so same-site is only claimed for the same host, parent/child, or a shared parent that is not in `formulize_multiLabelPublicSuffixes()`. A short two-label tail under a country code that isn't in that list can't be told from a registered name, so it is left out of both buckets rather than guessed. A suffix missing from that list anywhere else still gets reported as same-site, so those are worth adding.
-
 Set `cookie_samesite` to `None` and the session travels cross-site too. The origin allowlist is then the only control. Patch 000 defaults it to `None` on LTI/Brightspace sites, detected by the `lti2_consumer` table. `None` needs HTTPS: `cookieSameSite()` downgrades it to `Lax` otherwise, because browsers reject it without a Secure cookie.
 
 ## The formulize_embed URL parameter
@@ -53,4 +51,3 @@ Don't raise these as bugs:
 - Sites that were already framed, such as LTI or portals, go blank after an upgrade until an admin turns embedding on and lists the origins. The message from patch 011 tells the admin.
 - Navigating a frame to a page that isn't a screen, such as `redirect_header`, print views or other screens, carries only the site-wide list. A screen that fails under embedding is a matter for testing before launch.
 - The generated embed code has a placeholder, `{formulize-address}` (`FORMULIZE_ADDRESS_PLACEHOLDER`), where the admin puts the embedding address.
-- The session-sharing notice sorts websites against the hostname the admin is browsing from, because that's all the request knows. It can't see the address the iframe will use.

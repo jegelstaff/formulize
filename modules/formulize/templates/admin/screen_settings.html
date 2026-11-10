@@ -50,70 +50,15 @@
 
 	<fieldset>
 		<legend><{$smarty.const._AM_SCREEN_SETTINGS_URLS_LEGEND}></legend>
-		<p><{$smarty.const._AM_SCREEN_SETTINGS_URL_DEFAULT}> <a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}>" target="_blank"><{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}></a></p>
-		<{if $content.alternateURLsOn eq 1}><p><{$smarty.const._AM_SCREEN_SETTINGS_URL_ALTERNATE}> <{$xoops_url}>/<input type='text' name='screens-rewriteruleAddress' value='<{$content.rewriteruleAddress}>'></p>
-        <{if $content.alternateURLDesc}><div class="description"><{$content.alternateURLDesc}></div><{/if}>
-        <{foreach from=$content.alternateURLListDescs item=alternateURLListDesc}><div class="description"><{$alternateURLListDesc}></div><{/foreach}>
+		<{if $content.alternateURLsOn eq 1}>
+		<p><{$smarty.const._AM_SCREEN_SETTINGS_URL_ALT}> <{$xoops_url}>/<input type='text' name='screens-rewriteruleAddress' value='<{$content.rewriteruleAddress}>'></p>
         <p><{$smarty.const._AM_SCREEN_SETTINGS_URL_ALTERNATE_ELEMENT}> <{html_options name='screens-rewriteruleElement' options=$content.rewriteruleElements selected=$content.rewriteruleElement}></p>
+        <{else}>
+		<p><a href="<{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}>" target="_blank"><{$xoops_url}>/modules/formulize/index.php?sid=<{$content.sid}></a></p>
         <{/if}>
 	</fieldset>
 
-	<{* Embedding in another website sits with the other ways of reaching this screen, and ahead of
-	   the PHP include below it, because that is what people come here for now: including a screen
-	   in another page on this same server is a much older idea and a much rarer one. The code to
-	   paste only appears once the site allows embedding at all - until then there is nothing that
-	   would work anywhere. *}>
-	<fieldset>
-		<legend><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_LEGEND}></legend>
-
-	  <div class="form-item">
-	    <{if not $content.embeddingAllowed}>
-	      <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_OFF}></div>
-	    <{else}>
-	    <{if $content.embedCode}>
-	    <{* One copy of the code, with a placeholder where this site's address goes, since which address
-	       is right depends on who will use the screen - see formulize_screenEmbedCode(). It is plain
-	       text, so it is escaped here to show as code rather than render as a frame. *}>
-	    <label><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE}></label>
-	    <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE_DESC}></div>
-	    <div class="formulize-admin-codeblock">
-	      <pre><code><{$content.embedCode|escape}></code></pre>
-	      <button type="button" class="formulize-admin-codeblock-copy" data-copied="<{$smarty.const._AM_SCREEN_SETTINGS_CODE_COPIED}>"><{$smarty.const._AM_SCREEN_SETTINGS_CODE_COPY}></button>
-	    </div>
-	    <div class="description"><{$content.embedCodeAddressDesc}></div>
-	    <br />
-	    <{/if}>
-	    <label for="screens-embedOrigins"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_ORIGINS}></label>
-	    <textarea name="screens-embedOrigins" id="screens-embedOrigins" rows="4" cols="60" maxlength="1000" placeholder="www.example.com"><{$content.embedOrigins}></textarea>
-	    <{$content.embedOriginsWarning}>
-	    <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_ORIGINS_DESC}></div>
-	    <{$content.embedSessionNotice}>
-	    <{/if}>
-	  </div>
-	</fieldset>
-
-	<fieldset>
-		<legend><{$smarty.const._AM_SCREEN_SETTINGS_PHP_LEGEND}></legend>
-		<p><{$smarty.const._AM_SCREEN_SETTINGS_PHP_DESC}><br /><{$smarty.const._AM_SCREEN_SETTINGS_PHP_DESC2}></p>
-		<div class="formulize-admin-codeblock">
-		  <pre><code>include_once "<{$smarty.const.XOOPS_ROOT_PATH|escape}>/mainfile.php";
-$formulize_screen_id = <{$content.sid}>;
-include "<{$smarty.const.XOOPS_ROOT_PATH|escape}>/modules/formulize/index.php";</code></pre>
-		  <button type="button" class="formulize-admin-codeblock-copy" data-copied="<{$smarty.const._AM_SCREEN_SETTINGS_CODE_COPIED}>"><{$smarty.const._AM_SCREEN_SETTINGS_CODE_COPY}></button>
-		</div>
-	</fieldset>
-
-  <fieldset>
-	  <legend><{$smarty.const._AM_SCREEN_SETTINGS_TOKEN_LEGEND}></legend>
-
-	  <div class="form-item">
-	    <label for="screens-useToken-yes"><input type="radio" id="screens-useToken-yes" name="screens-useToken" value="1"<{if $content.useToken eq 1}> checked<{/if}>/><{$smarty.const._YES}></label>
-	    <label for="screens-useToken-no"><input type="radio" id="screens-useToken-no" name="screens-useToken" value="0"<{if $content.useToken eq 0}> checked<{/if}>/><{$smarty.const._NO}></label>
-	    <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_TOKEN_DESC}></div>
-	  </div>
-  </fieldset>
-
-  <fieldset>
+<fieldset>
 	  <legend><{$smarty.const._AM_SCREEN_SETTINGS_PASSCODE_LEGEND}></legend>
 
 	  <div class="form-item">
@@ -143,17 +88,59 @@ include "<{$smarty.const.XOOPS_ROOT_PATH|escape}>/modules/formulize/index.php";<
 	  </div>
   </fieldset>
 
-
-
-  <!--<fieldset>
-	  <legend>Sample PHP Code</legend>
+	<{* Embedding in another website sits with the other ways of reaching this screen, and ahead of
+	   the PHP include below it, because that is what people come here for now: including a screen
+	   in another page on this same server is a much older idea and a much rarer one. The code to
+	   paste only appears once the site allows embedding at all - until then there is nothing that
+	   would work anywhere. *}>
+	<fieldset>
+		<legend><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_LEGEND}></legend>
 
 	  <div class="form-item">
-		  <textarea name="code"/></textarea>
-		  <input type="submit" class="copybutton" name="copy-code" value="Copy code"/>
-		  <div class="description">Copy this sample PHP code somewhere.</div>
+	    <{if not $content.embeddingAllowed}>
+	      <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_OFF}></div>
+	    <{else}>
+	    <{if $content.embedCode}>
+	    <{* One copy of the code, with a placeholder where this site's address goes, since which address
+	       is right depends on who will use the screen - see formulize_screenEmbedCode(). It is plain
+	       text, so it is escaped here to show as code rather than render as a frame. *}>
+	    <label><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_CODE}></label>
+	    <div class="formulize-admin-codeblock">
+	      <pre><code><{$content.embedCode|escape}></code></pre>
+	      <button type="button" class="formulize-admin-codeblock-copy" data-copied="<{$smarty.const._AM_SCREEN_SETTINGS_CODE_COPIED}>"><{$smarty.const._AM_SCREEN_SETTINGS_CODE_COPY}></button>
+	    </div>
+	    <div class="description"><{$content.embedCodeAddressDesc}></div>
+	    <br />
+	    <{/if}>
+	    <label for="screens-embedOrigins"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_ORIGINS}></label><br />
+	    <textarea name="screens-embedOrigins" id="screens-embedOrigins" rows="4" cols="60" maxlength="<{$content.embedOriginsMaxLength}>" placeholder="www.example.com"><{$content.embedOrigins}></textarea>
+	    <{$content.embedOriginsWarning}>
+	    <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_EMBED_ORIGINS_DESC}></div>
+	    <{/if}>
 	  </div>
-  </fieldset>-->
+	</fieldset>
+
+	<fieldset>
+		<legend><{$smarty.const._AM_SCREEN_SETTINGS_PHP_LEGEND}></legend>
+		<p><{$smarty.const._AM_SCREEN_SETTINGS_PHP_DESC}><br /><{$smarty.const._AM_SCREEN_SETTINGS_PHP_DESC2}></p>
+		<div class="formulize-admin-codeblock">
+		  <pre><code>include_once "<{$smarty.const.XOOPS_ROOT_PATH|escape}>/mainfile.php";
+$formulize_screen_id = <{$content.sid}>;
+include "<{$smarty.const.XOOPS_ROOT_PATH|escape}>/modules/formulize/index.php";</code></pre>
+		  <button type="button" class="formulize-admin-codeblock-copy" data-copied="<{$smarty.const._AM_SCREEN_SETTINGS_CODE_COPIED}>"><{$smarty.const._AM_SCREEN_SETTINGS_CODE_COPY}></button>
+		</div>
+	</fieldset>
+
+  <fieldset>
+	  <legend><{$smarty.const._AM_SCREEN_SETTINGS_TOKEN_LEGEND}></legend>
+
+	  <div class="form-item">
+	    <label for="screens-useToken-yes"><input type="radio" id="screens-useToken-yes" name="screens-useToken" value="1"<{if $content.useToken eq 1}> checked<{/if}>/><{$smarty.const._YES}></label>
+	    <label for="screens-useToken-no"><input type="radio" id="screens-useToken-no" name="screens-useToken" value="0"<{if $content.useToken eq 0}> checked<{/if}>/><{$smarty.const._NO}></label>
+	    <div class="description"><{$smarty.const._AM_SCREEN_SETTINGS_TOKEN_DESC}></div>
+	  </div>
+  </fieldset>
+
 </div>
 
 </form>

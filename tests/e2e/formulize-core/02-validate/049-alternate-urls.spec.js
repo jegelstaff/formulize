@@ -183,15 +183,16 @@ test.describe('Alternate URLs', () => {
 		await leavePage(page);
 	});
 
-	test('the form screen\'s settings say where it can be reached', async ({ page }) => {
+	test('a screen with no address of its own shows its id in the address box, and saving that keeps it that way', async ({ page }) => {
 		await login(page, 'admin');
 		await openScreenSettings(page, formSid);
-		const urls = page.locator('fieldset:has(input[name="screens-rewriteruleAddress"])');
-		await expect(urls).toContainText(`this screen can also be reached at`);
-		await expect(urls.getByRole('link', { name: new RegExp(`/${formSid}/$`) })).toBeVisible();
-		// the default list is named for the form in the plural
-		await expect(urls).toContainText(new RegExp(`entries opened from the list "${FORM_TITLE}s?" are shown at`));
-		await expect(urls).toContainText(`/${LIST_ADDRESS}/entry/`);
+		const address = page.locator('input[name="screens-rewriteruleAddress"]');
+		await expect(address).toHaveValue(`${formSid}`);
+		await saveAdminForm(page);
+		await openScreenSettings(page, formSid);
+		await expect(address).toHaveValue(`${formSid}`);
+		// still reached by its id, as every screen is
+		expect((await page.request.get(`/${formSid}/`)).status()).toBeLessThan(400);
 	});
 
 	test('an alternate address that is only a number is not saved', async ({ page }) => {

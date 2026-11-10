@@ -807,213 +807,7 @@ function formulize_settingsWarningStylesHtml() {
     .formulize-settings-warning ul { margin: 0.4em 0 0.6em 1.5em; }
     .formulize-settings-warning code { font-family: monospace; background: #fff; padding: 0 0.3em; border: 1px solid #e0d0cf; }
     .formulize-settings-code { font-family: monospace; background: #fff; padding: 0 0.3em; border: 1px solid #e0d0cf; }
-    .formulize-settings-note { border-left: 4px solid #ce8c22; background: #fdf8ef; padding: 0.75em 1em; margin: 1em 0; }
-    .formulize-settings-note p { margin: 0.6em 0; }
     </style>";
-}
-
-/**
- * A note about what the session cookie's SameSite setting means for embedding.
- *
- * These two settings are configured on different pages and decide one thing between them, so
- * whichever page you are on needs to say what the other one is doing.
- *
- * With the default of Lax, whether the session cookie reaches an embedded screen depends on where it
- * is embedded. A browser sends it into a frame when the page doing the framing is the same site as
- * this one - the same registrable domain and the same scheme, eg. this site at forms.example.com
- * inside www.example.com - and there the screen shows visitors their own data exactly as it would
- * on this site. On a website on another domain the cookie is withheld, so the screen is anonymous
- * no matter who is looking at it. The note sorts the websites listed into those two groups where
- * that can be known for certain.
- *
- * Set to None, the session cookie travels into a frame on any website, and an embedded screen shows
- * the visitor whatever they are logged in to see. That is what an LMS or portal integration needs,
- * and it is also what makes the list of allowed websites load-bearing: on such a site those websites
- * receive logged-in pages, not anonymous ones.
- *
- * @param string $value The saved list of allowed websites, sorted in the note by whether they share
- *   the session
- * @return string HTML for the note, or an empty string when there is nothing worth saying
- */
-function formulize_embedSessionSharingNoticeHtml($value = '') {
-    global $icmsConfig;
-    $sameSite = isset($icmsConfig['cookie_samesite']) ? $icmsConfig['cookie_samesite'] : 'Lax';
-    if (!formulize_embeddingAllowed()) {
-        return '';
-    }
-    // SameSite=None sends the session everywhere, so where a website sits makes no difference
-    if ($sameSite === 'None') {
-        return formulize_settingsWarningStylesHtml()
-            ."<div class='formulize-settings-warning'>"
-            ."<p><b>"._AM_EMBED_SESSION_SHARED_TITLE."</b> "._AM_EMBED_SESSION_SHARED_BODY."</p>"
-            ."<p>"._AM_EMBED_SESSION_SHARED_BROWSERS."</p>"
-            ."<p>"._AM_EMBED_SESSION_SHARED_TRUST."</p>"
-            ."</div>";
-    }
-    $thisHost = strtolower((string) parse_url(XOOPS_URL, PHP_URL_HOST));
-    $html = formulize_settingsWarningStylesHtml()
-        ."<div class='formulize-settings-note'>"
-        ."<p><b>"._AM_EMBED_SESSION_DEPENDS_TITLE."</b> "
-        .sprintf(_AM_EMBED_SESSION_DEPENDS_BODY, htmlspecialchars($sameSite))
-        ."</p>";
-    // Sorted into what this site can say for certain about the websites actually listed, so the rule
-    // above does not have to be applied by hand to each one.
-    //
-    // Sorted against the address this page is being viewed at, which is all this request knows. That
-    // is normally the site's ordinary address, while the iframe on another website usually points at
-    // a second address on that website's own domain (see the embedding setup documentation), which
-    // nothing here can detect. So a website on a different domain is not declared anonymous outright:
-    // it is anonymous through THIS address, and the note says how to change that.
-    $hostCode = '<code>'.htmlspecialchars($thisHost).'</code>';
-    $sorted = formulize_sortOriginsBySessionSharing($value, $thisHost);
-    if ($sorted['same']) {
-        $html .= '<p>'.sprintf(_AM_EMBED_SESSION_LIST_SAME, $hostCode).' '
-            .'<code>'.implode('</code>, <code>', array_map('htmlspecialchars', $sorted['same'])).'</code></p>';
-    }
-    if ($sorted['cross']) {
-        $html .= '<p>'.sprintf(_AM_EMBED_SESSION_LIST_CROSS, $hostCode).' '
-            .'<code>'.implode('</code>, <code>', array_map('htmlspecialchars', $sorted['cross'])).'</code></p>';
-    }
-    return $html.'<p>'._AM_EMBED_SESSION_DEPENDS_LMS.'</p></div>';
-}
-
-/**
- * Sort the websites in an embedding list into those that share this site's session and those that
- * do not.
- *
- * A browser sends a SameSite=Lax cookie into a frame when the framing page and the framed page are
- * the same site, which means the same registrable domain AND the same scheme. So a screen at
- * forms.example.com embedded in www.example.com is signed in, while the same screen embedded in
- * someone-else.com is anonymous. Ports make no difference.
- *
- * Only relationships this site can be sure of are reported. Working out the registrable domain of
- * an arbitrary hostname needs the Public Suffix List, which Formulize does not carry, so the
- * comparison here is limited to the cases that need no such list: the same hostname, one hostname
- * inside the other, or two hostnames under a shared parent that is clearly a registrable domain
- * rather than a public suffix like co.uk. Anything else is left out of both lists rather than
- * guessed at - the note states the rule, and an administrator can apply it to what remains.
- *
- * @param string $value The saved setting
- * @param string $thisHost This site's own hostname
- * @return array array('same' => array, 'cross' => array) of canonical addresses
- */
-function formulize_sortOriginsBySessionSharing($value, $thisHost) {
-    $sorted = array('same' => array(), 'cross' => array());
-    if (!$thisHost) {
-        return $sorted;
-    }
-    $thisScheme = strtolower((string) parse_url(XOOPS_URL, PHP_URL_SCHEME));
-    foreach (formulize_splitOriginSetting($value) as $entry) {
-        $pattern = formulize_parseOriginPattern($entry);
-        if (!$pattern OR !formulize_originPatternCanBeFramed($pattern)) {
-            continue;
-        }
-        // A pattern naming no scheme is matched by the browser against this site's own scheme, and on
-        // an http site against https as well, since browsers let a scheme-less entry upgrade. So on an
-        // https site it is same-scheme; on an http site it is treated as same-scheme here even though
-        // an https website it admits would be cross-site. Embedding only really works over https, so
-        // that case is not worth a third category. A pattern naming a different scheme is a
-        // different site outright.
-        if ($pattern['scheme'] !== null AND $pattern['scheme'] !== $thisScheme) {
-            $sorted['cross'][] = formulize_renderOriginPattern($pattern);
-            continue;
-        }
-        $relationship = formulize_hostSessionRelationship($pattern['host'], $thisHost);
-        if ($relationship !== 'unknown') {
-            $sorted[$relationship][] = formulize_renderOriginPattern($pattern);
-        }
-    }
-    return $sorted;
-}
-
-/**
- * Whether two hostnames are the same site, as a browser decides it, where that can be known
- * without the Public Suffix List.
- *
- * @param string $host The hostname from the administrator's list (a wildcard's bare host)
- * @param string $thisHost This site's own hostname
- * @return string 'same', 'cross', or 'unknown' when it cannot be decided safely
- */
-function formulize_hostSessionRelationship($host, $thisHost) {
-    if ($host === $thisHost) {
-        return 'same';
-    }
-    // An IP address is a site of its own: it shares nothing with any other address or any hostname,
-    // however many of its numbers happen to line up with theirs
-    if (filter_var($host, FILTER_VALIDATE_IP) OR filter_var($thisHost, FILTER_VALIDATE_IP)) {
-        return 'cross';
-    }
-    $suffixes = formulize_multiLabelPublicSuffixes();
-    // one inside the other, eg. example.com and forms.example.com: the shorter one is the parent,
-    // and a parent that somebody has actually listed is a domain they hold - unless it is itself a
-    // suffix that unrelated sites live under, eg. github.io
-    if (substr($thisHost, -strlen('.'.$host)) === '.'.$host) {
-        return in_array($host, $suffixes, true) ? 'cross' : 'same';
-    }
-    if (substr($host, -strlen('.'.$thisHost)) === '.'.$thisHost) {
-        return in_array($thisHost, $suffixes, true) ? 'cross' : 'same';
-    }
-    // siblings, eg. www.example.com and forms.example.com: same site only if what they share is a
-    // registrable domain. Requiring a label before a two-label tail rules out two unrelated sites
-    // that merely share a public suffix, eg. a.co.uk and b.co.uk.
-    $hostLabels = explode('.', $host);
-    $thisLabels = explode('.', $thisHost);
-    $shared = array();
-    while ($hostLabels AND $thisLabels AND end($hostLabels) === end($thisLabels)) {
-        array_unshift($shared, array_pop($hostLabels));
-        array_pop($thisLabels);
-    }
-    if (count($shared) < 2) {
-        return 'cross'; // nothing in common beyond a bare TLD, or nothing at all
-    }
-    if (count($shared) === 2) {
-        if (in_array(implode('.', $shared), $suffixes, true)) {
-            return 'cross'; // all they share is something like co.uk, so they are different sites
-        }
-        if (strlen($shared[1]) === 2 AND strlen($shared[0]) <= 3) {
-            // A short label under a country code has the shape of a registry's own suffix - co.xx,
-            // com.xx, gc.ca - and one missing from the list cannot be told apart from a short
-            // registered name, so it is not guessed at. A longer one, like example.ca, is a name
-            // somebody registered, and those are what most sites under a country code look like.
-            return 'unknown';
-        }
-    }
-    return 'same';
-}
-
-/**
- * The suffixes with two labels that unrelated sites share, common enough to be worth knowing here.
- *
- * Both kinds: public ones run by registries, like co.uk, and private ones run by hosting platforms
- * that hand out subdomains to their customers, like github.io, where two customers' sites are as
- * unrelated as two .co.uk sites are.
- *
- * Not the Public Suffix List, and not trying to be: this only has to stop the tests in
- * formulize_hostSessionRelationship() from calling two unrelated sites the same site. Short two-label
- * tails under a country code that are not listed here are reported as unknown rather than guessed at,
- * but a missing suffix anywhere else - under a generic top level domain (.com, .net, .app...), or a
- * longer one under a country code - still leaves a pair reported as sharing the session when they do
- * not, so those are the ones worth adding.
- *
- * @return array
- */
-function formulize_multiLabelPublicSuffixes() {
-    return array(
-        // private suffixes: hosting platforms that give each customer a subdomain
-        'github.io', 'gitlab.io', 'herokuapp.com', 'azurewebsites.net', 'cloudapp.net', 'appspot.com',
-        'cloudfront.net', 'netlify.app', 'vercel.app', 'pages.dev', 'workers.dev', 'web.app',
-        'firebaseapp.com', 'onrender.com', 'fly.dev', 'amplifyapp.com', 'blogspot.com',
-        'co.uk', 'org.uk', 'ac.uk', 'gov.uk', 'me.uk', 'net.uk', 'sch.uk',
-        'com.au', 'net.au', 'org.au', 'edu.au', 'gov.au', 'id.au',
-        'co.nz', 'net.nz', 'org.nz', 'ac.nz', 'govt.nz',
-        'co.za', 'org.za', 'net.za', 'gov.za', 'ac.za',
-        'co.jp', 'or.jp', 'ne.jp', 'ac.jp', 'go.jp',
-        'com.br', 'net.br', 'org.br', 'gov.br', 'edu.br',
-        'co.in', 'net.in', 'org.in', 'gen.in', 'gov.in',
-        'com.mx', 'com.ar', 'com.sg', 'com.hk', 'com.tw', 'com.cn', 'net.cn', 'org.cn', 'gov.cn',
-        'co.il', 'co.kr', 'or.kr', 'com.tr', 'com.pl', 'com.ua', 'com.ru',
-        'gc.ca', 'qc.ca', 'on.ca', 'ab.ca', 'bc.ca',
-    );
 }
 
 /**
@@ -1080,6 +874,70 @@ function formulize_siteFrameAncestors() {
         return array();
     }
     return formulize_parseEmbedOrigins(formulize_moduleConfigValue('formulizeFrameAncestors'));
+}
+
+/**
+ * The canonical form of one written website address, if embedding can act on it.
+ *
+ * @param string $entry One address as it was written
+ * @return string|bool The canonical address, or FALSE when it cannot be read or cannot be used
+ */
+function formulize_embedOriginCanonical($entry) {
+    $pattern = formulize_parseOriginPattern($entry);
+    if ($pattern AND formulize_originPatternCanBeFramed($pattern)) {
+        return formulize_renderOriginPattern($pattern);
+    }
+    return false;
+}
+
+/**
+ * The list of websites to show when editing a screen's embedding setting: the site-wide websites
+ * first, then the screen's own, with no website twice. Entries of the screen's that cannot be read
+ * are kept as written so the administrator can correct them.
+ *
+ * @param string $screenValue The screen's saved embedOrigins
+ * @return string One website per line
+ */
+function formulize_screenEmbedOriginsForEditing($screenValue) {
+    $lines = formulize_siteFrameAncestors();
+    $seen = array_flip($lines);
+    foreach (formulize_splitOriginSetting($screenValue) as $entry) {
+        $entry = trim($entry);
+        if ($entry === '') {
+            continue;
+        }
+        $canonical = formulize_embedOriginCanonical($entry);
+        $key = $canonical !== false ? $canonical : $entry;
+        if (!isset($seen[$key])) {
+            $seen[$key] = true;
+            $lines[] = $entry;
+        }
+    }
+    return implode("\n", $lines);
+}
+
+/**
+ * The value to save for a screen's embedding setting, given what was in the box: the site-wide
+ * websites are taken out, since they apply to the screen anyway and are shown in the box only for
+ * reference. That way a change to the site-wide list reaches every screen.
+ *
+ * @param string $postedValue What the administrator submitted
+ * @return string One website per line, as written
+ */
+function formulize_screenEmbedOriginsForSaving($postedValue) {
+    $siteOrigins = array_flip(formulize_siteFrameAncestors());
+    $keep = array();
+    foreach (formulize_splitOriginSetting($postedValue) as $entry) {
+        $entry = trim($entry);
+        if ($entry === '') {
+            continue;
+        }
+        $canonical = formulize_embedOriginCanonical($entry);
+        if ($canonical === false OR !isset($siteOrigins[$canonical])) {
+            $keep[] = $entry;
+        }
+    }
+    return implode("\n", $keep);
 }
 
 /**

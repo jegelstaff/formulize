@@ -52,11 +52,16 @@ $config_handler = xoops_gethandler('config');
 $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 $settings['embeddingAllowed'] = formulize_embeddingAllowed(); // a new screen has this question too
 $settings['screenTypes'] = formulize_getScreenTypes();
+// The box for the websites that can embed the screen also shows the site-wide websites, which are not
+// stored with the screen, so it has room for them on top of the 1000 characters the screen can store.
+$siteFrameAncestorsText = implode("\n", formulize_siteFrameAncestors());
+$settings['embedOriginsMaxLength'] = 1000 + ($siteFrameAncestorsText === '' ? 0 : strlen($siteFrameAncestorsText) + 1);
 if ($screen_id == "new") {
     $settings['type'] = 'listOfEntries';
     $settings['frid'] = 0;
     $settings['useToken'] = $formulizeConfig['useToken'];
     $settings['anonNeedsPasscode'] = 1;
+    $settings['embedOrigins'] = htmlspecialchars(formulize_screenEmbedOriginsForEditing(''));
     $screenName = "New screen";
 		$screen_handle = "";
 } else {
@@ -73,7 +78,9 @@ if ($screen_id == "new") {
     $settings['useToken'] = $screen->getVar('useToken');
     $settings['anonNeedsPasscode'] = $screen->getVar('anonNeedsPasscode');
     // escaped for display, because this one holds whatever the administrator typed, valid or not
-    $settings['embedOrigins'] = $screen->getVar('embedOrigins');
+    // The site-wide websites come first, then the screen's own. They apply to the screen anyway, and
+    // are taken back out when the screen is saved - see formulize_screenEmbedOriginsForSaving()
+    $settings['embedOrigins'] = htmlspecialchars(formulize_screenEmbedOriginsForEditing($screen->getVar('embedOrigins', 'n')));
     // the note about ignored entries is written in one place and shown wherever such a list is
     // edited, so the preferences page and this page say the same thing in the same words
     $settings['embedOriginsWarning'] = formulize_embedOriginsWarningHtml($screen->getVar('embedOrigins', 'n'));
@@ -83,10 +90,10 @@ if ($screen_id == "new") {
     // screen - see formulize_screenEmbedCode()
     $settings['embedCode'] = formulize_screenEmbedCode($screen);
     $settings['embedCodeAddressDesc'] = sprintf(_AM_SCREEN_SETTINGS_EMBED_CODE_ADDRESS_DESC, FORMULIZE_ADDRESS_PLACEHOLDER, htmlspecialchars(XOOPS_URL));
-    $settings['embedSessionNotice'] = formulize_embedSessionSharingNoticeHtml($screen->getVar('embedOrigins', 'n'));
 	$settings['alternateURLsOn'] = $formulizeConfig['formulizeRewriteRulesEnabled'];
     if($settings['alternateURLsOn']) {
-        $settings['rewriteruleAddress'] = $screen->getVar('rewriteruleAddress');
+        // the address the screen is reached at: the one saved for it, or otherwise its id
+        $settings['rewriteruleAddress'] = htmlspecialchars(formulize_alternateURLAddressForScreen($screen));
         $settings['rewriteruleElement'] = $screen->getVar('rewriteruleElement');
         $formObject = $form_handler->get($form_id);
         $elementColheads = $formObject->getVar('elementColheads');
@@ -94,14 +101,6 @@ if ($screen_id == "new") {
         foreach($formObject->getVar('elementCaptions') as $elementId=>$elementLabel) {
             $elementLabel = $elementColheads[$elementId] ? $elementColheads[$elementId] : $elementLabel;
             $settings['rewriteruleElements'][$elementId] = $elementLabel;
-        }
-        // every screen can also be reached at its id, and a screen showing a list's entries at the list's address
-        $sidURL = XOOPS_URL.'/'.$screen->getVar('sid').'/';
-        $settings['alternateURLDesc'] = sprintf(_AM_SCREEN_SETTINGS_URL_ALTERNATE_DESC, "<a href='".htmlspecialchars($sidURL)."' target='_blank'>".htmlspecialchars($sidURL)."</a>");
-        $settings['alternateURLListDescs'] = array();
-        foreach(formulize_alternateURLListsShowingEntriesIn($screen) as $listScreen) {
-            $listURL = htmlspecialchars(XOOPS_URL.'/'.formulize_alternateURLAddressForScreen($listScreen).'/')."<i>"._AM_SCREEN_SETTINGS_URL_ENTRY_PLACEHOLDER."</i>/";
-            $settings['alternateURLListDescs'][] = sprintf(_AM_SCREEN_SETTINGS_URL_ALTERNATE_LIST_DESC, htmlspecialchars(trans($listScreen->getVar('title', 'n'))), $listURL);
         }
     }
 

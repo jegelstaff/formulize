@@ -154,27 +154,6 @@ function formulize_alternateURLListScreenFor($screen) {
 }
 
 /**
- * The lists that lend a screen their address, for showing in the screen's settings: the lists on the screen's
- * form that show their entries in this screen.
- *
- * @param object $screen The screen
- * @return array The list screens
- */
-function formulize_alternateURLListsShowingEntriesIn($screen) {
-	$lists = array();
-	if(!$screen OR $screen->getVar('type') == 'listOfEntries') {
-		return $lists;
-	}
-	$screen_handler = xoops_getmodulehandler('screen', 'formulize');
-	foreach($screen_handler->getObjects(new Criteria('type', 'listOfEntries'), $screen->getVar('fid')) as $listScreen) {
-		if(formulize_alternateURLListViewEntryScreenId($listScreen) == $screen->getVar('sid')) {
-			$lists[] = $listScreen;
-		}
-	}
-	return $lists;
-}
-
-/**
  * Describe the alternate URL of a screen, and optionally of an entry in it and a page of it
  *
  * A screen with an alternate address of its own is reached at that. Otherwise, a screen showing an entry of a

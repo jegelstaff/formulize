@@ -122,10 +122,14 @@ $screen->setVar('anonNeedsPasscode',$screens['anonNeedsPasscode']);
 if(isset($screens['embedOrigins'])) { // left alone when the screen was saved from a page without this field
 	// Saved as it was written, malformed entries included, so the administrator can see and correct
 	// them rather than watch them vanish. Only the entries that can be read are ever sent in the header.
-	$screen->setVar('embedOrigins', trim($screens['embedOrigins']));
+	// The websites allowed site-wide are shown in the box too, but apply on their own, so they are not stored here.
+	$screen->setVar('embedOrigins', formulize_screenEmbedOriginsForSaving($screens['embedOrigins']));
 }
 $rewriteruleAddress = formulizeScreen::sanitize_rewrite_address($screens['rewriteruleAddress']);
-if(ctype_digit($rewriteruleAddress)) {
+if($rewriteruleAddress !== '' AND $rewriteruleAddress === (string) $screen->getVar('sid')) {
+	// the box shows the screen's own id when it has no address of its own, so that is the same as having none
+	$screen->setVar('rewriteruleAddress', '');
+} elseif(ctype_digit($rewriteruleAddress)) {
 	// a number would be read as a screen's id, which every screen can already be reached at, so the address is left as it was.
 	// evalnow, so that any reload printed below still happens
 	print "/* evalnow */ alert(".json_encode(sprintf(_AM_SCREEN_SETTINGS_URL_ALTERNATE_NUMERIC, $rewriteruleAddress)).");";

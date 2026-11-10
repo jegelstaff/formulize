@@ -2375,6 +2375,14 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
 .formulize-config-settings .formulize-config-input input[type=password] {
 	max-width: 100%;
 }
+/* Warnings under a textarea take the width the textarea sets. Left to size themselves,
+   their long text makes the whole input column wide, and the column then wraps beneath
+   the setting's description instead of sitting beside it. */
+.formulize-config-settings .formulize-config-input textarea ~ .formulize-settings-warning {
+	width: 0;
+	min-width: 100%;
+	box-sizing: border-box;
+}
 .formulize-config-settings .formulize-config-preview {
 	margin-top: 0.3em;
 	font-size: 0.9em;

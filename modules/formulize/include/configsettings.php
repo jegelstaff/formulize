@@ -180,13 +180,10 @@ function formulize_configFormElementHtml($config) {
         return $ele->render() . formulize_mcpEnableCheckFailureHtml() . formulize_mcpAuthHeaderWarningHtml();
     }
 
-    // The websites allowed to frame the whole site, plus a note about any entry that is being
-    // ignored, and a note about what the session cookie setting means for the websites listed here.
+    // The websites allowed to frame the whole site, plus a note about any entry that is being ignored.
     if ($name === 'formulizeFrameAncestors') {
         $ele = new icms_form_elements_Textarea('', $name, icms_core_DataFilter::htmlSpecialChars($value), 5, 50);
-        return $ele->render()
-            . formulize_embedOriginsWarningHtml($value)
-            . formulize_embedSessionSharingNoticeHtml($value);
+        return $ele->render() . formulize_embedOriginsWarningHtml($value);
     }
 
     // The list of websites allowed to call the Public API, plus a note about any entry that cannot
