@@ -19,7 +19,8 @@ import {
 // on a list, which go through formulize_parseFilter(), different code again, so a fix to one doesn't fix the others. Section 8
 // types each row's conditions into the admin UI, the way a webmaster does, for the settings MCP can't reach. Sections 9 and 10 are
 // sites that show dates another way. Section 11 is a group's filter, which is SQL of its own, and section 12 is the values that
-// = conditions give a new entry.
+// = conditions give a new entry. Section 13 is the values a list's Search box offers, which have to be the ones the element
+// would offer in a form.
 //
 // How a section is built:
 //   - Each row sets its condition, opens the page and compares. A row that disagrees is recorded, and the section carries on.
@@ -61,6 +62,12 @@ const COLLECTION_OPTIONS = 'loans_collections';
 const FOLLOW_UP_OPTIONS = 'visits_follow_up';
 const DISPLAYED_ELEMENT = 'artifacts_curator_note';
 const WEAPONS_SUBFORM = 'collections_subform_artifacts';
+
+// The Donor element on Artifacts, whose Search box in the Catalogue list section 13 reads. It shows each donor's name, the way
+// 010 made it, and a row with a Shows column has it show another field of the donor instead, from this list.
+const DONOR_COLUMN = 'artifacts_donor';
+const DONOR_COLUMN_SOURCE = 'donors_name';
+const DONOR_COLUMN_SHOWS = { 'Province': 'donors_province' };
 const WEAPONS_SUBFORM_DELETE_LINKS = '#filterdiv > a.conditionsdelete';
 
 // The Artifacts subform in Main Vault has no Add or Delete buttons, the way 022 made it. Section 12 turns them on to add an
@@ -174,8 +181,11 @@ const setDisplayConditions = conditions =>
 	tool('update_text_box_element', { element_identifier: DISPLAYED_ELEMENT, display_conditions: conditions });
 const setFundamentalFilters = (listHandle, conditions) =>
 	tool('update_list_screen', { screen_id: parseInt(screenId(listHandle), 10), fundamental_filters: conditions });
+const setDonorColumn = (conditions, sourceElement = DONOR_COLUMN_SOURCE) =>
+	tool('update_linked_list_element', { element_identifier: DONOR_COLUMN, properties: { sourceElement, sourceEntryFilter: conditions } });
 
 async function putSettingsBack() {
+	await setDonorColumn([]);
 	await setSubformFilter(MAIN_VAULT_SUBFORM, [], 1, MAIN_VAULT_SUBFORM_AS_SETUP_LEFT_IT);
 	await setSubformFilter(LOANS_SUBFORM, [], keepInSyncToStart);
 	await setOptionsFilter(ARTIFACT_OPTIONS, []);
@@ -1011,6 +1021,49 @@ test('Section 12: what = conditions give a new entry', async ({ page }) => {
 		}
 	}
 	await setSubformFilter(MAIN_VAULT_SUBFORM, [], 1, MAIN_VAULT_SUBFORM_AS_SETUP_LEFT_IT);
+	await leavePage(page);
+});
+
+// Every value the Donor column's Search box offers in the Catalogue list, apart from Show all and Show Blanks, which head every
+// Search box's list. Unlike namesOnPage, a value that isn't one of the names counts too, since what mustn't be offered is any
+// value at all, ie: the entry ids stored in Artifacts. The values come with the page, so they're all there once the list opens.
+async function valuesOffered(page, selector) {
+	await openList(page, LISTS['Catalogue']);
+	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
+	await page.locator(`input[name="search_${DONOR_COLUMN}"]`).click();
+	const choices = page.locator(selector);
+	await expect(choices.first()).toHaveText('Show all');
+	const text = await choices.evaluateAll(found => found.map(item => (item.innerText || item.textContent || '').trim()));
+	return text.filter(value => value !== 'Show all' && value !== 'Show Blanks').sort();
+}
+
+test('Section 13: the values a list\'s Search box offers', async ({ page }) => {
+	const rows = casesFor('P');
+	test.setTimeout(rows.length * SECONDS_PER_ROW * 1000);
+	const { selector } = howToCheck('P');
+	const read = () => valuesOffered(page, selector);
+
+	await login(page, 'curator1', '12345');
+	for (const row of rows) {
+		await checkRow(page, row['Row'], disagreements, async () => {
+			const shows = row['Shows'] || '';
+			const sourceElement = shows ? DONOR_COLUMN_SHOWS[shows] : DONOR_COLUMN_SOURCE;
+			if (!sourceElement) {
+				throw new Error(`The Donor list can't be made to show ${shows}`);
+			}
+			const conditions = conditionsFor(row, DONOR_ELEMENTS);
+			const expected = expectedNames(row['Should show'], namesIn(shows ? `${shows} shown` : 'Donor'));
+			if (expected.length === 0 && shows) {
+				throw new Error('A row that offers nothing is proved by a donor\'s name showing, so it can\'t have a Shows column');
+			}
+			await setDonorColumn(conditions, sourceElement);
+			compare(row, expected, await read());
+			if (expected.length === 0) {
+				await proveQueryRan(row, () => setDonorColumn(provingConditions(conditions, 'donors_name', 'Freeform Solutions')), read, 'Freeform Solutions');
+			}
+		});
+	}
+	await setDonorColumn([]);
 	await leavePage(page);
 });
 

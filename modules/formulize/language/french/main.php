@@ -739,6 +739,8 @@ define("_formulize_SEARCHBOX_LOADING", "Recherche des correspondances...");
 define("_formulize_SEARCHBOX_MORE", "Les %s premières sont affichées. Tapez davantage pour réduire la liste.");
 define("_formulize_SEARCHBOX_CLEAR", "Effacer les valeurs choisies");
 define("_formulize_SEARCHBOX_ERROR", "Les valeurs n'ont pas pu être trouvées. Vous pouvez quand même rechercher ce que vous avez tapé.");
+// une valeur proposée dans les filtres d'une liste qui a le même texte qu'une autre, suivie du numéro de l'entrée d'où elle vient, pour les distinguer
+define("_formulize_QSF_DUPLICATE_LABEL", "%1\$s (%2\$s)");
 
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';

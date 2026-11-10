@@ -39,6 +39,7 @@ export const DONOR_ELEMENTS = {
 	'Email Address': 'donors_email',
 	'Is the donor anonymous?': 'donors_anonymous',
 	'Province': 'donors_province',
+	'creation_uid': 'creation_uid',
 };
 export const COLLECTION_ELEMENTS = {
 	'Name': 'collections_name',

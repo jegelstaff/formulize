@@ -136,6 +136,16 @@ switch($op) {
 			print json_encode(array('options' => array(), 'more' => false));
 			break;
 		}
+		// Conditions on the column's values can use values in the address of the page the box is on, which the page passes
+		// on as address[...] (see formulize_addressValuesForFilterOptions()). The conditions look for them in $_GET, so they
+		// go there, in place of this request's own, which are read above and would otherwise be taken for the page's.
+		$qsAddressValues = (isset($_GET['address']) AND is_array($_GET['address'])) ? $_GET['address'] : array();
+		unset($_GET['op'], $_GET['handle'], $_GET['fid'], $_GET['term'], $_GET['address']);
+		foreach($qsAddressValues as $qsName=>$qsValue) {
+			if(is_string($qsName) AND is_string($qsValue)) {
+				$_GET[$qsName] = $qsValue;
+			}
+		}
 		$qsLimit = formulize_searchBoxOptionLimit();
 		print json_encode(formulize_getQuickSearchOptions($qsHandle, $qsFid, $qsTerm, $qsLimit) + array('limit' => $qsLimit));
 		break;

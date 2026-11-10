@@ -981,3 +981,5 @@ define("_formulize_SEARCHBOX_LOADING", "Finding matches...");
 define("_formulize_SEARCHBOX_MORE", "Showing the first %s. Type more to narrow them down.");
 define("_formulize_SEARCHBOX_CLEAR", "Clear the values picked");
 define("_formulize_SEARCHBOX_ERROR", "The values could not be found. You can still search for what you typed.");
+// a value offered in a list's filters that has the same text as another, followed by the number of the entry it comes from, so they can be told apart
+define("_formulize_QSF_DUPLICATE_LABEL", "%1\$s (%2\$s)");

@@ -6904,7 +6904,9 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 
 					// if the $options is from a linked selectbox, then figure that out and gather the possible values
 					// only linked selectboxes have this string in their options field
+					$isLinkedSource = false;
 					if (is_string($options) AND strstr($options, "#*=:*")) {
+							$isLinkedSource = true;
 							$boxproperties = formulize_linkedSourceParts($options);
 							$source_form_id = $boxproperties[0];
 							$source_element_handle = $boxproperties[1];
@@ -6934,33 +6936,17 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 							$conditionsfilter = "";
 							$conditionsfilter_oom = "";
 							$extra_clause = "";
+							$directLimit = "";
 							if($elementFormObject = $form_handler->get($elementObject->getVar('id_form'))) {
 									global $xoopsUser;
 									$fakeOwnerUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-									// remove any dynamic filters pointing to form elements since we're rendering without entry context
-									if(isset($ele_value[5]) AND is_array($ele_value[5]) AND isset($ele_value[5][2]) AND is_array($ele_value[5][2])) {
-										$removedAtLeastOneCondition = false;
-										foreach($ele_value[5][2] as $i=>$conditionTerm) {
-												if(substr($conditionTerm, 0, 1)=="{" AND substr($conditionTerm, -1)=="}") {
-														$termToCheck = substr($conditionTerm, 1, -1);
-														if(!isset($_GET[$termToCheck]) AND !isset($_POST[$termToCheck])) {
-																$removedAtLeastOneCondition = true;
-																unset($ele_value[5][0][$i]);
-																unset($ele_value[5][1][$i]);
-																unset($ele_value[5][2][$i]);
-																unset($ele_value[5][3][$i]);
-														}
-												}
-										}
-										if($removedAtLeastOneCondition) {
-											// reindex the arrays, as other code expects everything to start at zero and be sequential
-											$ele_value[5][0] = array_values($ele_value[5][0]);
-											$ele_value[5][1] = array_values($ele_value[5][1]);
-											$ele_value[5][2] = array_values($ele_value[5][2]);
-											$ele_value[5][3] = array_values($ele_value[5][3]);
-										}
+									// there is no entry here, so leave out conditions that read one, and keep {USER} and the like, which the form applies too
+									list($linkConditions) = formulize_conditionsWithoutEntryReferences(isset($ele_value[5]) ? $ele_value[5] : array());
+									list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($linkConditions, $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
+									// the options can also be limited to the values picked in another element, the same as in the form
+									if(($limitEntryIds = formulize_optionsLimitByElementValues($ele_value, false, $fakeOwnerUid, $elementFormObject)) !== false) {
+										$directLimit = " AND t1.entry_id IN (".implode(",", $limitEntryIds).") ";
 									}
-									list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($ele_value[5], $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
 									$sourceEntryIdsForFilters = array(); // filters never have any preselected values from the database
 									list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIdsForFilters);
 									$ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
@@ -7012,7 +6998,7 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 
 							// a term to match is matched by the database, when the columns shown hold text rather than references to
 							// other entries or users, which only mean something once prepvalues() has turned them into names
-							$whereClauses = "$extra_clause $conditionsfilter $conditionsfilter_oom $limitConditionWhere";
+							$whereClauses = "$extra_clause $conditionsfilter $conditionsfilter_oom $limitConditionWhere $directLimit";
 							// with no term, only so many are wanted, and the database can stop there. With a term the database
 							// can't match, every value has to be read, for the term to be matched once they're names.
 							$termLimit = ((string) $term === '' AND intval($maxOptions) > 0) ? " LIMIT ".intval($maxOptions) : "";
@@ -7035,40 +7021,48 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 							}
 							if ($dataResult = $xoopsDB->query("SELECT $select_column, t1.entry_id FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as t1 $limitConditionTable $whereClauses $sortOrderClause$termLimit")) {
 									$useValue = 'entryid';
-									if(count($linked_columns)>1) {
-											$linked_column_count = count((array) $linked_columns);
-											while ($dataRow = $xoopsDB->fetchRow($dataResult)) {
-													$linked_column_values = array();
-													foreach (range(0, ($linked_column_count-1)) as $linked_column_index) {
-															$linked_value = '';
-															if ($dataRow[$linked_column_index] !== "") {
-																	$linked_value = prepvalues($dataRow[$linked_column_index], $linked_columns[$linked_column_index], $dataRow[$linked_column_count]);
-																	$linked_value = $linked_value[0];
-															}
-															if($linked_value != '' OR is_numeric($linked_value)) {
-																	$linked_column_values[] = $linked_value;
-															}
+									// a snapshot list saves the text of the option rather than the entry id, so the text is what to search for
+									$isSnapshot = !empty($ele_value['snapshot']);
+									$linked_column_count = count((array) $linked_columns);
+									while ($dataRow = $xoopsDB->fetchRow($dataResult)) {
+											$linked_column_values = array();
+											foreach (range(0, ($linked_column_count-1)) as $linked_column_index) {
+													$linked_value = '';
+													if ($dataRow[$linked_column_index] !== "") {
+															$linked_value = prepvalues($dataRow[$linked_column_index], $linked_columns[$linked_column_index], $dataRow[$linked_column_count]);
+															$linked_value = $linked_value[0];
 													}
-													if(count((array) $linked_column_values)>0) {
-															// set option to entry id, with the linked columns as the label
-															$concatenatedValues = implode(" | ", $linked_column_values);
-															if(!in_array($concatenatedValues, $options)) {
-																	$options[$dataRow[$linked_column_count]] = $concatenatedValues;
-															}
+													if($linked_value != '' OR is_numeric($linked_value)) {
+															$linked_column_values[] = $linked_value;
 													}
 											}
-									} else {
-											while($dataRow = $xoopsDB->fetchRow($dataResult)) {
-													$linked_value = prepvalues($dataRow[0], $linked_columns[0], $dataRow[1]);
-													if(!in_array($linked_value[0], $options)) {
-															$options[$dataRow[1]] = $linked_value[0];
+											if(count((array) $linked_column_values)>0) {
+													$label = implode(" | ", $linked_column_values);
+													if($isSnapshot) {
+															// text that would be escaped can't be matched with equals, so it is matched as contained in the field, as stored values are below
+															$value = htmlspecialchars(strip_tags($label), ENT_QUOTES);
+															$options[($value != $label ? 'NOQSFEQUALS' : '').$value] = $label;
+													} else {
+															$options[$dataRow[$linked_column_count]] = $label;
+													}
+											}
+									}
+									// Two source entries can show the same text. The form offers only one of them, but saved entries can point
+									// at either, so each one is offered here, with its entry id after the text, to tell them apart.
+									if(!$isSnapshot) {
+											$labelCounts = array_count_values(array_map('strval', $options));
+											foreach($options as $sourceEntryId=>$label) {
+													if($labelCounts[(string) $label] > 1) {
+															$options[$sourceEntryId] = sprintf(_formulize_QSF_DUPLICATE_LABEL, $label, $sourceEntryId);
 													}
 											}
 									}
 							}
 					}
 
-					if(!$options) {
+					// a linked list's options are the source entries the form would offer, so if there are none, there are none.
+					// The values stored in this form are entry ids, which mean nothing as options.
+					if(!$options AND !$isLinkedSource) {
 							// figure out the distinct values for this field, use those instead
 							// strip out HTML. Or, if there is <span class='formulize-filter-value'>Text</span> present in the value, use that marked up value instead.
 							// only show the user values that match their visibility settings
@@ -7113,54 +7107,20 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 							$options = $parsedOptions;
 					}
 
-					// code copied from elementrender.php to make fullnames work for Drupalcamp demo
-					if (key($options) === "{FULLNAMES}" OR key($options) === "{USERNAMES}") {
-							if (key($options) === "{FULLNAMES}") { $nametype = "name"; }
-							if (key($options) === "{USERNAMES}") { $nametype = "uname"; }
-							$pgroups = array();
-							if ($ele_value[3]) {
-									$scopegroups = explode(",",$ele_value[3]);
-									global $xoopsUser;
-									$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-									if (!in_array("all", $scopegroups)) {
-											// limit by users's groups
-											if ($ele_value[4]) {
-													// loop so we can get rid of reg users group simply
-													foreach ($groups as $gid) {
-															if ($gid == XOOPS_GROUP_USERS) { continue; }
-															if (in_array($gid, $scopegroups)) {
-																	$pgroups[] = $gid;
-															}
-													}
-													if (count((array) $pgroups) > 0) {
-															unset($groups);
-															$groups = $pgroups;
-													} else {
-															$groups = array();
-													}
-											} else {
-													// don't limit by user's groups
-													$groups = $scopegroups;
-											}
-									} else {
-											// really use all (otherwise, we're just going will all user's groups, so existing value of $groups will be okay
-											if (!$ele_value[4]) {
-													unset($groups);
-													global $xoopsDB;
-													$allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups") . " WHERE groupid != " . XOOPS_GROUP_USERS);
-													foreach ($allgroupsq as $thisgid) {
-															$groups[] = $thisgid['groupid'];
-													}
-											}
-									}
-									$options = array();
-									$namelist = gatherNames($groups, $nametype);
-									foreach ($namelist as $auid=>$aname) {
-											$options[$auid] = $aname;
-									}
-									$useValue = 'uid';
-									natcasesort($options);
+					// a user list offers the users the form would offer the current user, see formulize_userListNames()
+					if (is_array($options) AND (key($options) === "{FULLNAMES}" OR key($options) === "{USERNAMES}")) {
+							$nametype = key($options) === "{FULLNAMES}" ? "name" : "uname";
+							global $xoopsUser;
+							$declaredUsersGroups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+							$currentUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
+							$limitUserIds = formulize_optionsLimitByElementValues($ele_value, false, $currentUid, $form_handler->get($elementObject->getVar('id_form')), true);
+							$options = array();
+							foreach (formulize_userListNames($ele_value, $nametype, $declaredUsersGroups) as $auid=>$aname) {
+									if ($limitUserIds !== false AND !in_array(intval($auid), $limitUserIds)) { continue; }
+									$options[$auid] = $aname;
 							}
+							$useValue = 'uid';
+							natcasesort($options);
 					}
     } // end of element-specific filter option building (metadata fields handled in the branch above)
     return array($options, $useValue, $ele_uitext);
@@ -7216,7 +7176,10 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
     // limits are very similar to subfilters in their effect, but subfilters are meant for situations where one filter influences another filter
     // subfilters are kind of like dynamic limits, where the limit condition is not specified until the parent filter is chosen.
 
-    global $xoopsDB; // required by q
+    global $xoopsDB, $myts; // xoopsDB is required by q
+    if (!$myts) {
+        $myts =& MyTextSanitizer::getInstance();
+    }
     $multiIdCounter = 1;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -7325,7 +7288,10 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 
             $multiIdCounter++;
             $selected = "";
-            $labeloption = $useValue ? $option_value : $option;
+            // A label that is a value, rather than the option itself, is the text of another form's entry or a user's
+            // name, which anyone could have typed, so it is escaped, once. The other options are already escaped by
+            // formulize_gatherFilterOptions(), or are the ones a webmaster wrote for the element, which are left alone.
+            $labeloption = $useValue ? $myts->htmlSpecialChars(undoAllHTMLChars((string) $option_value)) : $option;
             $labeloption = str_replace('NOQSFEQUALS','',$labeloption); // When the special flag is being used to override equals operator for searches, we must not show the flag! Super kludgey, but it's such a nested exception, hard to make generalized and only takes a couple lines to handle like this
             $labeloption = formulize_handleRandomAndDateText(formulize_swapUIText($labeloption, $ele_uitext));
 						if($labeloption === '') {
@@ -7343,7 +7309,9 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                         $anythingChecked = $checked ? true : $anythingChecked;
                         $checked = (!$anythingChecked AND in_array($option, $defaultValue)) ? "checked" : $checked;
                     }
-                    $filter .= "<label class='formulize-multifilter-option' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$option."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'$orset$ORSETOperator".$option."//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('$orset$ORSETOperator".$option."//', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\"><span>".$labeloption."</span></label>\n";
+                    // the script reads the box's own value, because a value written into the script would be decoded back
+                    // into quotes in the attribute, and could end the script's string and run as code
+                    $filter .= "<label class='formulize-multifilter-option' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$option."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'$orset$ORSETOperator'+this.value+'//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('$orset$ORSETOperator'+this.value+'//', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\"><span>".$labeloption."</span></label>\n";
                 } else {
                     $selected = ($_POST[$id] == $option OR $_GET[$id] == $option) ? "selected" : "";
                     $selected = (!$selected AND in_array($option, $defaultValue)) ? "selected" : $selected;
@@ -7382,7 +7350,8 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                     $option = "qsf_".$counter."_$option";
                 }
                 if($multi) {
-                    $filter .= "<label class='formulize-multifilter-option' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$option."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$option."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$option."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\"><span>".$labeloption."</span></label>\n";
+                    // the box's value is the whole search for it, which the script reads rather than having it written in. See above.
+                    $filter .= "<label class='formulize-multifilter-option' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$option."' $selected onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+this.value); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace(this.value, '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\"><span>".$labeloption."</span></label>\n";
                 } else {
                     $filter .= "<option value=\"$option\" $selected>".$labeloption."</option>\n";
                 }
@@ -11296,6 +11265,182 @@ function prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourc
         $extra_clause = " $parentFormFrom WHERE $sourceEntrySafetyNetStart t1.entry_id>0 ";
     }
     return $extra_clause;
+}
+
+/**
+ * A list's conditions, without the ones that read the entry being edited, for working out its options where there is
+ * no entry, as in a list of entries' filters. A { } term that names an element, or {ID}, gets its value from the entry,
+ * so it is taken out, and the options are the ones any entry could have. {USER}, {USER_ID}, {USERID}, {BLANK} and
+ * {TODAY} need no entry, so they stay, as does a { } term the request supplies. These are the keywords that
+ * buildConditionsFilterSQL() understands, and it leaves out any other { } term that isn't an element of the form.
+ *
+ * @param array $conditions A standard conditions array
+ * @return array The conditions that can be applied, and whether any that read the entry were taken out
+ */
+function formulize_conditionsWithoutEntryReferences($conditions) {
+    if(!is_array($conditions) OR !isset($conditions[2]) OR !is_array($conditions[2])) {
+        return array($conditions, false);
+    }
+    $readsEntry = false;
+    $removed = false;
+    foreach($conditions[2] as $i=>$term) {
+        if(!is_string($term) OR substr($term, 0, 1) != "{" OR substr($term, -1) != "}") {
+            continue;
+        }
+        $name = substr($term, 1, -1);
+        if(isset($_GET[$name]) OR isset($_POST[$name])
+            OR in_array($name, array('USER', 'USER_ID', 'USERID', 'BLANK'), true)
+            OR strstr($term, '{TODAY')) {
+            continue;
+        }
+        if($name === 'ID' OR _getElementObject($name) !== false) {
+            $readsEntry = true;
+        }
+        unset($conditions[0][$i], $conditions[1][$i], $conditions[2][$i], $conditions[3][$i]);
+        $removed = true;
+    }
+    if($removed) {
+        // other code expects the lists to be numbered from zero with no gaps
+        for($i = 0; $i < 4; $i++) {
+            $conditions[$i] = isset($conditions[$i]) ? array_values((array) $conditions[$i]) : array();
+        }
+    }
+    return array($conditions, $readsEntry);
+}
+
+/**
+ * The values in the page's address that a list's conditions use, ie: Cairo for {place} in a page opened with
+ * place=Cairo. The Search box asks for its values in a request of its own, whose address doesn't have them, so the
+ * page passes these on, and the values it gets follow the same conditions as the ones the page drew.
+ *
+ * @param object|false $elementObject The element whose options the conditions limit
+ * @return array The values, keyed by the names in the conditions
+ */
+function formulize_addressValuesForFilterOptions($elementObject) {
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectElement.php"; // the ELE_VALUE_SELECT_ constants
+    $values = array();
+    if(!$elementObject) {
+        return $values;
+    }
+    $ele_value = $elementObject->getVar('ele_value');
+    // linked checkboxes keep their conditions under the same key as linked lists do
+    foreach(array(ELE_VALUE_SELECT_LINK_FILTERS, ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER) as $key) {
+        if(!isset($ele_value[$key][2]) OR !is_array($ele_value[$key][2])) {
+            continue;
+        }
+        foreach($ele_value[$key][2] as $term) {
+            if(is_string($term) AND substr($term, 0, 1) == "{" AND substr($term, -1) == "}") {
+                $name = substr($term, 1, -1);
+                if(isset($_GET[$name]) AND is_string($_GET[$name])) {
+                    $values[$name] = $_GET[$name];
+                }
+            }
+        }
+    }
+    return $values;
+}
+
+/**
+ * The options a list's "limit by another element" setting allows: the values picked in that other element, in the
+ * entry its conditions find. For a linked list they are entry ids in the source form, and for a user list they are
+ * user ids, if the other element is a user list too.
+ *
+ * When the conditions find one entry, its values are the limit. When they find none, or several, a linked list offers
+ * nothing, and a user list is not limited. That is what forms have always done.
+ *
+ * With no entry, as in a list of entries' filters, conditions that read the entry are left out (see
+ * formulize_conditionsWithoutEntryReferences()). If that leaves conditions that find several entries, each one is
+ * an entry some form would have found, so the limit is all their values together.
+ *
+ * @param array $ele_value The list's settings
+ * @param int|string|false $entry_id The entry the list is shown in, or 'new', or false where there is no entry
+ * @param int $owner The user {USER} in the conditions is compared with: the entry's owner, or the current user
+ * @param object $formObject The form the list belongs to, which { } terms in the conditions refer to
+ * @param bool $userList Optional. True for a user list.
+ * @return array|false The entry ids or user ids the options are limited to, or false if there is no limit
+ */
+function formulize_optionsLimitByElementValues($ele_value, $entry_id, $owner, $formObject, $userList=false) {
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectElement.php"; // the ELE_VALUE_SELECT_ constants
+    if(!isset($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT]) OR !is_numeric($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT]) OR !$ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT]) {
+        return false;
+    }
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    if(!$limitElementObject = $element_handler->get(intval($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT]))) {
+        return false;
+    }
+    if($userList) {
+        // only another user list holds users to limit this one to
+        $limitEleValue = $limitElementObject->getVar('ele_value');
+        if(!isset($limitEleValue[ELE_VALUE_SELECT_OPTIONS]) OR !is_array($limitEleValue[ELE_VALUE_SELECT_OPTIONS]) OR !strstr(implode('', array_keys($limitEleValue[ELE_VALUE_SELECT_OPTIONS])), "NAMES}")) {
+            return false;
+        }
+    }
+    $limitHandle = $limitElementObject->getVar('ele_handle');
+    $limitValues = array();
+    if(!$userList AND $entry_id !== false AND isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$limitHandle])) {
+        // the value that has just been picked in the other element, on this page
+        $limitValues[] = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$limitHandle];
+    } else {
+        $conditions = isset($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER]) ? $ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER] : array();
+        $readsEntry = false;
+        if($entry_id === false) {
+            list($conditions, $readsEntry) = formulize_conditionsWithoutEntryReferences($conditions);
+            $entry_id = 'new';
+        }
+        list($limitFilter, $limitFilter_oom, $limitFilter_parentFormFrom) = buildConditionsFilterSQL($conditions, $limitElementObject->getVar('id_form'), $entry_id, $owner, $formObject, "olf");
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $limitFormObject = $form_handler->get($limitElementObject->getVar('id_form'));
+        global $xoopsDB;
+        $sql = "SELECT olf.`$limitHandle` FROM ".$xoopsDB->prefix('formulize_'.$limitFormObject->getVar('form_handle'))." as olf $limitFilter_parentFormFrom WHERE 1 $limitFilter $limitFilter_oom";
+        $rows = array();
+        if($res = $xoopsDB->query($sql)) {
+            while($row = $xoopsDB->fetchRow($res)) {
+                $rows[] = $row[0];
+            }
+        }
+        if(count($rows) == 1 OR ($readsEntry AND count($rows) > 1)) {
+            $limitValues = $rows;
+        } elseif($userList) {
+            return false;
+        } else {
+            $limitValues = array('');
+        }
+    }
+    $limit = array();
+    foreach($limitValues as $limitValue) {
+        $ids = $userList ? explode("*=+*:", trim((string) $limitValue, "*=+*:")) : convertEntryIdsFromDBToArray((string) $limitValue);
+        foreach($ids as $id) {
+            $limit[] = intval($id);
+        }
+    }
+    return array_values(array_unique($limit));
+}
+
+/**
+ * The users a user list offers, from the groups it is set to draw on.
+ *
+ * @param array $ele_value The list's settings
+ * @param string $nametype 'uname' or 'name', the name to show for each user
+ * @param array $declaredUsersGroups The groups the list is for: the owner's groups for a saved entry, otherwise the current user's
+ * @return array The users' names, keyed by user id
+ */
+function formulize_userListNames($ele_value, $nametype, $declaredUsersGroups) {
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/class/selectElement.php"; // the ELE_VALUE_SELECT_ constants
+    $groups = $declaredUsersGroups;
+    if($ele_value[ELE_VALUE_SELECT_LINK_LIMITGROUPS]) {
+        $scopegroups = explode(",", $ele_value[ELE_VALUE_SELECT_LINK_LIMITGROUPS]);
+        if(!in_array("all", $scopegroups)) {
+            $groups = $scopegroups;
+        } elseif(!$ele_value[ELE_VALUE_SELECT_LINK_USERSGROUPS]) {
+            // all groups really means all of them, unless the list is limited to the user's own groups, which $groups already is
+            global $xoopsDB;
+            $groups = array();
+            foreach(q("SELECT groupid FROM " . $xoopsDB->prefix("groups")) as $thisgid) {
+                $groups[] = $thisgid['groupid'];
+            }
+        }
+    }
+    return gatherNames($groups, $nametype, $ele_value[ELE_VALUE_SELECT_LINK_ALLGROUPS], $ele_value[ELE_VALUE_SELECT_LINK_FILTERS], $ele_value[ELE_VALUE_SELECT_LINK_USERSGROUPS], $declaredUsersGroups);
 }
 
 /**

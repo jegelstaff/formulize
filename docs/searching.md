@@ -19,6 +19,7 @@ As you type, the values in that column that match what you've typed appear in a 
 - Once you've ticked a value, the ticks are your search. Typing after that only narrows the list of values to tick.
 - The values you've ticked show under the box. Click the **×** beside them to clear them.
 - Tick **Show Blanks** to include the entries that have nothing in that column.
+- If two values in the list look the same, each has a number in brackets after it, so you can tell them apart. They're different entries that happen to have the same name.
 - If a column has a lot of values, only the first 50 that match are listed. Type more to narrow them down.
 - Click **Cancel** or press Esc to close the list and put your search back the way it was when you opened it.
 - Click somewhere else on the page to close the list and keep what you've typed or ticked. It's used the next time the list updates, such as when you press Enter or sort a column.

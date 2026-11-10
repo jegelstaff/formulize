@@ -1,5 +1,8 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled } from '../../utils';
+import {
+	login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, waitForWorkingMessage, createMuseumForm, deleteMuseumFormsTitled,
+	openAllColumnSections, applyColumnChanges, dbQuery, dbPrefix,
+} from '../../utils';
 
 /**
  * T3.6 - linked-element OPTION LABELS in the form render.
@@ -17,6 +20,9 @@ import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createM
  *   - opening the target's ADD form renders one checkbox whose LABEL is the source payload text:
  *       * the marker is present (the option rendered)
  *       * the payload is inert - its <img> did not become a live element and no on* handler survived
+ *   - the same labels are the values the target's list offers in its filters, so the column's dropdown filter
+ *     (buildFilter(), a sink of its own) and its Search box (drawn by filterpopovers.js) are checked the same way.
+ *     A second source entry closes the dropdown first, since an <img> inside an <option> is ignored.
  *
  * Requires enforcement ON (the fresh-install default the suite runs under).
  */
@@ -24,6 +30,12 @@ import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createM
 const LINK_MARKER = 'CBLINKMARK038';
 const LINK_PROBE = 'xss-cblink-probe-038';
 const LINK_PAYLOAD = `${LINK_MARKER}<img src=x class="${LINK_PROBE}" onerror="window.__xssCbLink038=1">`;
+
+// A list's dropdown filter puts the same labels in <option>s, where an <img> is ignored, so this one closes the dropdown
+// first. If the label isn't escaped, its <img> is live on the page after the dropdown.
+const FILTER_MARKER = 'CBFILTERMARK038';
+const FILTER_PROBE = 'xss-cbfilter-probe-038';
+const FILTER_PAYLOAD = `${FILTER_MARKER}</option></select><img src=x class="${FILTER_PROBE}" onerror="window.__xssCbFilter038=1">`;
 
 // the target links to the source, so it is deleted first
 const FORM_TITLES = ['XSS CBLink Target', 'XSS CBLink Source'];
@@ -55,6 +67,13 @@ test.describe.serial('T3.6 - linked checkbox option labels are escaped in the fo
 		await page.getByLabel('Source Name').fill(LINK_PAYLOAD);
 		await saveFormulizeForm(page);
 		await page.getByRole('link', { name: 'Save and Close' }).click();
+
+		await page.getByRole('button', { name: 'Add XSS CBLink Source', exact: true }).click();
+		await page.getByRole('textbox', { name: 'ID *' }).fill('CBSRC038B');
+		await page.getByLabel('Source Name').fill(FILTER_PAYLOAD);
+		await saveFormulizeForm(page);
+		await page.getByRole('link', { name: 'Save and Close' }).click();
+		await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
 	});
 
 	test('build the target form with a linked checkbox onto the source', async ({ page }) => {
@@ -94,6 +113,57 @@ test.describe.serial('T3.6 - linked checkbox option labels are escaped in the fo
 		await expect(page.locator('[onerror]')).toHaveCount(0);
 		expect(await page.evaluate(() => window.__xssCbLink038)).toBeUndefined();
 	});
+
+	// The same labels are the values a list's filters offer for the column, which buildFilter() draws as <option>s or
+	// checkboxes, and the Search box draws with a script. Each is a sink of its own.
+	for (const { searchType, read } of [
+		{ searchType: 'Dropdown list - select value', read: page => page.locator('select[name="search_cblink_choice"] option') },
+		{ searchType: 'Search box - type or pick values', read: async page => {
+			await page.locator('input[name="search_cblink_choice"]').click();
+			return page.locator('.formulize-searchbox-panel:popover-open .fz-choice');
+		} },
+	]) {
+		test(`the list's ${searchType} filter shows the linked labels with the payloads neutralised`, async ({ page }) => {
+			page.on('dialog', async dialog => {
+				throw new Error(`XSS executed - unexpected dialog fired: ${dialog.message()}`);
+			});
+			await login(page, 'admin');
+
+			// the element's own search is what a column added with Change columns uses
+			const eleId = dbQuery(`SELECT ele_id FROM ${dbPrefix()}_formulize WHERE ele_handle = 'cblink_choice'`)[0][0];
+			const elementUrl = `/modules/formulize/admin/ui.php?page=element&ele_id=${eleId}&fid=${targetFid}&aid=0`;
+			const searchTypeSetting = page.locator('select[name="elements-ele_searchtype"]');
+			await page.goto(elementUrl);
+			await waitForAdminPageReady(page);
+			await searchTypeSetting.selectOption({ label: searchType });
+			await saveAdminForm(page);
+			await page.goto(elementUrl);
+			await waitForAdminPageReady(page);
+			await expect(searchTypeSetting.locator('option:checked')).toHaveText(searchType);
+
+			await page.goto(`/modules/formulize/index.php?fid=${targetFid}`);
+			await expect(page.getByRole('button', { name: 'Change columns' })).toBeVisible();
+			const popupPromise = page.context().waitForEvent('page');
+			await page.getByRole('button', { name: 'Change columns' }).click();
+			const popup = await popupPromise;
+			await openAllColumnSections(popup);
+			await popup.getByRole('checkbox', { name: 'Linked Choice', exact: true }).check();
+			await applyColumnChanges(popup);
+			await waitForWorkingMessage(page);
+
+			// POSITIVE first: both labels are offered, as text
+			const offered = await read(page);
+			await expect(offered.filter({ hasText: FILTER_MARKER })).toHaveCount(1);
+			await expect(offered.filter({ hasText: LINK_MARKER })).toHaveCount(1);
+
+			// SAFETY: neither payload became a live element, no on* handler survived, and nothing ran
+			await expect(page.locator(`img.${FILTER_PROBE}`)).toHaveCount(0);
+			await expect(page.locator(`img.${LINK_PROBE}`)).toHaveCount(0);
+			await expect(page.locator('[onerror]')).toHaveCount(0);
+			expect(await page.evaluate(() => window.__xssCbFilter038)).toBeUndefined();
+			expect(await page.evaluate(() => window.__xssCbLink038)).toBeUndefined();
+		});
+	}
 
 	// afterAll rather than a trailing test(): test.describe.serial skips everything after a failure, so a
 	// trailing cleanup test would leave the throwaway forms behind. See 034 for the full rationale.

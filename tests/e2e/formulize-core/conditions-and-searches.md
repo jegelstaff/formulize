@@ -48,11 +48,13 @@ A row says what should be on the page. This table says where to look for it, and
 | G | Main Vault | `.formulize-subform td` | Artifact | The names in those cells are exactly the row's names |
 | J | The Catalogue list, as auditor1, the one member of the Auditors, which the row's filter is on, instead of curator1 | `[id^="celladdress_"]` | Artifact | The names in those cells are exactly the row's names |
 | K | Main Vault, as a webmaster, instead of curator1, then Add in its Artifacts subform | What the new artifact holds | Artifact | The new artifact holds what the row's Saved says |
+| P | The Catalogue list, then the Search box of its Donor column | `.formulize-searchbox-panel:popover-open .fz-choice` | Donor, or for a row with a Shows column, the table named for what it shows, ie: Province shown | The values offered, apart from Show all and Show Blanks, are exactly the row's names |
 
 - **Names** is one of the tables at the end of this file, by its first column. Only text that is exactly one of those names counts, so other text in the same cells can't be mistaken for a result. By list means Artifact on the Catalogue and Artifacts lists, and Donor on the Donor artifacts list. Out of means a row's Everything is only those, ie: a row in section 5 is out of the artifacts it opens.
 - **The match is exact.** An entry that shouldn't be there fails a row as much as one that's missing.
 - **`Everything`** means every name in the set, `Everything except` means the rest of the set, and anything else is the list of names. A name that isn't in the set stops the spec, so a typo here can't pass.
-- **`Nothing` has to be proved.** A query that fails shows no entries, the same as one that finds none. So rows that find nothing in sections 1, 3 and 4 are loaded again with their conditions in the "one or more" set, alongside one that must match, and that entry must appear.
+- **Section 13 counts every value offered.** A value that isn't one of the names is a disagreement too, since what a list's filters mustn't offer is any value at all, ie: the entry ids stored in Artifacts.
+- **`Nothing` has to be proved.** A query that fails shows no entries, the same as one that finds none. So rows that find nothing in sections 1, 3, 4 and 13 are loaded again with their conditions in the "one or more" set, alongside one that must match, and that entry must appear.
 
 ## What the operators mean
 
@@ -735,6 +737,23 @@ Set with `sourceEntryFilter` on `locations_subform_artifacts`, with its Add and 
 | K4 | Era = BCE |  | Era: BCE | a condition that isn't on a date is written as it was |
 | K5 | Era = BCE; Date of acquisition = 2002 |  | Era: BCE; Date of acquisition: (blank) | only what can be saved is written |
 
+## 13. The values a list's Search box offers
+
+A list's filters offer the values the element would offer the person in a form. For a linked element, that's the source entries its conditions find. There's no entry in a list, so a `{ }` that names an element, and `{ID}`, are left out, and `{USER}`, `{TODAY}` and `{BLANK}` apply, as they do in the form. The Search box, the dropdown and the checkboxes all get their values the same way, so these rows read the Search box.
+
+Set with `sourceEntryFilter` on `artifacts_donor`, then the Search box of the Donor column in the Catalogue list is opened, as curator1. curator1 entered every donor except L. Warner Foundation, which the webmaster entered in 021. A row with a Shows column also sets the element's `sourceElement`, so the Donor list shows that field of each donor instead of the name. Two donors can show the same text, and a list's filters offer both, with the donor's entry id after the text, where the form offers only one. Saved entries can point at either one.
+
+| Row | Shows | All of | Any of | Should show | What it tests |
+|---|---|---|---|---|---|
+| P1 |  |  |  | Everything | no conditions |
+| P2 |  | Type of donor = Organization |  | Freeform Solutions, L. Warner Foundation, Hart & Sons Antiques | a condition on the source entries |
+| P3 |  | creation_uid = {USER} |  | Everything except L. Warner Foundation | {USER}, the donors curator1 entered |
+| P4 |  | creation_uid != {USER} |  | L. Warner Foundation | the opposite |
+| P5 |  | First name = {BLANK} |  | Freeform Solutions, L. Warner Foundation, Hart & Sons Antiques | {BLANK} |
+| P6 |  | Name = Nobody by that name |  | Nothing | no source entries, so no values, rather than what Artifacts stores |
+| P7 | Province |  |  | Quebec (1), Quebec (2), Ontario, Prince Edward Island | two donors in the same province, told apart by their entry ids, and donors with no province show nothing |
+| P8 | Province | First name != Emilie |  | Quebec, Ontario, Prince Edward Island | a province only one donor is left in shows no entry id |
+
 ## The museum's data
 
 | Artifact | Year | Era | Acquired | Donated | Donor | Collections | Latitude | Materials | On loan | Provenance | Appraiser email | Storage | Handling | Catalogued by |
@@ -766,6 +785,16 @@ A blank cell is NULL.
 | L. Warner Foundation | Organization |  |  | empty string | No |  |
 | Aoife O'Brien | Individual | Aoife | O'Brien | empty string |  |  |
 | Hart & Sons Antiques | Organization |  |  | empty string |  | Prince Edward Island |
+
+What a Donor list offers in a list's filters when it shows each donor's province, in section 13. François-Marie Arouet is donor 1 and Emilie Du Châtelet is donor 2, both in Quebec.
+
+| Province shown |
+|---|
+| Quebec (1) |
+| Quebec (2) |
+| Quebec |
+| Ontario |
+| Prince Edward Island |
 
 | Collection | Suitable audience |
 |---|---|
@@ -887,6 +916,12 @@ The first complete run with coverage, 42561306189, ran 598 of the 668 changed li
 - **A value taken out on screen in a saved entry.** In a new entry, a value taken out on screen has no value, which is what master does (N19, N20, N25, N31 and N32). No row empties a field on screen in a saved entry, where the `{ }` could mean the blank on screen or the value that's saved. This branch changed one line that only that runs: `=` compared with the value that's saved, in `_nullAwareComparisonWithReference()` in `functions.php`, which the coverage run of 42561306189 shows no test reaching. To close: rows in section 2 with an On screen cell, which open a saved Loan Request and empty a date, checkboxes and linked checkboxes on screen, and expect what master does.
 
 - **Forms that link to themselves.** A form with a list of its own entries isn't in the museum. It was, as Part of a set with, a list on Artifacts of other artifacts, and section 4 had rows for it. But that link from Artifacts to itself was in the relationship the Catalogue list uses, and it broke every fundamental filter on that list: F1 to F11 and F23 to F26, in run 42398600775, on master, which has the same code. `formulize_parseFilter()` gives each form in a fundamental filter its alias in the query: `main` for the list's own form, then `f` and a number for each form linked to it. Artifacts was in both places, so `f2` replaced `main`, and the query that counts the entries failed with "Unknown column 'f2.artifacts_catalogued_by'". Forms that link to themselves are the subject of `self-referential-forms-plan.md`, at the root of the repository, which has this. To close: once that work is done, a form of its own with a list of its own entries, and rows like the ones that were here, ie: `Era = {artifacts_era}` and `Donor = {artifacts_donor}`. The list shouldn't offer the entry that's open, and should always offer the one that's selected.
+
+- **What a list's filters offer, beyond what MCP can set.** Section 13 sets a linked element's conditions and source with MCP, which has no setting for these, and no row covers them:
+  - **A limit to the values picked in another element.** A linked or user list can be limited to what's picked in an element of another form, in the entry that its own conditions find. A list's filters apply the same limit, with conditions that read the entry left out, through `formulize_optionsLimitByElementValues()` in `functions.php`. The form uses that function too. To close: set the limit on Donor in the admin UI, the way section 8 types conditions, to the Donor contact of the Loan Request whose Borrower is City Museum, then a P row that expects François-Marie Arouet alone, and take it off again.
+  - **A user list's groups.** A list's filters offer the users the form would offer, through `formulize_userListNames()`, including "must be a member of all the groups". To close: rows on the Search box of the Catalogue list's Catalogued by column, with its groups set in the admin UI and put back.
+  - **A snapshot list,** which saves the text of a value rather than the entry id. Its filters offer the text, so a value picked finds what was saved. To close: a linked element that saves snapshots, and entries saved in it, which the museum has neither of. It would have to be a form of the spec's own.
+  - **What's typed in the Search box, with more than 50 values.** With 50 or fewer, the Search box narrows the values the page brought, so section 13 never asks `formulize_xhr_responder.php` for matches. The values it would get come from the same function, but nothing runs that request. To close: a column with more than 50 values, in a form of the spec's own.
 
 ### Problems found
 

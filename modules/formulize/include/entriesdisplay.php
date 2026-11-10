@@ -2670,6 +2670,10 @@ function formulize_buildQSSearchBox($handle, $search_text, $fid=0, $submitScript
 
 	$uid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
 	$optionsUrl = XOOPS_URL.'/modules/formulize/formulize_xhr_responder.php?uid='.$uid.'&op=get_quicksearch_options&handle='.urlencode($handle).'&fid='.intval($fid);
+	// the values in this page's address that the column's conditions use, so the values fetched follow the same conditions
+	if($addressValues = formulize_addressValuesForFilterOptions($elementObject)) {
+		$optionsUrl .= '&'.http_build_query(array('address' => $addressValues));
+	}
 	$headings = getHeaders(array($handle));
 	$columnName = trans(strip_tags((string) ($headings[$handle] ?? $handle)));
 	// the first values the column has, so the list is there as soon as the box is opened; only typing asks for others

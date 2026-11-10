@@ -900,30 +900,15 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			$extra_clause = prepareLinkedElementExtraClause($pgroupsfilter, $parentFormFrom, $sourceEntrySafetyNetStart);
 
 			// if we're supposed to limit based on the values in an arbitrary other element, add those to the clause too
+			// list filters work out the same limit, so it is worked out in one place. See formulize_optionsLimitByElementValues()
 			$directLimit = '';
-			$dbValue = '';
-			if(isset($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT]) AND is_numeric($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT])) {
-				if($optionsLimitByElement_ElementObject = $this->get($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT])) {
-					$dbValue = '';
-					if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$optionsLimitByElement_ElementObject->getVar('ele_handle')])) {
-						$dbValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$optionsLimitByElement_ElementObject->getVar('ele_handle')];
-					} else {
-						list($optionsLimitFilter, $optionsLimitFilter_oom, $optionsLimitFilter_parentFormFrom) = buildConditionsFilterSQL($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $optionsLimitByElement_ElementObject->getVar('id_form'), $entry_id, $owner, $formObject, "olf");
-						catalogDynamicFilterConditionElements($markupName, $ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $formObject, $screen);
-						$optionsLimitFilterFormObject = $form_handler->get($optionsLimitByElement_ElementObject->getVar('id_form'));
-						$sql = "SELECT ".$optionsLimitByElement_ElementObject->getVar('ele_handle')." FROM ".$xoopsDB->prefix('formulize_'.$optionsLimitFilterFormObject->getVar('form_handle'))." as olf $optionsLimitFilter_parentFormFrom WHERE 1 $optionsLimitFilter $optionsLimitFilter_oom";
-						if($res = $xoopsDB->query($sql)) {
-							if($xoopsDB->getRowsNum($res)==1) {
-								$row = $xoopsDB->fetchRow($res);
-								$dbValue = $row[0];
-							}
-						}
-					}
-					$directLimit = convertEntryIdsFromDBToArray($dbValue);
-				}
+			if(isset($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT]) AND is_numeric($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT])
+				AND $optionsLimitByElement_ElementObject = $this->get($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT])
+				AND !isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$optionsLimitByElement_ElementObject->getVar('ele_handle')])) {
+				catalogDynamicFilterConditionElements($markupName, $ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $formObject, $screen);
 			}
-			if($directLimit) {
-				$directLimit = ' AND t1.entry_id IN ('.implode(',',$directLimit).') ';
+			if($limitEntryIds = formulize_optionsLimitByElementValues($ele_value, $entry_id, $owner, $formObject)) {
+				$directLimit = ' AND t1.entry_id IN ('.implode(',', $limitEntryIds).') ';
 			}
 
 			$selfReferenceExclusion = generateSelfReferenceExclusionSQL($entry_id, $id_form, $sourceFid, $ele_value, 't1');
@@ -1128,47 +1113,17 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 								$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 							}
 						}
-						$pgroups = array();
-						$declaredUsersGroups = $groups;
-						if($ele_value[ELE_VALUE_SELECT_LINK_LIMITGROUPS]) {
-							$scopegroups = explode(",",$ele_value[ELE_VALUE_SELECT_LINK_LIMITGROUPS]);
-							if(!in_array("all", $scopegroups)) {
-								$groups = $scopegroups;
-							} else { // use all
-								if(!$ele_value[ELE_VALUE_SELECT_LINK_USERSGROUPS]) { // really use all (otherwise, we're just going with all user's groups, so existing value of $groups will be okay
-									unset($groups);
-									global $xoopsDB;
-									$allgroupsq = q("SELECT groupid FROM " . $xoopsDB->prefix("groups")); //  . " WHERE groupid != " . XOOPS_GROUP_USERS); // removed exclusion of registered users group March 18 2009, since it doesn't make sense in this situation.  All groups should mean everyone, period.
-									foreach($allgroupsq as $thisgid) {
-										$groups[] = $thisgid['groupid'];
-									}
-								}
-							}
-						}
+						// list filters offer the same users, so they are worked out in one place. See formulize_userListNames() and formulize_optionsLimitByElementValues()
+						$namelist = formulize_userListNames($ele_value, $nametype, $groups);
 
-						$namelist = gatherNames($groups, $nametype, $ele_value[ELE_VALUE_SELECT_LINK_ALLGROUPS], $ele_value[ELE_VALUE_SELECT_LINK_FILTERS], $ele_value[ELE_VALUE_SELECT_LINK_USERSGROUPS], $declaredUsersGroups);
-
-						$directLimitUserIds = false;
-						if(isset($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT]) AND is_numeric($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT])) {
-							if($optionsLimitByElement_ElementObject = $this->get($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT])) {
-								list($optionsLimitFilter, $optionsLimitFilter_oom, $optionsLimitFilter_parentFormFrom) = buildConditionsFilterSQL($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $optionsLimitByElement_ElementObject->getVar('id_form'), $entry_id, $owner, $formObject, "olf");
-								catalogDynamicFilterConditionElements($markupName, $ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $formObject, $screen);
-								$optionsLimitFilterFormObject = $form_handler->get($optionsLimitByElement_ElementObject->getVar('id_form'));
-								$sql = "SELECT ".$optionsLimitByElement_ElementObject->getVar('ele_handle')." FROM ".$xoopsDB->prefix('formulize_'.$optionsLimitFilterFormObject->getVar('form_handle'))." as olf $optionsLimitFilter_parentFormFrom WHERE 1 $optionsLimitFilter $optionsLimitFilter_oom";
-								if($res = $xoopsDB->query($sql)) {
-									if($xoopsDB->getRowsNum($res)==1) {
-										$row = $xoopsDB->fetchRow($res);
-										$elementObjectEleValue = $optionsLimitByElement_ElementObject->getVar('ele_value');
-										if(is_array($elementObjectEleValue[ELE_VALUE_SELECT_OPTIONS]) AND strstr(implode('',array_keys($elementObjectEleValue[ELE_VALUE_SELECT_OPTIONS])), "NAMES}")) {
-											$directLimitUserIds = explode("*=+*:",trim($row[0], "*=+*:"));
-										}
-									}
-								}
-							}
+						if(isset($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT]) AND is_numeric($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT])
+							AND $this->get($ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENT])) {
+							catalogDynamicFilterConditionElements($markupName, $ele_value[ELE_VALUE_SELECT_LINK_LIMITBYELEMENTFILTER], $formObject, $screen);
 						}
+						$directLimitUserIds = formulize_optionsLimitByElementValues($ele_value, $entry_id, $owner, $formObject, true);
 
 						foreach($namelist as $auid=>$aname) {
-							if($directLimitUserIds AND !in_array($auid, $directLimitUserIds)) { continue; }
+							if($directLimitUserIds !== false AND !in_array(intval($auid), $directLimitUserIds)) { continue; }
 							$options[$auid] = $aname;
 						}
 					} elseif($i['key'] === "{SELECTEDNAMES}") { // loadValue in formDisplay will create a second option with this key that contains an array of the selected values
