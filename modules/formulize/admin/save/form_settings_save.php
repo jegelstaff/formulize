@@ -166,6 +166,16 @@ if (empty($sanitizedSingle)) {
 }
 $processedValues['forms']['single'] = $sanitizedSingle;
 
+// the name of the table a new tableform points to can be typed with or without the prefix, and is stored with it
+if(isset($processedValues['forms']['tableform'])) {
+	$processedValues['forms']['tableform'] = $form_handler->tableFormNameWithPrefix($processedValues['forms']['tableform']);
+	// check the table before the form is made, so a name that's wrong doesn't leave a form behind that points at nothing
+	if(!$form_handler->getTableFormColumns($processedValues['forms']['tableform'])) {
+		print sprintf(_AM_SETTINGS_FORM_DATABASE_NOT_FOUND, $processedValues['forms']['tableform']);
+		return;
+	}
+}
+
 $formObject = formulizeHandler::upsertFormSchemaAndResources($processedValues['forms'], $groupsCanEdit, $applicationIds, $groupCategories);
 $fid = $formObject->getVar('fid');
 
@@ -215,14 +225,14 @@ $formulize_altered_form_handle = $processedValues['forms']['form_handle'] != $fo
 $singularPluralChanged = ($processedValues['forms']['plural'] != $formObject->getVar('plural') OR $processedValues['forms']['singular'] != $formObject->getVar('singular')) ? true : false;
 
 // if we're making a new table form, then synch the "elements" for the form with the target table
-if(isset($_POST['forms-tableform'])) {
-  if(!$form_handler->createTableFormElements($_POST['forms-tableform'], $fid)) {
-    print "Error: could not create all the placeholder elements for the tableform";
+if(isset($processedValues['forms']['tableform'])) {
+  if(!$form_handler->createTableFormElements($processedValues['forms']['tableform'], $fid)) {
+    print _AM_SETTINGS_FORM_DATABASE_ELEMENTS_FAILED;
   }
 }
 
 // create the PI element if requested
-if($_POST['pi_new_yes_no'] == "yes" AND isset($_POST['pi_new_caption']) AND $_POST['pi_new_caption'] != "") {
+if(isset($_POST['pi_new_yes_no']) AND $_POST['pi_new_yes_no'] == "yes" AND isset($_POST['pi_new_caption']) AND $_POST['pi_new_caption'] != "") {
 	$element_handler = xoops_getmodulehandler('textElement','formulize');
 	$elementObjectProperties = array(
 		'fid' => $fid,

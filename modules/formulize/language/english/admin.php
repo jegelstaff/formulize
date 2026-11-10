@@ -204,7 +204,9 @@ define("_AM_SETTINGS_FORM_HANDLE","Form handle");
 define("_AM_EOG_Repair","Repair entry ownership table");
 define("_AM_SETTINGS_FORM_HANDLE_EXPLAIN","Optional. The name will you use to refer to this form in programming code and in the database.");
 define("_AM_SETTINGS_FORM_DATABASE","Which database table should this 'form' point to?");
-define("_AM_SETTINGS_FORM_DATABASE_EXPLAIN","Type the exact name, including the prefix, ie: mysite_groups");
+define("_AM_SETTINGS_FORM_DATABASE_EXPLAIN","Type the name of the table, such as groups. You don't need to include the prefix, but you can.");
+define("_AM_SETTINGS_FORM_DATABASE_NOT_FOUND","There's no table called %s in the database, or it has no columns. Check the name and try again."); // shown in an alert, %s is the table name with the prefix
+define("_AM_SETTINGS_FORM_DATABASE_ELEMENTS_FAILED","The form was made, but some of the elements for the table's columns could not be created.");
 define("_AM_SETTINGS_FORM_ENTRIES_ALLOWED","How many entries are allowed in this form?");
 define("_AM_SETTINGS_FORM_ENTRIES_ALLOWED_PERGROUP_DESC","You can set different entry rules for different groups. The Registered Users setting is the default for all users. Settings for specific groups override the default. When a user belongs to multiple groups with overrides, the least restrictive setting applies.");
 define("_AM_SETTINGS_FORM_ENTRIES_ONEPERGROUP","One entry per <b>group</b>");

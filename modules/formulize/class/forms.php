@@ -1834,14 +1834,51 @@ class formulizeFormsHandler {
 		return $result;
 	}
 
+	/**
+	 * Gives the full name of a database table that a tableform points to. People can type the name with or without
+	 * the site's table prefix, and tableforms store it with the prefix.
+	 * @param string $tableName The table name as typed, such as 'groups' or 'mysite_groups'
+	 * @return string The table name with the prefix, such as 'mysite_groups', or an empty string if no name was given
+	 */
+	function tableFormNameWithPrefix($tableName) {
+		$tableName = trim($tableName);
+		if($tableName === '') {
+			return '';
+		}
+		$prefix = $this->db->prefix().'_';
+		return strpos($tableName, $prefix) === 0 ? $tableName : $prefix.$tableName;
+	}
+
+	/**
+	 * Gets the names of the columns in a database table that a tableform points to.
+	 * @param string $tableName The full name of the table, with the prefix
+	 * @return array|false The column names in order, or false if the table doesn't exist or has no columns
+	 */
+	function getTableFormColumns($tableName) {
+		if(trim($tableName) === '') {
+			return false;
+		}
+		$quotedTableName = "`".str_replace("`", "``", $tableName)."`";
+		if(!$result = $this->db->query("SHOW COLUMNS FROM $quotedTableName")) {
+			return false;
+		}
+		$columns = array();
+		while($row = $this->db->fetchRow($result)) {
+			$columns[] = $row[0];
+		}
+		return $columns ? $columns : false;
+	}
+
 	function createTableFormElements($targetTableName, $fid) {
 
-		$result = $this->db->query("SHOW COLUMNS FROM " . formulize_db_escape($targetTableName));
+		if(!$columns = $this->getTableFormColumns($targetTableName)) {
+			return false;
+		}
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$element_order = 0;
-		while($row = $this->db->fetchRow($result)) {
+		foreach($columns as $column) {
 			$element =& $element_handler->create();
-			$element->setVar('ele_caption', str_replace("_", " ", $row[0]));
+			$element->setVar('ele_caption', str_replace("_", " ", $column));
 			$element->setVar('ele_desc', "");
 			$element->setVar('ele_colhead', "");
 			$element->setVar('ele_required', 0);

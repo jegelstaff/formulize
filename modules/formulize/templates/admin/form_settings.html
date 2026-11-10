@@ -38,7 +38,7 @@
 
 		<{if $content.istableform == false AND $content.fid != 'new'}>
 			<{include file="db:admin/primary_identifier_selection.html" content=$content}>
-		<{elseif $content.fid == 'new'}>
+		<{elseif $content.istableform == false AND $content.fid == 'new'}>
 			<div class="form-item">
 				<fieldset>
 					<legend><label class="question"><{$smarty.const._AM_SETTINGS_FORM_PI_NEW}></label></legend>
