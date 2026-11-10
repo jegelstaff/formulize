@@ -1096,7 +1096,7 @@ class formulizeHandler {
 	 *
 	 * Each column definition is an associative array:
 	 *   - element (required): an ele_id, an element handle, or a metadata field name
-	 *   - search_type: 'search_box' | 'simple_text_box' | 'dropdown' | 'dropdown_exclude' | 'date_range' | 'month_current_year' | 'month_last_12_months'.
+	 *   - search_type: 'search_box_with_checklist' | 'search_box' | 'dropdown' | 'dropdown_exclude' | 'date_range' | 'month_current_year' | 'month_last_12_months'.
 	 *     Left out, the column gets the search type its element is set to use (see formulize_defaultSearchTypeForColumn())
 	 *   - sort_direction: 'ASC' | 'DESC' | 'off' (the default - the list does not start out sorted by this column)
 	 *   - default_search_value: a value to pre-fill this column's Quicksearch with, so the list starts out filtered
@@ -1154,8 +1154,8 @@ class formulizeHandler {
 	 */
 	public static function listScreenSearchTypes() {
 		return array(
-			'search_box' => 'MultiFilter',
-			'simple_text_box' => 'Box',
+			'search_box_with_checklist' => 'MultiFilter',
+			'search_box' => 'Box',
 			'dropdown' => 'Filter',
 			'dropdown_exclude' => 'NegativeFilter',
 			'date_range' => 'DateRange',

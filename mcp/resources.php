@@ -1852,7 +1852,7 @@ That makes the template groups the right place to set and change permissions tha
 			// id-to-handle translation the object does in its accessors has to be repeated
 			$reportedColumn = [
 				'element' => formulizeHandler::resolveElementHandle($column[0]),
-				'search_type' => $searchTypes[$column[3] ?? 'Box'] ?? 'simple_text_box'
+				'search_type' => $searchTypes[$column[3] ?? 'Box'] ?? 'search_box'
 			];
 			// 1 is a legacy way of saying ascending, from before the direction was stored as a word.
 			// Always reported, including 'off', so the shape matches what the write side accepts.

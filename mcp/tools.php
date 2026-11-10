@@ -2999,7 +2999,7 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 						'search_type' => [
 							'type' => 'string',
 							'enum' => array_keys(formulizeHandler::listScreenSearchTypes()),
-							'description' => "Optional. The kind of Quicksearch control at the top of this column. Only has an effect when show_search_boxes is on. Leave it out to use the one the element is set to use (its list_search_interface, see get_element_details), which is what you want unless the user asks for something else. Valid options are: 'search_box' = a box to type a search term into, which also shows the values that match what is typed so any number of them can be picked; 'simple_text_box' = a plain box to type a search term into; 'dropdown' = pick one of the values present in the entries; 'dropdown_exclude' = pick a value to leave out; 'date_range' = a from/to pair of dates; 'month_current_year' = pick a whole month from January to December of the current year; 'month_last_12_months' = pick a whole month from the last twelve, starting with the current one. The last three only work on a column that holds dates."
+							'description' => "Optional. The kind of Quicksearch control at the top of this column. Only has an effect when show_search_boxes is on. Leave it out to use the one the element is set to use (its list_search_interface, see get_element_details), which is what you want unless the user asks for something else. Valid options: 'search_box_with_checklist' = a box to type a search term into, with a checklist of the values that match what is typed, so any number of them can be picked; 'search_box' = a plain box to type a search term into; 'dropdown' = pick one of the values present in the entries; 'dropdown_exclude' = pick a value to leave out; 'date_range' = a from/to pair of dates; 'month_current_year' = pick a whole month from January to December of the current year; 'month_last_12_months' = pick a whole month from the last twelve, starting with the current one. The last three only work on a column that holds dates."
 						],
 						'sort_direction' => [
 							'type' => 'string',
@@ -7285,7 +7285,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 			$holdsDates = (($elementForCheck AND $elementForCheck->holdsDates())
 				OR (is_string($dataType) AND formulizeElement::isDateDataType($dataType)));
 			if(!$holdsDates) {
-				throw new FormulizeMCPException("'$listSearchInterface' only works for elements that hold dates, and this one does not. Use 'search_box', 'simple_text_box', 'dropdown' or 'dropdown_exclude'.", 'invalid_data');
+				throw new FormulizeMCPException("'$listSearchInterface' only works for elements that hold dates, and this one does not. Use 'search_box_with_checklist', 'search_box', 'dropdown' or 'dropdown_exclude'.", 'invalid_data');
 			}
 		}
 		return $storedValue;
@@ -7322,7 +7322,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 			'list_search_interface' => [
 				'type' => 'string',
 				'enum' => array_keys(formulizeHandler::listScreenSearchTypes()),
-				'description' => "Optional. The Quicksearch control at the top of this REPLACEWITHSINGLUARCATEGORYNAME's column whenever it appears in a list, unless the list screen chooses a different one for that column. Leave it out to keep the default, which is 'date_range' for elements that hold dates, 'simple_text_box' for numbers that people type in (number boxes, sliders and the like), and 'search_box' for everything else, including elements with options to choose from, even if they store numbers. Options: 'search_box' = a box to type a search term into, which also shows the values that match what is typed so any number of them can be picked; 'simple_text_box' = a plain box to type a search term into; 'dropdown' = pick one of the values present in the entries; 'dropdown_exclude' = pick a value to leave out; 'date_range', 'month_current_year' and 'month_last_12_months' = for elements that hold dates only."
+				'description' => "Optional. The Quicksearch control at the top of this REPLACEWITHSINGLUARCATEGORYNAME's column whenever it appears in a list, unless the list screen chooses a different one for that column. Leave it out to keep the default, which is 'date_range' for elements that hold dates, 'search_box' for numbers that people type in (number boxes, sliders and the like), and 'search_box_with_checklist' for everything else, including elements with options to choose from, even if they store numbers. Options: 'search_box_with_checklist' = a box to type a search term into, with a checklist of the values that match what is typed, so any number of them can be picked; 'search_box' = a plain box to type a search term into; 'dropdown' = pick one of the values present in the entries; 'dropdown_exclude' = pick a value to leave out; 'date_range', 'month_current_year' and 'month_last_12_months' = for elements that hold dates only."
 			]
 		];
 
