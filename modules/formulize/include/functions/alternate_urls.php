@@ -333,8 +333,10 @@ function formulize_handleHtaccessRewriteRule() {
 	if(isset($_GET['formulizeRewriteRuleAddress']) AND $_GET['formulizeRewriteRuleAddress']) {
 		global $formulizeCanonicalURI;
 		global $formulizeRemoveEntryIdentifier;
+		global $formulizeAlternateURLRefusedEntry;
 		$formulizeCanonicalURI = '';
 		$formulizeRemoveEntryIdentifier = false;
+		$formulizeAlternateURLRefusedEntry = 0;
 		$trimedFormulizeRewriteRuleAddress = trim($_GET['formulizeRewriteRuleAddress'], '/');
 		$addressData = explode('/', $trimedFormulizeRewriteRuleAddress);
 		$address = $addressData[0];
@@ -368,6 +370,8 @@ function formulize_handleHtaccessRewriteRule() {
 						getCurrentURL($address."/".$entryIdentifier."/");
 					}
 				} else {
+					// someone not logged in may be asked to log in to see this entry. See formulize_anonMustLogInForEntry()
+					$formulizeAlternateURLRefusedEntry = $ve;
 					// when we get to JS later, we'll need to alter the URL to remove the invalid identifier
 					$formulizeRemoveEntryIdentifier = "window.history.replaceState(null, '', ".json_encode(XOOPS_URL."/$address/").");";
 					// seed the current URL with the correct address

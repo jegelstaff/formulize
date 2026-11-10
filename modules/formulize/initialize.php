@@ -48,7 +48,7 @@ $GLOBALS['formulize_displayingMultipageScreen'] = false; // later, will be set t
 global $xoopsDB, $xoopsUser, $xoopsModule, $xoopsTpl, $renderedFormulizeScreen, $formulizeCanonicalURI;
 
 if(is_object($xoopsTpl) AND !$xoopsUser) {
-	$xoopsTpl->assign('formulize_redirect', '/user.php?xoops_redirect='.urlencode(getCurrentURL()));
+	$xoopsTpl->assign('formulize_redirect', '/user.php?xoops_redirect='.urlencode(formulize_requestedURL()));
 }
 
 $thisRendering = microtime(true); // setup a flag that is common to this instance of rendering a formulize page
@@ -118,18 +118,30 @@ $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $view_globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, $mid);
 $view_groupscope = $gperm_handler->checkRight("view_groupscope", $fid, $groups, $mid);
 
-if($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) {
+// gather $_GET['ve'] (viewentry), or prefer a global value that has been set
+if(isset($formulize_entry_id) AND is_numeric($formulize_entry_id)) {
+  $entry = $formulize_entry_id;
+} elseif(isset($_GET['ve']) AND is_numeric($_GET['ve'])) {
+    $entry = $_GET['ve'];
+} else {
+    $entry = "";
+}
+
+// no permission for the form, or someone not logged in asking for an entry they may only see once they have logged in
+if(($fid AND !$view_form = $gperm_handler->checkRight("view_form", $fid, $groups, $mid)) OR formulize_anonMustLogInForEntry(($sid ? $thisscreen1 : null), $entry)) {
+    // after logging in, go back to the address they asked for, including any entry in a clean URL, which $currentURL has lost if they may not see that entry now
+    $requestedURL = formulize_requestedURL();
     if(formulize_isEmbeddedRequest()) {
         // Inside somebody else's iframe, so say so here rather than redirecting to the login page.
         // That redirect would land on a page only this site may frame, and the browser would blank
         // the frame with nothing anywhere explaining why - which looks like the embedding is broken
         // rather than like a permission the screen does not have.
-        print formulize_embeddedNoPermissionHtml($currentURL);
+        print formulize_embeddedNoPermissionHtml($requestedURL);
         return;
     }
     if(strstr($currentURL, "/modules/formulize/") OR $formulizeCanonicalURI) { // if it's a formulize page reload to login screen (check URL and check if there was a valid Formulize clean URL)
         $nopermission = $xoopsUser ? "op=nopermission&" : ""; // no permission flag will bump the user to the All Applications page since they don't have perm for this page. If no user, they will be prompted for login.
-        redirect_header(XOOPS_URL . "/user.php?".$nopermission."xoops_redirect=".urlencode($currentURL), 3, _formulize_NO_PERMISSION, false);
+        redirect_header(XOOPS_URL . "/user.php?".$nopermission."xoops_redirect=".urlencode($requestedURL), 3, _formulize_NO_PERMISSION, false);
     } else { // if formulize is just being included elsewhere, then simply show error and end script
         // A host system (ie: Drupal) can set formulizeHostSystemLoginUrl so we can offer its login page
         // to a visitor who is not logged in. We print a link rather than redirecting: the host has
@@ -158,15 +170,6 @@ if($sid) {
             $frid = $screen->getVar('frid'); // set these here just in case it's needed in readelements.php
         }
     }
-}
-
-// gather $_GET['ve'] (viewentry), or prefer a global value that has been set
-if(isset($formulize_entry_id) AND is_numeric($formulize_entry_id)) {
-  $entry = $formulize_entry_id;
-} elseif(isset($_GET['ve']) AND is_numeric($_GET['ve'])) {
-    $entry = $_GET['ve'];
-} else {
-    $entry = "";
 }
 
 $formulize_screen_loadview = (!isset($formulize_screen_loadview) OR !is_numeric($formulize_screen_loadview)) ? (isset($_GET['loadview']) ? intval($_GET['loadview']) : 0) : $formulize_screen_loadview;

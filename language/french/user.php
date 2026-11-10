@@ -186,4 +186,5 @@ define('_US_ALLOWVIEWEMAILOPENID','Autoriser les autres utilisateurs ? voir mon 
 
 ######################## Added in 1.2 ###################################
 define('_US_LOGIN_NAME', "Nom d’utilisateur");
+define('_US_NOPERMISSION_ASKADMIN', "Désolé, vous n'avez pas la permission de voir cette page. Veuillez contacter l'administrateur du site.");
 ?>

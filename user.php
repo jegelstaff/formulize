@@ -183,8 +183,7 @@ switch ($op) {
         if (!icms::$user){
             redirect_header('index.php', 5, _US_NOPERMISS);
         } elseif (!empty($_GET['xoops_redirect'])) {
-            redirect_header(ICMS_URL."/modules/formulize/application.php?id=all", 5,
-                "Sorry, you do not have permission to view this page. Please contact your site administrator.");
+            redirect_header(ICMS_URL."/modules/formulize/application.php?id=all", 5, _US_NOPERMISSION_ASKADMIN);
             exit();
         } else {
             header('Location: ' . ICMS_URL . '/userinfo.php?uid=' . intval(icms::$user->getVar('uid')));

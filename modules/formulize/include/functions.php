@@ -967,13 +967,59 @@ function formulize_sendScreenFrameAncestorsHeader($screen) {
 function getCurrentURL($rewriteruleAddress='') {
     static $url = "";
     if (!$url OR $rewriteruleAddress) {
-			$url_parts = parse_url(XOOPS_URL);
-			$url = $url_parts['scheme'] . "://" . $_SERVER['HTTP_HOST'];
-			$url = (isset($url_parts['port']) AND !strstr($_SERVER['HTTP_HOST'], ":")) ? $url . ":" . $url_parts['port'] : $url;
-			// strip html tags, convert special chars to htmlchar equivalents, then convert back ampersand htmlchars to regular ampersands, so the URL doesn't bust on certain servers
-			$url .= str_replace("&amp;", "&", htmlSpecialChars(strip_tags($rewriteruleAddress ? "/$rewriteruleAddress/" : $_SERVER['REQUEST_URI'])));
+			$url = formulize_siteURLForPath($rewriteruleAddress ? "/$rewriteruleAddress/" : $_SERVER['REQUEST_URI']);
 		}
     return $url;
+}
+
+/**
+ * The address the visitor asked for, exactly as they asked for it. getCurrentURL() can differ from this,
+ * because when a clean URL names an entry the visitor may not see, formulize_handleHtaccessRewriteRule()
+ * takes the entry out of it. Use this where the visitor has to come back to where they were going, such
+ * as after logging in, because once they have logged in they may be allowed to see that entry.
+ * @return string The full URL of the request
+ */
+function formulize_requestedURL() {
+	return formulize_siteURLForPath($_SERVER['REQUEST_URI']);
+}
+
+/**
+ * Whether a visitor who isn't logged in asked for an entry that is there, but that they may not see. They are
+ * sent to log in, rather than shown the screen without the entry, which looks like the entry is empty. Whoever
+ * gave them the link most likely meant them to log in and see it. A screen that takes a passcode is left alone,
+ * because there the passcode is what lets them see the entry, and it hasn't been asked for yet.
+ * @param object $screen The screen asked for
+ * @param mixed $entry The entry asked for in the query string, if any. An entry asked for in a clean URL is
+ * taken from $formulizeAlternateURLRefusedEntry, because formulize_handleHtaccessRewriteRule() leaves it out of
+ * the query string when it is refused.
+ * @return bool
+ */
+function formulize_anonMustLogInForEntry($screen, $entry) {
+	global $xoopsUser, $formulizeAlternateURLRefusedEntry;
+	if($xoopsUser OR !is_object($screen) OR $screen->getVar('anonNeedsPasscode')) {
+		return false;
+	}
+	$entry = $formulizeAlternateURLRefusedEntry ? $formulizeAlternateURLRefusedEntry : $entry;
+	if(!is_numeric($entry) OR intval($entry) <= 0) {
+		return false;
+	}
+	$entry = intval($entry);
+	$fid = $screen->getVar('fid');
+	$dataHandler = new formulizeDataHandler($fid);
+	return ($dataHandler->entryExists($entry) AND !security_check($fid, $entry));
+}
+
+/**
+ * Make a full URL on this site out of a path and query string
+ * @param string $path The path, starting with a slash, and any query string
+ * @return string The full URL
+ */
+function formulize_siteURLForPath($path) {
+	$url_parts = parse_url(XOOPS_URL);
+	$url = $url_parts['scheme'] . "://" . $_SERVER['HTTP_HOST'];
+	$url = (isset($url_parts['port']) AND !strstr($_SERVER['HTTP_HOST'], ":")) ? $url . ":" . $url_parts['port'] : $url;
+	// strip html tags, convert special chars to htmlchar equivalents, then convert back ampersand htmlchars to regular ampersands, so the URL doesn't bust on certain servers
+	return $url . str_replace("&amp;", "&", htmlSpecialChars(strip_tags($path)));
 }
 
 /**

@@ -66,6 +66,12 @@ builds a candidate list and tests membership:
 authority, because there it is *choosing which entry to display* on a single-entry form, not granting
 access to it — `security_check()` still runs on whatever it picks.
 
+## When an anonymous visitor asks for an entry they may not see
+
+If the entry exists, `initialize.php` sends them to log in, through the same branch as having no permission for the form, rather than drawing the screen with no entry in it. `formulize_anonMustLogInForEntry()` decides. It covers `?ve=` and clean URLs. For a clean URL it reads `$formulizeAlternateURLRefusedEntry`, because `formulize_handleHtaccessRewriteRule()` leaves a refused entry out of the query string. The login page is given `formulize_requestedURL()`, the address as it was asked for, because `getCurrentURL()` has lost the entry by then.
+
+A screen with `anonNeedsPasscode` is left alone, because the passcode is what grants the entry and it's checked later in `initialize.php`. Sending those visitors to log in would break passcode access.
+
 ## Rules when changing this
 
 - Ownership by uid 0 is never sufficient on its own. Any new anonymous path must ask

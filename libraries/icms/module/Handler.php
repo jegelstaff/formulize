@@ -407,6 +407,14 @@ class icms_module_Handler extends icms_core_ObjectHandler {
 			}
 		}
 		if (!self::checkModuleAccess($module, $inAdmin)) {
+			// Someone not logged in comes back to this page after logging in. Someone logged in who may not
+			// use an admin page is told so, and sent to their applications. Otherwise someone logged in goes
+			// to their account, because their applications may be the very module they may not use.
+			if (!icms::$user) {
+				redirect_header(ICMS_URL . "/user.php", 3, _NOPERM, TRUE);
+			} elseif ($inAdmin) {
+				redirect_header(ICMS_URL . "/user.php?op=nopermission", 3, _NOPERM, TRUE);
+			}
 			redirect_header(ICMS_URL . "/user.php", 3, _NOPERM, FALSE);
 		}
 		if ($module) $module->launch();
