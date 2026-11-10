@@ -142,7 +142,7 @@ test.describe('Columns on a list screen', () => {
 		await expect(help.locator('span')).toBeVisible();
 		await expect(help.locator('span')).toContainText('Search box - type or pick values:');
 		await expect(help.locator('span')).toContainText('Search box - type only:');
-		await expect(help.locator('span')).toContainText('Date Range:');
+		await expect(help.locator('span')).toContainText('Date range:');
 
 		const before = await rows.locator('select[name^="search-type"]').evaluateAll(selects => selects.map(select => select.value));
 
