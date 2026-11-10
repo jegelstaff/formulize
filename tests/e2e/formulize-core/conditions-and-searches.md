@@ -741,14 +741,14 @@ Set with `sourceEntryFilter` on `locations_subform_artifacts`, with its Add and 
 
 A list's filters offer the values the element would offer the person in a form. For a linked element, that's the source entries its conditions find. There's no entry in a list, so a `{ }` that names an element, and `{ID}`, are left out, and `{USER}`, `{TODAY}` and `{BLANK}` apply, as they do in the form. The Search box, the dropdown and the checkboxes all get their values the same way, so these rows read the Search box.
 
-Set with `sourceEntryFilter` on `artifacts_donor`, then the Search box of the Donor column in the Catalogue list is opened, as curator1. curator1 entered every donor except L. Warner Foundation, which the webmaster entered in 021. A row with a Shows column also sets the element's `sourceElement`, so the Donor list shows that field of each donor instead of the name. Two donors can show the same text, and a list's filters offer both, with the donor's entry id after the text, where the form offers only one. Saved entries can point at either one.
+Set with `sourceEntryFilter` on `artifacts_donor`, then the Search box of the Donor column in the Catalogue list is opened, as curator1. curator1 owns every donor except L. Warner Foundation, which the webmaster entered in 021, and Freeform Solutions, which 020 makes curator2's. A row with a Shows column also sets the element's `sourceElement`, so the Donor list shows that field of each donor instead of the name. Two donors can show the same text, and a list's filters offer both, with the donor's entry id after the text, where the form offers only one. Saved entries can point at either one.
 
 | Row | Shows | All of | Any of | Should show | What it tests |
 |---|---|---|---|---|---|
 | P1 |  |  |  | Everything | no conditions |
 | P2 |  | Type of donor = Organization |  | Freeform Solutions, L. Warner Foundation, Hart & Sons Antiques | a condition on the source entries |
-| P3 |  | creation_uid = {USER} |  | Everything except L. Warner Foundation | {USER}, the donors curator1 entered |
-| P4 |  | creation_uid != {USER} |  | L. Warner Foundation | the opposite |
+| P3 |  | creation_uid = {USER} |  | Everything except Freeform Solutions, L. Warner Foundation | {USER}, the donors curator1 owns |
+| P4 |  | creation_uid != {USER} |  | Freeform Solutions, L. Warner Foundation | the opposite |
 | P5 |  | First name = {BLANK} |  | Freeform Solutions, L. Warner Foundation, Hart & Sons Antiques | {BLANK} |
 | P6 |  | Name = Nobody by that name |  | Nothing | no source entries, so no values, rather than what Artifacts stores |
 | P7 | Province |  |  | Quebec (1), Quebec (2), Ontario, Prince Edward Island | two donors in the same province, told apart by their entry ids, and donors with no province show nothing |
