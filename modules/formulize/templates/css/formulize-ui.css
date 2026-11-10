@@ -1087,6 +1087,82 @@
 }
 .fz-card-list > * { margin-block: 0; }
 
+/* ---- Link list --------------------------------------------------------------
+   Links to other pages, one to a row: the screens in a section of the menu, a
+   set of places to go next. On a <ul> or <ol>, with a link in each <li>. Each
+   link fills its row, is shaded under the pointer, and has an arrow at its end.
+   In a card, the list reaches a little into the card's padding, so the links'
+   text lines up with the card's title while their shading has room around it.
+   fz-link-list--columns puts the links in columns when there is room, reading
+   down each column. */
+.fz-link-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fz-link-list > * {
+  min-width: 0;
+  margin-block: 0;
+}
+.fz-card > .fz-link-list {
+  margin-inline: calc(var(--fz-spacing) * -2.5);
+}
+.fz-link-list--columns {
+  display: block;
+  columns: 14rem;
+  column-gap: calc(var(--fz-spacing) * 4);
+}
+.fz-link-list--columns > * { break-inside: avoid; }
+.fz-link-list :where(li > a) {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--fz-spacing) * 3);
+  min-height: var(--fz-menu-item-height);
+  padding: calc(var(--fz-spacing) * 1.5) calc(var(--fz-spacing) * 2.5);
+  border-radius: var(--fz-radius-md);
+  color: var(--fz-color-text);
+  font-size: var(--fz-text-sm);
+  font-weight: var(--fz-font-weight-medium);
+  line-height: var(--fz-leading-snug);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition: background-color var(--fz-duration-fast) var(--fz-ease-out),
+              color var(--fz-duration-fast) var(--fz-ease-out);
+}
+/* the arrow: a chevron in the link's own colour, drawn as a mask so it follows it */
+.fz-link-list :where(li > a)::after {
+  content: "";
+  flex: none;
+  width: calc(var(--fz-spacing) * 4);
+  height: calc(var(--fz-spacing) * 4);
+  margin-inline-start: auto;
+  background-color: var(--fz-color-text-subtle);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 3.5 4.5 4.5L6 12.5'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 3.5 4.5 4.5L6 12.5'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: transform var(--fz-duration-fast) var(--fz-ease-out),
+              background-color var(--fz-duration-fast) var(--fz-ease-out);
+}
+.fz-link-list :where(li > a):dir(rtl)::after { transform: scaleX(-1); }
+.fz-link-list :where(li > a):hover {
+  background: var(--fz-color-accent-soft);
+  color: var(--fz-color-accent-text);
+}
+.fz-link-list :where(li > a):hover::after {
+  background-color: currentColor;
+  transform: translateX(2px);
+}
+.fz-link-list :where(li > a):dir(rtl):hover::after { transform: scaleX(-1) translateX(2px); }
+.fz-link-list :where(li > a):focus-visible {
+  outline: none;
+  background: var(--fz-color-accent-soft);
+  color: var(--fz-color-accent-text);
+  box-shadow: var(--fz-focus-ring);
+}
+.fz-link-list :where(li > a):focus-visible::after { background-color: currentColor; }
+
 /* ---- Table ------------------------------------------------------------------
    A plain data table: a header row, a line under each row, and rows the row
    height. On a <table>. fz-table--striped shades
@@ -2061,7 +2137,11 @@
   .fz-checkbox,
   .fz-radio,
   .fz-toggle::before,
-  .fz-card--interactive { transition: none; }
+  .fz-card--interactive,
+  .fz-link-list :where(li > a),
+  .fz-link-list :where(li > a)::after { transition: none; }
+  .fz-link-list :where(li > a):hover::after { transform: none; }
+  .fz-link-list :where(li > a):dir(rtl):hover::after { transform: scaleX(-1); }
 }
 
 /* ============================================================

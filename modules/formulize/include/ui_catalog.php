@@ -765,6 +765,43 @@ HTML
 HTML
             ),
             array(
+                'id' => 'link-list',
+                'name' => 'Link list',
+                'summary' => 'Links to other pages, one to a row, each with an arrow at its end: the screens in a section of the menu, or a set of places to go next.',
+                'classes' => array(
+                    'fz-link-list' => 'On a `<ul>` or `<ol>`, with an `<a>` in each `<li>`. Each link fills its row and is shaded under the pointer.',
+                    'fz-link-list--columns' => 'The links in columns when there is room, each at least 14rem wide, reading down each column. For a long list.',
+                ),
+                'notes' => array(
+                    'The links need no classes of their own.',
+                    'In a card, the list reaches a little into the card\'s padding, so the text of the links lines up with the rest of the card and their shading has room around it.',
+                    'It is for going somewhere. For actions on the page, use buttons.',
+                ),
+                'example' => <<<'HTML'
+<div class="fz-auto-grid fz-auto-grid--max-2 fz-auto-grid--wide">
+  <section class="fz-card">
+    <h3 class="fz-card__title">Programs</h3>
+    <ul class="fz-link-list">
+      <li><a href="#">Applications</a></li>
+      <li><a href="#">Interview schedule</a></li>
+      <li><a href="#">Offers</a></li>
+    </ul>
+  </section>
+  <section class="fz-card">
+    <h3 class="fz-card__title">Reports</h3>
+    <ul class="fz-link-list fz-link-list--columns">
+      <li><a href="#">Enrolment by program</a></li>
+      <li><a href="#">Attendance summary</a></li>
+      <li><a href="#">Revenue by month</a></li>
+      <li><a href="#">Outstanding invoices</a></li>
+      <li><a href="#">Volunteer hours</a></li>
+      <li><a href="#">Retention</a></li>
+    </ul>
+  </section>
+</div>
+HTML
+            ),
+            array(
                 'id' => 'table',
                 'name' => 'Table',
                 'summary' => 'A plain data table: a header row, a line under each row, and rows the row height, which the site\'s look sets.',

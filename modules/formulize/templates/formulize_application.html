@@ -2,16 +2,20 @@
 <div class="formulize-app-links fz-auto-grid fz-auto-grid--wide">
 <{foreach item=appData from=$allAppData}>
 	<section class="fz-card">
-		<h2 class="fz-card__title fz-text-lg"><{$appData.app_name}></h2>
+		<div class="fz-card__header fz-flex-nowrap fz-pb-3 fz-border-b">
+			<div class="fz-flex fz-items-center fz-gap-3 fz-min-w-0">
+				<span class="fz-badge fz-badge--icon fz-badge--accent fz-text-accent fz-rounded-lg" style="height: calc(var(--fz-spacing) * 8)" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h2.6l1.6 1.8h4.8A1.5 1.5 0 0 1 14 6.3v5.2a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5z"/></svg></span>
+				<h2 class="fz-card__title fz-text-lg"><{$appData.app_name}></h2>
+			</div>
+<{if !$appData.noforms}>
+			<span class="fz-badge fz-badge--plain fz-tabular-nums fz-shrink-0" aria-hidden="true"><{$appData.formData|@count}></span>
+<{/if}>
+		</div>
 <{if $appData.noforms}>
 		<p class="fz-text-muted"><{$appData.noforms}></p>
 <{else}>
 <{* a long list of links goes into columns when its card is wide enough; a short one stays one list *}>
-<{if $appData.formData|@count > 8}>
-		<ul class="fz-auto-grid fz-gap-x-6 fz-gap-y-2 fz-list-none fz-p-0" style="--fz-auto-grid-min: 14rem">
-<{else}>
-		<ul class="fz-stack fz-gap-2 fz-list-none fz-p-0">
-<{/if}>
+		<ul class="fz-link-list<{if $appData.formData|@count > 8}> fz-link-list--columns<{/if}>">
 <{foreach item=thisform from=$appData.formData}>
 			<li><a href="<{$thisform.url}>"><{$thisform.title}></a></li>
 <{/foreach}>
