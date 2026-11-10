@@ -6,6 +6,8 @@
  * that was previously duplicated in userAccountGroupMembershipElement
  * and groupTableElement classes.
  *
+ * See ai-context/entries-are-users-and-groups.md.
+ *
  * @package formulize
  * @subpackage classes
  */

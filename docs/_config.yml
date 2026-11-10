@@ -46,6 +46,10 @@ exclude:
   - _data/news.json
   - _data/roadmap_issues.json
   - _data/writableFilesAndFolders.json
+  # notes for AI coding tools, not pages
+  - AGENTS.md
+  - CLAUDE.md
+  - GEMINI.md
 
 breadcrumbs:
   root:

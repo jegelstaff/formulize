@@ -46,7 +46,26 @@ Every request needs steps 1 and 2. A normal webpage in the active theme goes thr
    ↓ Render the theme around that content and output the HTML
 ```
 
-See [bootstrap-include-order](bootstrap-include-order.md) for what this order means in practice.
+What this order means in practice:
+
+- **Formulize module functions are defined on every page of the site**, including core pages like
+  `user.php`, `edituser.php` and `lostpass.php`, not just pages under `/modules/formulize/`. The
+  module bootstrap includes everything in `modules/formulize/class/` and `modules/formulize/include/`
+  that the module needs.
+- The bootstrap runs **before** any page includes `header.php`, so code in `header.php` can call
+  Formulize module functions.
+- Individual entry points (`modules/formulize/index.php`, `application.php`, `groups.php`,
+  `users.php`, `signup.php`, `edituser.php`, …) *also* include various files explicitly, as a
+  fallback in case they're called directly. This is mostly left over from before the module bootstrap
+  was part of the core system. Today the `include_once` in the core bootstrap runs on every page that
+  includes `mainfile.php`, so don't reason about what's available from the files a single entry point
+  includes.
+- The theme is resolved eagerly in `icms_view_theme_Factory::createInstance()` when `header.php` is
+  included, from `$icmsConfig['theme_set']` (or an explicit `folderName` option). Setting `theme_set`
+  after `header.php` has run doesn't change the rendering theme, but it *does* change
+  `$xoopsConfig['theme_set']` (the two are the same array by reference, see
+  `libraries/icms/config/Handler.php`), which is what per-screen template lookup uses. See
+  [embedding-screens](embedding-screens.md).
 
 ### Skipping header.php and footer.php
 

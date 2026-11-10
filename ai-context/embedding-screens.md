@@ -36,7 +36,7 @@ See [anonymous-entry-access](anonymous-entry-access.md) for how an embedded visi
 
 ## The embed theme
 
-**Never set `$icmsConfig['theme_set']` to the embed theme.** `$xoopsConfig` is the same array by reference, and per-screen templates resolve under `modules/formulize/templates/screens/<theme_set>/<sid>/`, so switching it sends embedded screens to the default templates instead of the site's customised ones. The embed theme is selected by passing `folderName`, from `formulize_embedRenderingTheme()`, to `createInstance()` in `header.php` instead. See [bootstrap-include-order](bootstrap-include-order.md).
+**Never set `$icmsConfig['theme_set']` to the embed theme.** `$xoopsConfig` is the same array by reference, and per-screen templates resolve under `modules/formulize/templates/screens/<theme_set>/<sid>/`, so switching it sends embedded screens to the default templates instead of the site's customised ones. The embed theme is selected by passing `folderName`, from `formulize_embedRenderingTheme()`, to `createInstance()` in `header.php` instead. See [Bootstrap Sequence](architecture-overview.md#bootstrap-sequence).
 
 Embed themes are marked by a `formulize-embed-theme.marker` file in the theme folder (`FORMULIZE_EMBED_THEME_MARKER`). An embed theme needs a `theme.html` like any other, so the marker is what keeps it out of the theme pickers. `icms_view_theme_Factory::getThemesList()` leaves marked themes out, `formulize_selectableThemesList()` applies the same rule to other lists such as the admin themes, and `formulize_embedThemesList()` lists them for the `formulizeEmbedTheme` preference. An embed theme borrows the site theme's styling (`formulize_embedBaseTheme()`).
 

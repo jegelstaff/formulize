@@ -2,6 +2,7 @@
 // Generalized "elements only" form renderer for AJAX contexts. The right slide-out
 // drawer uses this for everything it shows: an entry opened from a list, and (since the
 // subform modal was replaced by the drawer) sub entries opened from a subform element.
+// See ai-context/drawer.md.
 //
 // Renders a form (optionally via a configured screen) as an elements-only <form>,
 // suitable for injection into a host page. The host is responsible for submitting

@@ -8,7 +8,11 @@ This file holds the rules that apply to almost every change. Background on speci
 
 If nothing in the table matches, or the question spans several topics, or you don't know where something lives, start with [architecture-overview](ai-context/architecture-overview.md) for how the whole system fits together, then [formulize-module-overview](ai-context/formulize-module-overview.md) for how it behaves.
 
-The files in `ai-context/` are a general guide and may not match every case. Check them against the code when implementing features. When you change them, keep each topic in one file and link to it from the others, so copies can't drift apart.
+**Folders below the root have their own `AGENTS.md`.** Before changing a file, read the `AGENTS.md` in its folder and in each folder above it, if there is one. Each names the topic files that govern that folder. Some files and functions name their topic file in a comment, such as `See ai-context/conditions.md`. Read that file before you change that code. See [how-agents-load-these-notes](ai-context/how-agents-load-these-notes.md).
+
+**Every plan and every final report lists the `ai-context/` files you read in that session.** That shows the person which notes the work was based on, and which were missed.
+
+The files in `ai-context/` are a general guide and may not match every case. Check them against the code when implementing features. When you change them, keep each topic in one file and link to it from the others, so copies can't drift apart. When you change a topic file, check that its line in the table below still says what the file says.
 
 ## Rules that apply everywhere
 
@@ -16,7 +20,7 @@ The files in `ai-context/` are a general guide and may not match every case. Che
 - **The typical path is from `initialize.php` to a screen's `render()` method,** which hands off to `displayFormPages()`, `displayEntries()` and the other display functions. Read those functions to understand how Formulize works, but don't call them from new code. Go through a screen, which can be one you build in code. See [Rendering a screen in code](ai-context/formulize-module-overview.md#rendering-a-screen-in-code).
 - **Get form data through `gatherDataset()`.** It's the universal data layer. **Scope is critical:** an empty scope means no limit on which entries come back. When the data is going to a user, read [how to set the scope](ai-context/formulize-module-overview.md#data-extraction-extractphp) first.
 - **The ICMS/XOOPS core is ours.** It is a Formulize fork, not a vendored dependency. Edit it directly. Never add `ALTERED BY FREEFORM SOLUTIONS` or any other comment marking a change as ours, and leave the existing ones as they are. Don't wrap calls to Formulize functions in `function_exists()` guards. See [icms-core-is-ours-to-edit](ai-context/icms-core-is-ours-to-edit.md).
-- **Formulize module functions are available on every page.** Core `include/common.php` loads the module bootstrap before `header.php` runs. See [bootstrap-include-order](ai-context/bootstrap-include-order.md).
+- **Formulize module functions are available on every page.** Core `include/common.php` loads the module bootstrap before `header.php` runs. See [Bootstrap Sequence](ai-context/architecture-overview.md#bootstrap-sequence).
 - **Criteria objects do not escape values.** `icms_db_criteria_Item::render()` inserts values into SQL as-is. Escape anything from user input before it goes into a Criteria, with `formulize_db_escape()` in module code or with `global $xoopsDB` in core code. See [escaping](ai-context/escaping.md).
 - **HTML escaping:** write `htmlspecialchars($v)` without `ENT_QUOTES`. PHP 8.1+ escapes single quotes by default. See [escaping](ai-context/escaping.md#html).
 - **Whatever people typed has to be made safe before it's shown.** Escape plain values. Purify values that are meant to be HTML, and anything an author's markup has data mixed into. See [xss-and-purification](ai-context/xss-and-purification.md).
@@ -36,7 +40,7 @@ The files in `ai-context/` are a general guide and may not match every case. Che
 
 ## Writing a change
 
-- Read [coding-guidelines](ai-context/coding-guidelines.md) before you write any code. It's short enough to read every time, and it applies to every change.
+- Read [coding-guidelines](ai-context/coding-guidelines.md) before you write any code. It applies to every change. Claude Code and Gemini CLI load it at the start of each session, so with those, check that it's in your context rather than reading it again.
 - Read the existing code first, and match its patterns and style. Don't introduce a new pattern unless you have to.
 - Use handlers, not direct SQL. If the handler that owns a table lacks what you need, add a method to it.
 - Validate anything that comes from a user, and check permissions before acting on it.
@@ -64,41 +68,44 @@ See [agent-conduct](ai-context/agent-conduct.md) for these rules in full.
 
 ## Background by topic
 
-| Topic or question | Read |
-|---|---|
-| Overall architecture, file layout, request flow | [architecture-overview](ai-context/architecture-overview.md), [docs/code_flow.md](docs/code_flow.md) |
-| How pages save and draw, screens, permissions | [formulize-module-overview](ai-context/formulize-module-overview.md) |
-| The ICMS / XOOPS core, its services, objects, bootstrapping, etc | [architecture-overview](ai-context/architecture-overview.md), [icms-core-is-ours-to-edit](ai-context/icms-core-is-ours-to-edit.md) |
-| Handlers, objects, `getVar` formats, writing entries | [database-patterns](ai-context/database-patterns.md), [docs/functions.md](docs/functions.md) |
-| Schema changes, new settings, the module update | [update-patches](ai-context/update-patches.md) |
-| Derived values, form procedures, code in elements | [derived-values-and-custom-code](ai-context/derived-values-and-custom-code.md) |
-| Any code change. Also admin pages and saves, debugging, version control | [coding-guidelines](ai-context/coding-guidelines.md) |
-| Relationships between forms, linked elements | [relationships](ai-context/relationships.md) |
-| Entries-are-users, entries-are-groups, template groups, enforced memberships | [entries-are-users-and-groups](ai-context/entries-are-users-and-groups.md) |
-| Conditions and the filter UI | [conditions](ai-context/conditions.md) |
-| Showing data: escaping, purification, XSS | [xss-and-purification](ai-context/xss-and-purification.md), [escaping](ai-context/escaping.md) |
-| Security tokens and CSRF | [security-tokens](ai-context/security-tokens.md) |
-| Group permissions, deleting a form's permissions | [webmaster-permission-bypass](ai-context/webmaster-permission-bypass.md) |
-| Anything that refers to an element | [element-references](ai-context/element-references.md) |
-| A new element type | [docs/custom_form_elements.md](docs/custom_form_elements.md) |
-| Users/groups pages, virtual elements | [virtual-elements-and-system-table-forms](ai-context/virtual-elements-and-system-table-forms.md) |
-| Admin save errors, admin page views | [admin-save-error-masking](ai-context/admin-save-error-masking.md), [admin-page-views-permission-return](ai-context/admin-page-views-permission-return.md) |
-| Passwords, 2FA, account editing | [password-hashing](ai-context/password-hashing.md), [2fa-account-edit-phases](ai-context/2fa-account-edit-phases.md) |
-| Anonymous access, signup | [anonymous-entry-access](ai-context/anonymous-entry-access.md), [self-registration-signup](ai-context/self-registration-signup.md) |
-| The right slide-out drawer | [drawer](ai-context/drawer.md) |
-| Embedding screens in other sites | [embedding-screens](ai-context/embedding-screens.md) |
-| The installable app and service worker | [installable-app](ai-context/installable-app.md) |
-| Lock files, temp files, caching | [filesystem-dependencies](ai-context/filesystem-dependencies.md) |
-| Changing the Public API or the MCP server | [mcp-and-public-api](ai-context/mcp-and-public-api.md) |
-| Using the Public API, MCP and the AI assistant | [docs/public_api.md](docs/public_api.md), [docs/AI-advanced.md](docs/AI-advanced.md), [docs/AI-mcp-reference.md](docs/AI-mcp-reference.md) |
-| User-visible words and translations | [docs/translating_text.md](docs/translating_text.md) |
-| The museum system the e2e tests build, in CI and locally: its forms, users, groups and permissions | [testing-museum-system](ai-context/testing-museum-system.md) |
-| Running tests, the Docker setup | [local-environment-and-testing](ai-context/local-environment-and-testing.md), [docs/testing.md](docs/testing.md) |
-| Writing Playwright specs | [testing-through-the-application](ai-context/testing-through-the-application.md), [testing-robust-specs](ai-context/testing-robust-specs.md), [docs/creating_tests.md](docs/creating_tests.md) |
-| Writing specs for users, groups and accounts | [testing-eau-eag](ai-context/testing-eau-eag.md) |
-| A failed test: a CI run, a Playwright report or a trace | [testing-ci-failures](ai-context/testing-ci-failures.md) |
-| Front-facing markup and CSS | [formulize-ui](ai-context/formulize-ui.md), [docs/templates.md](docs/templates.md) |
-| Themes, the Login block and the open menu | [themes-anari-and-lyris](ai-context/themes-anari-and-lyris.md), [docs/themes.md](docs/themes.md) |
-| Template changes not showing, `templates_c` | [compiled-templates-theme-fromfile](ai-context/compiled-templates-theme-fromfile.md) |
-| The docs website | [writing-user-docs](ai-context/writing-user-docs.md), [docs-site-verification](ai-context/docs-site-verification.md) |
-| Checking someone's AI memory against these notes, when they ask | [reconciling-memory](ai-context/reconciling-memory.md) |
+Each row says when the topic applies and the fact most often missed. The file it points to has the rest, so read it before you work on that topic.
+
+| Topic or question | Key fact | Read |
+|---|---|---|
+| Overall architecture, file layout, request flow | `mainfile.php` includes `include/common.php`, which loads the Formulize bootstrap before `header.php`. Screen templates are PHP, taken from the screen's own folder, then the theme's `default/`, then the global `default/`. | [architecture-overview](ai-context/architecture-overview.md), [docs/code_flow.md](docs/code_flow.md) |
+| How pages save and draw, screens, permissions | Pages submit to themselves: `readelements.php` saves first, then the display functions decide what to draw. To show something new, build a screen in code with its type's handler, starting from the `setDefault…ScreenVars()` defaults. | [formulize-module-overview](ai-context/formulize-module-overview.md) |
+| The ICMS / XOOPS core, its services, objects, bootstrapping, etc | The core is our fork. Edit it directly, with no marker comments and no `function_exists()` guards around Formulize calls, except in code that runs before the bootstrap finishes, or in `install/`. | [architecture-overview](ai-context/architecture-overview.md), [icms-core-is-ours-to-edit](ai-context/icms-core-is-ours-to-edit.md) |
+| Handlers, objects, `getVar` formats, writing entries | Form entries aren't objects. Read them with `gatherDataset()` or the data handler, and write them with `formulize_writeEntry()`, which checks no permissions and doesn't update derived values. | [database-patterns](ai-context/database-patterns.md), [docs/functions.md](docs/functions.md) |
+| Schema changes, new settings, the module update | New column or table: `sql/mysql.sql`, a patch in `admin/patches/` and a higher `dbversion`. New module setting: declare it and raise `dbversion`, with no patch. A patch gates on the new `dbversion`, returns `false` on failure, and is safe to run twice. | [update-patches](ai-context/update-patches.md) |
+| Derived values, form procedures, code in elements | The code is in files in `modules/formulize/code/`, and the file is the source of truth. Derived values are stored, so a changed formula shows nothing until the values are recomputed. | [derived-values-and-custom-code](ai-context/derived-values-and-custom-code.md) |
+| Any code change. Also admin pages and saves, debugging, version control | Match the existing code, use handlers rather than SQL, and escape for SQL and HTML. An admin save handler reports back by what it prints. The Formulize admin UI runs jQuery 1.4.2. | [coding-guidelines](ai-context/coding-guidelines.md) |
+| Relationships between forms, linked elements | Connections are seen from one entry, so they're one to one, one to many or many to one, never many to many. Linked elements add them to the Primary Relationship (`frid` -1) automatically. The code calls relationships "frameworks". | [relationships](ai-context/relationships.md) |
+| Entries-are-users, entries-are-groups, template groups, enforced memberships | Permissions go on template groups, and entry groups copy them. Enforced memberships can't be removed, so don't offer Remove for them. `uname` is the full name and `login_name` is the login. | [entries-are-users-and-groups](ai-context/entries-are-users-and-groups.md) |
+| Conditions and the filter UI | Conditions are `[elements, ops, terms, types]`. `checkConditionsAgainstAnEntry()` and `buildConditionsFilterSQL()` both evaluate them and must agree, and list searches are separate code. | [conditions](ai-context/conditions.md) |
+| Showing data: escaping, purification, XSS | Escape plain values, purify values meant to be HTML, and leave alone what an admin wrote, unless a reference has mixed typed data into it. Smarty escapes nothing here. | [xss-and-purification](ai-context/xss-and-purification.md), [escaping](ai-context/escaping.md) |
+| Security tokens and CSRF | Checking a token uses it up, except on a jQuery AJAX request. A valid token isn't a permission check. On form pages the token is filled in after the first click, so a script must fill only its own form's token. | [security-tokens](ai-context/security-tokens.md) |
+| Group permissions, deleting a form's permissions | `checkRight()` passes for webmasters, but "which groups have X" lookups don't include them unless it was granted. `deleteByModule()` with an item id and no name deletes every permission in the module. | [webmaster-permission-bypass](ai-context/webmaster-permission-bypass.md) |
+| Anything that refers to an element | Declare every new place that refers to an element, or the usage report, delete clean-up and handle renames miss it. Don't remove the dependency methods that look unused, because configuration as code relies on them. | [element-references](ai-context/element-references.md) |
+| A new element type | An element type is one file, `class/<type>Element.php`, holding an element class and a handler class whose hierarchies run in parallel. Formulize finds it by its file name. | [docs/custom_form_elements.md](docs/custom_form_elements.md) |
+| Users/groups pages, virtual elements | `users.php` and `groups.php` draw the System Users and System Groups forms over the core tables. Virtual elements have no field, and their values are put in after the query. `groups.php` takes its columns from `$advanceViewArray`. | [virtual-elements-and-system-table-forms](ai-context/virtual-elements-and-system-table-forms.md) |
+| Admin save errors, admin page views | One form's save can reload the page over another form's error, so a passing test can hide one. A page-type admin view must have exactly one top-level bare `return;`, for its permission check. | [admin-save-error-masking](ai-context/admin-save-error-masking.md), [admin-page-views-permission-return](ai-context/admin-page-views-permission-return.md) |
+| Passwords, 2FA, account editing | Write new passwords with `hashPassword()`, and store `pass`, `salt` and `enc_type` together. The two-phase 2FA decision for editing your own account is in three places that must stay in step. | [password-hashing](ai-context/password-hashing.md), [2fa-account-edit-phases](ai-context/2fa-account-edit-phases.md) |
+| Anonymous access, signup | An anonymous visitor's right to an entry comes from a signed cookie or a passcode, through `formulize_anonHoldsEntry()` on both read and write, never from uid 0 owning it. Signup depends on `formulize_selfRegistrationActive()`. | [anonymous-entry-access](ai-context/anonymous-entry-access.md), [self-registration-signup](ai-context/self-registration-signup.md) |
+| The right slide-out drawer | It changes often, so check the note against `drawer.js`. It uses the form's own screen and templates. Something that works full screen and not in the drawer is usually missing from `formdisplay-elementsonly.php`. | [drawer](ai-context/drawer.md) |
+| Embedding screens in other sites | No site can frame anything until an admin allows it. `formulize_embed` decides presentation only. Never set `theme_set` to the embed theme. Anonymous tokens are bound more loosely on purpose. | [embedding-screens](ai-context/embedding-screens.md) |
+| The installable app and service worker | The worker runs for every visitor, including on localhost and in CI. Keep its `keepalive` branch, and don't add `skipWaiting()` or `clients.claim()`. | [installable-app](ai-context/installable-app.md) |
+| Lock files, temp files, caching | Formulize keeps working state in files on purpose, so don't propose Redis or a locks table. Only `include/entryLocks.php` touches lock files. `.htaccess` can't use `php_admin_*`. | [filesystem-dependencies](ai-context/filesystem-dependencies.md) |
+| Changing the Public API or the MCP server | A new tool needs its entry in `registerTools()`, a method of the same name, a tool set in `aiadminconfig.php`, and a line in spec 040. Check permissions in the method, and reuse the admin UI's handlers. | [mcp-and-public-api](ai-context/mcp-and-public-api.md) |
+| Using the Public API, MCP and the AI assistant | These pages are for people using them. To change them, read mcp-and-public-api. | [docs/public_api.md](docs/public_api.md), [docs/AI-advanced.md](docs/AI-advanced.md), [docs/AI-mcp-reference.md](docs/AI-mcp-reference.md) |
+| User-visible words and translations | Every word is a constant in `modules/formulize/language/english/`. Scripts get theirs through `formulize_scriptText()`, with a `_JS_` prefix. Write whole sentences, with `%s` for what changes. | [docs/translating_text.md](docs/translating_text.md) |
+| The museum system the e2e tests build, in CI and locally: its forms, users, groups and permissions | Every user's password is `12345`. Specs find forms and screens by title or handle, not by id. Where this note and the specs disagree, the specs are right. | [testing-museum-system](ai-context/testing-museum-system.md) |
+| Running tests, the Docker setup | Assume the site is down until the person says it's up. Run specs from `tests/e2e/` with `npm test --`. The table prefix and container names vary, so look them up. | [local-environment-and-testing](ai-context/local-environment-and-testing.md), [docs/testing.md](docs/testing.md) |
+| Writing Playwright specs | Set up and tidy up through the application, never by writing to the database or to disk. Every test must pass first time. Leave an entry with `leavePage()`, so its lock is released. | [testing-through-the-application](ai-context/testing-through-the-application.md), [testing-robust-specs](ai-context/testing-robust-specs.md), [docs/creating_tests.md](docs/creating_tests.md) |
+| Writing specs for users, groups and accounts | Fill in both Username and Login name. Required fields have `*` in their ARIA label, so don't match it exactly. Every automatic membership in the suite is enforced. | [testing-eau-eag](ai-context/testing-eau-eag.md) |
+| A failed test: a CI run, a Playwright report or a trace | Read the trace before forming a theory, starting with `pageError` and console events. A failing spec stops the run, so it can hide later breakage. A form drawn read-only is often a lock left by an earlier test. | [testing-ci-failures](ai-context/testing-ci-failures.md) |
+| Front-facing markup and CSS | Read the Formulize UI reference before writing HTML or CSS, use only its `fz-` classes and tokens, and say in your report that you did. The admin UI doesn't use it. | [formulize-ui](ai-context/formulize-ui.md), [docs/templates.md](docs/templates.md) |
+| Themes, the Login block and the open menu | Lyris is the default and Anari the legacy theme, and work has to suit both. Each has its own copy of the screen templates, as does the global `default/`. Depend on Formulize-level contracts, not on one theme's markup. | [themes-anari-and-lyris](ai-context/themes-anari-and-lyris.md), [docs/themes.md](docs/themes.md) |
+| Template changes not showing, `templates_c` | With `theme_fromfile` at 0, a compiled template is used however old it is, and only the module update clears them. After a reinstall, a restore or a hand edit, delete `templates_c/*.php`. | [compiled-templates-theme-fromfile](ai-context/compiled-templates-theme-fromfile.md) |
+| The docs website | `docs/` is the public Jekyll site. Write for the reader: what to do, what they'll see, and what to do when it goes wrong. Check whether it's already running at localhost:4000 before you start it. | [writing-user-docs](ai-context/writing-user-docs.md), [docs-site-verification](ai-context/docs-site-verification.md) |
+| Checking someone's AI memory against these notes, when they ask | Only when asked. Back the memory up first, change nothing until the person approves, and keep what's personal, private or unsettled. | [reconciling-memory](ai-context/reconciling-memory.md) |
+| How these notes reach each AI tool, and adding a folder's `AGENTS.md` | A folder's `AGENTS.md` only names its topic files, and its `CLAUDE.md` only imports them. Facts belong in the topic files and in this table. | [how-agents-load-these-notes](ai-context/how-agents-load-these-notes.md) |

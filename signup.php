@@ -24,6 +24,8 @@
  * allow_register policy. That single gate is what lets an anonymous visitor create a new entry on
  * the otherwise locked-down System Users form.
  *
+ * See ai-context/self-registration-signup.md.
+ *
  * @package Formulize
  */
 

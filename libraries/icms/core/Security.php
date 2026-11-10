@@ -12,6 +12,8 @@
 /**
  * Class for managing security aspects such as checking referers, applying tokens and checking global variables for contamination
  *
+ * See ai-context/security-tokens.md.
+ *
  * @category	ICMS
  * @package		Core
  * @subpackage	Security
