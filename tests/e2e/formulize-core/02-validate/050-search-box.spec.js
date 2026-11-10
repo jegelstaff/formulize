@@ -11,6 +11,8 @@ import { formId, museumAppId } from '../01-setup/museum-forms';
 //  - A column the screen doesn't list, such as one added with Change columns, uses its element's search interface.
 //  - In the Search box, what's typed is an ordinary search, submitted with Enter. Ticking values that match what's
 //    typed searches for exactly those instead.
+//  - Esc and Cancel put the search back the way it was when the box opened. Clicking anywhere else closes the list
+//    and keeps what was typed, deleted or ticked, so it goes with the next submit, such as sorting a column.
 //
 // The museum's data is listed at the end of formulize-core/conditions-and-searches.md.
 
@@ -244,5 +246,52 @@ test.describe('The Search box in a list', () => {
 		await donorCell.getByRole('button', { name: 'Clear the values picked' }).click();
 		await waitForWorkingMessage(page);
 		await expect(page.getByText(/Showing entries:/).first()).toHaveText(everything);
+	});
+
+	test('Esc and Cancel put the search back, and clicking elsewhere keeps what was done', async ({ page }) => {
+		await artifactsListWithEraAndDonor(page);
+		const everything = await page.getByText(/Showing entries:/).first().textContent();
+		const eraBox = page.locator('input[name="search_artifacts_era"]');
+		const panel = page.locator('.formulize-searchbox-panel:popover-open');
+
+		await eraBox.fill('BC');
+		await eraBox.press('Enter');
+		await waitForWorkingMessage(page);
+		await expect(page.getByText('Showing entries: 1 to 6 of 6.')).toBeVisible();
+
+		// Esc undoes what was typed since the box opened
+		await eraBox.fill('xyz');
+		await expect(panel).toHaveCount(1);
+		await eraBox.press('Escape');
+		await expect(panel).toHaveCount(0);
+		await expect(eraBox).toHaveValue('BC');
+
+		// Cancel undoes Show all
+		await eraBox.click();
+		await panel.locator('.fz-choice').nth(0).click();
+		await expect(eraBox).toHaveValue('');
+		await panel.getByRole('button', { name: 'Cancel' }).click();
+		await expect(panel).toHaveCount(0);
+		await expect(eraBox).toHaveValue('BC');
+
+		// deleting the search and then sorting a column keeps it deleted
+		await eraBox.fill('');
+		await expect(panel).toHaveCount(1);
+		await page.getByRole('link', { name: 'Short name' }).click();
+		await waitForWorkingMessage(page);
+		await expect(page.getByText(/Showing entries:/).first()).toHaveText(everything);
+		await expect(page.locator('input[name="search_artifacts_era"]')).toHaveValue('');
+
+		// a value ticked and then left by sorting a column is the search the sort submits
+		const donorBox = page.locator('input[name="search_artifacts_donor"]');
+		await donorBox.click();
+		await donorBox.fill('Arouet');
+		await panel.getByText('François-Marie Arouet', { exact: true }).click();
+		await page.getByRole('link', { name: 'Short name' }).click();
+		await waitForWorkingMessage(page);
+		// Roman Coin, Babylonian Spoon, Polynesian Canoe and Candide
+		await expect(page.getByText('Showing entries: 1 to 4 of 4.')).toBeVisible();
+		const donorCell = page.locator('.formulize-searchbox').filter({ has: page.locator('.formulize-searchbox-value[name="search_artifacts_donor"]') });
+		await expect(donorCell.locator('.formulize-searchbox-picked-text')).toHaveText('François-Marie Arouet');
 	});
 });
