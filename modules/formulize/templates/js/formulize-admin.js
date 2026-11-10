@@ -55,14 +55,17 @@ function getCookie(name) {
 /**
  * On a list or map screen's settings, choosing the element for a column row sets the row's search interface to the
  * one that element uses by default, and makes the date oriented interfaces available only for columns that hold
- * dates. Rows are only changed when someone chooses a column, so a screen's existing settings stay as they are.
+ * dates, and the time range only for columns that hold times. Rows are only changed when someone chooses a column,
+ * so a screen's existing settings stay as they are.
  *
- * defaults: handle => {type: stored search type, dates: bool}, from formulize_columnSearchDefaults()
+ * defaults: handle => {type: stored search type, dates: bool, times: bool}, from formulize_columnSearchDefaults()
  * dateOnlyTypes: the stored search types that only work on dates, from formulizeHandler::dateOnlySearchTypes()
+ * timeOnlyTypes: the stored search types that only work on times, from formulizeHandler::timeOnlySearchTypes()
  *
  * Written for jQuery 1.4.2, which the admin UI runs.
  */
-function formulizeBindColumnSearchDefaults(defaults, dateOnlyTypes) {
+function formulizeBindColumnSearchDefaults(defaults, dateOnlyTypes, timeOnlyTypes) {
+	timeOnlyTypes = timeOnlyTypes || [];
 	jQuery('table.advanceview select[id^=cols-]').live('change', function() {
 		var column = defaults[jQuery(this).val()];
 		var typeSelect = jQuery(this).closest('tr').find('select[name^=search-type]');
@@ -70,7 +73,8 @@ function formulizeBindColumnSearchDefaults(defaults, dateOnlyTypes) {
 			return;
 		}
 		typeSelect.find('option').each(function() {
-			if(jQuery.inArray(jQuery(this).attr('value'), dateOnlyTypes) != -1 && !column.dates) {
+			var type = jQuery(this).attr('value');
+			if((jQuery.inArray(type, dateOnlyTypes) != -1 && !column.dates) || (jQuery.inArray(type, timeOnlyTypes) != -1 && !column.times)) {
 				jQuery(this).attr('disabled', 'disabled');
 			} else {
 				jQuery(this).removeAttr('disabled');

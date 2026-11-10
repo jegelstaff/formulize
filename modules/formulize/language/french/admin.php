@@ -773,6 +773,7 @@ define("_AM_FORMULIZE_SEARCH_TYPE_BOX", "Boîte de recherche - taper seulement")
 define("_AM_FORMULIZE_SEARCH_TYPE_FILTER", "Liste déroulante - choisir une valeur");
 define("_AM_FORMULIZE_SEARCH_TYPE_NEGATIVEFILTER", "Liste déroulante - exclure une valeur");
 define("_AM_FORMULIZE_SEARCH_TYPE_DATERANGE", "Plage de dates");
+define("_AM_FORMULIZE_SEARCH_TYPE_TIMERANGE", "Plage horaire");
 define("_AM_FORMULIZE_SEARCH_TYPE_MONTHCURRENTYEAR", "Choix du mois - année en cours");
 define("_AM_FORMULIZE_SEARCH_TYPE_MONTHLAST12MONTHS", "Choix du mois - 12 derniers mois");
 define("_AM_ELE_SEARCHTYPE", "L'interface de recherche à utiliser dans les listes :");
@@ -780,7 +781,15 @@ define("_AM_ELE_SEARCHTYPE", "L'interface de recherche à utiliser dans les list
 define("_AM_ELE_SEARCHTYPE_DESC_SEARCHBOX", "<b>Boîte de recherche - taper ou choisir des valeurs :</b> une zone où taper une recherche, et des cases à cocher pour les entrées qui correspondent.");
 define("_AM_ELE_SEARCHTYPE_DESC_BOX", "<b>Boîte de recherche - taper seulement :</b> une zone où taper une recherche, sans la liste de cases à cocher.");
 define("_AM_ELE_SEARCHTYPE_DESC_DROPDOWN", "<b>Liste déroulante :</b> une liste de toutes les valeurs disponibles; en choisir une affiche (ou masque) les entrées qui correspondent.");
-define("_AM_ELE_SEARCHTYPE_DESC_DATERANGE", "<b>Plage de dates :</b> des options pour choisir une plage de dates à afficher.");
+define("_AM_ELE_SEARCHTYPE_DESC_DATERANGE", "<b>Plage de dates :</b> une date de début et une date de fin, avec des raccourcis pour aujourd'hui, pour les jours avant et après aujourd'hui, etc.");
+define("_AM_ELE_SEARCHTYPE_DESC_TIMERANGE", "<b>Plage horaire :</b> une heure de début et une heure de fin, avec des raccourcis pour les moments de la journée et pour les heures autour de maintenant.");
 define("_AM_ELE_SEARCHTYPE_DESC_MONTH", "<b>Choix du mois :</b> une liste déroulante des mois à afficher.");
+
+// Time Selector elements
+define("_AM_formulize_TIME_DEFAULT_TIME", "Heure par défaut");
+define("_AM_formulize_TIME_DEFAULT_DESC", "Indiquez l'heure au format 24 heures, par exemple : <b>13:25</b><br>Laissez vide pour ne pas avoir d'heure par défaut. Utilisez {NOW} pour l'heure actuelle, ou {NOW+60} pour dans une heure, {NOW-15} pour il y a quinze minutes, etc.<br>Vous pouvez aussi utiliser {elementHandle} pour faire référence à un autre élément de ce formulaire, et baser l'heure par défaut sur la valeur enregistrée dans cet élément.");
+define("_AM_formulize_TIME_DISPLAY_FORMAT", "Format d'affichage");
+define("_AM_formulize_TIME_FORMAT_12", "Sur 12 heures (par ex. %s)"); // %s est une heure d'exemple au format 12 heures du site, par ex. 1:30pm
+define("_AM_formulize_TIME_FORMAT_24", "Sur 24 heures (par ex. %s)"); // %s est une heure d'exemple au format 24 heures du site, par ex. 13:30
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/admin.php'; // just to catch whatever constants might be missing

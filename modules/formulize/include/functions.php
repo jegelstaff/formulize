@@ -6867,7 +6867,7 @@ function formulize_getQuickSearchOptions($handle, $fid=0, $term='', $maxOptions=
  * @param int $linked_data_id Experimental, see buildFilter()
  * @param string $term Optional. Only the values that contain this. Where the values come from the database, the database does the matching.
  * @param int $maxOptions Optional. At most this many values are read from the database, where they come from there. 0 means no limit.
- * @return array The options (keyed by value), a flag saying whether the label to show is the key ('') or the value ('entryid' or 'uid'), and the element's ui text
+ * @return array The options (keyed by value), a flag saying whether the label to show is the key ('') or the value ('entryid', 'uid', or 'shown' for a date or time, whose label is the value as a list shows it), and the element's ui text
  */
 function formulize_gatherFilterOptions($elementObject, $element_identifier, $metadataFid=0, $limit=false, $subfilter=false, $linked_ele_id=0, $linked_data_id=0, $term='', $maxOptions=0) {
     global $xoopsDB;
@@ -7078,8 +7078,14 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 									}
 							}
 							$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+							// Dates and times are stored one way and shown another, ie: 17:30:00 is shown as 5:30pm. So their label is the value the way
+							// a list shows it, and the value stays as it's stored, which is what a search for it with = compares. What's typed is matched
+							// with the label, by formulize_getQuickSearchOptions(), so the database can't match it, and every distinct value is read.
+							$showsValuesItsOwnWay = (elementTypeIsOrExtends($elementObject, 'date') OR elementTypeIsOrExtends($elementObject, 'time'));
 							// if no groups passed and no scope uids passed, then it just gets everything
-							if((string) $term !== '' OR intval($maxOptions) > 0) {
+							if($showsValuesItsOwnWay) {
+									$options = $dataHandler->findDistinctValuesForField($elementObject->getVar('ele_handle'), '', 0, $groupScopeGroups, $scopeUids, true);
+							} elseif((string) $term !== '' OR intval($maxOptions) > 0) {
 									// only the values that match, and only so many: the Search box asks for these as someone types
 									$options = $dataHandler->findDistinctValuesForField($elementObject->getVar('ele_handle'), $term, $maxOptions, $groupScopeGroups, $scopeUids, true);
 							} else {
@@ -7087,9 +7093,15 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 							}
 							$options = is_array($options) ? array_unique($options) : array();
 							$parsedOptions = array();
+							$elementTypeHandler = $showsValuesItsOwnWay ? xoops_getmodulehandler($elementObject->getVar('ele_type').'Element', 'formulize') : null;
 							foreach($options as $option) {
 									$option = undoAllHTMLChars($option, ENT_QUOTES);
 									if($option === "") { continue; } // skip blanks. {BLANK} is an option already.
+									if($showsValuesItsOwnWay) {
+											$parsedOptions[htmlspecialchars($option, ENT_QUOTES)] = $elementTypeHandler->prepareDataForDataset($option, $elementObject->getVar('ele_handle'), 0);
+											$useValue = 'shown';
+											continue;
+									}
 									if($pos = strpos($option,"formulize-filter-value")) {
 											$startPos = strpos($option, '>', $pos);
 											$endPos = strpos($option, '<', $startPos);
@@ -8810,6 +8822,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     $bareFilterTerm = substr($filterTerms[$filterId],1,-1);
     $filterElementObject = $element_handler->get($filterElementIds[$filterId]);
     $filterIsOnADate = _conditionIsOnADate($filterElementObject, $filterElementIds[$filterId] ?? '');
+    $filterIsOnATime = (is_object($filterElementObject) AND elementTypeIsOrExtends($filterElementObject, 'time'));
     $filterHandle = is_object($filterElementObject) ? $filterElementObject->getVar('ele_handle') : ($filterElementIds[$filterId] ?? '');
     if ($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
     $likebits = "";
@@ -8834,6 +8847,10 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 					$curlyBracketINNeedsSingleQuotes = true;
 				} elseif($filterIsOnADate AND !$filterTermParts = array_values(array_filter($filterTermParts, 'formulize_termIsADate'))) {
 					// Terms that aren't dates are removed from the list, because MySQL gives an error if a date is compared with text. With none left, it's decided here.
+					$conditionsFilterComparisonValue = _termThatIsNotADateForConditionsFilterSQL($filterOps[$filterId]);
+					$nullClauseHandled = true;
+				} elseif($filterIsOnATime AND !$filterTermParts = array_values(array_filter($filterTermParts, 'formulize_termIsATime'))) {
+					// The same for times, which the database would read as midnight (see formulize_termIsATime)
 					$conditionsFilterComparisonValue = _termThatIsNotADateForConditionsFilterSQL($filterOps[$filterId]);
 					$nullClauseHandled = true;
 				} else {
@@ -8902,6 +8919,36 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 			AND (substr($filterTerms[$filterId],0,1) != "{" OR substr($filterTerms[$filterId],-1) != "}")
 			AND $dateLikeComparison = formulize_dateLikeComparison($filterOps[$filterId], " `$filterHandle` ", $filterTerms[$filterId], $termAsTyped, $likebits)) {
 			$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<-- ".($filterOps[$filterId] == 'NOT LIKE' ? " `$filterHandle` IS NULL OR " : "").$dateLikeComparison;
+			$nullClauseHandled = true;
+		}
+
+		// *** PART OF A TIME ON A TIME ELEMENT, WITH LIKE, MATCHES THE TIME AS THE ELEMENT SHOWS IT, IE: LIKE 5: FINDS 5:30am AND 5:30pm ON AN ELEMENT THAT SHOWS 12-HOUR TIMES
+		// See formulize_timeSearchTerm. A blank time doesn't have the term in it, so NOT LIKE takes it in, the same as dates.
+		if($conditionsFilterComparisonValue === NULL
+			AND is_object($filterElementObject)
+			AND elementTypeIsOrExtends($filterElementObject, 'time')
+			AND $likebits === '%'
+			AND $filterTerms[$filterId] !== '{BLANK}'
+			AND (substr($filterTerms[$filterId],0,1) != "{" OR substr($filterTerms[$filterId],-1) != "}")) {
+			$timeTypeHandler = xoops_getmodulehandler($filterElementObject->getVar('ele_type')."Element", "formulize");
+			$timeFormats = $timeTypeHandler->getTimeFormatStrings($filterElementObject);
+			if($timeLikeComparison = formulize_timeLikeComparison($filterOps[$filterId], " `$filterHandle` ", formulize_timeSearchTerm($termAsTyped, $filterTerms[$filterId], $timeFormats), $timeFormats[0])) {
+				$conditionsFilterComparisonValue = "-->>WHOLECONDITION<<-- ".($filterOps[$filterId] == 'NOT LIKE' ? " `$filterHandle` IS NULL OR " : "").$timeLikeComparison;
+				$nullClauseHandled = true;
+			}
+		}
+
+		// *** ANY OTHER TERM ON A TIME THAT ISN'T A TIME, IE: BREAD, CAN'T BE COMPARED WITH ONE, THE SAME AS DATES
+		// The database would read it as midnight. See formulize_termIsATime and formulize_dateComparedWithTermThatIsNotADate. A { } term is resolved further down.
+		// ie: time != bread becomes (1=1 ) and time > bread becomes (1=0 )
+		if($conditionsFilterComparisonValue === NULL
+			AND $filterIsOnATime
+			AND $overrideReturnedOp != "IN"
+			AND $filterTerms[$filterId] !== '{BLANK}'
+			AND (substr($filterTerms[$filterId],0,1) != "{" OR substr($filterTerms[$filterId],-1) != "}")
+			AND !formulize_termIsATime($filterTerms[$filterId])
+			AND $termThatIsNotATime = _termThatIsNotADateForConditionsFilterSQL($filterOps[$filterId])) {
+			$conditionsFilterComparisonValue = $termThatIsNotATime;
 			$nullClauseHandled = true;
 		}
 
@@ -9423,6 +9470,10 @@ function formulize_operatorComparesOrder($operator) {
 function formulize_blankValueComparison($elementObject, $fieldName, $column, $negative) {
 	if(_conditionIsOnADate($elementObject, $fieldName)) {
 		return formulize_blankDateComparison($column, $negative);
+	}
+	// a time field reads '' as midnight, so a blank time is NULL, and only NULL. A time element saves an empty box as NULL.
+	if(!isMetaDataField($fieldName) AND is_object($elementObject) AND $elementObject->holdsTimes()) {
+		return $negative ? " $column IS NOT NULL " : " $column IS NULL ";
 	}
 	if(!isMetaDataField($fieldName) AND is_object($elementObject) AND !$elementObject->hasNumericDataType()) {
 		return $negative ? " ( $column != '' AND $column IS NOT NULL ) " : " ( $column = '' OR $column IS NULL ) ";
@@ -11532,6 +11583,7 @@ function standardizeUserTypedSearchTerms($searchString, $elementIdentifier, &$re
 		$searchString = "";
 	}
 	$searchString = parseBetweenDatesSyntaxInSearchStrings($searchString);
+	$searchString = formulize_timeRangeAcrossMidnight($searchString, $elementIdentifier);
 	$searchString = convertDynamicFilterTerms($searchString, $resolvedFromHandle);
 	return splitUpSearchStringIntoSearchTerms($searchString, $elementIdentifier);
 }
@@ -11739,6 +11791,198 @@ function formulize_dateValueAsISO($value, $format = null) {
 }
 
 /**
+ * Get a time value as HH:MM:SS, from the formats a dataset shows times in (_12HTIMEFORMAT and _24HTIMEFORMAT), or from HH:MM with or without seconds
+ * Used when conditions are checked against a dataset, so times are compared the same way the database compares them, whatever the time formats are.
+ * Derived values can use it too, to work out the time between two times, since a time shown in a custom format may not be something strtotime can read.
+ *
+ * @param mixed $value The time value
+ * @param array|string|null $formats Optional. The PHP date() formats to read the value in, in the order to try them, if it isn't HH:MM. Defaults to the site's 12-hour format, then its 24-hour format.
+ * @return mixed The time as HH:MM:SS, or the value unchanged if it isn't a time in any of the formats, ie: blank, or part of a time in a search
+ */
+function formulize_timeValueAsISO($value, $formats = null) {
+	if(!is_string($value) OR trim($value) === '') {
+		return $value;
+	}
+	$value = trim($value);
+	if(preg_match('/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/', $value, $matches) AND $matches[1] < 24 AND $matches[2] < 60 AND (!isset($matches[3]) OR $matches[3] < 60)) {
+		return sprintf('%02d:%02d:%02d', $matches[1], $matches[2], isset($matches[3]) ? $matches[3] : 0);
+	}
+	$formats = $formats === null ? array(_12HTIMEFORMAT, _24HTIMEFORMAT) : (array) $formats;
+	foreach($formats as $format) {
+		$time = DateTime::createFromFormat('!'.$format, $value);
+		$errors = DateTime::getLastErrors();
+		if($time AND (!$errors OR ($errors['warning_count'] == 0 AND $errors['error_count'] == 0))) {
+			return $time->format('H:i:s');
+		}
+	}
+	return $value;
+}
+
+/**
+ * Check if a term is a time, the way the database stores times, HH:MM with or without seconds, ie: 9:00 or 13:30:00
+ * A time can only be compared with one of these. MariaDB reads anything else as midnight, so time > bread would find every time,
+ * and time = bread the times at midnight. See formulize_dateComparedWithTermThatIsNotADate, which decides those instead.
+ *
+ * @param mixed $term The term, as prepareLiteralTextForDB() made it
+ * @return bool True if the term is a time
+ */
+function formulize_termIsATime($term) {
+	if(is_array($term)) {
+		return false;
+	}
+	$time = formulize_timeValueAsISO((string) $term, array());
+	return is_string($time) AND preg_match('/^\d{2}:\d{2}:\d{2}$/', $time) === 1;
+}
+
+/**
+ * Work out the time {NOW} stands for, give or take some minutes, ie: {NOW+60} is an hour from now, as the person searching sees it
+ * The same as a time element's default value of {NOW}, see interpretTimeElementValue()
+ *
+ * @param string $term The term
+ * @return string The time as HH:MM, or the term unchanged if it isn't {NOW}
+ */
+function formulize_timeForNowTerm($term) {
+	$term = trim((string) $term);
+	if(!preg_match('/^\{NOW([+-]\d+)?\}$/', $term)) {
+		return $term;
+	}
+	xoops_getmodulehandler('timeElement', 'formulize'); // interpretTimeElementValue is in the time element's class file
+	return interpretTimeElementValue($term);
+}
+
+/**
+ * A time range whose start is later than its end goes past midnight, ie: from 10pm to 2am. That's every time after the start OR before the end.
+ * The Time range search writes a range as >=start//<=end, which are both required, so a range that goes past midnight is made a set of OR'd
+ * terms of its own instead: ORSETW<element id>:>=start//ORSETW<element id>:<=end. {NOW} give or take some minutes is worked out first, because
+ * a range like the next hour only goes past midnight late in the evening, and in the last hour only goes past it just after midnight.
+ *
+ * @param string $searchString The search on the column
+ * @param mixed $elementIdentifier The element the search is on
+ * @return string The search, changed if it's a time range that goes past midnight
+ */
+function formulize_timeRangeAcrossMidnight($searchString, $elementIdentifier) {
+	if(!is_string($searchString) OR !preg_match('/^>=([^\/]+)\/\/<=([^\/]+)$/', $searchString, $matches)) {
+		return $searchString;
+	}
+	$elementObject = _getElementObject($elementIdentifier);
+	if(!$elementObject OR !elementTypeIsOrExtends($elementObject, 'time')) {
+		return $searchString;
+	}
+	$timeTypeHandler = xoops_getmodulehandler($elementObject->getVar('ele_type').'Element', 'formulize');
+	$ends = array();
+	foreach(array($matches[1], $matches[2]) as $term) {
+		$time = formulize_timeValueAsISO((string) $timeTypeHandler->prepareLiteralTextForDB(formulize_timeForNowTerm($term), $elementObject), $timeTypeHandler->getTimeFormatStrings($elementObject));
+		if(!formulize_termIsATime($time)) {
+			return $searchString;
+		}
+		$ends[] = substr($time, 0, 5);
+	}
+	if($ends[0] <= $ends[1]) {
+		return $searchString;
+	}
+	$key = 'W'.intval($elementObject->getVar('ele_id'));
+	return "ORSET$key:>=".$ends[0]."//ORSET$key:<=".$ends[1];
+}
+
+/**
+ * Get the MySQL TIME_FORMAT() format that shows times the way a PHP date() format does, ie: g:ia becomes %l:%i%p
+ * MySQL has only AM and PM, so a and A are both %p. Searches compare times as lower case, so that doesn't matter there.
+ *
+ * @param string $format The PHP date() format for the time
+ * @return string The MySQL TIME_FORMAT() format. Characters with no MySQL equivalent are kept as they are.
+ */
+function formulize_mysqlTimeFormat($format) {
+	$specifiers = array('H' => '%H', 'G' => '%k', 'h' => '%h', 'g' => '%l', 'i' => '%i', 's' => '%s', 'a' => '%p', 'A' => '%p');
+	$mysqlFormat = '';
+	for($i = 0; $i < strlen($format); $i++) {
+		$character = $format[$i];
+		if($character == '\\' AND $i + 1 < strlen($format)) { // an escaped character in a PHP date format is literal
+			$i++;
+			$mysqlFormat .= $format[$i] == '%' ? '%%' : $format[$i];
+		} elseif(isset($specifiers[$character])) {
+			$mysqlFormat .= $specifiers[$character];
+		} else {
+			$mysqlFormat .= $character == '%' ? '%%' : $character;
+		}
+	}
+	return $mysqlFormat;
+}
+
+/**
+ * Read what was typed into a LIKE search or condition on a time, so it can be matched with the time as the element shows it.
+ * The one place for this rule, for searches and conditions in SQL (formulize_timeLikeComparison) and for conditions checked against an entry (formulize_timeMatchesSearch).
+ *
+ * - What was typed is found anywhere in the time as it's shown, ie: 5 finds 5:30pm and 1:05am.
+ * - When it starts with an hour, ie: 5: or 5:3 or 13h30, that's the whole hour, with or without a leading zero, so 5: finds 5:30am, 5:30pm and 05:30,
+ *   and not 15:30 or 11:55.
+ * - When it's a whole time in either of the site's formats, ie: 13:30 in a list that shows 1:30pm, it finds that time too.
+ *
+ * @param string $typedTerm The term as it was typed
+ * @param string $termForDB The term as the time element's prepareLiteralTextForDB() made it, ie: 1:30pm becomes 13:30
+ * @param array $formats The PHP date() formats the time could be typed in, the element's own first
+ * @return array|false The pattern to find in the time as it's shown, in lower case, and the time as HH:MM if a whole time was typed, or null. False if nothing was typed.
+ */
+function formulize_timeSearchTerm($typedTerm, $termForDB, $formats) {
+	$typed = trim((string) $typedTerm);
+	if($typed === '') {
+		return false;
+	}
+	$typed = strtolower($typed);
+	// an hour is one or two digits followed by something that isn't a digit, a space, or the a or p of am and pm, ie: the : in 5:
+	if(preg_match('/^(\d{1,2})([^\d\saApP].*)$/', $typed, $matches)) {
+		$pattern = '(^|[^0-9:])0*'.preg_quote(ltrim($matches[1], '0'), '/').preg_quote($matches[2], '/');
+	} else {
+		$pattern = preg_quote($typed, '/');
+	}
+	$wholeTime = formulize_timeValueAsISO((string) $termForDB, $formats);
+	return array(
+		'pattern' => $pattern,
+		'time' => (is_string($wholeTime) AND preg_match('/^\d{2}:\d{2}:\d{2}$/', $wholeTime)) ? substr($wholeTime, 0, 5) : null
+	);
+}
+
+/**
+ * Build the SQL for LIKE or NOT LIKE on a time, which matches the time as the element shows it (see formulize_timeSearchTerm)
+ * A blank time has nothing in it, so it's not found by LIKE, and NOT LIKE leaves it out too. The caller decides whether a negative search or condition takes blanks in.
+ *
+ * @param string $operator The operator
+ * @param string $column The column, ie: main.`start_time`
+ * @param array|false $search What formulize_timeSearchTerm() made of the term
+ * @param string $format The PHP date() format the element shows times in
+ * @return string|false The SQL, or false if the operator isn't LIKE or NOT LIKE, or nothing was typed
+ */
+function formulize_timeLikeComparison($operator, $column, $search, $format) {
+	$operator = trim($operator);
+	if(($operator != 'LIKE' AND $operator != 'NOT LIKE') OR !$search) {
+		return false;
+	}
+	$match = "LOWER(TIME_FORMAT($column,'".formulize_db_escape(formulize_mysqlTimeFormat($format))."')) REGEXP '".formulize_db_escape($search['pattern'])."'";
+	if($search['time'] !== null) {
+		$match = "$match OR TIME_FORMAT($column,'%H:%i') = '".formulize_db_escape($search['time'])."'";
+	}
+	return $operator == 'LIKE' ? " ( $match ) " : " ( NOT ( $match ) ) ";
+}
+
+/**
+ * Check if a time matches what was typed into a LIKE condition, the same way formulize_timeLikeComparison() does in SQL
+ *
+ * @param string $shownValue The time as the element shows it, ie: 1:30pm
+ * @param string $storedValue The time as it's stored, HH:MM:SS
+ * @param array|false $search What formulize_timeSearchTerm() made of the term
+ * @return bool True if the time matches
+ */
+function formulize_timeMatchesSearch($shownValue, $storedValue, $search) {
+	if(!$search OR (string) $shownValue === '') {
+		return false;
+	}
+	if(preg_match('/'.$search['pattern'].'/i', (string) $shownValue)) {
+		return true;
+	}
+	$storedTime = formulize_timeValueAsISO((string) $storedValue);
+	return $search['time'] !== null AND is_string($storedTime) AND substr($storedTime, 0, 5) === $search['time'];
+}
+
+/**
  * Check if a term is a real date, in the format the database stores dates in, YYYY-MM-DD, with or without a time
  * A date in the database can only be compared with one of these. MySQL gives an error for anything else, where MariaDB compares them as text.
  *
@@ -11856,7 +12100,7 @@ function formulize_dateLikeComparison($operator, $column, $storedTerm, $typedTer
 
 /**
  * Decide whether a date compared with a term that isn't a date matches, ie: date = bread. That's decided here, rather than put in SQL, because MySQL gives an
- * error if a date is compared with text, where MariaDB doesn't. No date is equal to it, or before or after it, or in a list with no dates in it, and every
+ * error if a date is compared with text, where MariaDB doesn't. Times follow the same rule, because MariaDB reads text as midnight (see formulize_termIsATime). No date is equal to it, or before or after it, or in a list with no dates in it, and every
  * date is not equal to it, and not in that list, including blank dates. LIKE and NOT LIKE compare a date as text, so they're not decided here.
  * A blank term is like any other term that isn't a date, except with = and != (see formulize_blankDateComparison).
  * The one place for this, for conditions, searches and per-group filters in SQL, and for conditions checked against an entry in PHP.
@@ -11957,7 +12201,9 @@ function formulize_unwrapSearchBoxValue($value) {
  * @return array|null ['term' => ..., 'key' => ...] when a colon-delimited key was found, otherwise null
  */
 function formulize_extractKeyedGroupPrefix($rest) {
-	if (preg_match('/^(\d*):(.*)$/s', $rest, $matches)) {
+	// a key is digits, or W and digits for the set a time range that goes past midnight is made into, which can't be the same as any
+	// set a filter on the page writes (see formulize_timeRangeAcrossMidnight)
+	if (preg_match('/^(\d*|W\d+):(.*)$/s', $rest, $matches)) {
 		return array('term' => $matches[2], 'key' => $matches[1]);
 	}
 	return null;
@@ -12170,6 +12416,9 @@ function formulize_parseSearchesIntoFilter($searches) {
 					$basetime = $number ? strtotime($number . " day") : time();
 					$offset = formulize_getUserUTCOffsetSecs(timestamp: $basetime); // need to adjust for user time vs UTC, since time() is based on UTC
 					$one_search = date("Y-m-d", ($basetime + $offset));
+				} elseif (preg_match('/^NOW([+-]\d+)?$/', $searchgetkey)) {
+					// the time now, give or take some minutes, which the Time range search uses, ie: {NOW+60} for an hour from now
+					$one_search = formulize_timeForNowTerm($one_search);
 				} elseif ($searchgetkey == "USER") {
 					if ($xoopsUser) {
 						$one_search = htmlspecialchars_decode($xoopsUser->getVar('uname'), ENT_QUOTES);
@@ -12201,6 +12450,10 @@ function formulize_parseSearchesIntoFilter($searches) {
 						$blankOp2 = " IS NULL ";
 					}
 					$one_search = "/**/$blankOp1][$key/**//**/$blankOp2";
+					// a blank time is NULL, and only NULL, since a time field reads '' as midnight (see formulize_blankValueComparison)
+					if (!isset($metadataFieldTypes[$key]) AND is_object($elementObject) AND $elementObject->holdsTimes()) {
+						$one_search = "/**/$blankOp2";
+					}
 					$operator = ""; // don't use an operator, we've specially constructed the one_search string to have all the info we need
 				} elseif ($searchgetkey == "PERGROUPFILTER") {
 					$one_search = $searchgetkey;
@@ -15093,6 +15346,41 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			}
 		}
 
+		// times are compared as HH:MM:SS, whatever format the dataset shows them in, the same as the database compares them, and the term is read the same way, ie: 1:30pm becomes 13:30:00
+		// LIKE matches the time as the dataset shows it, the same as SQL does, see formulize_timeSearchTerm. A blank has nothing in it, so NOT LIKE takes it in.
+		$timeExpression = "";
+		$timeField = $dateField; // the element the condition is on, if it's an element
+		if(!is_array($compValue) AND is_object($timeField) AND elementTypeIsOrExtends($timeField, 'time')) {
+			$timeTypeHandler = xoops_getmodulehandler($timeField->getVar('ele_type')."Element", "formulize");
+			$timeFormats = $timeTypeHandler->getTimeFormatStrings($timeField);
+			$timeAsShown = (string) $compValue;
+			$compValue = formulize_timeValueAsISO($compValue, $timeFormats);
+			if($filterTerms[$i] !== '' AND $thisOp == 'IN') {
+				// the terms are read as times, and the ones that aren't times are left out, the same as SQL (see formulize_termIsATime). With none left, nothing is in the list.
+				$listedTimes = array();
+				foreach(explode(',', $filterTerms[$i]) as $listedTerm) {
+					$listedTerm = trim(htmlspecialchars_decode($listedTerm, ENT_QUOTES), " \n\r\t\v\x00\"'");
+					$listedTime = formulize_timeValueAsISO((string) $timeTypeHandler->prepareLiteralTextForDB($listedTerm, $timeField), $timeFormats);
+					if(formulize_termIsATime($listedTime)) {
+						$listedTimes[] = $listedTime;
+					}
+				}
+				$timeExpression = ($compValue !== '' AND in_array($compValue, $listedTimes, true)) ? 'TRUE' : 'FALSE';
+			} elseif($filterTerms[$i] !== '') {
+				if($thisOp == 'LIKE' OR $thisOp == 'NOT LIKE') {
+					$timeSearch = formulize_timeSearchTerm($filterTerms[$i], $timeTypeHandler->prepareLiteralTextForDB($filterTerms[$i], $timeField, true), $timeFormats);
+					$inTime = formulize_timeMatchesSearch($timeAsShown, $compValue, $timeSearch);
+					$timeExpression = ($inTime == ($thisOp == 'LIKE')) ? 'TRUE' : 'FALSE';
+				} else {
+					$filterTerms[$i] = formulize_timeValueAsISO($timeTypeHandler->prepareLiteralTextForDB($filterTerms[$i], $timeField), $timeFormats);
+					// a term that isn't a time can't be compared with one, the same as dates, see formulize_dateComparedWithTermThatIsNotADate
+					if(!formulize_termIsATime($filterTerms[$i]) AND ($everyTimeMatches = formulize_dateComparedWithTermThatIsNotADate($thisOp)) !== null) {
+						$timeExpression = $everyTimeMatches ? 'TRUE' : 'FALSE';
+					}
+				}
+			}
+		}
+
 		// when a reference or the field holds several values, = and LIKE mean the field has any of the referenced values, and != and NOT LIKE mean it has none of them, the same as SQL
 		// (see _anyOfComparisonForConditionsFilterSQL). A blank reference means the field is blank, or not blank. LIKE can find a referenced value in part of one of the field's values,
 		// see formulize_referenceLikeLooksInPartOfAValue
@@ -15140,6 +15428,8 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			$evaluationCondition .= 'FALSE';
 		} elseif($dateExpression) {
 			$evaluationCondition .= $dateExpression;
+		} elseif($timeExpression) {
+			$evaluationCondition .= $timeExpression;
 		} elseif($referenceExpression) {
 			$evaluationCondition .= $referenceExpression;
 		} elseif($thisOp == "LIKE" AND $filterTermToUse != '') {
@@ -15313,6 +15603,23 @@ function formulize_handleIsDateColumn($handle) {
 }
 
 /**
+ * Is this column a time of day, and so a candidate for the time range quicksearch filter?
+ *
+ * @param string $handle An element handle
+ * @return bool
+ */
+function formulize_handleIsTimeColumn($handle) {
+    if(isMetaDataField($handle)) {
+        return false;
+    }
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    if(!$elementObject = $element_handler->get($handle)) {
+        return false;
+    }
+    return $elementObject->holdsTimes();
+}
+
+/**
  * The search interface a column gets when the screen showing it doesn't choose one: the element's own setting, or
  * its default (see formulizeElement::listSearchType()). Columns that are metadata fields get the interface that
  * suits them: a date range for the two dates, a simple box for the entry id, and the Search box for the rest.
@@ -15343,12 +15650,12 @@ function formulize_defaultSearchTypeForColumn($handle) {
 }
 
 /**
- * For the screen settings pages: the search interface each column gets by default, and whether it holds dates, so
- * that choosing a column for a list or map screen can pick its search interface, and offer the date oriented ones
- * only where they work.
+ * For the screen settings pages: the search interface each column gets by default, and whether it holds dates or
+ * times, so that choosing a column for a list or map screen can pick its search interface, and offer the date
+ * oriented ones and the time range only where they work.
  *
  * @param array $handles The element handles and metadata field names the page offers as columns
- * @return array handle => array('type' => stored value, 'dates' => bool)
+ * @return array handle => array('type' => stored value, 'dates' => bool, 'times' => bool)
  */
 function formulize_columnSearchDefaults($handles) {
     $defaults = array();
@@ -15358,7 +15665,8 @@ function formulize_columnSearchDefaults($handles) {
         }
         $defaults[$handle] = array(
             'type' => formulize_defaultSearchTypeForColumn($handle),
-            'dates' => formulize_handleIsDateColumn($handle)
+            'dates' => formulize_handleIsDateColumn($handle),
+            'times' => formulize_handleIsTimeColumn($handle)
         );
     }
     return $defaults;

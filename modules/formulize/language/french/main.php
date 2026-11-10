@@ -733,6 +733,20 @@ define("_formulize_FILTERPOP_TYPE_SEARCH", "Saisir un terme de recherche");
 define("_formulize_FILTERPOP_PICK_INSTEAD", "Choisir plutôt que saisir");
 define("_formulize_FILTERPOP_FROM_DATE", "À partir du %s");
 define("_formulize_FILTERPOP_UNTIL_DATE", "Jusqu'au %s");
+// the Time range filter in a list's search cell
+define("_formulize_FILTERPOP_ANY_TIME", "N'importe quelle heure");
+define("_formulize_FILTERPOP_FROM_TIME", "À partir de %s");
+define("_formulize_FILTERPOP_UNTIL_TIME", "Jusqu'à %s");
+define("_formulize_FILTERPOP_NOW", "Maintenant");
+define("_formulize_FILTERPOP_MINUTES_AGO", "Il y a %s minutes");
+define("_formulize_FILTERPOP_MINUTES_FROM_NOW", "Dans %s minutes");
+define("_formulize_FILTERPOP_NUMBER_OF_MINUTES", "Nombre de minutes");
+define("_formulize_FILTERPOP_MORNING", "Matin");
+define("_formulize_FILTERPOP_AFTERNOON", "Après-midi");
+define("_formulize_FILTERPOP_EVENING", "Soir");
+define("_formulize_FILTERPOP_LAST_HOUR", "Dans la dernière heure");
+define("_formulize_FILTERPOP_NEXT_HOUR", "Dans l'heure qui vient");
+define("_formulize_FILTERPOP_WHOLE_RANGE", "Moments de la journée");
 // la boîte de recherche en haut d'une colonne : taper un terme de recherche, ou choisir parmi les valeurs qui y correspondent
 define("_formulize_SEARCHBOX_LABEL", "Rechercher dans %s");
 define("_formulize_SEARCHBOX_LOADING", "Recherche des correspondances...");

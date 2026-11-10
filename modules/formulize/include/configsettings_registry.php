@@ -444,8 +444,8 @@ return array(
                             'description' => _AM_CFG_DESC_DATESTRING),
                         array('name' => 'shortdatestring', 'scope' => 'formulize', 'preview' => 'datetime',
                             'description' => _AM_CFG_DESC_SHORTDATESTRING),
-                        array('name' => 'shorttimestring', 'scope' => 'formulize', 'preview' => 'datetime',
-                            'description' => _AM_CFG_DESC_SHORTTIMESTRING),
+                        array('name' => 'timeformat12h', 'scope' => 'formulize', 'preview' => 'datetime'),
+                        array('name' => 'timeformat24h', 'scope' => 'formulize', 'preview' => 'datetime'),
                     ),
                     _AM_CFG_SEC_SEO => array(
                         array('name' => 'meta_description', 'scope' => 'metafooter'),

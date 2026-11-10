@@ -10,16 +10,16 @@ Every word Formulize shows (labels, buttons, messages, errors) comes from a lang
 a site can show it in its own language. This covers words that PHP prints and words that scripts
 show. Both come from the same place.
 
-This is about Formulize's own words. Words that people type into Formulize, like form names and
-element captions, are translated differently, with language tags. See
-[trans](/documentation/functions/trans).
+This is about Formulize's own words. Words that people type into Formulize, like form names,
+element captions and the entries in forms, are translated differently, with language tags. See
+[Words that people type](#words-that-people-type).
 
 ## Where the words are
 
 The words are PHP constants, defined in the files in `modules/formulize/language/`. There is a
 folder for each language, named the way ImpressCMS names it (`english`, `french` and so on).
-`english` always has every word. The others may lag behind, so a page falls back to English for a
-file that a language doesn't have yet.
+`english` always has every word, and every new word is added in `french` too. The others may lag
+behind, so a page falls back to English for a file that a language doesn't have yet.
 
 - `main.php` has the words of the pages people use: forms, lists, screens.
 - `admin.php` has the words of the admin pages.
@@ -174,3 +174,33 @@ You'll find other ways of getting words into scripts in older code. Some templat
 straight into inline script. Some PHP `json_encode()`s constants one at a time. The list filters
 build a hand-written list for `window.formulizeFilterPopoverLang`. They work, and there's no need to
 change them unless you're working on that code anyway. New scripts should use `formulizeText()`.
+
+## Words that people type
+
+Anything people type into Formulize can be in more than one language. That includes form and
+element names, captions, help text, the options in a list, text on screens and in menus, and the
+entries people make in forms. Put each language's version between that language's tags:
+
+~~~
+[en]Date of acquisition[/en][fr]Date d'acquisition[/fr]
+~~~
+
+Someone reading the site in English sees _Date of acquisition_, and someone reading it in French
+sees _Date d'acquisition_. The tags are `[en]` for English and `[fr]` for French.
+
+- **Text outside the tags shows in every language,** so you can tag only the part that changes:
+  `ID: [en]Artifact[/en][fr]Artéfact[/fr]`.
+- **The tags work wherever text is shown on a page,** whoever typed it. They're taken out as the
+  page is drawn.
+- **A box you're typing in keeps the tags,** so changing the English doesn't lose the French. You see
+  every language there, and save every language.
+- **To switch language,** add `lang=fr` or `lang=en` to the page's address, such as
+  `index.php?sid=12&lang=fr`. The site remembers the choice on later pages. Formulize's own words
+  switch too.
+- **To see every language at once,** with the tags, add `lang=all`. This only works for webmasters.
+
+If you see the tags themselves on a page, check that each one is closed with the same language,
+`[fr]` with `[/fr]`, and that it's `en` or `fr`.
+
+In your own code, [trans](/documentation/functions/trans) takes the tags out of some text, for the
+current language or one you name.

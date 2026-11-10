@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 30,
+	'dbversion' => 31,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -1243,13 +1243,23 @@ $modversion['config'][] = array(
 	'valuetype' => 'text',
 	'default' => defined('_SHORTDATESTRING') ? _SHORTDATESTRING : 'Y-m-d',
 );
+// The two time formats, _12HTIMEFORMAT and _24HTIMEFORMAT. Time elements show times in one or the other, as
+// the time_format setting or the element's own setting says. They replace shorttimestring, which nothing used.
 $modversion['config'][] = array(
-	'name' => 'shorttimestring',
-	'title' => 'Short time format',
-	'description' => '',
+	'name' => 'timeformat12h',
+	'title' => '_MI_formulize_TIMEFORMAT12H',
+	'description' => '_MI_formulize_TIMEFORMAT12H_DESC',
 	'formtype' => 'textbox',
 	'valuetype' => 'text',
-	'default' => defined('_SHORTTIMESTRING') ? _SHORTTIMESTRING : 'g:ia',
+	'default' => defined('_12HTIMEFORMAT') ? _12HTIMEFORMAT : 'g:ia',
+);
+$modversion['config'][] = array(
+	'name' => 'timeformat24h',
+	'title' => '_MI_formulize_TIMEFORMAT24H',
+	'description' => '_MI_formulize_TIMEFORMAT24H_DESC',
+	'formtype' => 'textbox',
+	'valuetype' => 'text',
+	'default' => defined('_24HTIMEFORMAT') ? _24HTIMEFORMAT : 'H:i',
 );
 
 $modversion['config'][] = array(

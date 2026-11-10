@@ -237,6 +237,15 @@ class formulizeElement extends FormulizeObject {
 	}
 
 	/**
+	 * Does this element hold times of day? It does if its field in the database has a time type, whatever kind of
+	 * element it is, because the time range search builds SQL that only works on that type.
+	 * @return bool
+	 */
+	function holdsTimes() {
+		return self::isTimeDataType($this->fieldDataType());
+	}
+
+	/**
 	 * Does this element hold numbers? It does if its field in the database has a numeric type.
 	 * @return bool
 	 */
@@ -291,6 +300,15 @@ class formulizeElement extends FormulizeObject {
 	}
 
 	/**
+	 * Is a database type a time of day, with or without a size, ie: time(6)?
+	 * @param string $dataType A type as the database reports it, or as an element type declares it
+	 * @return bool
+	 */
+	static function isTimeDataType($dataType) {
+		return self::baseDataType($dataType) === 'time';
+	}
+
+	/**
 	 * Is a database type numeric, with or without a size or sign, ie: decimal(10,2) or int(10) unsigned?
 	 * @param string $dataType A type as the database reports it, or as an element type declares it
 	 * @return bool
@@ -300,8 +318,8 @@ class formulizeElement extends FormulizeObject {
 	}
 
 	/**
-	 * The search interfaces this element can have in a list: all of them for an element that holds dates, and all but
-	 * the date oriented ones for any other element.
+	 * The search interfaces this element can have in a list: the date oriented ones only for an element that holds
+	 * dates, the time range only for one that holds times, and the rest for every element.
 	 * @return array Stored values, as in formulizeHandler::listScreenSearchTypes()
 	 */
 	function allowedListSearchTypes() {
@@ -309,14 +327,17 @@ class formulizeElement extends FormulizeObject {
 		if(!$this->holdsDates()) {
 			$types = array_values(array_diff($types, formulizeHandler::dateOnlySearchTypes()));
 		}
+		if(!$this->holdsTimes()) {
+			$types = array_values(array_diff($types, formulizeHandler::timeOnlySearchTypes()));
+		}
 		return $types;
 	}
 
 	/**
 	 * The search interface this element gets in a list, when the list doesn't choose one itself: the one chosen in the
 	 * element's settings, or if none has been chosen (or the one chosen no longer suits the element), a date range for
-	 * elements that hold dates, the type-only search box for numbers people type in, since picking from a list of them
-	 * makes little sense, and the search box that also picks values for everything else.
+	 * elements that hold dates, a time range for elements that hold times, the type-only search box for numbers people
+	 * type in, since picking from a list of them makes little sense, and the search box that also picks values for everything else.
 	 * @return string A stored value, as in formulizeHandler::listScreenSearchTypes()
 	 */
 	function listSearchType() {
@@ -326,6 +347,9 @@ class formulizeElement extends FormulizeObject {
 		}
 		if($this->holdsDates()) {
 			return 'DateRange';
+		}
+		if($this->holdsTimes()) {
+			return 'TimeRange';
 		}
 		if($this->holdsNumbers() AND !$this->hasLabelledValues()) {
 			return 'Box';

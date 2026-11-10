@@ -12,8 +12,8 @@
     <fieldset>
         <legend><{$smarty.const._AM_formulize_TIME_DISPLAY_FORMAT}></legend>
         <div class="form-item">
-            <label><input type="radio" name="elements-ele_value[1]" value="12" <{if $content.effective_time_format eq "12"}> checked="checked"<{/if}> /> <{$smarty.const._AM_formulize_TIME_FORMAT_12}></label><br>
-            <label><input type="radio" name="elements-ele_value[1]" value="24" <{if $content.effective_time_format eq "24"}> checked="checked"<{/if}> /> <{$smarty.const._AM_formulize_TIME_FORMAT_24}></label>
+            <label><input type="radio" name="elements-ele_value[1]" value="12" <{if $content.effective_time_format eq "12"}> checked="checked"<{/if}> /> <{$content.time_format_12_label}></label><br>
+            <label><input type="radio" name="elements-ele_value[1]" value="24" <{if $content.effective_time_format eq "24"}> checked="checked"<{/if}> /> <{$content.time_format_24_label}></label>
         </div>
     </fieldset>
 </div>

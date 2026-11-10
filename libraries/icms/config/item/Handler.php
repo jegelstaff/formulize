@@ -388,19 +388,16 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 		/**
 		 * FORMULIZE: when one of the date/time format settings is saved, regenerate
 		 * the small file that the language global.php files include, so the
-		 * _DATESTRING / _SHORTDATESTRING / _SHORTTIMESTRING constants reflect the
-		 * saved values. Kept here (the lowest persistence level) so it fires for
-		 * the Formulize admin UI and the legacy preferences page alike, with no
-		 * Formulize code needing to be loaded. Self-contained: reads the three
+		 * _DATESTRING / _SHORTDATESTRING / _12HTIMEFORMAT / _24HTIMEFORMAT constants
+		 * reflect the saved values. Kept here (the lowest persistence level) so it
+		 * fires for the Formulize admin UI and the legacy preferences page alike,
+		 * with no Formulize code needing to be loaded. Self-contained: reads the
 		 * values straight from the config table and writes the file.
 		 * _MEDIUMDATESTRING is a backwards-compat alias for _DATESTRING defined
-		 * in global.php; it is not stored separately.
+		 * in global.php; it is not stored separately. _SHORTTIMESTRING isn't a
+		 * setting any more, and global.php defines it.
 		 */
-		$formulizeDateFormatConstants = array(
-			'datestring'      => '_DATESTRING',
-			'shortdatestring' => '_SHORTDATESTRING',
-			'shorttimestring' => '_SHORTTIMESTRING',
-		);
+		$formulizeDateFormatConstants = icms_config_Item_Object::$dateFormatConstants;
 		if (defined('XOOPS_ROOT_PATH') && isset($formulizeDateFormatConstants[$config->getVar('conf_name')])) {
 			$fmlzNames = "'" . implode("','", array_keys($formulizeDateFormatConstants)) . "'";
 			$fmlzRes = $this->db->query("SELECT conf_name, conf_value FROM " . $this->db->prefix('config') . " WHERE conf_name IN ($fmlzNames)");

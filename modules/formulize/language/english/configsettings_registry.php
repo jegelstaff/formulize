@@ -93,7 +93,6 @@ define('_AM_CFG_CAP_DEFAULT_TZ', 'Default timezone for new users');
 define('_AM_CFG_DESC_SERVER_TZ', 'This is the timezone that would be reported by <i>SELECT @@global.time_zone;</i> in MariaDB');
 define('_AM_CFG_DESC_DATESTRING', 'Used for date-and-time display throughout Formulize.');
 define('_AM_CFG_DESC_SHORTDATESTRING', 'Used for short date display.');
-define('_AM_CFG_DESC_SHORTTIMESTRING', 'Used for short time display.');
 define('_AM_CFG_DESC_FOOTER', 'Content for the footer of every page, if your theme supports this. HTML is allowed.');
 define('_AM_CFG_DESC_FOOTADM', 'Content for the footer of every admin page, if your theme supports this. HTML is allowed.');
 define('_AM_CFG_DESC_SESSION_NAME', 'The name of the session cookie');
@@ -117,4 +116,4 @@ define('_AM_CFG_AIMODEL_NONE_FOUND', 'No models were returned for this key.');
 define('_AM_CFG_AIMODEL_FAILED', 'Could not load the list of models:');
 
 // --- Section help HTML: date/time format reference ---
-define('_AM_CFG_HELP_DATE_TIME_FORMATS', "<details class='formulize-config-help'><summary>Show date/time format codes</summary><div class='formulize-config-help-codes'><b>Year:</b> Y=2026, y=26<br><b>Month:</b> m=06, n=6, M=Jun, F=June<br><b>Day:</b> d=05, j=5, D=Thu, l=Thursday<br><b>Hour:</b> H=14, G=14 (no leading zero), h=02, g=2 (12-hour)<br><b>Minutes:</b> i=05 &nbsp;&nbsp; <b>Seconds:</b> s=09<br><b>AM/PM:</b> a=pm, A=PM</div></details>");
+define('_AM_CFG_HELP_DATE_TIME_FORMATS', "<details class='formulize-config-help'><summary>Show date/time format codes</summary><div class='formulize-config-help-codes'><b>Year:</b> Y=2026, y=26<br><b>Month:</b> m=06, n=6, M=Jun, F=June<br><b>Day:</b> d=05, j=5, D=Thu, l=Thursday<br><b>Hour:</b> H=14, G=14 (no leading zero), h=02, g=2 (12-hour)<br><b>Minutes:</b> i=05 &nbsp;&nbsp; <b>Seconds:</b> s=09<br><b>AM/PM:</b> a=pm, A=PM<br><b>Other text:</b> put \\ before a letter to show the letter itself, ie: H\\hi=14h05</div></details>");

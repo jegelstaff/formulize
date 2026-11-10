@@ -29,6 +29,19 @@ class icms_config_Item_Object extends icms_core_Object {
 	public $_confOptions = array();
 
 	/**
+	 * The settings that are PHP date() formats, and the constant each one is written out as. See icms_config_Item_Handler::insert(),
+	 * which writes them to the file the language files include.
+	 *
+	 * @var array
+	 */
+	public static $dateFormatConstants = array(
+		'datestring'      => '_DATESTRING',
+		'shortdatestring' => '_SHORTDATESTRING',
+		'timeformat12h'   => '_12HTIMEFORMAT',
+		'timeformat24h'   => '_24HTIMEFORMAT',
+	);
+
+	/**
 	 * Constructor
 	 */
 	public function __construct() {
@@ -89,6 +102,10 @@ class icms_config_Item_Object extends icms_core_Object {
 			$value = icms_core_DataFilter::checkVar($value, 'text', 'input');
 		} elseif ($this->getVar('conf_formtype') == 'password') {
 			$value = filter_var($value, FILTER_SANITIZE_URL);
+		} elseif (isset(self::$dateFormatConstants[$this->getVar('conf_name')]) AND !is_array($value)) {
+			// A backslash in a date format makes the next character literal, ie: H\hi for 13h30, so it's kept, where StopXSS would remove it.
+			// Everything else StopXSS removes is removed, and without < and > a format can't make any HTML.
+			$value = str_replace(array('"', '>', '<'), '', strip_tags(preg_replace("/\(\)/si", "", $value)));
 		} else {
 			$value = StopXSS($value);
 		}

@@ -774,8 +774,8 @@ define("_formulize_CAPTION_MATCH", "The caption you entered is already in use. A
 define("_AM_formulize_TIME_DEFAULT_TIME", "Default Time");
 define("_AM_formulize_TIME_DEFAULT_DESC", "Specify the time in 24 hour format, ie: <b>13:25</b><br>Leave blank for no default time. Use {NOW} for the current time, or {NOW+60} for one hour in the future, {NOW-15} for fifteen minutes in the past, etc.<br>You can also use {elementHandle} to reference another element in this form and base the default time on the value saved in that element.");
 define("_AM_formulize_TIME_DISPLAY_FORMAT", "Display Format");
-define("_AM_formulize_TIME_FORMAT_12", "12-hour (e.g. 1:30pm)");
-define("_AM_formulize_TIME_FORMAT_24", "24-hour (e.g. 13:30)");
+define("_AM_formulize_TIME_FORMAT_12", "12-hour (e.g. %s)"); // %s is an example time in the site's 12-hour format, ie: 1:30pm
+define("_AM_formulize_TIME_FORMAT_24", "24-hour (e.g. %s)"); // %s is an example time in the site's 24-hour format, ie: 13:30
 define("_formulize_CAPTION_QUOTES", "Captions cannot have quotes. They have been removed.");
 define("_formulize_CAPTION_SLASH", "Captions cannot have backslashes. They have been removed.");
 define("_formulize_CAPTION_LT", "Captions cannot have < signs. They have been removed.");
@@ -1111,6 +1111,7 @@ define("_AM_FORMULIZE_SEARCH_TYPE_BOX", "Search box - type only");
 define("_AM_FORMULIZE_SEARCH_TYPE_FILTER", "Dropdown list - select value");
 define("_AM_FORMULIZE_SEARCH_TYPE_NEGATIVEFILTER", "Dropdown list - exclude value");
 define("_AM_FORMULIZE_SEARCH_TYPE_DATERANGE", "Date range");
+define("_AM_FORMULIZE_SEARCH_TYPE_TIMERANGE", "Time range");
 define("_AM_FORMULIZE_SEARCH_TYPE_MONTHCURRENTYEAR", "Month selection - current year");
 define("_AM_FORMULIZE_SEARCH_TYPE_MONTHLAST12MONTHS", "Month selection - last 12 months");
 define("_AM_ELE_SEARCHTYPE", "The search interface to use in lists:");
@@ -1118,7 +1119,8 @@ define("_AM_ELE_SEARCHTYPE", "The search interface to use in lists:");
 define("_AM_ELE_SEARCHTYPE_DESC_SEARCHBOX", "<b>Search box - type or pick values:</b> a box to type a search in, plus checkboxes for the entries that match.");
 define("_AM_ELE_SEARCHTYPE_DESC_BOX", "<b>Search box - type only:</b> a box to type a search in, without the list of checkboxes.");
 define("_AM_ELE_SEARCHTYPE_DESC_DROPDOWN", "<b>Dropdown List:</b> a list of all available values, choosing one will show (or hide) entries that match.");
-define("_AM_ELE_SEARCHTYPE_DESC_DATERANGE", "<b>Date Range:</b> options for selecting a range of dates to show.");
+define("_AM_ELE_SEARCHTYPE_DESC_DATERANGE", "<b>Date range:</b> a start and an end date, with shortcuts for today, this month, year, etc.");
+define("_AM_ELE_SEARCHTYPE_DESC_TIMERANGE", "<b>Time range:</b> a start and an end time, with shortcuts for parts of the day and for times around now.");
 define("_AM_ELE_SEARCHTYPE_DESC_MONTH", "<b>Month Selection:</b> a dropdown list of months to show.");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SORT_BY", "Sort by this");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DELETE_COLUMN", "Remove column");

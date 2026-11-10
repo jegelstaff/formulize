@@ -3166,7 +3166,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				} elseif ($delegatedWhereClause = formulize_tryDelegatedSearchWhere($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], $ifParts[1], $operator, $quotes, $likebits, $fid, $elementPrefix, $queryElement)) {
 					$newWhereClause = $delegatedWhereClause;
 					// the other elements that build their own clause are about things stored elsewhere, there's no column of their own in the form to check for blanks
-					$searchIncludesBlanks = ($searchIncludesBlanks AND elementTypeIsOrExtends($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], 'date'));
+					$searchIncludesBlanks = ($searchIncludesBlanks AND (elementTypeIsOrExtends($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], 'date') OR elementTypeIsOrExtends($formFieldFilterMap[$mappedForm][$element_id]['ele_type'], 'time')));
 
 					// HANDLE IN / NOT IN ON A PLAIN ELEMENT
 				} elseif (trim($operator) === 'IN' || trim($operator) === 'NOT IN') {

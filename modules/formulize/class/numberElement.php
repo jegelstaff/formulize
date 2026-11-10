@@ -272,7 +272,12 @@ class formulizeNumberElementHandler extends formulizeTextElementHandler {
 	// $entry_id is the ID of the entry being loaded
 	function loadValue($element, $value, $entry_id) {
 		$ele_value = $element->getVar('ele_value');
-		$ele_value[$this->defaultValueKey] = $ele_value[ELE_VALUE_TEXT_DECIMALS] > 0 ? floatval($value) : intval($value);
+		// nothing saved stays blank, since leaving the box empty isn't the same as typing 0. prepareDataForSaving() saves a blank box as null.
+		if($value === null OR $value === '') {
+			$ele_value[$this->defaultValueKey] = '';
+		} else {
+			$ele_value[$this->defaultValueKey] = $ele_value[ELE_VALUE_TEXT_DECIMALS] > 0 ? floatval($value) : intval($value);
+		}
 		return $ele_value;
 	}
 

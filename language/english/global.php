@@ -177,6 +177,8 @@ if (!defined("_MEDIUMDATESTRING")) define("_MEDIUMDATESTRING", _DATESTRING);
 if (!defined("_DBDATESTRING")) define("_DBDATESTRING","Y-m-d G:i:s");
 if (!defined("_SHORTDATESTRING")) define("_SHORTDATESTRING","Y-m-d"); // ALTERED BY FREEFORM SOLUTIONS FOR BACKWARDS COMPATIBILITY WITH PREVIOUS DATE FORMATS
 if (!defined("_SHORTTIMESTRING")) define("_SHORTTIMESTRING","g:ia");
+if (!defined("_12HTIMEFORMAT")) define("_12HTIMEFORMAT","g:ia"); // times shown by time elements set to 12-hour
+if (!defined("_24HTIMEFORMAT")) define("_24HTIMEFORMAT","H:i"); // times shown by time elements set to 24-hour
 /*
  The following characters are recognized in the format string:
  a - "am" or "pm"

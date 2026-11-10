@@ -1,6 +1,6 @@
-// Popover pickers for the checkbox and date range filters in a list's column search cells.
+// Popover pickers for the checkbox, date range and time range filters in a list's column search cells.
 //
-// buildFilter (with $multi) and formulize_buildDateRangeFilter render these filters as controls that sit in the
+// buildFilter (with $multi), formulize_buildDateRangeFilter and formulize_buildTimeRangeFilter render these filters as controls that sit in the
 // cell, which is what a page gets without this script. This script swaps each one in a column search cell for a
 // button that shows the search in effect, and moves the filter's own controls into a panel that the button opens.
 // The hidden fields that carry the search values, and the handlers that fill them in, are left alone, so the
@@ -43,6 +43,19 @@ window.formulizeFilterPopoverLang = window.formulizeFilterPopoverLang || {
 	daysFromNow: '%s days from now',
 	dec31: 'Dec 31 this year',
 	numberOfDays: 'Number of days',
+	anyTime: 'Any time',
+	fromTime: 'From %s',
+	untilTime: 'Until %s',
+	now: 'Now',
+	minutesAgo: '%s minutes ago',
+	minutesFromNow: '%s minutes from now',
+	numberOfMinutes: 'Number of minutes',
+	morning: 'Morning',
+	afternoon: 'Afternoon',
+	evening: 'Evening',
+	lastHour: 'In the last hour',
+	nextHour: 'In the next hour',
+	wholeRange: 'Parts of the day',
 	typeSearch: 'Type a search term',
 	pickInstead: 'Pick instead of typing',
 	searchLoading: 'Finding matches...',
@@ -52,8 +65,9 @@ window.formulizeFilterPopoverLang = window.formulizeFilterPopoverLang || {
 };
 
 // typeSearch is whether this user may swap a popover for a typed search box (webmasters only); screen names the
-// screen (or form) the choice is remembered for. Both come from interfaceJavascript too.
-window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings || { typeSearch: false, screen: '' };
+// screen (or form) the choice is remembered for; utcOffsetMinutes is how far the person's time zone is from UTC, in
+// their account, so today and now here are the same as {TODAY} and {NOW} in the search. All come from interfaceJavascript too.
+window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings || { typeSearch: false, screen: '', utcOffsetMinutes: null };
 
 (function () {
 
@@ -92,10 +106,15 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 		return date.getFullYear() + '-' + (month.length < 2 ? '0' + month : month) + '-' + (day.length < 2 ? '0' + day : day);
 	}
 
+	// how many minutes the person's time zone is from UTC: the one in their account, which the search uses, or the browser's if the page didn't say
+	function utcOffsetMinutes() {
+		return typeof settings.utcOffsetMinutes === 'number' ? settings.utcOffsetMinutes : -new Date().getTimezoneOffset();
+	}
+
+	// today's date in the person's time zone, at midday, so adding days never trips over a daylight saving change
 	function today() {
-		var date = new Date();
-		date.setHours(12, 0, 0, 0); // midday, so adding days never trips over a daylight saving change
-		return date;
+		var now = new Date(Date.now() + utcOffsetMinutes() * 60000);
+		return new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12, 0, 0, 0);
 	}
 
 	function isoDaysFromToday(days) {
@@ -134,7 +153,7 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 		if(parts.length != 3) { return iso; }
 		var date = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
 		var options = { month: 'short', day: 'numeric' };
-		if(date.getFullYear() != new Date().getFullYear()) { options.year = 'numeric'; }
+		if(date.getFullYear() != today().getFullYear()) { options.year = 'numeric'; }
 		return date.toLocaleDateString(undefined, options);
 	}
 
@@ -624,6 +643,256 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 		return this.start;
 	};
 
+	// --- time ranges -------------------------------------------------------------
+
+	// A time element holds a time of day, with no date, so the shortcuts are about the day and about now. The parts of the day,
+	// and the hour either side of now, set both times. Under the times, the left column sets From and the right column sets To, the
+	// way the date shortcuts do. Now and the counts of minutes go into the search relative to now, like {NOW-30}, so a saved or
+	// reloaded list keeps meaning "the last half hour". A From later than To goes past midnight, ie: 10pm to 2am, which the search
+	// reads as after From or before To (see formulize_timeRangeAcrossMidnight), so unlike dates, the times aren't put in order.
+	var DEFAULT_MINUTES = 60; // an hour, the same as In the last hour and In the next hour, so the boxes keep their number when someone moves between those and these
+	var timePresets = [
+		{ label: lang.morning, from: '00:00', to: '11:59' },
+		{ label: lang.afternoon, from: '12:00', to: '16:59' },
+		{ label: lang.evening, from: '17:00', to: '23:59' },
+		{ label: lang.lastHour, from: '{NOW-60}', to: '{NOW}' },
+		{ label: lang.nextHour, from: '{NOW}', to: '{NOW+60}' }
+	];
+	var timeShortcuts = {
+		from: [
+			{ label: lang.now, term: '{NOW}' },
+			{ count: lang.minutesAgo, term: function (minutes) { return '{NOW-' + minutes + '}'; }, pattern: /^\{NOW-(\d+)\}$/ },
+			{ label: lang.clear, clear: true }
+		],
+		to: [
+			{ label: lang.now, term: '{NOW}' },
+			{ count: lang.minutesFromNow, term: function (minutes) { return '{NOW+' + minutes + '}'; }, pattern: /^\{NOW\+(\d+)\}$/ },
+			{ label: lang.clear, clear: true }
+		]
+	};
+
+	function twoDigits(number) {
+		return (number < 10 ? '0' : '') + number;
+	}
+
+	// a term in a time search is a time, HH:MM, or {NOW} give or take some minutes, which the search works out itself, in the time zone
+	// of the person's account, so now here is the same as now in the search, whatever time zone the browser is in
+	function resolveTime(term) {
+		var relative = /^\{NOW([+-]\d+)?\}$/.exec(term);
+		if(!relative) { return term; }
+		var minutes = utcOffsetMinutes() + (relative[1] ? parseInt(relative[1], 10) : 0);
+		var date = new Date(Date.now() + minutes * 60000);
+		return twoDigits(date.getUTCHours()) + ':' + twoDigits(date.getUTCMinutes());
+	}
+
+	// a time, HH:MM, the way the element shows times, from its PHP date() format, ie: g:ia shows 13:30 as 1:30pm, the same as its list does
+	function readableTime(time, format) {
+		var parts = /^(\d{1,2}):(\d{2})/.exec(time || '');
+		if(!parts) { return time; }
+		var hours = parseInt(parts[1], 10);
+		var minutes = parseInt(parts[2], 10);
+		var hours12 = hours % 12 || 12;
+		var shown = '';
+		format = format || 'H:i';
+		for(var i = 0; i < format.length; i++) {
+			var character = format.charAt(i);
+			switch(character) {
+				case 'H': shown += twoDigits(hours); break;
+				case 'G': shown += hours; break;
+				case 'h': shown += twoDigits(hours12); break;
+				case 'g': shown += hours12; break;
+				case 'i': shown += twoDigits(minutes); break;
+				case 's': shown += '00'; break;
+				case 'a': shown += hours < 12 ? 'am' : 'pm'; break;
+				case 'A': shown += hours < 12 ? 'AM' : 'PM'; break;
+				case '\\': i++; shown += format.charAt(i); break; // a backslash makes the next character literal, as in PHP
+				default: shown += character;
+			}
+		}
+		return shown;
+	}
+
+	function TimeRangePicker(cell, filter, hidden, makePicker) {
+		Picker.call(this, cell, filter, hidden, makePicker);
+		var picker = this;
+		picker.minWidth = 360;
+		picker.format = filter.getAttribute('data-time-format');
+		picker.start = filter.querySelector('input[id^="formulize_timerange_sta_"]');
+		picker.end = filter.querySelector('input[id^="formulize_timerange_end_"]');
+
+		// the hidden field carries the search value, so it stays in the cell, inside the list's form
+		filter.parentNode.insertBefore(picker.hidden, filter);
+		picker.trigger.appendChild(picker.triggerText);
+		picker.trigger.insertAdjacentHTML('beforeend', caretIcon);
+		picker.top.hidden = true;
+		picker.body.appendChild(filter);
+
+		var presets = make('div', 'fz-cluster fz-gap-1 fz-mt-3 formulize-filter-presets');
+		presets.setAttribute('role', 'group');
+		presets.setAttribute('aria-label', lang.wholeRange);
+		picker.presets = timePresets.map(function (preset) {
+			var button = makeButton('fz-btn fz-btn--sm fz-btn--ghost formulize-filter-shortcut', preset.label);
+			button.setAttribute('aria-pressed', 'false');
+			button.addEventListener('click', function () {
+				picker.setTerms({ from: preset.from, to: preset.to });
+				picker.markShortcuts();
+			});
+			presets.appendChild(button);
+			return { preset: preset, element: button };
+		});
+		picker.body.appendChild(presets);
+
+		var columns = make('div', 'formulize-filter-shortcuts');
+		picker.shortcuts = [];
+		['from', 'to'].forEach(function (side) {
+			var column = make('div', 'formulize-filter-shortcut-column');
+			column.setAttribute('role', 'group');
+			column.setAttribute('aria-label', String(lang[side]).replace(/[:\s]+$/, ''));
+			timeShortcuts[side].forEach(function (shortcut) {
+				var item = { side: side, shortcut: shortcut };
+				if(shortcut.count) {
+					// a label styled as a button, holding the box for the number: clicking it, or typing a number, chooses it
+					item.element = make('label', 'fz-btn fz-btn--sm fz-btn--ghost formulize-filter-shortcut formulize-filter-shortcut-count');
+					var words = shortcut.count.split('%s');
+					item.minutes = make('input', 'formulize-filter-days');
+					item.minutes.type = 'number';
+					item.minutes.min = '1';
+					item.minutes.max = '1439';
+					item.minutes.value = DEFAULT_MINUTES;
+					item.minutes.setAttribute('aria-label', lang.numberOfMinutes + ': ' + shortcut.count.replace('%s', '').replace(/\s+/g, ' ').trim());
+					if(words[0].trim()) { item.element.appendChild(make('span', '', words[0].trim())); }
+					item.element.appendChild(item.minutes);
+					if(words[1] && words[1].trim()) { item.element.appendChild(make('span', '', words[1].trim())); }
+					var chooseCount = function () {
+						var count = parseInt(item.minutes.value, 10);
+						if(count > 0) { picker.choose(side, shortcut.term(count)); }
+					};
+					item.element.addEventListener('click', chooseCount);
+					item.minutes.addEventListener('input', chooseCount);
+					item.minutes.addEventListener('keydown', function (event) {
+						if(event.key === 'Enter') { event.preventDefault(); chooseCount(); } // the list's form would submit
+					});
+				} else {
+					item.element = makeButton('fz-btn fz-btn--sm fz-btn--ghost formulize-filter-shortcut', shortcut.label);
+					item.element.setAttribute('aria-pressed', 'false');
+					item.element.addEventListener('click', function () {
+						picker.choose(side, shortcut.clear ? '' : shortcut.term);
+					});
+				}
+				column.appendChild(item.element);
+				picker.shortcuts.push(item);
+			});
+			columns.appendChild(column);
+		});
+		picker.body.appendChild(columns);
+
+		// formulize_buildTimeRangeFilter's script hears changed times on the document, and writes them into the hidden field.
+		// Listening on the window, which hears it last, sees what it wrote.
+		window.addEventListener('change', function (event) {
+			if(event.target === picker.start || event.target === picker.end) { picker.markShortcuts(); }
+		});
+		picker.updateTrigger();
+	}
+	TimeRangePicker.prototype = Object.create(Picker.prototype);
+
+	// the hidden field holds >=from//<=to, or just one of the two
+	TimeRangePicker.prototype.terms = DateRangePicker.prototype.terms;
+
+	// the times are filled in so people can see what the terms mean now. They're set directly, without a change event, so
+	// formulize_buildTimeRangeFilter's script doesn't swap relative terms for the times they stand for.
+	TimeRangePicker.prototype.setTerms = function (terms) {
+		this.hidden.value = (terms.from ? '>=' + terms.from : '') + (terms.from && terms.to ? '//' : '') + (terms.to ? '<=' + terms.to : '');
+		this.start.value = terms.from ? resolveTime(terms.from) : '';
+		this.end.value = terms.to ? resolveTime(terms.to) : '';
+	};
+
+	// a shortcut sets its own side, and leaves the other alone, even if that makes the range go past midnight
+	TimeRangePicker.prototype.choose = function (side, term) {
+		var terms = this.terms();
+		terms[side] = term;
+		this.setTerms(terms);
+		this.markShortcuts();
+	};
+
+	// the time a shortcut stands for now, '' for Clear; a count of minutes uses the number in its box
+	TimeRangePicker.prototype.shortcutTime = function (item) {
+		var shortcut = item.shortcut;
+		if(shortcut.clear) { return ''; }
+		if(item.minutes) { return resolveTime(shortcut.term(parseInt(item.minutes.value, 10) || 0)); }
+		return resolveTime(shortcut.term);
+	};
+
+	// a shortcut is highlighted when the time in its side's box is the time it stands for, and a part of the day when both times are
+	// its times, however they got there, so typing 12:00 and 16:59 lights up Afternoon
+	TimeRangePicker.prototype.markShortcuts = function () {
+		var picker = this;
+		// a count of minutes in the search, like {NOW-60} from In the last hour, goes in its box, so the box says what the search is
+		var terms = this.terms();
+		this.shortcuts.forEach(function (item) {
+			if(!item.minutes) { return; }
+			var count = item.shortcut.pattern.exec(terms[item.side]);
+			if(count) { item.minutes.value = count[1]; }
+		});
+		this.shortcuts.forEach(function (item) {
+			var time = item.side == 'from' ? picker.start.value : picker.end.value;
+			var on = picker.shortcutTime(item) === time;
+			item.element.classList.toggle('formulize-filter-shortcut-active', on);
+			if(!item.minutes) { item.element.setAttribute('aria-pressed', String(on)); }
+		});
+		this.presets.forEach(function (item) {
+			var on = resolveTime(item.preset.from) === picker.start.value && resolveTime(item.preset.to) === picker.end.value;
+			item.element.classList.toggle('formulize-filter-shortcut-active', on);
+			item.element.setAttribute('aria-pressed', String(on));
+		});
+	};
+
+	TimeRangePicker.prototype.updateTrigger = function () {
+		var terms = this.terms();
+		var start = this.start.value;
+		var end = this.end.value;
+		var named = timePresets.filter(function (preset) { return preset.from === terms.from && preset.to === terms.to; });
+		if(!this.hidden.value) {
+			this.setTrigger(lang.anyTime, true, 0);
+		} else if(named.length) {
+			this.setTrigger(named[0].label, false, 0);
+		} else if(start && end) {
+			this.setTrigger(start === end ? readableTime(start, this.format) : readableTime(start, this.format) + ' – ' + readableTime(end, this.format), false, 0);
+		} else if(start) {
+			this.setTrigger(lang.fromTime.replace('%s', readableTime(start, this.format)), false, 0);
+		} else if(end) {
+			this.setTrigger(lang.untilTime.replace('%s', readableTime(end, this.format)), false, 0);
+		} else {
+			this.setTrigger(this.hidden.value, false, 0);
+		}
+	};
+
+	TimeRangePicker.prototype.takeSnapshot = DateRangePicker.prototype.takeSnapshot;
+	TimeRangePicker.prototype.restoreSnapshot = DateRangePicker.prototype.restoreSnapshot;
+
+	// with no time search in effect, the times start at the next hour, ready to Apply or adjust; the snapshot is already taken,
+	// so Cancel still leaves no time search in effect. Relative terms are worked out again, since time has passed since the page loaded.
+	TimeRangePicker.prototype.beforeOpen = function () {
+		var termsInEffect = this.terms();
+		if(!this.hidden.value) {
+			this.setTerms({ from: '{NOW}', to: '{NOW+60}' });
+		} else if(termsInEffect.from || termsInEffect.to) {
+			this.setTerms(termsInEffect);
+		}
+		// a count of minutes in effect, like {NOW-15}, goes back in its box; otherwise the boxes start at the default
+		var terms = this.terms();
+		this.shortcuts.forEach(function (item) {
+			if(!item.minutes) { return; }
+			var count = item.shortcut.pattern.exec(terms[item.side]);
+			item.minutes.value = count ? count[1] : DEFAULT_MINUTES;
+		});
+		this.markShortcuts();
+		this.body.scrollTop = 0;
+	};
+
+	TimeRangePicker.prototype.firstFocus = function () {
+		return this.start;
+	};
+
 	// --- the Search box ---------------------------------------------------------------
 	//
 	// formulize_buildQSSearchBox draws a box to type in, a hidden field, and the filter's own Apply, all of which stay
@@ -1027,6 +1296,10 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 			var dates = cell.querySelector('.formulize-daterange');
 			if(dates && dates.querySelector('.formulize-filter-apply') && dates.querySelector('input[type="hidden"]')) {
 				start(DateRangePicker, cell, dates, dates.querySelector('input[type="hidden"]'));
+			}
+			var times = cell.querySelector('.formulize-timerange');
+			if(times && times.querySelector('.formulize-filter-apply') && times.querySelector('input[type="hidden"]')) {
+				start(TimeRangePicker, cell, times, times.querySelector('input[type="hidden"]'));
 			}
 		});
 	}
