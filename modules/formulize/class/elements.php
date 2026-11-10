@@ -315,8 +315,8 @@ class formulizeElement extends FormulizeObject {
 	/**
 	 * The search interface this element gets in a list, when the list doesn't choose one itself: the one chosen in the
 	 * element's settings, or if none has been chosen (or the one chosen no longer suits the element), a date range for
-	 * elements that hold dates, the simple text box for numbers people type in, since picking from a list of them
-	 * makes little sense, and the Search box for everything else.
+	 * elements that hold dates, the type-only search box for numbers people type in, since picking from a list of them
+	 * makes little sense, and the search box that also picks values for everything else.
 	 * @return string A stored value, as in formulizeHandler::listScreenSearchTypes()
 	 */
 	function listSearchType() {

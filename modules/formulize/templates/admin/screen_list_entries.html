@@ -21,7 +21,7 @@
       <tr>
 	<td><label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_COLUMNS}></label></td>
 	<td><label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_BY}></label></td>
-    <td><label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_TYPE}></label></td>
+    <td><label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_TYPE}></label> <a class="tooltip"><span><{foreach from=$content.advanceviewsearchtypedescriptions item=description name=searchtypedescriptions}><{if !$smarty.foreach.searchtypedescriptions.first}><br><br><{/if}><{$description}><{/foreach}></span></a></td>
 	<td><label><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SORT_BY}></label></td>
 	<td></td>
       </tr>

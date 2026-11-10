@@ -161,17 +161,17 @@ Each column in a list can have one of these searches at the top:
 
  **Search** | **What people can do with it**
 :-----------|:-------------------------------
- Search box | Type a search term, or tick any of the values that match what they type. This is the default.
- Simple text box | Type a search term.
+ Search box - type or pick values | Type a search term, or tick any of the values that match what they type. This is the default.
+ Search box - type only | Type a search term.
  Dropdown list - select value | Choose one of the values in the entries.
  Dropdown list - exclude value | Choose a value to leave out.
  Date range | Choose a from date and a to date. Only for elements that hold dates.
  Month selection - current year | Choose a month of this year. Only for elements that hold dates.
  Month selection - last 12 months | Choose one of the last twelve months. Only for elements that hold dates.
 
-**For an element**, set **How people search this element in lists** on the element's **Settings** tab. That search is used wherever the element appears in a list, unless the list chooses a different one. If you leave it, elements that hold dates get **Date range**, numbers that people type in, like a number box or a slider, get the **Simple text box**, and everything else gets the **Search box**.
+**For an element**, set **How people search this element in lists** on the element's **Settings** tab. That search is used wherever the element appears in a list, unless the list chooses a different one. If you leave it, elements that hold dates get **Date range**, numbers that people type in, like a number box or a slider, get **Search box - type only**, and everything else gets **Search box - type or pick values**.
 
-**For a list screen**, the **Display only these columns** section of the screen's **Entries** tab has a **Search Interface** for each column. When you add a column there, it starts with the element's own search, and you can change it. Columns you haven't listed there, including ones people add with **Change columns**, use the element's own search. Map screens choose the search for each filter the same way, in the **Filter Type** of each filter on their **Map Options** tab.
+**For a list screen**, the **Display only these columns** section of the screen's **Entries** tab has a **Search Interface** for each column. Hover over the help icon beside that heading to see what each one is. When you add a column there, it starts with the element's own search, and you can change it. Columns you haven't listed there, including ones people add with **Change columns**, use the element's own search. Map screens choose the search for each filter the same way, in the **Filter Type** of each filter on their **Map Options** tab.
 
 
 ## Advanced developer-focused search terms

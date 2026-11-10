@@ -70,11 +70,11 @@ test.afterAll(async ({ browser }) => {
 test.describe('The search interface of an element', () => {
 
 	test('Elements offer the search interfaces that suit them, defaulting to the Search box or a date range', async ({ page }) => {
-		const allTypes = ['Search box', 'Simple text box', 'Dropdown list - select value', 'Dropdown list - exclude value', 'Date range', 'Month selection - current year', 'Month selection - last 12 months'];
+		const allTypes = ['Search box - type or pick values', 'Search box - type only', 'Dropdown list - select value', 'Dropdown list - exclude value', 'Date range', 'Month selection - current year', 'Month selection - last 12 months'];
 		await login(page);
 		await page.goto(elementUrl('artifacts_short_name'));
 		await waitForAdminPageReady(page);
-		await expect(searchTypeSetting(page).locator('option:checked')).toHaveText('Search box');
+		await expect(searchTypeSetting(page).locator('option:checked')).toHaveText('Search box - type or pick values');
 		expect(await offeredSearchTypes(page)).toEqual(allTypes.slice(0, 4));
 
 		// a date element no one has chosen a search for
@@ -86,7 +86,7 @@ test.describe('The search interface of an element', () => {
 		// a date element set to be typed into (see 01-setup/010), which still offers the date searches
 		await page.goto(elementUrl('artifacts_date_of_acquisition'));
 		await waitForAdminPageReady(page);
-		await expect(searchTypeSetting(page).locator('option:checked')).toHaveText('Simple text box');
+		await expect(searchTypeSetting(page).locator('option:checked')).toHaveText('Search box - type only');
 		expect(await offeredSearchTypes(page)).toEqual(allTypes);
 	});
 
@@ -105,12 +105,12 @@ test.describe('The search interface of an element', () => {
 		await expect(page.getByRole('heading')).toContainText('Visited on');
 		const dateElementUrl = page.url();
 
-		// a new text box starts on the Search box, and can choose the simple text box
+		// a new text box starts on the search box that also picks values, and can choose the type-only one
 		await page.goto(`/modules/formulize/admin/ui.php?page=element&ele_id=new&fid=${fid}&aid=${aid}&type=text`);
 		await waitForAdminPageReady(page);
-		await expect(searchTypeSetting(page).locator('option:checked')).toHaveText('Search box');
+		await expect(searchTypeSetting(page).locator('option:checked')).toHaveText('Search box - type or pick values');
 		await page.locator('input[name="elements-ele_caption"]').fill('Visitor name');
-		await searchTypeSetting(page).selectOption({ label: 'Simple text box' });
+		await searchTypeSetting(page).selectOption({ label: 'Search box - type only' });
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Visitor name');
 		const textElementUrl = page.url();
@@ -120,7 +120,7 @@ test.describe('The search interface of an element', () => {
 		await expect(searchTypeSetting(page).locator('option:checked')).toHaveText('Month selection - last 12 months');
 		await page.goto(textElementUrl);
 		await waitForAdminPageReady(page);
-		await expect(searchTypeSetting(page).locator('option:checked')).toHaveText('Simple text box');
+		await expect(searchTypeSetting(page).locator('option:checked')).toHaveText('Search box - type only');
 	});
 });
 
@@ -133,6 +133,15 @@ test.describe('Columns on a list screen', () => {
 		await page.getByRole('link', { name: 'Entries', exact: true }).click();
 		const rows = page.locator('table.advanceview tr.advanceviewcol');
 		await expect(rows.first()).toBeVisible();
+
+		// the help beside the Search Interface heading says what each search interface is
+		const help = page.locator('table.advanceview a.tooltip');
+		await help.hover();
+		await expect(help.locator('span')).toBeVisible();
+		await expect(help.locator('span')).toContainText('Search box - type or pick values:');
+		await expect(help.locator('span')).toContainText('Search box - type only:');
+		await expect(help.locator('span')).toContainText('Date Range:');
+
 		const before = await rows.locator('select[name^="search-type"]').evaluateAll(selects => selects.map(select => select.value));
 
 		await page.getByRole('button', { name: 'Add Column' }).click();
@@ -153,7 +162,7 @@ test.describe('Columns on a list screen', () => {
 			await expect(option).toBeEnabled();
 		}
 
-		// an element with a search chosen for it starts on that one: Date of acquisition is set to the simple text box (see 01-setup/010)
+		// an element with a search chosen for it starts on that one: Date of acquisition is set to the type-only search box (see 01-setup/010)
 		await newRow.locator('select[id^="cols-"]').selectOption('artifacts_date_of_acquisition');
 		await expect(searchType).toHaveValue('Box');
 		for (const option of await dateOptions.all()) {

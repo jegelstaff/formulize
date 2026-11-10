@@ -872,7 +872,7 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
   min-width: 0;
 }
 
-/* In a list, the same width as the simple text box (see #listofentries div.main-cell-div input above), which a theme
+/* In a list, the same width as the type-only search box (see #listofentries div.main-cell-div input above), which a theme
    might not give it otherwise, since its box is inside the Search box's own elements (ie: Anari sets inputs nested in
    a cell's divs to width: auto). Themes that size the search row's boxes themselves, as Lyris does, still win. */
 #listofentries div.main-cell-div .formulize-searchbox-input {

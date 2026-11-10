@@ -1055,7 +1055,7 @@ define("_AM_FORMULIZE_SCREEN_LOE_TEMPLATEINTRO2", "<span style=\"font-weight: no
 </table>
 <p>Formulize provides 'Quick Search Boxes' and 'Quick Search Filters', as variables, that you can include however you want in your Top Templates.</p>\n
 <ul>
-<li>Use quickSearchBox_<i>handle</i> for a simple text box, ie: \$quickSearchBox_profile_dept</li>
+<li>Use quickSearchBox_<i>handle</i> for a box to type a search in, ie: \$quickSearchBox_profile_dept</li>
 <li>Use quickSearchFilter_<i>handle</i> for a dropdown filter, ie: \$quickSearchFilter_profile_dept</li>
 <li>Use quickSearchNegativeFilter_<i>handle</i> for a dropdown filter that excludes values, ie: \$quickSearchNegativeFilter_profile_dept</li>
 <li>Use quickSearchMultiFilter_<i>handle</i> for a search box where the user can type a search term, or pick any number of the values that match it, ie: \$quickSearchMultiFilter_profile_dept</li>
@@ -1102,20 +1102,20 @@ define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_COLUMNS", "Column");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_BY", "Search by this");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SEARCH_TYPE", "Search Interface");
 // the search interfaces a column in a list or map screen can have, also offered as the default for each element
-define("_AM_FORMULIZE_SEARCH_TYPE_SEARCHBOX", "Search box");
-define("_AM_FORMULIZE_SEARCH_TYPE_BOX", "Simple text box");
+define("_AM_FORMULIZE_SEARCH_TYPE_SEARCHBOX", "Search box - type or pick values");
+define("_AM_FORMULIZE_SEARCH_TYPE_BOX", "Search box - type only");
 define("_AM_FORMULIZE_SEARCH_TYPE_FILTER", "Dropdown list - select value");
 define("_AM_FORMULIZE_SEARCH_TYPE_NEGATIVEFILTER", "Dropdown list - exclude value");
 define("_AM_FORMULIZE_SEARCH_TYPE_DATERANGE", "Date range");
 define("_AM_FORMULIZE_SEARCH_TYPE_MONTHCURRENTYEAR", "Month selection - current year");
 define("_AM_FORMULIZE_SEARCH_TYPE_MONTHLAST12MONTHS", "Month selection - last 12 months");
 define("_AM_ELE_SEARCHTYPE", "The search interface to use in lists:");
-// what each search interface is, shown for the ones an element can have; the two dropdowns, and the two month selections, share one
-define("_AM_ELE_SEARCHTYPE_DESC_SEARCHBOX", "Search Box: a list of checkboxes for available options, plus a box to type in to filter the options or write your own search.");
-define("_AM_ELE_SEARCHTYPE_DESC_BOX", "Simple Text Box: a box to type in to write your own search.");
-define("_AM_ELE_SEARCHTYPE_DESC_DROPDOWN", "Dropdown List: a list of all available values, choosing one will show (or hide) entries that match.");
-define("_AM_ELE_SEARCHTYPE_DESC_DATERANGE", "Date Range - options for selecting a range of dates to show.");
-define("_AM_ELE_SEARCHTYPE_DESC_MONTH", "Month Selection - a dropdown list of months to show");
+// what each search interface is, shown for the ones an element can have, and in the help beside the choice on list and map screens; the two dropdowns, and the two month selections, share one
+define("_AM_ELE_SEARCHTYPE_DESC_SEARCHBOX", "<b>Search box - type or pick values:</b> a box to type a search in, plus checkboxes for the entries that match.");
+define("_AM_ELE_SEARCHTYPE_DESC_BOX", "<b>Search box - type only:</b> a box to type a search in, without the list of checkboxes.");
+define("_AM_ELE_SEARCHTYPE_DESC_DROPDOWN", "<b>Dropdown List:</b> a list of all available values, choosing one will show (or hide) entries that match.");
+define("_AM_ELE_SEARCHTYPE_DESC_DATERANGE", "<b>Date Range:</b> options for selecting a range of dates to show.");
+define("_AM_ELE_SEARCHTYPE_DESC_MONTH", "<b>Month Selection:</b> a dropdown list of months to show.");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SORT_BY", "Sort by this");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DELETE_COLUMN", "Remove column");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DESCRIPTION", "If you add columns here this will become the default view. The 'search by this' and 'sort by this' are optional fields");

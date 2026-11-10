@@ -60,7 +60,7 @@
       <tr>
         <td><label><{$smarty.const._AM_MAP_COLUMN_HEADING}></label></td>
         <td><label><{$smarty.const._AM_MAP_DEFAULT_SEARCH_TERM_HEADING}></label></td>
-        <td><label><{$smarty.const._AM_MAP_FILTER_TYPE_HEADING}></label></td>
+        <td><label><{$smarty.const._AM_MAP_FILTER_TYPE_HEADING}></label> <a class="tooltip"><span><{foreach from=$content.columnsearchtypedescriptions item=description name=searchtypedescriptions}><{if !$smarty.foreach.searchtypedescriptions.first}><br><br><{/if}><{$description}><{/foreach}></span></a></td>
         <td></td>
       </tr>
       <{if $content.columns|is_array AND $content.columns|@count > 0}>

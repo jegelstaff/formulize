@@ -2596,7 +2596,7 @@ function formulize_buildQSFilterMulti($handle, $search_text, $fid=0, $submitScri
 /**
  * THIS FUNCTION CREATES THE HTML FOR A SEARCH BOX
  *
- * A box to type a search term into, which searches the column the way the simple text box does, with everything the
+ * A box to type a search term into, which searches the column the way the type-only search box does, with everything the
  * search parser understands (=Jim, Big AND Small, {TODAY} and so on). As someone types, filterpopovers.js shows the
  * values that match, fetched from formulize_xhr_responder.php, and any number of them can be picked instead. Picked
  * values replace the typed term as the search, written as one set of OR'd conditions, ORSET<n>:, the way the checkbox
@@ -2688,8 +2688,8 @@ function formulize_buildQSSearchBox($handle, $search_text, $fid=0, $submitScript
 	foreach($attributes as $name=>$value) {
 		$attributeMarkup .= " $name=\"".htmlspecialchars((string) $value)."\"";
 	}
-	// The box people type in carries the search under the column's name, search_<handle>, the same as a simple text
-	// box, so it works as one even without filterpopovers.js. It is the same kind of input as the simple text box,
+	// The box people type in carries the search under the column's name, search_<handle>, the same as the type-only
+	// search box, so it works as one even without filterpopovers.js. It is the same kind of input as that box,
 	// with no class of its own to style it, so each theme draws it the way it draws that box. When values are picked, the hidden field carries them
 	// under that name instead, and the box has none, so what is typed then only narrows the values to pick from.
 	$fieldName = 'search_'.htmlspecialchars($handle);
