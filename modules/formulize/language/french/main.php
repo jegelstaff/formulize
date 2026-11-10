@@ -733,6 +733,12 @@ define("_formulize_FILTERPOP_TYPE_SEARCH", "Saisir un terme de recherche");
 define("_formulize_FILTERPOP_PICK_INSTEAD", "Choisir plutôt que saisir");
 define("_formulize_FILTERPOP_FROM_DATE", "À partir du %s");
 define("_formulize_FILTERPOP_UNTIL_DATE", "Jusqu'au %s");
+// la boîte de recherche en haut d'une colonne : taper un terme de recherche, ou choisir parmi les valeurs qui y correspondent
+define("_formulize_SEARCHBOX_LABEL", "Rechercher dans %s");
+define("_formulize_SEARCHBOX_LOADING", "Recherche des correspondances...");
+define("_formulize_SEARCHBOX_MORE", "Les %s premières sont affichées. Tapez davantage pour réduire la liste.");
+define("_formulize_SEARCHBOX_CLEAR", "Effacer les valeurs choisies");
+define("_formulize_SEARCHBOX_ERROR", "Les valeurs n'ont pas pu être trouvées. Vous pouvez quand même rechercher ce que vous avez tapé.");
 
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';

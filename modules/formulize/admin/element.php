@@ -274,6 +274,9 @@ if($searchTypeElement AND $searchTypeElement->hasData) {
     $searchTypeLabels = formulizeHandler::listScreenSearchTypeLabels();
     $names['searchtypeoptions'] = array_intersect_key($searchTypeLabels, array_flip($searchTypeElement->allowedListSearchTypes()));
     $names['searchtype'] = $searchTypeElement->listSearchType();
+    // what the offered choices are, each described once, in the order they're offered
+    $searchTypeDescriptions = formulizeHandler::listScreenSearchTypeDescriptions();
+    $names['searchtypedescriptions'] = array_values(array_unique(array_intersect_key($searchTypeDescriptions, $names['searchtypeoptions'])));
 }
 
 // common values should be assigned to all tabs

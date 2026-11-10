@@ -1109,8 +1109,13 @@ define("_AM_FORMULIZE_SEARCH_TYPE_NEGATIVEFILTER", "Dropdown list - exclude valu
 define("_AM_FORMULIZE_SEARCH_TYPE_DATERANGE", "Date range");
 define("_AM_FORMULIZE_SEARCH_TYPE_MONTHCURRENTYEAR", "Month selection - current year");
 define("_AM_FORMULIZE_SEARCH_TYPE_MONTHLAST12MONTHS", "Month selection - last 12 months");
-define("_AM_ELE_SEARCHTYPE", "How people search this element in lists:");
-define("_AM_ELE_SEARCHTYPE_DESC", "The search interface at the top of this element's column, whenever it appears in a list. A list screen can still choose a different one for its own columns. The Search box lets people type a search term, or pick from the values that match what they type. Date range and the month selections are only available for elements that hold dates.");
+define("_AM_ELE_SEARCHTYPE", "The search interface to use in lists:");
+// what each search interface is, shown for the ones an element can have; the two dropdowns, and the two month selections, share one
+define("_AM_ELE_SEARCHTYPE_DESC_SEARCHBOX", "Search Box: a list of checkboxes for available options, plus a box to type in to filter the options or write your own search.");
+define("_AM_ELE_SEARCHTYPE_DESC_BOX", "Simple Text Box: a box to type in to write your own search.");
+define("_AM_ELE_SEARCHTYPE_DESC_DROPDOWN", "Dropdown List: a list of all available values, choosing one will show (or hide) entries that match.");
+define("_AM_ELE_SEARCHTYPE_DESC_DATERANGE", "Date Range - options for selecting a range of dates to show.");
+define("_AM_ELE_SEARCHTYPE_DESC_MONTH", "Month Selection - a dropdown list of months to show");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_SORT_BY", "Sort by this");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DELETE_COLUMN", "Remove column");
 define("_AM_FORMULIZE_SCREEN_LOE_ADVANCE_VIEW_DESCRIPTION", "If you add columns here this will become the default view. The 'search by this' and 'sort by this' are optional fields");

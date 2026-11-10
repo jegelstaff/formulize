@@ -99,7 +99,9 @@
 				<{html_options options=$content.searchtypeoptions selected=$content.searchtype}>
 			</select>
 			<div class="description">
-				<p><{$smarty.const._AM_ELE_SEARCHTYPE_DESC}></p>
+				<{foreach from=$content.searchtypedescriptions item=description}>
+				<p><{$description}></p>
+				<{/foreach}>
 			</div>
 		</fieldset>
 	</div>

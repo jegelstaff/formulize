@@ -1183,6 +1183,23 @@ class formulizeHandler {
 	}
 
 	/**
+	 * What each search type is, for the help beside the choice. The two dropdowns share one description, and so do the
+	 * two month selections.
+	 * @return array storedValue => description
+	 */
+	public static function listScreenSearchTypeDescriptions() {
+		return array(
+			'MultiFilter' => _AM_ELE_SEARCHTYPE_DESC_SEARCHBOX,
+			'Box' => _AM_ELE_SEARCHTYPE_DESC_BOX,
+			'Filter' => _AM_ELE_SEARCHTYPE_DESC_DROPDOWN,
+			'NegativeFilter' => _AM_ELE_SEARCHTYPE_DESC_DROPDOWN,
+			'DateRange' => _AM_ELE_SEARCHTYPE_DESC_DATERANGE,
+			'MonthCurrentYear' => _AM_ELE_SEARCHTYPE_DESC_MONTH,
+			'MonthLast12Months' => _AM_ELE_SEARCHTYPE_DESC_MONTH
+		);
+	}
+
+	/**
 	 * The search types that only work on a column that holds dates. They draw nothing on any other column.
 	 * @return array Stored values
 	 */
