@@ -44,7 +44,11 @@ window.formulizeFilterPopoverLang = window.formulizeFilterPopoverLang || {
 	dec31: 'Dec 31 this year',
 	numberOfDays: 'Number of days',
 	typeSearch: 'Type a search term',
-	pickInstead: 'Pick instead of typing'
+	pickInstead: 'Pick instead of typing',
+	searchLoading: 'Finding matches...',
+	searchMore: 'Showing the first %s. Type more to narrow them down.',
+	searchClear: 'Clear the values picked',
+	searchError: 'The values could not be found. You can still search for what you typed.'
 };
 
 // typeSearch is whether this user may swap a popover for a typed search box (webmasters only); screen names the
@@ -620,6 +624,384 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 		return this.start;
 	};
 
+	// --- the Search box ---------------------------------------------------------------
+	//
+	// formulize_buildQSSearchBox draws a box to type in, a hidden field, and the filter's own Apply, all of which stay
+	// where they are, inside the page's form. Typing searches the way any search box does: the box is named for the
+	// column, search_<handle>, so what is typed is the search, and Enter submits it. Opening the box shows a panel of
+	// the column's values, which came with the page, and ticking any of them makes those values the search instead,
+	// as a set of OR'd conditions (ORSET<n>:=value//), the same as the checkbox filters write. The hidden field then
+	// carries them under the column's name, and the box has no name, so the typed text only narrows the list. The
+	// values picked show as a badge inside the box.
+	//
+	// Typing narrows the list to the values that match. When the page brought every value, that happens here; when the
+	// column has more than the page brought, the ones that match are fetched. If nothing matches, the list stays as it
+	// was. Show all, at the top, clears every search on the column, typed or picked, and Show Blanks is always there too.
+	//
+	// The panel is a manual popover, not an auto one, because typing in the box would otherwise close it: the box is
+	// outside the panel. So this closes it itself, when something else on the page is clicked or Esc is pressed, and
+	// either of those puts back the values that were picked when it opened, the way Cancel does. What was typed stays,
+	// as it does in any search box, so someone can type a search and then sort a column, or type in the next box.
+
+	function jsonAttribute(root, name, fallback) {
+		try { return JSON.parse(root.getAttribute(name) || '') || fallback; } catch (e) { return fallback; }
+	}
+
+	function SearchBox(root) {
+		var box = this;
+		box.root = root;
+		box.hidden = root.querySelector('.formulize-searchbox-value');
+		box.input = root.querySelector('.formulize-searchbox-input');
+		box.ownApply = root.querySelector('.formulize-filter-apply');
+		box.url = root.getAttribute('data-options-url');
+		box.orset = root.getAttribute('data-orset');
+		box.operator = root.getAttribute('data-operator');
+		box.allLabel = root.getAttribute('data-all-label');
+		box.blankLabel = root.getAttribute('data-blank-label');
+		box.name = root.getAttribute('data-name');
+		box.limit = parseInt(root.getAttribute('data-limit'), 10) || 0;
+		box.picked = jsonAttribute(root, 'data-picked', []);
+		box.initialOptions = jsonAttribute(root, 'data-options', []);
+		box.initialMore = root.getAttribute('data-more') === '1';
+		box.found = box.initialOptions;
+		box.initial = box.search();
+		box.request = 0;
+		box.isOpen = false;
+		box.ignoreFocus = false;
+
+		var cell = root.closest('td[id^="celladdress_1_"]');
+		var name = cell ? columnName(cell) : '';
+		if(name) { box.input.setAttribute('aria-label', box.input.getAttribute('aria-label') || name); }
+
+		// the box, with the values picked shown as a badge inside it, and a button on the badge to clear them
+		box.field = make('div', 'formulize-searchbox-field');
+		box.input.parentNode.insertBefore(box.field, box.input);
+		box.field.appendChild(box.input);
+		box.pickedBadge = make('span', 'fz-badge fz-badge--accent fz-badge--plain formulize-searchbox-picked');
+		box.pickedText = make('span', 'formulize-searchbox-picked-text');
+		// a span, not a button: themes style buttons, ie: Lyris draws them the full height of a field, which a small x
+		// on a badge mustn't be. It takes the focus, and Enter and Space, the way a button does.
+		var clear = make('span', 'formulize-searchbox-clear', '×');
+		clear.setAttribute('role', 'button');
+		clear.setAttribute('tabindex', '0');
+		clear.title = lang.searchClear;
+		clear.setAttribute('aria-label', lang.searchClear);
+		var clearPicked = function () {
+			box.picked = [];
+			box.writeSearch();
+			box.apply();
+		};
+		clear.addEventListener('click', clearPicked);
+		clear.addEventListener('keydown', function (event) {
+			if(event.key === 'Enter' || event.key === ' ') {
+				event.preventDefault();
+				clearPicked();
+			}
+		});
+		box.pickedBadge.appendChild(box.pickedText);
+		box.pickedBadge.appendChild(clear);
+		// the badge is over the box, so clicking it is clicking the box
+		box.pickedText.addEventListener('click', function () { box.input.focus(); box.open(); });
+		box.field.appendChild(box.pickedBadge);
+
+		// the panel of values, on the body so the list's scrolling can't clip it
+		box.panel = make('div', 'fz-popover fz-popover--panel formulize-filter-panel formulize-searchbox-panel');
+		box.panel.id = 'formulize-filter-panel-' + (++panelCounter);
+		box.panel.setAttribute('popover', 'manual');
+		box.panel.setAttribute('role', 'dialog');
+		if(name) { box.panel.setAttribute('aria-label', name); }
+		var anchor = '--formulize-filter-' + panelCounter;
+		box.field.setAttribute('style', 'anchor-name: ' + anchor);
+		box.panel.setAttribute('style', 'position-anchor: ' + anchor);
+		box.input.setAttribute('aria-controls', box.panel.id);
+		box.input.setAttribute('aria-expanded', 'false');
+		var body = make('div', 'fz-popover__body formulize-filter-panel-body');
+		box.list = make('div', 'formulize-searchbox-options');
+		box.status = make('p', 'formulize-searchbox-status');
+		box.status.setAttribute('aria-live', 'polite');
+		body.appendChild(box.list);
+		body.appendChild(box.status);
+		var foot = make('div', 'fz-popover__foot formulize-filter-panel-foot');
+		var cancelButton = makeButton('fz-btn fz-btn--sm formulize-filter-cancel', lang.cancel);
+		var applyButton = makeButton('fz-btn fz-btn--sm fz-btn--primary formulize-filter-panel-apply', lang.apply);
+		foot.appendChild(make('span', 'formulize-filter-spacer'));
+		foot.appendChild(cancelButton);
+		foot.appendChild(applyButton);
+		box.panel.appendChild(body);
+		box.panel.appendChild(foot);
+		document.body.appendChild(box.panel);
+		cancelButton.addEventListener('click', function () { box.cancel(); });
+		applyButton.addEventListener('click', function () { box.apply(); });
+
+		box.input.addEventListener('focus', function () {
+			if(box.ignoreFocus) { box.ignoreFocus = false; return; } // focus coming back after the panel closed
+			box.open();
+		});
+		box.input.addEventListener('click', function () { box.open(); });
+		box.input.addEventListener('input', function () {
+			box.open();
+			box.writeSearch();
+			box.narrow();
+		});
+		box.input.addEventListener('keydown', function (event) {
+			if(event.key === 'Enter') {
+				event.preventDefault(); // submitted the way the filter's own Apply does, so the list shows it's working
+				box.apply(true);
+			} else if(event.key === 'Escape' && box.isOpen) {
+				event.preventDefault();
+				box.close(true);
+			} else if(event.key === 'ArrowDown' && box.isOpen) {
+				var first = box.list.querySelector('input');
+				if(first) { event.preventDefault(); first.focus(); }
+			}
+		});
+		box.panel.addEventListener('keydown', function (event) {
+			if(event.key === 'Escape') {
+				event.preventDefault();
+				box.cancel();
+			}
+		});
+		// clicking anything else on the page puts the search back, as an auto popover would
+		document.addEventListener('mousedown', function (event) {
+			if(box.isOpen && !root.contains(event.target) && !box.panel.contains(event.target)) {
+				box.close(true);
+			}
+		}, true);
+		window.addEventListener('resize', function () { box.fitBadge(); });
+		// the list may not be laid out yet, so the box's width is taken when the page has finished loading
+		if(document.readyState === 'complete') {
+			box.fitBadge();
+		} else {
+			window.addEventListener('load', function () { box.fitBadge(); });
+		}
+
+		box.updatePicked();
+	}
+
+	SearchBox.prototype.takeSnapshot = function () {
+		return { picked: this.picked.slice(), typed: this.input.value };
+	};
+
+	// The picked values go back the way they were. If there are some, what was typed was only narrowing the list of them,
+	// so it goes. If there are none, what was typed is the search, and stays, unless Show all cleared it, which is undone.
+	SearchBox.prototype.restoreSnapshot = function (snapshot) {
+		this.picked = snapshot.picked.slice();
+		if(this.picked.length) {
+			this.input.value = '';
+		} else if(this.input.value === '' && snapshot.typed !== '') {
+			this.input.value = snapshot.typed;
+		}
+		this.writeSearch();
+	};
+
+	SearchBox.prototype.open = function () {
+		if(this.isOpen) { return; }
+		this.snapshot = this.takeSnapshot();
+		this.isOpen = true;
+		this.panel.style.minWidth = Math.min(Math.max(this.field.getBoundingClientRect().width, 288), document.documentElement.clientWidth - 16) + 'px';
+		this.panel.querySelectorAll('button').forEach(function (button) { button.disabled = false; });
+		this.panel.showPopover();
+		this.input.setAttribute('aria-expanded', 'true');
+		this.fitBadge();
+		this.narrow();
+	};
+
+	SearchBox.prototype.close = function (restore) {
+		if(restore && this.snapshot) { this.restoreSnapshot(this.snapshot); }
+		this.isOpen = false;
+		clearTimeout(this.fetchTimer);
+		this.request++; // an answer still on its way is for a panel that's gone
+		if(this.panel.matches(':popover-open')) { this.panel.hidePopover(); }
+		this.input.setAttribute('aria-expanded', 'false');
+		this.updatePicked();
+	};
+
+	// Cancel and Esc put things back and return to the box, without opening the panel again
+	SearchBox.prototype.cancel = function () {
+		this.close(true);
+		this.ignoreFocus = true;
+		this.input.focus();
+		if(document.activeElement !== this.input) { this.ignoreFocus = false; }
+	};
+
+	// the picked values are the search when there are any; otherwise what has been typed is
+	SearchBox.prototype.search = function () {
+		var box = this;
+		if(!box.picked.length) {
+			return box.input.value.trim();
+		}
+		// a value marked contains is matched as contained in the field, so it gets no equals sign
+		return box.picked.map(function (option) {
+			var operator = option.value === '{BLANK}' ? '=' : (option.contains ? '' : box.operator);
+			return box.orset + operator + option.value + '//';
+		}).join('');
+	};
+
+	// whichever field holds the search gets the column's name, so it is the one the page's form submits
+	SearchBox.prototype.writeSearch = function () {
+		if(this.picked.length) {
+			this.hidden.value = this.search();
+			this.hidden.setAttribute('name', this.name);
+			this.input.removeAttribute('name');
+		} else {
+			this.hidden.value = '';
+			this.hidden.removeAttribute('name');
+			this.input.setAttribute('name', this.name);
+		}
+		this.updatePicked();
+		if(this.allTick) { this.allTick.checked = this.search() === ''; }
+	};
+
+	// Enter and Apply both submit the search, the same way the filter's own Apply always has. Enter always submits, as
+	// it does in any search box, since searches typed into other columns go with it. Apply has nothing to do if this
+	// column's search is the one the page has already. Either way the panel goes, so the list can show it's working.
+	SearchBox.prototype.apply = function (always) {
+		this.writeSearch();
+		if(!always && this.search() === this.initial) {
+			this.close(false);
+			return;
+		}
+		this.isOpen = false;
+		clearTimeout(this.fetchTimer);
+		if(this.panel.matches(':popover-open')) { this.panel.hidePopover(); }
+		this.input.setAttribute('aria-expanded', 'false');
+		this.ownApply.click();
+	};
+
+	SearchBox.prototype.updatePicked = function () {
+		var names = this.picked.map(function (option) { return option.label; });
+		this.pickedBadge.hidden = names.length === 0;
+		// the box's placeholder invites a search, so it goes while the picked values are the search
+		if(this.placeholder === undefined) { this.placeholder = this.input.getAttribute('placeholder'); }
+		if(this.placeholder !== null) {
+			this.input.setAttribute('placeholder', names.length ? '' : this.placeholder);
+		}
+		if(names.length) {
+			this.pickedText.textContent = names[0] + (names.length > 1 ? ' +' + (names.length - 1) : '');
+			this.pickedBadge.title = names.join(', ');
+		}
+		this.fitBadge();
+	};
+
+	// The box's text starts after the badge, so what is typed is never under it. That's done with text-indent, not
+	// padding, because padding is part of the box's size: a table sharing out its columns would count it, and the
+	// column would change width as values were picked. A list's search row can start out hidden, with no badge to
+	// measure yet, so loading the page and opening the box fit it too.
+	SearchBox.prototype.fitBadge = function () {
+		if(this.pickedBadge.hidden) {
+			this.input.style.textIndent = '';
+			return;
+		}
+		if(this.pickedBadge.offsetWidth) {
+			this.input.style.textIndent = (this.pickedBadge.offsetWidth + 4) + 'px';
+			// in line with where the box's text goes, which a theme might put lower than the middle, ie: Anari
+			var style = getComputedStyle(this.input);
+			var textTop = this.input.offsetTop + (parseFloat(style.borderTopWidth) || 0) + (parseFloat(style.paddingTop) || 0);
+			var textHeight = this.input.clientHeight - (parseFloat(style.paddingTop) || 0) - (parseFloat(style.paddingBottom) || 0);
+			this.pickedBadge.style.top = Math.round(textTop + (textHeight - this.pickedBadge.offsetHeight) / 2) + 'px';
+			this.pickedBadge.style.transform = 'none';
+		}
+	};
+
+	SearchBox.prototype.isPicked = function (value) {
+		return this.picked.some(function (option) { return option.value === value; });
+	};
+
+	// The values to show for what has been typed. With nothing typed, the ones the page brought. When the page brought
+	// every value, the ones among them that match; otherwise the ones that match are fetched. If nothing matches, the
+	// list stays as it was.
+	SearchBox.prototype.narrow = function () {
+		var box = this;
+		var term = box.input.value.trim().toLowerCase();
+		clearTimeout(box.fetchTimer);
+		box.request++;
+		if(!term) {
+			box.found = box.initialOptions;
+			box.render(box.initialMore);
+		} else if(!box.initialMore) {
+			var matches = box.initialOptions.filter(function (option) { return option.label.toLowerCase().indexOf(term) != -1; });
+			box.found = matches.length ? matches : box.initialOptions;
+			box.render(false);
+		} else {
+			box.fetchTimer = setTimeout(function () { box.fetch(); }, 250);
+		}
+	};
+
+	// Show all and Show Blanks first, then the picked values, so the current choice is in view, then the rest
+	SearchBox.prototype.render = function (more) {
+		var box = this;
+		box.list.textContent = '';
+		box.allTick = box.addChoice(box.allLabel, box.search() === '', function (tick) {
+			if(!tick.checked) { tick.checked = true; return; } // it's on until something else is chosen
+			box.picked = [];
+			box.input.value = '';
+			box.writeSearch();
+			box.list.querySelectorAll('input.formulize-searchbox-value-tick').forEach(function (other) { other.checked = false; });
+		});
+		var shown = [{ value: '{BLANK}', label: box.blankLabel }];
+		box.picked.forEach(function (option) {
+			if(option.value !== '{BLANK}') { shown.push(option); }
+		});
+		box.found.forEach(function (option) {
+			if(!box.isPicked(option.value) && option.value !== '{BLANK}') { shown.push(option); }
+		});
+		shown.forEach(function (option) {
+			box.addChoice(option.label, box.isPicked(option.value), function (tick) {
+				if(tick.checked) {
+					if(!box.isPicked(option.value)) { box.picked.push(option); }
+				} else {
+					box.picked = box.picked.filter(function (picked) { return picked.value !== option.value; });
+				}
+				box.writeSearch();
+			}).classList.add('formulize-searchbox-value-tick');
+		});
+		box.setStatus(more && box.limit ? lang.searchMore.replace('%s', box.limit) : '');
+	};
+
+	SearchBox.prototype.addChoice = function (label, checked, onChange) {
+		var box = this;
+		var choice = make('label', 'fz-choice');
+		var tick = document.createElement('input');
+		tick.type = 'checkbox';
+		tick.className = 'fz-checkbox';
+		tick.checked = checked;
+		tick.addEventListener('change', function () { onChange(tick); });
+		tick.addEventListener('keydown', function (event) {
+			if(event.key === 'Enter') { event.preventDefault(); box.apply(true); }
+		});
+		choice.appendChild(tick);
+		choice.appendChild(make('span', '', label));
+		box.list.appendChild(choice);
+		return tick;
+	};
+
+	SearchBox.prototype.setStatus = function (text) {
+		this.status.textContent = text || '';
+		this.status.hidden = !text;
+	};
+
+	// only the answer to the latest request is shown, since they can come back out of order
+	SearchBox.prototype.fetch = function () {
+		var box = this;
+		var thisRequest = ++box.request;
+		var term = box.input.value.trim();
+		box.setStatus(lang.searchLoading);
+		window.fetch(box.url + '&term=' + encodeURIComponent(term), { credentials: 'same-origin' })
+			.then(function (response) { if(!response.ok) { throw new Error(response.status); } return response.json(); })
+			.then(function (result) {
+				if(thisRequest !== box.request) { return; }
+				var options = result.options || [];
+				box.found = options.length ? options : box.initialOptions;
+				box.render(options.length ? result.more : box.initialMore);
+			})
+			.catch(function () {
+				if(thisRequest !== box.request) { return; }
+				box.found = box.initialOptions;
+				box.render(box.initialMore);
+				box.setStatus(lang.searchError);
+			});
+	};
+
 	// --- wiring ------------------------------------------------------------------
 
 	// a picker for the filter, or the typed search box if a webmaster chose that here last time
@@ -633,6 +1015,10 @@ window.formulizeFilterPopoverSettings = window.formulizeFilterPopoverSettings ||
 	}
 
 	function init() {
+		// a Search box works wherever it is, in a column's search cell or in a template, since its box never moves
+		Array.prototype.forEach.call(document.querySelectorAll('.formulize-searchbox'), function (root) {
+			if(!root.formulizeSearchBox) { root.formulizeSearchBox = new SearchBox(root); }
+		});
 		var cells = document.querySelectorAll('#listofentries td[id^="celladdress_1_"]');
 		Array.prototype.forEach.call(cells, function (cell) {
 			// buildFilter puts the checkboxes' hidden ORSET field just before them

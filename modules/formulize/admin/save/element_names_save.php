@@ -85,6 +85,19 @@ if(!$isNew
 	$_POST['reload_names_page'] = 1;
 }
 
+// only a search interface this element can have is kept; anything else leaves the setting as it was. A new element
+// isn't an object of its own type yet, so ask one of those which interfaces suit it.
+if(isset($processedValues['elements']['ele_searchtype'])) {
+	$searchTypeElement = $element;
+	if($isNew AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".basename($ele_type)."Element.php")
+		AND $typeHandler = xoops_getmodulehandler(basename($ele_type)."Element", 'formulize')) {
+		$searchTypeElement = $typeHandler->create();
+	}
+	if(!in_array($processedValues['elements']['ele_searchtype'], $searchTypeElement->allowedListSearchTypes(), true)) {
+		unset($processedValues['elements']['ele_searchtype']);
+	}
+}
+
 foreach ($processedValues['elements'] as $property => $element_handle_name) {
 	$element->setVar($property, $element_handle_name);
 }

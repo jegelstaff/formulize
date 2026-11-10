@@ -855,6 +855,96 @@ form#formulize td.even textarea, form#formulize td.odd textarea {
   color: var(--fz-color-text-muted, #5b6068);
 }
 
+/* The Search box (formulize_buildQSSearchBox and SearchBox in filterpopovers.js): a box to type in, which stays where
+   it is, with the values picked shown as a badge inside it, at its start. The values to pick from open in a panel,
+   which uses the rules above. */
+.formulize-searchbox {
+  min-width: 0;
+}
+
+.formulize-searchbox-field {
+  position: relative;
+  min-width: 0;
+}
+
+.formulize-searchbox .formulize-searchbox-input {
+  width: 100%;
+  min-width: 0;
+}
+
+/* In a list, the same width as the type-only search box (see #listofentries div.main-cell-div input above), which a theme
+   might not give it otherwise, since its box is inside the Search box's own elements (ie: Anari sets inputs nested in
+   a cell's divs to width: auto). Themes that size the search row's boxes themselves, as Lyris does, still win. */
+#listofentries div.main-cell-div .formulize-searchbox-input {
+  width: 80%;
+}
+
+.formulize-searchbox-picked {
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 0.35em;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  max-width: calc(100% - 2.5em);
+  cursor: pointer;
+}
+
+.formulize-searchbox-picked[hidden] {
+  display: none;
+}
+
+.formulize-searchbox-picked-text {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* the x on the badge, which clears the values picked. A span with the role of a button (see SearchBox in
+   filterpopovers.js), since themes style buttons, so it's only ever the size of its own character. */
+.formulize-searchbox-picked > .formulize-searchbox-clear {
+  flex: none;
+  display: inline-block;
+  padding: 0 0.15em;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.formulize-searchbox-picked > .formulize-searchbox-clear:focus-visible {
+  outline: 2px solid var(--fz-color-focus, #1f2937);
+  outline-offset: 1px;
+}
+
+/* shorter than other panels, since it opens under a box near the top of the list and is often read while typing */
+.formulize-searchbox-panel {
+  max-height: min(20rem, calc(100vh - var(--fz-spacing, 0.25rem) * 4));
+}
+
+.formulize-searchbox-panel .formulize-searchbox-options {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
+}
+
+.formulize-searchbox-panel .fz-choice {
+  padding: 0.3em 0.4em;
+  border-radius: var(--fz-radius-sm, 0.25rem);
+  white-space: normal;
+}
+
+.formulize-searchbox-panel .fz-choice:hover {
+  background: var(--fz-color-surface-3, #f1f1ed);
+}
+
+.formulize-searchbox-status {
+  margin: 0.5em 0.4em;
+  color: var(--fz-color-text-muted, #5b6068);
+}
+
 /* From and To at the top of the date panel, side by side, each word over its date */
 .formulize-filter-panel .formulize-daterange {
   flex-direction: row;

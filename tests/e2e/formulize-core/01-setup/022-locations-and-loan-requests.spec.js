@@ -469,6 +469,10 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 			'creation_datetime',
 			'mod_datetime',
 		]);
+		// each column starts on its element's search: Date of acquisition is set to be typed into (see 010), which
+		// section B of conditions-and-searches.md relies on, and the dates people don't type into get a date range
+		await expect(page.locator('#search-type-3')).toHaveValue('Box');
+		await expect(page.locator('#search-type-16')).toHaveValue('DateRange');
 	});
 
 	test('Donor artifacts list screen', async ({ page }) => {

@@ -114,6 +114,7 @@ class formulizeElement extends FormulizeObject {
     $this->initVar("ele_exportoptions", XOBJ_DTYPE_ARRAY);
 		$this->initVar("ele_dynamicdefault_source", XOBJ_DTYPE_INT);
 		$this->initVar('ele_dynamicdefault_conditions', XOBJ_DTYPE_ARRAY);
+		$this->initVar('ele_searchtype', XOBJ_DTYPE_TXTBOX, '', false, 30); // the search interface this element gets in a list, when the list doesn't choose one. Empty means not chosen, see listSearchType()
 		$this->useOptionsAsValues = false;
 	}
 
@@ -188,9 +189,148 @@ class formulizeElement extends FormulizeObject {
 	 * @return boolean Returns true or false
 	 */
 	function hasNumericDataType() {
-		$numericDataTypes = array('decimal'=>0, 'float'=>0, 'numeric'=>0, 'double'=>0, 'int'=>0, 'mediumint'=>0, 'tinyint'=>0, 'bigint'=>0, 'smallint'=>0, 'integer'=>0);
 		$dataTypeInfo = $this->getDataTypeInformation();
-		return isset($numericDataTypes[$dataTypeInfo['dataType']]);
+		return self::isNumericDataType($dataTypeInfo['dataType']);
+	}
+
+	/**
+	 * The type of this element's field in the database. An element that has no field yet, because it is being created,
+	 * gets the type its field will be created with, which its class declares (see upsertElementSchemaAndResources()).
+	 * The fields of a form's data table are read once per request, for all its elements at once, since lists and the
+	 * screen settings ask this of every column.
+	 * @return string The type, ie: date, int(11), varchar(255), or blank if the element has no field
+	 */
+	function fieldDataType() {
+		if(!$this->hasData) {
+			return '';
+		}
+		if(!$this->getVar('ele_id') OR !$this->getVar('id_form')) {
+			if(method_exists($this, 'getDefaultDataType')) {
+				return (string) $this->getDefaultDataType();
+			}
+			return (string) $this->overrideDataType;
+		}
+		static $fieldTypesByForm = array();
+		$fid = intval($this->getVar('id_form'));
+		if(!isset($fieldTypesByForm[$fid])) {
+			$fieldTypesByForm[$fid] = array();
+			global $xoopsDB;
+			$form_handler = xoops_getmodulehandler('forms', 'formulize');
+			if($formObject = $form_handler->get($fid)) {
+				if($res = $xoopsDB->queryF("SHOW COLUMNS FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')))) {
+					while($row = $xoopsDB->fetchArray($res)) {
+						$fieldTypesByForm[$fid][$row['Field']] = strtolower((string) $row['Type']);
+					}
+				}
+			}
+		}
+		return $fieldTypesByForm[$fid][$this->getVar('ele_handle')] ?? '';
+	}
+
+	/**
+	 * Does this element hold dates? It does if its field in the database has a date or datetime type, whatever kind of
+	 * element it is, because the date oriented searches build SQL that only works on those types.
+	 * @return bool
+	 */
+	function holdsDates() {
+		return self::isDateDataType($this->fieldDataType());
+	}
+
+	/**
+	 * Does this element hold numbers? It does if its field in the database has a numeric type.
+	 * @return bool
+	 */
+	function holdsNumbers() {
+		return self::isNumericDataType($this->fieldDataType());
+	}
+
+	/**
+	 * Are this element's values a set of labelled choices: the entries a linked element points to, the users a user list
+	 * can name, options of the element's own, like a yes/no or a radio button's, or stored values that have ui text,
+	 * the text people see in place of what is stored? Those suit picking from a list in a search. Values people type
+	 * in, like names or numbers, do not have labels of their own.
+	 * @return bool
+	 */
+	function hasLabelledValues() {
+		if($this->isLinked OR $this->isUserList) {
+			return true;
+		}
+		$uiText = $this->getVar('ele_uitext');
+		if(is_array($uiText) AND count(array_filter($uiText, function($text) { return trim((string) $text) !== ''; }))) {
+			return true;
+		}
+		// the type's handler knows what its options are. A new element has no type recorded yet, so it comes from the class.
+		$type = (string) $this->getVar('ele_type');
+		if($type === '' AND substr(get_class($this), 0, 9) == 'formulize') {
+			$type = lcfirst(substr(get_class($this), 9, -7));
+		}
+		if($type === '' OR !file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".basename($type)."Element.php")) {
+			return false;
+		}
+		$typeHandler = xoops_getmodulehandler(basename($type).'Element', 'formulize', true);
+		return ($typeHandler AND method_exists($typeHandler, 'getFilterOptions') AND !empty($typeHandler->getFilterOptions($this)));
+	}
+
+	/**
+	 * The type at the start of a database type, ie: datetime for datetime(6), and int for int(10) unsigned
+	 * @param string $dataType A type as the database reports it, or as an element type declares it
+	 * @return string
+	 */
+	static function baseDataType($dataType) {
+		$parts = preg_split('/[\s(]/', strtolower(trim((string) $dataType)));
+		return $parts[0] ?? '';
+	}
+
+	/**
+	 * Is a database type a date or datetime, with or without a size, ie: datetime(6)?
+	 * @param string $dataType A type as the database reports it, or as an element type declares it
+	 * @return bool
+	 */
+	static function isDateDataType($dataType) {
+		return in_array(self::baseDataType($dataType), array('date', 'datetime'), true);
+	}
+
+	/**
+	 * Is a database type numeric, with or without a size or sign, ie: decimal(10,2) or int(10) unsigned?
+	 * @param string $dataType A type as the database reports it, or as an element type declares it
+	 * @return bool
+	 */
+	static function isNumericDataType($dataType) {
+		return in_array(self::baseDataType($dataType), array('decimal', 'float', 'numeric', 'double', 'int', 'mediumint', 'tinyint', 'bigint', 'smallint', 'integer'), true);
+	}
+
+	/**
+	 * The search interfaces this element can have in a list: all of them for an element that holds dates, and all but
+	 * the date oriented ones for any other element.
+	 * @return array Stored values, as in formulizeHandler::listScreenSearchTypes()
+	 */
+	function allowedListSearchTypes() {
+		$types = array_values(formulizeHandler::listScreenSearchTypes());
+		if(!$this->holdsDates()) {
+			$types = array_values(array_diff($types, formulizeHandler::dateOnlySearchTypes()));
+		}
+		return $types;
+	}
+
+	/**
+	 * The search interface this element gets in a list, when the list doesn't choose one itself: the one chosen in the
+	 * element's settings, or if none has been chosen (or the one chosen no longer suits the element), a date range for
+	 * elements that hold dates, the type-only search box for numbers people type in, since picking from a list of them
+	 * makes little sense, and the search box that also picks values for everything else.
+	 * @return string A stored value, as in formulizeHandler::listScreenSearchTypes()
+	 */
+	function listSearchType() {
+		$chosen = (string) $this->getVar('ele_searchtype');
+		if($chosen !== '' AND in_array($chosen, $this->allowedListSearchTypes(), true)) {
+			return $chosen;
+		}
+		if($this->holdsDates()) {
+			return 'DateRange';
+		}
+		if($this->holdsNumbers() AND !$this->hasLabelledValues()) {
+			return 'Box';
+		}
+		return 'MultiFilter';
 	}
 
   function createIndex(){
@@ -466,6 +606,7 @@ class formulizeElementsHandler {
 		$properties['ele_order'] = isset($properties['ele_order']) ? intval($properties['ele_order']) : ($existingElement ? $existingElement->getVar('ele_order') : figureOutOrder('bottom', fid: $properties['fid']));
 		$properties['ele_display'] = isset($properties['ele_display']) ? $properties['ele_display'] : ($existingElement ? $existingElement->getVar('ele_display', 'n') : 1);
 		$properties['ele_disabled'] = isset($properties['ele_disabled']) ? $properties['ele_disabled'] : ($existingElement ? $existingElement->getVar('ele_disabled', 'n') : 0);
+		$properties['ele_searchtype'] = isset($properties['ele_searchtype']) ? (string) $properties['ele_searchtype'] : ($existingElement ? (string) $existingElement->getVar('ele_searchtype') : '');
 		return $properties;
 	}
 
@@ -899,9 +1040,9 @@ class formulizeElementsHandler {
 
    		if( $element->isNew() || !$ele_id ) { // isNew is never set on the element object or parent??
 				$sql = sprintf("INSERT INTO %s (
-				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_sort, ele_required, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_disabledconditions, ele_use_default_when_blank, ele_exportoptions, ele_dynamicdefault_source, ele_dynamicdefault_conditions
+				id_form, ele_type, ele_caption, ele_desc, ele_colhead, ele_handle, ele_order, ele_sort, ele_required, ele_value, ele_uitext, ele_uitextshow, ele_delim, ele_display, ele_disabled, ele_forcehidden, ele_private, ele_encrypt, ele_filtersettings, ele_disabledconditions, ele_use_default_when_blank, ele_exportoptions, ele_dynamicdefault_source, ele_dynamicdefault_conditions, ele_searchtype
 				) VALUES (
-				%u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s, %u, %s
+				%u, %s, %s, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s, %s, %s, %u, %u, %u, %s, %s, %u, %s, %u, %s, %s
 				)",
 				formulize_TABLE,
 				$id_form,
@@ -927,7 +1068,8 @@ class formulizeElementsHandler {
 				$ele_use_default_when_blank,
         $this->db->quoteString($ele_exportoptions),
 				$ele_dynamicdefault_source,
-				$this->db->quoteString($ele_dynamicdefault_conditions)
+				$this->db->quoteString($ele_dynamicdefault_conditions),
+				$this->db->quoteString((string) $ele_searchtype)
 			);
             // changed - end - August 19 2005 - jpc
 			}else{
@@ -955,7 +1097,8 @@ class formulizeElementsHandler {
 				ele_use_default_when_blank = %u,
         ele_exportoptions = %s,
 				ele_dynamicdefault_source = %u,
-				ele_dynamicdefault_conditions = %s
+				ele_dynamicdefault_conditions = %s,
+				ele_searchtype = %s
 				WHERE ele_id = %u AND id_form = %u",
 				formulize_TABLE,
 				$this->db->quoteString($ele_type),
@@ -981,6 +1124,7 @@ class formulizeElementsHandler {
         $this->db->quoteString($ele_exportoptions),
 				$ele_dynamicdefault_source,
 				$this->db->quoteString($ele_dynamicdefault_conditions),
+				$this->db->quoteString((string) $ele_searchtype),
 				$ele_id,
 				$id_form
 			);

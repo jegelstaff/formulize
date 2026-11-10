@@ -6770,165 +6770,117 @@ function formulize_getMetadataFilterOptions($metadataHandle, $fid) {
 
 
 /**
- * Build a dropdown filter that can be used in a form. Normally used to make quick search filters for a list of entries.
- *
- * The options in the filter are determined based on the options for the specified element, or the values stored in all entries in the database if the element does not have defined values (ie: if it's not a radio button series, etc)
- *
- * @param string $id - The value of the name attribute in the markup for the filter we're creating. This will be used in POST when the filter value is submitted back to the server
- * @param string|int|object $element_identifier - The element ID, handle or object that we're making a filter based on
- * @param string $defaultText - Optional. Any default text that should be used as the first value in a dropdown list, ie: Choose an option
- * @param string $formDOMId - The id attirbute of a form element in the DOM which should be submitted when the selected value changes (if it is a dropdown filter for example). Or "{listofentries}" if the filter is being created for a standard list of entries, and the list should reload when the selected value changes. Leave blank to have no automatic submission on change.
- * @param mixed $defaultValue - The value in the filter that should be selected/shown by default
- * @param bool $subfilter - Experimental. A flag to indicate if the filter is the child of another filter, like a province-city set of filters
- * @param int $linked_ele_id - Experimental. Only used with subfilters
- * @param int $linked_data_id - Experimental. Only used with subfilters.
- * @param bool $limit - Deprecated. Used to be used in cases where the element is a linked selectbox, then the values can be optionally limited based on values in another field in each entry that underlies the link. ie: build a filter with the names of all activity entries, but limit it to activity entries where the date of the activity is 2007. See inline code comments for more detail.
- * @param bool $multi - A flag used to indicate if the filter should be a series of checkboxes for supporting multi value selections. Defaults to false.
- * should be returned as a checkbox series supporting multiple values
- * @param bool $negativeFilter - A flag used to indicate if the filter should be a "negative" filter, that selects which values to exclude instead of include.
- * @param int $metadataFid - The form id to use when $element_identifier is a metadata field (creation_uid, mod_uid, etc.), since metadata fields have no element object to derive the form from. Defaults to 0.
- * @return string HTML markup for the filter element, including necessary javascript to submit the form the filter is part of (based on formDOMid)
- * @formulizeElement $element_identifier one
+ * The number of the next set of OR'd conditions on the page. Each checkbox filter, and each Search box, writes the values
+ * picked in it as one set, ORSET<number>:, and sets with different numbers are combined with AND. Shared, so that a
+ * Search box and a checkbox filter made by buildFilter() on the same page never use the same number.
+ * @return int
  */
-function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $defaultValue=false, $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false, $multi=false, $negativeFilter=false, $metadataFid=0) {
+function formulize_nextOrsetNumber() {
+    static $number = -1;
+    return ++$number;
+}
 
-    static $multiCounter = -1;
-    if($multi) {
-        $multiCounter++;
+/**
+ * How many values the Search box lists at once: the ones drawn with the page, and the ones that match what is typed.
+ * @return int
+ */
+function formulize_searchBoxOptionLimit() {
+    return 50;
+}
+
+/**
+ * The options the Search box on a column offers, as values and the labels people see, the same values buildFilter()
+ * would give its checkboxes, so a search picked in either one means the same thing.
+ *
+ * @param string $handle An element handle, or a metadata field name
+ * @param int $fid The form a metadata field belongs to
+ * @param string $term Optional. Only options whose label contains this, ignoring case.
+ * @param int $maxOptions Optional. At most this many. 0 for all of them.
+ * @param array|null $onlyValues Optional. Only these values, for showing the labels of the values already picked.
+ * @return array 'options' => list of array('value' => ..., 'label' => plain text, and 'contains' => true for a value to match as contained in the field rather than equal to it), 'more' => whether there were more than $maxOptions
+ */
+function formulize_getQuickSearchOptions($handle, $fid=0, $term='', $maxOptions=0, $onlyValues=null) {
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    $elementObject = isMetaDataField($handle) ? false : $element_handler->get($handle);
+    if(!$elementObject AND !isMetaDataField($handle)) {
+        return array('options' => array(), 'more' => false);
     }
+    $identifier = $elementObject ? $elementObject->getVar('ele_id') : $handle;
+    $term = trim((string) $term);
+    // one more than will be shown, so we know whether there are more. Picked values need their labels, whatever they match.
+    $readTerm = $onlyValues === null ? $term : '';
+    $readMax = ($onlyValues === null AND $maxOptions > 0) ? $maxOptions + 1 : 0;
+    list($options, $useValue, $ele_uitext) = formulize_gatherFilterOptions($elementObject, $identifier, intval($fid), term: $readTerm, maxOptions: $readMax);
+    $results = array();
+    $more = false;
+    foreach((array) $options as $option=>$option_value) {
+        $label = $useValue ? $option_value : $option;
+        $label = str_replace('NOQSFEQUALS', '', (string) $label);
+        $label = formulize_handleRandomAndDateText(formulize_swapUIText($label, $ele_uitext));
+        $label = trim(html_entity_decode(strip_tags((string) $label), ENT_QUOTES));
+        if($label === '') {
+            continue;
+        }
+        if(preg_match('/\{OTHER\|+[0-9]+\}/', (string) $option)) {
+            $option = str_replace(":", "", _formulize_OPT_OTHER);
+        }
+        // A value whose stored form differs from what people see (it has markup, or characters that are stored escaped)
+        // comes marked NOQSFEQUALS, meaning "don't match it with equals". The search parser only understands that mark
+        // in a dropdown's value, so here the value is the text people see, matched as contained in the field.
+        $contains = false;
+        if(strpos((string) $option, 'NOQSFEQUALS') === 0) {
+            $option = html_entity_decode(substr((string) $option, 11), ENT_QUOTES);
+            $contains = true;
+        }
+        if($onlyValues !== null) {
+            if(!in_array((string) $option, array_map('strval', $onlyValues), true)) {
+                continue;
+            }
+        } elseif($term !== '' AND mb_stripos($label, $term) === false) {
+            continue;
+        }
+        if($onlyValues === null AND $maxOptions > 0 AND count($results) >= $maxOptions) {
+            $more = true;
+            break;
+        }
+        $result = array('value' => (string) $option, 'label' => $label);
+        if($contains) {
+            $result['contains'] = true;
+        }
+        $results[] = $result;
+    }
+    return array('options' => $results, 'more' => $more);
+}
 
-    $counter = -1;
-
-    // Changes made to allow the linking of one filter to another. This is acheieved as follows:
-    // 1. Create a formulize form for managing the Main Filter List (form M)
-    // 2. Create a formulize form for managing the Sub Filter list (form S), which includes a linked element to the data in form M,
-    //    so that relation between the Main Filter & Sub Filter data can be specified
-    // 3. Create a formulize form for the data that the Main & SubFilter act upon (form D)
-    ///
-    // In such a case, the parameters have the following meaning:
-    //  - $id is the element id of the field to be filtered in Form D
-    //  - $element_identifier is also the element id of the field to be filtered in Form D
-    //  - $subfilter specifies if this filter is a subfilter
-    //  - $linked_ele_id specifies the ele_id of the Main Filter field as it appears in Form S
-    //  - $linked_data_id specifies the ele_id of the Main Filter field as it appears in Form D
-
-    /* limit params work as follows: (a limit is some property of a field in the source entry in a linked selectbox)
-    $limit = false, or if used then it's an array with these params
-    'ele_id' = the id of the element to pay attention to for the limit condition
-    'term' = the term used to build the condition
-    'operator' = the operator used to build the condition
+/**
+ * The options a filter on an element offers: the element's own options, the entries a linked element points to, the
+ * users a user list can name, or failing those, the values stored in the entries the current user can see. Metadata
+ * fields get theirs from formulize_getMetadataFilterOptions(). Used by buildFilter(), and by the Search box, which
+ * asks for the options that match what someone has typed.
+ *
+ * @param object|false $elementObject The element, or false for a metadata field
+ * @param string|int $element_identifier What buildFilter() was given: an element id, handle, or a metadata field name
+ * @param int $metadataFid The form a metadata field belongs to
+ * @param array|bool $limit Deprecated, see buildFilter()
+ * @param bool $subfilter Experimental, see buildFilter()
+ * @param int $linked_ele_id Experimental, see buildFilter()
+ * @param int $linked_data_id Experimental, see buildFilter()
+ * @param string $term Optional. Only the values that contain this. Where the values come from the database, the database does the matching.
+ * @param int $maxOptions Optional. At most this many values are read from the database, where they come from there. 0 means no limit.
+ * @return array The options (keyed by value), a flag saying whether the label to show is the key ('') or the value ('entryid' or 'uid'), and the element's ui text
  */
-
-    // limits are very similar to subfilters in their effect, but subfilters are meant for situations where one filter influences another filter
-    // subfilters are kind of like dynamic limits, where the limit condition is not specified until the parent filter is chosen.
-
-    global $xoopsDB; // required by q
-    $multiIdCounter = 1;
+function formulize_gatherFilterOptions($elementObject, $element_identifier, $metadataFid=0, $limit=false, $subfilter=false, $linked_ele_id=0, $linked_data_id=0, $term='', $maxOptions=0) {
+    global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
-    $elementObject = (is_object($element_identifier) AND is_a($element_identifier, 'formulizeElement')) ? $element_identifier : $element_handler->get($element_identifier);
-
-		if(!$elementObject AND !isMetaDataField($element_identifier)) {
-			throw new Exception("No element found with the identifier: ".htmlspecialchars(strip_tags((string) $element_identifier)).", in 'buildFilter' function.");
-		}
-
-    $ORSETOperator = ($elementObject AND $elementObject->canHaveMultipleValues) ? '' : '='; // if the element supports multiple values, which are crammed into the same cell in the DB, then no equals operator... if the options are inclusive of one another, ie: active and inactive, then this isn't going to work cleanly! Metadata fields have no element object, so they use '='.
-
-		$defaultValue = parseUserAndToday($defaultValue, $elementObject ? $elementObject->getVar('ele_handle') : $element_identifier);
-
-    // Each checkbox filter's options form one set of OR'd conditions, named by $multiCounter so that sets from different
-    // filters are combined with AND. The set is written ORSET12:, the form the search reads with any number of digits.
-    // The older form, ORSET1, has no delimiter and the search reads exactly one character of it, so from the tenth
-    // checkbox filter on a page (one is made for every column with a search other than a box) the set came out wrong.
-    // Values in the older form, like ones in saved views, are rewritten in the new form as they're read here, so their
-    // boxes come back ticked, and unticking them takes them out of the search.
-    $orset = "ORSET$multiCounter:";
-    $keyedOrset = function($value) {
-        return is_string($value) ? preg_replace('/ORSET(\d)(?=[^:\d])/', 'ORSET$1:', $value) : $value;
-    };
-    $postedSearch = isset($_POST[$id]) ? (string) $keyedOrset($_POST[$id]) : '';
-    $gotSearch = isset($_GET[$id]) ? (string) $keyedOrset($_GET[$id]) : '';
-    if($multi) {
-        $defaultValue = $keyedOrset($defaultValue);
-    }
-
-    if($multi) { // create the hidden field that will get the value assigned for submission
-        $defaultHiddenValue = "";
-        if(isset($_POST[$id])) {
-            $defaultHiddenValue = htmlspecialchars(strip_tags($postedSearch), ENT_QUOTES);
-        } elseif(isset($_GET[$id])) {
-            $defaultHiddenValue = htmlspecialchars(strip_tags($gotSearch), ENT_QUOTES);
-        } elseif($defaultValue) {
-            if(is_string($defaultValue) AND substr($defaultValue,0,5)=="ORSET" AND substr($defaultValue, -2) == "//") {
-                $defaultHiddenValue = $defaultValue;
-            } elseif(is_string($defaultValue)) {
-                $defaultHiddenValue = "$orset$ORSETOperator".$defaultValue."//";
-            } elseif(is_array($defaultValue)) {
-                foreach($defaultValue as $dv) {
-                    $defaultHiddenValue .= "$orset$ORSETOperator".$dv."//";
-                }
-            }
-        }
-        // the options are laid out by CSS (formulize.css): columns of seven by default, or a single scrolling list when the filter is in a list column's search cell
-        $filter = "<input type='hidden' name='$id' id='".$id."_hiddenMulti' value='".strip_tags(htmlspecialchars($defaultHiddenValue))."'>\n
-        <div class='formulize-multifilter'><div class='formulize-multifilter-options'>\n";
-    } else { // start the actual dropdown selectbox
-        $filter = "<SELECT name=\"$id\" id=\"$id\"";
-        if ($formDOMId == "{listofentries}") {
-            $filter .= " onchange='javascript:showLoading();'"; // list of entries has a special javascript thing
-        } elseif ($formDOMId) {
-            $filter .= " onchange='javascript:document.$formDOMId.submit();'";
-        }
-        $filter .= ">\n";
-    }
-
-    if ($subfilter AND !(isset($_POST[$linked_data_id])) AND !(isset($_GET[$linked_data_id]))) {
-        // If its a subfilter and the main filter is unselected, then put in 'Please select from above options first
-        $filter .= $multi ? "<label class='formulize-multifilter-option formulize-multifilter-option-all' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\"><span>Please select a primary filter first</span></label>\n" : "<option value=\"none\">Please select a primary filter first</option>\n";
+    $useValue = "";
+    $ele_uitext = array();
+    // metadata fields (creation_uid, mod_uid, etc.) have no element object behind them,
+    // so source their filter options separately and skip all the element-specific logic below
+    if(isMetaDataField($element_identifier)) {
+    	$ele_uitext = array();
+    	list($options, $useValue) = formulize_getMetadataFilterOptions($element_identifier, $metadataFid);
     } else {
-        // Either it is not a subfilter, or it is a subfilter with the linked values set
-        if ($formDOMId == "{listofentries}") {
-            $defaultText = !$defaultText ? _AM_FORMLINK_PICK : $defaultText;
-            // must not pass back a value when we're putting a filter on the list of entries page
-            $checked = ((!isset($_POST[$id]) OR $_POST[$id] == '') AND (!isset($_GET[$id]) OR $_GET[$id] == '')) ? "checked" : "";
-            $filter .= $multi ? "<label class='formulize-multifilter-option formulize-multifilter-option-all' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\"><span>$defaultText</span></label>\n" : "<option value=\"\">".$defaultText."</option>\n";
-            // add {BLANK} option if we're doing this for a QSF filter in a list of entries page
-            if($defaultText == _formulize_QSF_DefaultText) {
-                $multiIdCounter++;
-                $counter++;
-                $checked = "";
-                $selected = "";
-                $checkboxOption = "$orset={BLANK}//";
-                if(isset($_POST[$id])) {
-                    $checked = strstr($postedSearch, $checkboxOption) ? "checked" : "";
-                    $selected = $_POST[$id] === 'qsf_0_{BLANK}' ? "selected" : "";
-                }
-                $filter .= $multi ? "<label class='formulize-multifilter-option' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$checkboxOption."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$checkboxOption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$checkboxOption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\"><span>"._SHOW_BLANKS."</span></label>\n" : "<option value=\"qsf_".$counter."_{BLANK}\" $selected>"._SHOW_BLANKS."</option>\n";
-            }
-        } else {
-            // not a filter for core use on list of entries screen, so if multi, set default text to "Any", otherwise use the "Choose an option" default, unless the user has specified something
-            $defaultText = ($multi AND !$defaultText) ? _formulize_QSF_DefaultText : $defaultText;
-            $defaultText = !$defaultText ? _AM_FORMLINK_PICK : $defaultText;
-            $checked = "";
-            // no form submission...
-            if(!isset($_POST[$id]) AND !isset($_GET[$id])) {
-                // there's no particular default specified, or we're simply going to set to whatever the user chooses on subsequent loads
-                if(!$defaultValue OR $defaultValue === true) {
-                    $checked = "checked";
-                }
-            // there is a form submission... check for "none" being checked
-            } elseif($_POST[$id] == "none" OR $_GET[$id] == "none") {
-                $checked = "checked";
-            }
-            $filter .= $multi ? "<label class='formulize-multifilter-option formulize-multifilter-option-all' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\"><span>$defaultText</span></label>\n" :"<option value=\"none\">".$defaultText."</option>\n";
-        }
-
-        // metadata fields (creation_uid, mod_uid, etc.) have no element object behind them,
-        // so source their filter options separately and skip all the element-specific logic below
-        if(isMetaDataField($element_identifier)) {
-        	$ele_uitext = array();
-        	list($options, $useValue) = formulize_getMetadataFilterOptions($element_identifier, $metadataFid);
-        } else {
 					// Ask the element type itself what its filter options are, rather than switching on
 					// the ele_type string here. That way custom element types that extend a built-in
 					// type inherit the right behaviour automatically, and types whose stored values are
@@ -7058,7 +7010,30 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 								$sortOrderClause = " ORDER BY t1.`$sortHandle` $sortOrder";
 							}
 
-							if ($dataResult = $xoopsDB->query("SELECT $select_column, t1.entry_id FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as t1 $limitConditionTable $extra_clause $conditionsfilter $conditionsfilter_oom $limitConditionWhere $sortOrderClause")) {
+							// a term to match is matched by the database, when the columns shown hold text rather than references to
+							// other entries or users, which only mean something once prepvalues() has turned them into names
+							$whereClauses = "$extra_clause $conditionsfilter $conditionsfilter_oom $limitConditionWhere";
+							// with no term, only so many are wanted, and the database can stop there. With a term the database
+							// can't match, every value has to be read, for the term to be matched once they're names.
+							$termLimit = ((string) $term === '' AND intval($maxOptions) > 0) ? " LIMIT ".intval($maxOptions) : "";
+							if((string) $term !== '') {
+									$termMatches = array();
+									// the term is matched as it is, so its own % and _ are not wildcards
+									$likeTerm = formulize_db_escape(str_replace(array("\\", "%", "_"), array("\\\\", "\\%", "\\_"), (string) $term));
+									foreach($linked_columns as $linkedColumn) {
+											$linkedColumnObject = $element_handler->get($linkedColumn);
+											if(!$linkedColumnObject OR $linkedColumnObject->isLinked OR $linkedColumnObject->getVar('ele_type') == 'derived') {
+													$termMatches = array();
+													break;
+											}
+											$termMatches[] = "t1.`".str_replace('`', '', $linkedColumn)."` LIKE '%$likeTerm%'";
+									}
+									if($termMatches) {
+											$whereClauses .= (stristr($whereClauses, 'WHERE') ? " AND " : " WHERE ")."(".implode(" OR ", $termMatches).")";
+											$termLimit = intval($maxOptions) > 0 ? " LIMIT ".intval($maxOptions) : "";
+									}
+							}
+							if ($dataResult = $xoopsDB->query("SELECT $select_column, t1.entry_id FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." as t1 $limitConditionTable $whereClauses $sortOrderClause$termLimit")) {
 									$useValue = 'entryid';
 									if(count($linked_columns)>1) {
 											$linked_column_count = count((array) $linked_columns);
@@ -7110,7 +7085,12 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 							}
 							$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
 							// if no groups passed and no scope uids passed, then it just gets everything
-							$options = $dataHandler->findAllValuesForField($elementObject->getVar('ele_handle'),'ASC',$groupScopeGroups,$scopeUids,true);// last true forces per group filters to be respected
+							if((string) $term !== '' OR intval($maxOptions) > 0) {
+									// only the values that match, and only so many: the Search box asks for these as someone types
+									$options = $dataHandler->findDistinctValuesForField($elementObject->getVar('ele_handle'), $term, $maxOptions, $groupScopeGroups, $scopeUids, true);
+							} else {
+									$options = $dataHandler->findAllValuesForField($elementObject->getVar('ele_handle'),'ASC',$groupScopeGroups,$scopeUids,true);// last true forces per group filters to be respected
+							}
 							$options = is_array($options) ? array_unique($options) : array();
 							$parsedOptions = array();
 							foreach($options as $option) {
@@ -7182,7 +7162,162 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 									natcasesort($options);
 							}
 					}
-        } // end of element-specific filter option building (metadata fields handled in the branch above)
+    } // end of element-specific filter option building (metadata fields handled in the branch above)
+    return array($options, $useValue, $ele_uitext);
+}
+
+/**
+ * Build a dropdown filter that can be used in a form. Normally used to make quick search filters for a list of entries.
+ *
+ * The options in the filter are determined based on the options for the specified element, or the values stored in all entries in the database if the element does not have defined values (ie: if it's not a radio button series, etc)
+ *
+ * @param string $id - The value of the name attribute in the markup for the filter we're creating. This will be used in POST when the filter value is submitted back to the server
+ * @param string|int|object $element_identifier - The element ID, handle or object that we're making a filter based on
+ * @param string $defaultText - Optional. Any default text that should be used as the first value in a dropdown list, ie: Choose an option
+ * @param string $formDOMId - The id attirbute of a form element in the DOM which should be submitted when the selected value changes (if it is a dropdown filter for example). Or "{listofentries}" if the filter is being created for a standard list of entries, and the list should reload when the selected value changes. Leave blank to have no automatic submission on change.
+ * @param mixed $defaultValue - The value in the filter that should be selected/shown by default
+ * @param bool $subfilter - Experimental. A flag to indicate if the filter is the child of another filter, like a province-city set of filters
+ * @param int $linked_ele_id - Experimental. Only used with subfilters
+ * @param int $linked_data_id - Experimental. Only used with subfilters.
+ * @param bool $limit - Deprecated. Used to be used in cases where the element is a linked selectbox, then the values can be optionally limited based on values in another field in each entry that underlies the link. ie: build a filter with the names of all activity entries, but limit it to activity entries where the date of the activity is 2007. See inline code comments for more detail.
+ * @param bool $multi - A flag used to indicate if the filter should be a series of checkboxes for supporting multi value selections. Defaults to false.
+ * should be returned as a checkbox series supporting multiple values
+ * @param bool $negativeFilter - A flag used to indicate if the filter should be a "negative" filter, that selects which values to exclude instead of include.
+ * @param int $metadataFid - The form id to use when $element_identifier is a metadata field (creation_uid, mod_uid, etc.), since metadata fields have no element object to derive the form from. Defaults to 0.
+ * @return string HTML markup for the filter element, including necessary javascript to submit the form the filter is part of (based on formDOMid)
+ * @formulizeElement $element_identifier one
+ */
+function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $defaultValue=false, $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false, $multi=false, $negativeFilter=false, $metadataFid=0) {
+
+    $multiCounter = $multi ? formulize_nextOrsetNumber() : 0;
+
+    $counter = -1;
+
+    // Changes made to allow the linking of one filter to another. This is acheieved as follows:
+    // 1. Create a formulize form for managing the Main Filter List (form M)
+    // 2. Create a formulize form for managing the Sub Filter list (form S), which includes a linked element to the data in form M,
+    //    so that relation between the Main Filter & Sub Filter data can be specified
+    // 3. Create a formulize form for the data that the Main & SubFilter act upon (form D)
+    ///
+    // In such a case, the parameters have the following meaning:
+    //  - $id is the element id of the field to be filtered in Form D
+    //  - $element_identifier is also the element id of the field to be filtered in Form D
+    //  - $subfilter specifies if this filter is a subfilter
+    //  - $linked_ele_id specifies the ele_id of the Main Filter field as it appears in Form S
+    //  - $linked_data_id specifies the ele_id of the Main Filter field as it appears in Form D
+
+    /* limit params work as follows: (a limit is some property of a field in the source entry in a linked selectbox)
+    $limit = false, or if used then it's an array with these params
+    'ele_id' = the id of the element to pay attention to for the limit condition
+    'term' = the term used to build the condition
+    'operator' = the operator used to build the condition
+ */
+
+    // limits are very similar to subfilters in their effect, but subfilters are meant for situations where one filter influences another filter
+    // subfilters are kind of like dynamic limits, where the limit condition is not specified until the parent filter is chosen.
+
+    global $xoopsDB; // required by q
+    $multiIdCounter = 1;
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    $elementObject = (is_object($element_identifier) AND is_a($element_identifier, 'formulizeElement')) ? $element_identifier : $element_handler->get($element_identifier);
+
+		if(!$elementObject AND !isMetaDataField($element_identifier)) {
+			throw new Exception("No element found with the identifier: ".htmlspecialchars(strip_tags((string) $element_identifier)).", in 'buildFilter' function.");
+		}
+
+    $ORSETOperator = ($elementObject AND $elementObject->canHaveMultipleValues) ? '' : '='; // if the element supports multiple values, which are crammed into the same cell in the DB, then no equals operator... if the options are inclusive of one another, ie: active and inactive, then this isn't going to work cleanly! Metadata fields have no element object, so they use '='.
+
+		$defaultValue = parseUserAndToday($defaultValue, $elementObject ? $elementObject->getVar('ele_handle') : $element_identifier);
+
+    // Each checkbox filter's options form one set of OR'd conditions, named by $multiCounter so that sets from different
+    // filters are combined with AND. The set is written ORSET12:, the form the search reads with any number of digits.
+    // The older form, ORSET1, has no delimiter and the search reads exactly one character of it, so from the tenth
+    // checkbox filter on a page (one is made for every column with a search other than a box) the set came out wrong.
+    // Values in the older form, like ones in saved views, are rewritten in the new form as they're read here, so their
+    // boxes come back ticked, and unticking them takes them out of the search.
+    $orset = "ORSET$multiCounter:";
+    $keyedOrset = function($value) {
+        return is_string($value) ? preg_replace('/ORSET(\d)(?=[^:\d])/', 'ORSET$1:', $value) : $value;
+    };
+    $postedSearch = isset($_POST[$id]) ? (string) $keyedOrset($_POST[$id]) : '';
+    $gotSearch = isset($_GET[$id]) ? (string) $keyedOrset($_GET[$id]) : '';
+    if($multi) {
+        $defaultValue = $keyedOrset($defaultValue);
+    }
+
+    if($multi) { // create the hidden field that will get the value assigned for submission
+        $defaultHiddenValue = "";
+        if(isset($_POST[$id])) {
+            $defaultHiddenValue = htmlspecialchars(strip_tags($postedSearch), ENT_QUOTES);
+        } elseif(isset($_GET[$id])) {
+            $defaultHiddenValue = htmlspecialchars(strip_tags($gotSearch), ENT_QUOTES);
+        } elseif($defaultValue) {
+            if(is_string($defaultValue) AND substr($defaultValue,0,5)=="ORSET" AND substr($defaultValue, -2) == "//") {
+                $defaultHiddenValue = $defaultValue;
+            } elseif(is_string($defaultValue)) {
+                $defaultHiddenValue = "$orset$ORSETOperator".$defaultValue."//";
+            } elseif(is_array($defaultValue)) {
+                foreach($defaultValue as $dv) {
+                    $defaultHiddenValue .= "$orset$ORSETOperator".$dv."//";
+                }
+            }
+        }
+        // the options are laid out by CSS (formulize.css): columns of seven by default, or a single scrolling list when the filter is in a list column's search cell
+        $filter = "<input type='hidden' name='$id' id='".$id."_hiddenMulti' value='".strip_tags(htmlspecialchars($defaultHiddenValue))."'>\n
+        <div class='formulize-multifilter'><div class='formulize-multifilter-options'>\n";
+    } else { // start the actual dropdown selectbox
+        $filter = "<SELECT name=\"$id\" id=\"$id\"";
+        if ($formDOMId == "{listofentries}") {
+            $filter .= " onchange='javascript:showLoading();'"; // list of entries has a special javascript thing
+        } elseif ($formDOMId) {
+            $filter .= " onchange='javascript:document.$formDOMId.submit();'";
+        }
+        $filter .= ">\n";
+    }
+
+    if ($subfilter AND !(isset($_POST[$linked_data_id])) AND !(isset($_GET[$linked_data_id]))) {
+        // If its a subfilter and the main filter is unselected, then put in 'Please select from above options first
+        $filter .= $multi ? "<label class='formulize-multifilter-option formulize-multifilter-option-all' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\"><span>Please select a primary filter first</span></label>\n" : "<option value=\"none\">Please select a primary filter first</option>\n";
+    } else {
+        // Either it is not a subfilter, or it is a subfilter with the linked values set
+        if ($formDOMId == "{listofentries}") {
+            $defaultText = !$defaultText ? _AM_FORMLINK_PICK : $defaultText;
+            // must not pass back a value when we're putting a filter on the list of entries page
+            $checked = ((!isset($_POST[$id]) OR $_POST[$id] == '') AND (!isset($_GET[$id]) OR $_GET[$id] == '')) ? "checked" : "";
+            $filter .= $multi ? "<label class='formulize-multifilter-option formulize-multifilter-option-all' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\"><span>$defaultText</span></label>\n" : "<option value=\"\">".$defaultText."</option>\n";
+            // add {BLANK} option if we're doing this for a QSF filter in a list of entries page
+            if($defaultText == _formulize_QSF_DefaultText) {
+                $multiIdCounter++;
+                $counter++;
+                $checked = "";
+                $selected = "";
+                $checkboxOption = "$orset={BLANK}//";
+                if(isset($_POST[$id])) {
+                    $checked = strstr($postedSearch, $checkboxOption) ? "checked" : "";
+                    $selected = $_POST[$id] === 'qsf_0_{BLANK}' ? "selected" : "";
+                }
+                $filter .= $multi ? "<label class='formulize-multifilter-option' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$checkboxOption."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'".$checkboxOption."'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('".$checkboxOption."', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\"><span>"._SHOW_BLANKS."</span></label>\n" : "<option value=\"qsf_".$counter."_{BLANK}\" $selected>"._SHOW_BLANKS."</option>\n";
+            }
+        } else {
+            // not a filter for core use on list of entries screen, so if multi, set default text to "Any", otherwise use the "Choose an option" default, unless the user has specified something
+            $defaultText = ($multi AND !$defaultText) ? _formulize_QSF_DefaultText : $defaultText;
+            $defaultText = !$defaultText ? _AM_FORMLINK_PICK : $defaultText;
+            $checked = "";
+            // no form submission...
+            if(!isset($_POST[$id]) AND !isset($_GET[$id])) {
+                // there's no particular default specified, or we're simply going to set to whatever the user chooses on subsequent loads
+                if(!$defaultValue OR $defaultValue === true) {
+                    $checked = "checked";
+                }
+            // there is a form submission... check for "none" being checked
+            } elseif($_POST[$id] == "none" OR $_GET[$id] == "none") {
+                $checked = "checked";
+            }
+            $filter .= $multi ? "<label class='formulize-multifilter-option formulize-multifilter-option-all' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' value='none' $checked onclick=\"jQuery('#".$id."_hiddenMulti').val('none');jQuery('.$id').each(function() { jQuery(this).removeAttr('checked') }); jQuery('#apply-button-".$id."').show(200);\"><span>$defaultText</span></label>\n" :"<option value=\"none\">".$defaultText."</option>\n";
+        }
+
+        list($options, $useValue, $ele_uitext) = formulize_gatherFilterOptions($elementObject, $element_identifier, $metadataFid, $limit, $subfilter, $linked_ele_id, $linked_data_id);
 
         $counter++;
         $anythingChecked = false;
@@ -15013,6 +15148,75 @@ function formulize_quickSearchTypeNames() {
         }
     }
     return $typeNames;
+}
+
+/**
+ * Is this column a date, and so a candidate for the date oriented quicksearch filters?
+ *
+ * @param string $handle An element handle, or one of the date metadata field names
+ * @return bool
+ */
+function formulize_handleIsDateColumn($handle) {
+    if($handle == 'creation_datetime' OR $handle == 'mod_datetime') {
+        return true;
+    }
+    $element_handler = xoops_getmodulehandler('elements', 'formulize');
+    if(!$elementObject = $element_handler->get($handle)) {
+        return false;
+    }
+    return $elementObject->holdsDates();
+}
+
+/**
+ * The search interface a column gets when the screen showing it doesn't choose one: the element's own setting, or
+ * its default (see formulizeElement::listSearchType()). Columns that are metadata fields get the interface that
+ * suits them: a date range for the two dates, a simple box for the entry id, and the Search box for the rest.
+ *
+ * List screens, map screens and the columns the MCP tools write all use this, so a column gets the same interface
+ * however it came to be shown.
+ *
+ * @param string $handle An element handle, or a metadata field name
+ * @return string A stored value, as in formulizeHandler::listScreenSearchTypes()
+ */
+function formulize_defaultSearchTypeForColumn($handle) {
+    static $types = array();
+    $handle = (string) $handle;
+    if(!isset($types[$handle])) {
+        if($handle == 'creation_datetime' OR $handle == 'mod_datetime') {
+            $types[$handle] = 'DateRange';
+        } elseif($handle == 'entry_id') {
+            $types[$handle] = 'Box';
+        } elseif(isMetaDataField($handle)) {
+            $types[$handle] = 'MultiFilter';
+        } else {
+            $element_handler = xoops_getmodulehandler('elements', 'formulize');
+            $elementObject = $handle !== '' ? $element_handler->get($handle) : false;
+            $types[$handle] = $elementObject ? $elementObject->listSearchType() : 'Box';
+        }
+    }
+    return $types[$handle];
+}
+
+/**
+ * For the screen settings pages: the search interface each column gets by default, and whether it holds dates, so
+ * that choosing a column for a list or map screen can pick its search interface, and offer the date oriented ones
+ * only where they work.
+ *
+ * @param array $handles The element handles and metadata field names the page offers as columns
+ * @return array handle => array('type' => stored value, 'dates' => bool)
+ */
+function formulize_columnSearchDefaults($handles) {
+    $defaults = array();
+    foreach($handles as $handle) {
+        if(!$handle) {
+            continue;
+        }
+        $defaults[$handle] = array(
+            'type' => formulize_defaultSearchTypeForColumn($handle),
+            'dates' => formulize_handleIsDateColumn($handle)
+        );
+    }
+    return $defaults;
 }
 
 // functions.php is split into files of related functions, in include/functions, which are all

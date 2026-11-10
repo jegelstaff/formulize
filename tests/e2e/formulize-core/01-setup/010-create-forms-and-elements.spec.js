@@ -185,8 +185,12 @@ test.describe('Artifacts Elements', async () => {
 		await waitForAdminPageReady(page)
   	await page.locator('input[name="elements-ele_caption"]').fill('Date of acquisition');
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_date_of_acquisition');
+		// searched by typing in lists, rather than with the date range a date element starts with, so that the specs
+		// can type dates and other terms into it (see section B of conditions-and-searches.md)
+		await page.locator('select[name="elements-ele_searchtype"]').selectOption({ label: 'Search box - type only' });
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Date of acquisition');
+		await expect(page.locator('select[name="elements-ele_searchtype"] option:checked')).toHaveText('Search box - type only');
 	});
 
 	test('Create Donated to museum Element', async ({ page }) => {

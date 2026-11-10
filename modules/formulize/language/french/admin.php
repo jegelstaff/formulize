@@ -767,4 +767,20 @@ define("_AM_EMBED_SESSION_SHARED_TRUST", "La liste de sites web ci-dessus devien
 define("_AM_EMBED_CODE_DEFAULT_TITLE", "Formulaire");
 
 
+// les interfaces de recherche qu'une colonne d'une liste ou d'une carte peut avoir, aussi proposées par défaut pour chaque élément
+define("_AM_FORMULIZE_SEARCH_TYPE_SEARCHBOX", "Boîte de recherche - taper ou choisir des valeurs");
+define("_AM_FORMULIZE_SEARCH_TYPE_BOX", "Boîte de recherche - taper seulement");
+define("_AM_FORMULIZE_SEARCH_TYPE_FILTER", "Liste déroulante - choisir une valeur");
+define("_AM_FORMULIZE_SEARCH_TYPE_NEGATIVEFILTER", "Liste déroulante - exclure une valeur");
+define("_AM_FORMULIZE_SEARCH_TYPE_DATERANGE", "Plage de dates");
+define("_AM_FORMULIZE_SEARCH_TYPE_MONTHCURRENTYEAR", "Choix du mois - année en cours");
+define("_AM_FORMULIZE_SEARCH_TYPE_MONTHLAST12MONTHS", "Choix du mois - 12 derniers mois");
+define("_AM_ELE_SEARCHTYPE", "L'interface de recherche à utiliser dans les listes :");
+// ce qu'est chaque interface de recherche, affiché pour celles qu'un élément peut avoir, et dans l'aide à côté du choix sur les écrans de liste et de carte; les deux listes déroulantes, et les deux choix du mois, en partagent une
+define("_AM_ELE_SEARCHTYPE_DESC_SEARCHBOX", "<b>Boîte de recherche - taper ou choisir des valeurs :</b> une zone où taper une recherche, et des cases à cocher pour les entrées qui correspondent.");
+define("_AM_ELE_SEARCHTYPE_DESC_BOX", "<b>Boîte de recherche - taper seulement :</b> une zone où taper une recherche, sans la liste de cases à cocher.");
+define("_AM_ELE_SEARCHTYPE_DESC_DROPDOWN", "<b>Liste déroulante :</b> une liste de toutes les valeurs disponibles; en choisir une affiche (ou masque) les entrées qui correspondent.");
+define("_AM_ELE_SEARCHTYPE_DESC_DATERANGE", "<b>Plage de dates :</b> des options pour choisir une plage de dates à afficher.");
+define("_AM_ELE_SEARCHTYPE_DESC_MONTH", "<b>Choix du mois :</b> une liste déroulante des mois à afficher.");
+
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/admin.php'; // just to catch whatever constants might be missing

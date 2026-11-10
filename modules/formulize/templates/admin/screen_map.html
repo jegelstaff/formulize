@@ -60,7 +60,7 @@
       <tr>
         <td><label><{$smarty.const._AM_MAP_COLUMN_HEADING}></label></td>
         <td><label><{$smarty.const._AM_MAP_DEFAULT_SEARCH_TERM_HEADING}></label></td>
-        <td><label><{$smarty.const._AM_MAP_FILTER_TYPE_HEADING}></label></td>
+        <td><label><{$smarty.const._AM_MAP_FILTER_TYPE_HEADING}></label> <a class="tooltip"><span><{foreach from=$content.columnsearchtypedescriptions item=description name=searchtypedescriptions}><{if !$smarty.foreach.searchtypedescriptions.first}><br><br><{/if}><{$description}><{/foreach}></span></a></td>
         <td></td>
       </tr>
       <{if $content.columns|is_array AND $content.columns|@count > 0}>
@@ -96,7 +96,7 @@
             <input type="text" name="search-value[0]">
           </td>
           <td>
-            <select id="search-type-0" name="search-type[0]"><option value="Box"><{$smarty.const._AM_MAP_SEARCH_TYPE_BOX}></option><option value="Filter"><{$smarty.const._AM_MAP_SEARCH_TYPE_FILTER}></option><option value="NegativeFilter"><{$smarty.const._AM_MAP_SEARCH_TYPE_NEG_FILTER}></option><option value="MultiFilter"><{$smarty.const._AM_MAP_SEARCH_TYPE_MULTI}></option><option value="DateRange"><{$smarty.const._AM_MAP_SEARCH_TYPE_DATE}></option></select>
+            <select id="search-type-0" name="search-type[0]" size="1"><{html_options options=$content.columnsearchtypeoptions}></select>
           </td>
           <td></td>
         </tr>
@@ -188,10 +188,14 @@
     <{/foreach}>
   }
 
+  // the search interfaces a row can have, for rows added later
+  var searchTypeOptions = '<{foreach from=$content.columnsearchtypeoptions key=value item=label}><option value="<{$value|escape:"html"}>"><{$label|escape:"html"|escape:"javascript"}></option><{/foreach}>';
+  formulizeBindColumnSearchDefaults(<{$content.columnsearchdefaults}>, <{$content.dateonlysearchtypes}>);
+
   function addAdvanceViewRow(number) {
     appendContents1 = '<td><span class="sorthandle">&equiv;</span> <select id="cols-'+number+'" name="col-value['+number+']"></select></td>';
     appendContents2 = '<td><input type="text" name="search-value['+number+']"></td>';
-    appendContents3 = '<td><select id="search-type-'+number+'" name="search-type['+number+']"><option value="Box"><{$smarty.const._AM_MAP_SEARCH_TYPE_BOX}></option><option value="Filter"><{$smarty.const._AM_MAP_SEARCH_TYPE_FILTER}></option><option value="NegativeFilter"><{$smarty.const._AM_MAP_SEARCH_TYPE_NEG_FILTER}></option><option value="MultiFilter"><{$smarty.const._AM_MAP_SEARCH_TYPE_MULTI}></option><option value="DateRange"><{$smarty.const._AM_MAP_SEARCH_TYPE_DATE}></option></select></td>';
+    appendContents3 = '<td><select id="search-type-'+number+'" name="search-type['+number+']">'+searchTypeOptions+'</select></td>';
     $(".advanceview:last").append('<tr class="advanceviewcol" name="'+number+'"></tr>');
     $(".advanceviewcol:last").append(appendContents1);
     $(".advanceviewcol:last").append(appendContents2);

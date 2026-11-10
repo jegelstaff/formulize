@@ -235,7 +235,12 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
         'mod_datetime'=>_formulize_DE_CALC_MODDATE,
 				'creator_email'=>_formulize_DE_CALC_CREATOR_EMAIL,
 				'owner_groups'=>_formulize_DE_CALC_OWNERGROUPS)+$elementOptions; // add a 0 value default to the element list
-  $entries['advanceviewsearchtypeoptions'] = array('Box'=>'Search Box','Filter'=>'Dropdown List - select value','NegativeFilter'=>'Dropdown List - exclude value','MultiFilter'=>'Checkboxes', 'DateRange'=>'Date Range', 'MonthCurrentYear'=>'Month Selection - current year', 'MonthLast12Months'=>'Month Selection - last 12 months');
+  $entries['advanceviewsearchtypeoptions'] = formulizeHandler::listScreenSearchTypeLabels();
+  // what each one is, for the help beside the Search Interface heading
+  $entries['advanceviewsearchtypedescriptions'] = array_values(array_unique(formulizeHandler::listScreenSearchTypeDescriptions()));
+  // what each column's search interface becomes when it is chosen for a row, see formulizeBindColumnSearchDefaults() in formulize-admin.js
+  $entries['columnsearchdefaults'] = json_encode(formulize_columnSearchDefaults(array_keys($entries['advanceviewoptions'])));
+  $entries['dateonlysearchtypes'] = json_encode(formulizeHandler::dateOnlySearchTypes());
   $entries['advanceview'] = $advanceViewSelected;
   $entries['defaultview'] = $screen->getVar('defaultview');
   // Convert to arrays if a legacy value
@@ -599,7 +604,11 @@ if ($screen_id != "new" && $settings['type'] == 'map') {
         'creator_email'     => _formulize_DE_CALC_CREATOR_EMAIL,
         'owner_groups'      => _formulize_DE_CALC_OWNERGROUPS,
     ) + $elementOptions;
-    $mapSettings['columnsearchtypeoptions'] = array('Box' => 'Search Box', 'Filter' => 'Dropdown List - select value', 'NegativeFilter' => 'Dropdown List - exclude value', 'MultiFilter' => 'Checkboxes', 'DateRange' => 'Date Range');
+    // the same search interfaces as a list screen's columns, under the same names, with the same defaults
+    $mapSettings['columnsearchtypeoptions'] = formulizeHandler::listScreenSearchTypeLabels();
+    $mapSettings['columnsearchtypedescriptions'] = array_values(array_unique(formulizeHandler::listScreenSearchTypeDescriptions()));
+    $mapSettings['columnsearchdefaults'] = json_encode(formulize_columnSearchDefaults(array_keys($mapSettings['columnoptions'])));
+    $mapSettings['dateonlysearchtypes'] = json_encode(formulizeHandler::dateOnlySearchTypes());
 
     // build columns array for the template
     $cols = $screen->getVar('columns');
