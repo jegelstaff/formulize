@@ -62,7 +62,8 @@ function fzSelectView(value, isStandard) {
 
     // Persisted filter-row visibility, keyed by screen id, in a single
     // localStorage object: { "<sid>": true|false }. Absent/corrupt state
-    // falls back to the rendered default (filters hidden).
+    // falls back to the rendered default (filters shown, or hidden when the
+    // screen's Quicksearch setting is "Yes, but hide the row").
     var FILTERS_KEY = 'lyris-filters-shown';
 
     function getScreenId() {
