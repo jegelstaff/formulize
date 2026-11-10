@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import {
 	login, leavePage, saveAdminForm, waitForAdminPageReady, conditionalChecksFinished, elementId, dbQuery, dbPrefix, sqlEscape, ensureMainMenuOpen,
-	applyColumnChanges, openAllColumnSections, showPermissionsFor, getUserByLogin,
+	applyColumnChanges, openAllColumnSections, showPermissionsFor, getUserByLogin, openElementSettings, removeConditions,
 } from '../../utils';
 import {
 	casesFor, howToCheck, namesIn, conditionsFor, conditionsWithCaptionsFor, expectedNames, namesOnPage, namesWhereShown, searchesFor, searchList,
@@ -312,28 +312,6 @@ async function expectCatalogueToShow(page, date) {
 		await page.goto(`/modules/formulize/index.php?sid=${screenId('artifact_catalogue')}`);
 		await expect(page.locator('[id^="celladdress_"]').filter({ hasText: date }).first()).toBeVisible({ timeout: 5000 });
 	}).toPass({ timeout: 60000 });
-}
-
-async function openElementSettings(page, handle, tab) {
-	const eleId = elementId(handle);
-	const fid = dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize WHERE ele_id = ${eleId}`)[0][0];
-	const aid = dbQuery(`SELECT appid FROM ${dbPrefix()}_formulize_application_form_link WHERE fid = ${fid}`)[0][0];
-	await page.goto(`/modules/formulize/admin/ui.php?page=element&ele_id=${eleId}&fid=${fid}&aid=${aid}`);
-	await waitForAdminPageReady(page);
-	await page.getByRole('link', { name: tab, exact: true }).click();
-}
-
-// Remove every condition in a filter box, the way a webmaster does, with each condition's X, which saves and reloads the page.
-// open goes to the page the box is on, ie: one of the ADMIN_UI_CONDITIONS.
-async function removeConditions(page, open, deleteLinks) {
-	await open(page);
-	while (await page.locator(deleteLinks).count() > 0) {
-		await Promise.all([
-			page.waitForNavigation({ waitUntil: 'networkidle', timeout: 120000 }),
-			page.locator(deleteLinks).first().click(),
-		]);
-		await open(page);
-	}
 }
 
 async function asAdmin(page) {

@@ -1751,6 +1751,38 @@ export function elementId(handle) {
 }
 
 /**
+ * Open an element's page in the admin UI, by its handle, and go to one of its tabs.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} handle - The element's handle
+ * @param {string} tab - The tab's name, ie: 'Options' or 'Display Settings'
+ */
+export async function openElementSettings(page, handle, tab) {
+	const eleId = elementId(handle);
+	const fid = dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize WHERE ele_id = ${eleId}`)[0][0];
+	const aid = dbQuery(`SELECT appid FROM ${dbPrefix()}_formulize_application_form_link WHERE fid = ${fid}`)[0][0];
+	await page.goto(`/modules/formulize/admin/ui.php?page=element&ele_id=${eleId}&fid=${fid}&aid=${aid}`);
+	await waitForAdminPageReady(page);
+	await page.getByRole('link', { name: tab, exact: true }).click();
+}
+
+/**
+ * Remove every condition in a filter box, the way a webmaster does, with each condition's X, which saves and reloads the page.
+ * @param {import('@playwright/test').Page} page
+ * @param {function} open - Goes to the page the box is on, ie: page => openElementSettings(page, handle, 'Display Settings')
+ * @param {string} deleteLinks - A selector for the conditions' Xs, ie: '#displayfilter > a.conditionsdelete'
+ */
+export async function removeConditions(page, open, deleteLinks) {
+	await open(page);
+	while (await page.locator(deleteLinks).count() > 0) {
+		await Promise.all([
+			page.waitForNavigation({ waitUntil: 'networkidle', timeout: 120000 }),
+			page.locator(deleteLinks).first().click(),
+		]);
+		await open(page);
+	}
+}
+
+/**
  * Open the Artifact origins map screen (015), found by its handle, and wait for its pins to stop moving.
  * @param {import('@playwright/test').Page} page
  */

@@ -261,42 +261,49 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 		}
 		$element->setVar('ele_order', figureOutOrder($position, $oldOrder, $fid));
 
-		// The grid gives its display conditions to the elements in it, below. When the starting element or the size
-		// changes, the elements that are no longer in the grid would keep those conditions, so find them before saving.
-		$elementsLeavingGrid = array();
+		// The grid gives its display conditions to the elements in it, below. Those copies have to follow the grid when its
+		// conditions change, and be removed from elements that leave it when the starting element or the size changes. So
+		// find the elements that were in the grid, and the conditions it had, before saving.
 		$savedGridFilterSettings = array();
+		$savedGridElements = array();
 		if($gridId = intval($element->getVar('ele_id')) AND $savedGrid = $this->get($gridId, true)) {
 			$savedGridFilterSettings = $savedGrid->getVar('ele_filtersettings');
 			$savedEleValue = $savedGrid->getVar('ele_value');
-			if($this->hasConditions($savedGridFilterSettings) AND is_array($savedEleValue) AND $savedEleValue[4] AND $savedEleValue[4] !== 'none') {
-				$savedElements = elementsInGrid($savedEleValue[4], $fid, $this->gridCount($savedEleValue));
-				$currentElements = (is_array($ele_value) AND $ele_value[4] AND $ele_value[4] !== 'none') ? elementsInGrid($ele_value[4], $fid, $this->gridCount($ele_value)) : array();
-				$elementsLeavingGrid = array_diff($savedElements, $currentElements);
+			if($this->hasConditions($savedGridFilterSettings) AND $this->hasStartingElement($savedEleValue)) {
+				$savedGridElements = elementsInGrid($savedEleValue[4], $fid, $this->gridCount($savedEleValue));
 			}
 		}
+		$currentGridElements = $this->hasStartingElement($ele_value) ? elementsInGrid($ele_value[4], $fid, $this->gridCount($ele_value)) : array();
 
 		// do the insert the normal way
 		if($result = parent::insert($element, $force)) {
 
-			// take the grid's display conditions off elements that have left it. Only conditions that match the grid's
-			// are removed. Any others were set on the element itself.
+			// An element that was in the grid, and has the conditions the grid had, got them from the grid. It takes the
+			// grid's conditions now if it's still in the grid, and loses them if it has left. Elements with other
+			// conditions had them set on the element itself, and keep them.
 			$gridFilterSettings = $element->getVar('ele_filtersettings');
-			foreach($elementsLeavingGrid as $formerGridElementId) {
-				if($formerGridElementObject = $this->get($formerGridElementId)) {
-					$formerGridElementFilterSettings = $formerGridElementObject->getVar('ele_filtersettings');
-					if($this->hasConditions($formerGridElementFilterSettings) AND ($formerGridElementFilterSettings == $savedGridFilterSettings OR $formerGridElementFilterSettings == $gridFilterSettings)) {
-						$formerGridElementObject->setVar('ele_filtersettings', "");
-						if(!parent::insert($formerGridElementObject)) {
-							throw new Exception(sprintf(_AM_ELE_GRID_CONDITIONS_NOT_CLEARED, $this->elementLabel($formerGridElementObject))."\n");
-						}
-					}
+			foreach($savedGridElements as $savedGridElementId) {
+				if(!$savedGridElementObject = $this->get($savedGridElementId)) {
+					continue;
+				}
+				$savedGridElementFilterSettings = $savedGridElementObject->getVar('ele_filtersettings');
+				if(!$this->hasConditions($savedGridElementFilterSettings) OR $savedGridElementFilterSettings != $savedGridFilterSettings) {
+					continue;
+				}
+				$stillInGrid = in_array($savedGridElementId, $currentGridElements);
+				if($stillInGrid AND $savedGridElementFilterSettings == $gridFilterSettings) {
+					continue;
+				}
+				$savedGridElementObject->setVar('ele_filtersettings', ($stillInGrid AND $this->hasConditions($gridFilterSettings)) ? $gridFilterSettings : "");
+				if(!parent::insert($savedGridElementObject)) {
+					throw new Exception(sprintf(_AM_ELE_GRID_CONDITIONS_NOT_UPDATED, $this->elementLabel($savedGridElementObject))."\n");
 				}
 			}
 
 			// now propagate display settings to constituent elements
 			// if grid has filter settings...
 			if($this->hasConditions($gridFilterSettings)) {
-				foreach(elementsInGrid($ele_value[4], $element->getVar('id_form'), $this->gridCount($ele_value)) as $gridElementId) {
+				foreach($currentGridElements as $gridElementId) {
 					$gridElementObject = $this->get($gridElementId);
 					// if constitiuent element has no filter settings...
 					if(!$this->hasConditions($gridElementObject->getVar('ele_filtersettings'))) {
@@ -318,6 +325,15 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 	 */
 	private function hasConditions($filterSettings) {
 		return (is_array($filterSettings) AND isset($filterSettings[0]) AND is_array($filterSettings[0]) AND count($filterSettings[0]) > 0);
+	}
+
+	/**
+	 * Check whether a grid's settings name a starting element
+	 * @param array $ele_value The ele_value of the grid
+	 * @return bool True if key 4 names an element
+	 */
+	private function hasStartingElement($ele_value) {
+		return (is_array($ele_value) AND isset($ele_value[4]) AND $ele_value[4] AND $ele_value[4] !== 'none');
 	}
 
 	/**
