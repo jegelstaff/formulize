@@ -1410,7 +1410,13 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 					}
 				},
 				search: function(event, ui) {
-					".$markupName."_clearbox = true;
+					".$markupName."_clearbox = true;";
+					if($multiple) {
+						// forget the value picked up for the previous text, so close can't add it under the new text
+						$output .= "
+					jQuery('#last_selected_".$markupName."').val('');";
+					}
+					$output .= "
 				}";
 				if($allow_new_values) {
 					// if we allow new values and the first (and therefore only) response is a new value item, then mark that for saving right away without selection by user
@@ -1428,12 +1434,22 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 						value = jQuery('#last_selected_".$markupName."').val();
 						label = jQuery('#".$markupName."_user').val();
 						label = label.replace('"._formulize_NEW_VALUE."', '');
-						if(value != 'none' && (value || value === 0)) {
+						if(jQuery.trim(label) == '') {
+							// the user erased what they typed, which closes the menu without a search
+							jQuery('#last_selected_".$markupName."').val('');
+						} else if(value != 'none' && (value || value === 0)) {
 							if(isNaN(value)) {
 								value = String(value).replace(/'/g,\"&#039;\");
 								i = value;
 							} else {
-								i = parseInt(jQuery('#".$markupName."_defaults').children().last().attr('target')) + 1;
+								// next number after the highest one in use, ignoring last_selected and any new-value inputs, which have no numeric target
+								i = 0;
+								jQuery('#".$markupName."_defaults input[name=\"".$markupName."[]\"]').each(function() {
+									var target = parseInt(jQuery(this).attr('target'), 10);
+									if(!isNaN(target) && target >= i) {
+										i = target + 1;
+									}
+								});
 							}
 							jQuery('#".$markupName."_defaults').append(\"<input type='hidden' name='".$markupName."[]' jquerytag='".$markupName."' id='".$markupName."_\"+i+\"' target='\"+i+\"' value='\"+value+\"' />\");
 							formulizeBuildAutocompleteChip('".$markupName."', value, label).appendTo('#".$markupName."_formulize_autocomplete_selections');

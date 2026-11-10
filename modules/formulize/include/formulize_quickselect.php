@@ -20,7 +20,8 @@ if (isset($$cache)) {
                 // found a value that matches an existing value
                 $match_existing_value = true;
             }
-            $found[] = array('label'=>$text, 'value'=>$id);
+            // value must be a string: jQuery UI's autocomplete replaces a falsy value with the label, so the option with key 0 would be sent as its text
+            $found[] = array('label'=>$text, 'value'=>(string) $id);
         }
     }
 
