@@ -189,14 +189,14 @@ test.describe('The Search box in a list', () => {
 		await eraBox.fill('BC');
 		await eraBox.press('Enter');
 		await waitForWorkingMessage(page);
-		await expect(page.getByText('Showing entries: 1 to 6 of 6.')).toBeVisible();
+		await expect(page.getByText('Showing entries: 1 to 7 of 7.')).toBeVisible();
 		await expect(page.locator('input[name="search_artifacts_era"]')).toHaveValue('BC');
 
 		// the full search language works in it too
 		await page.locator('input[name="search_artifacts_era"]').fill('=CE');
 		await page.locator('input[name="search_artifacts_era"]').press('Enter');
 		await waitForWorkingMessage(page);
-		await expect(page.getByText('Showing entries: 1 to 8 of 8.')).toBeVisible();
+		await expect(page.getByText('Showing entries: 1 to 9 of 9.')).toBeVisible();
 
 		// Show all and Show Blanks head the list, and Show all clears the typed search
 		await page.locator('input[name="search_artifacts_era"]').click();
@@ -257,7 +257,7 @@ test.describe('The Search box in a list', () => {
 		await eraBox.fill('BC');
 		await eraBox.press('Enter');
 		await waitForWorkingMessage(page);
-		await expect(page.getByText('Showing entries: 1 to 6 of 6.')).toBeVisible();
+		await expect(page.getByText('Showing entries: 1 to 7 of 7.')).toBeVisible();
 
 		// Esc undoes what was typed since the box opened
 		await eraBox.fill('xyz');
