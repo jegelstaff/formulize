@@ -13,6 +13,8 @@ behaviour. CI runs them *before* the e2e suite, since they have nothing to wait 
 * `normalize_then_escape_test.php`
 * `date_search_test.php` - run it a second time with a date format, `php tests/date_search_test.php --date-format=d/m/Y`,
   to check how a site that shows dates that way reads them.
+* `time_format_test.php` - times shown in the site's 12-hour and 24-hour formats, and read back from them by
+  searches, conditions and derived values. It runs itself once for each of several pairs of formats.
 * `empty_set_search_test.php`
 * `blocked_extensions_sync_test.php` - the list of never-executable script extensions, written out in
   `BLOCKED_EXTENSIONS`, `uploads/.htaccess`, the fallback copy in `uploads_execution_probe.php` and the copy

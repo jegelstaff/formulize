@@ -783,4 +783,11 @@ define("_AM_ELE_SEARCHTYPE_DESC_DROPDOWN", "<b>Liste déroulante :</b> une liste
 define("_AM_ELE_SEARCHTYPE_DESC_DATERANGE", "<b>Plage de dates :</b> des options pour choisir une plage de dates à afficher.");
 define("_AM_ELE_SEARCHTYPE_DESC_MONTH", "<b>Choix du mois :</b> une liste déroulante des mois à afficher.");
 
+// Time Selector elements
+define("_AM_formulize_TIME_DEFAULT_TIME", "Heure par défaut");
+define("_AM_formulize_TIME_DEFAULT_DESC", "Indiquez l'heure au format 24 heures, par exemple : <b>13:25</b><br>Laissez vide pour ne pas avoir d'heure par défaut. Utilisez {NOW} pour l'heure actuelle, ou {NOW+60} pour dans une heure, {NOW-15} pour il y a quinze minutes, etc.<br>Vous pouvez aussi utiliser {elementHandle} pour faire référence à un autre élément de ce formulaire, et baser l'heure par défaut sur la valeur enregistrée dans cet élément.");
+define("_AM_formulize_TIME_DISPLAY_FORMAT", "Format d'affichage");
+define("_AM_formulize_TIME_FORMAT_12", "Sur 12 heures (par ex. %s)"); // %s est une heure d'exemple au format 12 heures du site, par ex. 1:30pm
+define("_AM_formulize_TIME_FORMAT_24", "Sur 24 heures (par ex. %s)"); // %s est une heure d'exemple au format 24 heures du site, par ex. 13:30
+
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/admin.php'; // just to catch whatever constants might be missing

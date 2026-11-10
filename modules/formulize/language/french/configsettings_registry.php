@@ -80,10 +80,9 @@ define('_AM_CFG_CAP_SERVER_TZ', 'Fuseau horaire du serveur de base de données')
 define('_AM_CFG_DESC_SERVER_TZ', 'Il s\'agit du fuseau horaire que renverrait <i>SELECT @@global.time_zone;</i> dans MariaDB');
 define('_AM_CFG_DESC_DATESTRING', "Utilisé pour l'affichage de la date et de l'heure dans tout Formulize.");
 define('_AM_CFG_DESC_SHORTDATESTRING', "Utilisé pour l'affichage abrégé de la date.");
-define('_AM_CFG_DESC_SHORTTIMESTRING', "Utilisé pour l'affichage abrégé de l'heure.");
 define('_AM_CFG_DESC_FOOTER', 'Contenu du pied de page de toutes les pages, si votre thème le supporte. Le HTML est autorisé.');
 define('_AM_CFG_DESC_FOOTADM', "Contenu du pied de page de toutes les pages d'administration, si votre thème le supporte. Le HTML est autorisé.");
 define('_AM_CFG_DESC_SESSION_NAME', 'Le nom du cookie de session');
 
 // --- Aide de section HTML : référence des codes de format date/heure ---
-define('_AM_CFG_HELP_DATE_TIME_FORMATS', "<details class='formulize-config-help'><summary>Afficher les codes de format de date/heure</summary><div class='formulize-config-help-codes'><b>Année :</b> Y=2026, y=26<br><b>Mois :</b> m=06, n=6, M=Jun, F=June<br><b>Jour :</b> d=05, j=5, D=Jeu, l=Jeudi<br><b>Heure :</b> H=14, G=14 (sans zéro initial), h=02, g=2 (12 heures)<br><b>Minutes :</b> i=05 &nbsp;&nbsp; <b>Secondes :</b> s=09<br><b>AM/PM :</b> a=pm, A=PM</div></details>");
+define('_AM_CFG_HELP_DATE_TIME_FORMATS', "<details class='formulize-config-help'><summary>Afficher les codes de format de date/heure</summary><div class='formulize-config-help-codes'><b>Année :</b> Y=2026, y=26<br><b>Mois :</b> m=06, n=6, M=Jun, F=June<br><b>Jour :</b> d=05, j=5, D=Jeu, l=Jeudi<br><b>Heure :</b> H=14, G=14 (sans zéro initial), h=02, g=2 (12 heures)<br><b>Minutes :</b> i=05 &nbsp;&nbsp; <b>Secondes :</b> s=09<br><b>AM/PM :</b> a=pm, A=PM<br><b>Autre texte :</b> mettez \\ devant une lettre pour afficher la lettre elle-même, par ex. H\\hi=14h05</div></details>");

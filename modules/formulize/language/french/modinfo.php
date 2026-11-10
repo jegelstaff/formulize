@@ -172,4 +172,14 @@ define('_MI_formulize_VALIDATECODE_DESC', 'When this is turned on, then Formuliz
 define('_MI_formulize_ENFORCEHTMLPURIFICATION', 'Filter unsafe HTML from displayed data?');
 define('_MI_formulize_ENFORCEHTMLPURIFICATION_DESC', 'Some element types allow users to type whatever they want, including HTML codes. When this setting is turned on, all that HTML is passed through a filter before it is displayed, which removes dangerous parts (such as script tags and event handlers) while keeping normal formatting (headings, lists, tables, styling, links). This protects your site against cross-site scripting attacks that could otherwise be carried out by data saved into your forms. When this is turned off, the data is displayed without filtering, but Formulize records which elements would have been altered (you can see them in the Log Viewer), so you can review the effects before you turn filtering on for good. <i>Leaving this off can expose your site to attacks if any of your data contains malicious HTML.</i>');
 
+define('_MI_formulize_TIME_FORMAT', "Format d'affichage de l'heure");
+define('_MI_formulize_TIME_FORMAT_DESC', "Indique si les heures sont affichées sur 12 heures ou sur 24 heures, dans les listes et les champs en lecture seule. Chaque élément d'heure peut remplacer ce réglage. Sur 12 heures si rien n'est choisi. Les formats sont sous Formats de date et d'heure.");
+define('_MI_formulize_TIME_FORMAT_12', 'Sur 12 heures (par ex. 1:30pm)');
+define('_MI_formulize_TIME_FORMAT_24', 'Sur 24 heures (par ex. 13:30)');
+
+define('_MI_formulize_TIMEFORMAT12H', "Format de l'heure sur 12 heures");
+define('_MI_formulize_TIMEFORMAT12H_DESC', "La façon dont les éléments d'heure réglés sur 12 heures affichent l'heure. Les valeurs dérivées qui calculent le temps écoulé entre deux heures peuvent les lire avec formulize_timeValueAsISO(), quel que soit le format.");
+define('_MI_formulize_TIMEFORMAT24H', "Format de l'heure sur 24 heures");
+define('_MI_formulize_TIMEFORMAT24H_DESC', "La façon dont les éléments d'heure réglés sur 24 heures affichent l'heure. Les valeurs dérivées qui calculent le temps écoulé entre deux heures peuvent les lire avec formulize_timeValueAsISO(), quel que soit le format.");
+
 include_once XOOPS_ROOT_PATH . '/modules/formulize/language/english/modinfo.php'; // Include the English version of the module info file to ensure all constants are defined

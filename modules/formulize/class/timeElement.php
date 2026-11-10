@@ -121,6 +121,10 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
 			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
 			$dataToSendToTemplate['effective_time_format'] = isset($formulizeConfig['time_format']) ? $formulizeConfig['time_format'] : '12';
 		}
+		// the labels show an example time in the site's own formats
+		$exampleTime = DateTime::createFromFormat('!H:i', '13:30');
+		$dataToSendToTemplate['time_format_12_label'] = htmlspecialchars(sprintf(_AM_formulize_TIME_FORMAT_12, $exampleTime->format(_12HTIMEFORMAT)));
+		$dataToSendToTemplate['time_format_24_label'] = htmlspecialchars(sprintf(_AM_formulize_TIME_FORMAT_24, $exampleTime->format(_24HTIMEFORMAT)));
 		return $dataToSendToTemplate;
   }
 
@@ -177,13 +181,7 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
         $ele_value = is_array($ele_value) ? $ele_value[0] : $ele_value;
 				$ele_value = interpretTimeElementValue($ele_value, $entry_id);
         if($isDisabled) {
-            $displayValue = $ele_value;
-            if($this->getEffectiveTimeFormat($element) === '12') {
-                $displayValue = $this->convert24To12HourTime($displayValue);
-            } else {
-							$timeParts = explode(":", $displayValue);
-							$displayValue = $timeParts[0].":".$timeParts[1];
-						}
+            $displayValue = $this->formatTime($ele_value, $element);
             $formElement = new xoopsFormLabel($caption, $this->formatDataForList($displayValue, $element->getVar('ele_handle'), $entry_id));
         } else {
             $formElement = new xoopsFormText($caption, $markupName, 10, 10, $ele_value, type: 'time'); // caption, markup name, size, maxlength, default value, according to the xoops form class
@@ -226,13 +224,7 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     function prepareDataForDataset($value, $handle, $entry_id) {
         if($value === '' || $value === null) return $value;
         $element_handler = xoops_getmodulehandler('elements', 'formulize');
-        $element = $element_handler->get($handle);
-        if($element && $this->getEffectiveTimeFormat($element) === '12') {
-            return $this->convert24To12HourTime($value);
-        } else {
-					$timeParts = explode(":", $value);
-					return $timeParts[0].":".$timeParts[1];
-				}
+        return $this->formatTime($value, $element_handler->get($handle));
     }
 
     // this method will take a text value that the user has specified at some point, and convert it to a value that will work for comparing with values in the database.  This is used primarily for preparing user submitted text values for saving in the database, or for comparing to values in the database, such as when users search for things.  The typical user submitted values would be coming from a condition form (ie: fieldX = [term the user typed in]) or other situation where the user types in a value that needs to interact with the database.
@@ -242,8 +234,16 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
     // if $partialMatch is true, then an array may be returned, since there may be more than one matching value, otherwise a single value should be returned.
     // if literal text that users type can be used as is to interact with the database, simply return the $value
     // LINKED ELEMENTS AND UITEXT ARE RESOLVED PRIOR TO THIS METHOD BEING CALLED
+	// Times are stored as HH:MM:SS. A time typed the way they're stored, ie: 13:30 or 9:00, is left as typed, so a partial search for 9:00 still finds 9:00 and 19:00.
+	// A time typed the way the site shows times, in either the 12-hour or 24-hour format, becomes HH:MM. $element can be null, and then the site's formats are used.
 	function prepareLiteralTextForDB($value, $element, $partialMatch=false) {
-        // some conversion here ought to be done to support searching for >1:00PM etc
+        if(!is_string($value) OR trim($value) === '' OR preg_match('/^\d{1,2}:\d{2}(:\d{2})?$/', trim($value))) {
+            return $value;
+        }
+        $isoValue = formulize_timeValueAsISO($value, $this->getTimeFormatStrings($element));
+        if($isoValue !== $value) {
+            return substr($isoValue, 0, 5);
+        }
         return $this->convert12To24HourTime($value);
     }
 
@@ -258,32 +258,50 @@ class formulizeTimeElementHandler extends formulizeElementsHandler {
         return parent::formatDataForList($value); // always return the result of formatDataForList through the parent class (where the properties you set here are enforced)
     }
 
+    /**
+     * Whether an element shows times as 12-hour or 24-hour times: its own setting, or else the site's
+     * @param object|null $element The element object. If null, the site's setting is used.
+     * @return string '12' or '24'
+     */
     function getEffectiveTimeFormat($element) {
-        $ele_value = $element->getVar('ele_value');
-        $elementFormat = isset($ele_value[1]) ? $ele_value[1] : '';
-        if($elementFormat === '12' || $elementFormat === '24') {
-            return $elementFormat;
+        if(is_object($element)) {
+            $ele_value = $element->getVar('ele_value');
+            $elementFormat = isset($ele_value[1]) ? $ele_value[1] : '';
+            if($elementFormat === '12' || $elementFormat === '24') {
+                return $elementFormat;
+            }
         }
         $config_handler = xoops_gethandler('config');
         $formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
         return isset($formulizeConfig['time_format']) ? $formulizeConfig['time_format'] : '12';
     }
 
-    function convert24To12HourTime($value) {
-        $timeParts = explode(":", $value);
-				if(!isset($timeParts[1])) {
-					$timeParts[1] = "00";
-				}
-        if($timeParts[0] > 12) {
-            $value = ($timeParts[0]-12).":".$timeParts[1]."pm";
-        } elseif($timeParts[0] == "00") {
-            $value = "12:".$timeParts[1]."am";
-        } elseif($timeParts[0] == "12") {
-            $value = "12:".$timeParts[1]."pm";
-        } elseif($value) {
-            $value = ltrim($timeParts[0],"0").":".$timeParts[1]."am";
+    /**
+     * The PHP date() formats for times, the one an element shows times in first, and then the other one
+     * They're the site's 12-hour and 24-hour time formats, _12HTIMEFORMAT and _24HTIMEFORMAT
+     * @param object|null $element The element object. If null, the site's setting decides which comes first.
+     * @return array The two formats
+     */
+    function getTimeFormatStrings($element) {
+        return $this->getEffectiveTimeFormat($element) === '24' ? array(_24HTIMEFORMAT, _12HTIMEFORMAT) : array(_12HTIMEFORMAT, _24HTIMEFORMAT);
+    }
+
+    /**
+     * Format a time the way an element shows times
+     * @param string $value The time as it's stored, HH:MM:SS, or HH:MM
+     * @param object|null $element The element object. If null, the site's setting is used.
+     * @return string The time in the element's format, or the value unchanged if it isn't a time
+     */
+    function formatTime($value, $element) {
+        if($value === '' OR $value === null) {
+            return $value;
         }
-        return $value;
+        $time = DateTime::createFromFormat('!H:i:s', formulize_timeValueAsISO((string) $value));
+        if(!$time) {
+            return $value;
+        }
+        $formats = $this->getTimeFormatStrings($element);
+        return $time->format($formats[0]);
     }
 
     function convert12To24HourTime($value) {

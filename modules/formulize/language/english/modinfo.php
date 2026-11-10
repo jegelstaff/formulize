@@ -87,9 +87,13 @@ define("_MI_formulize_NUMBER_DECIMALSEP", "Decimal separator");
 define("_MI_formulize_NUMBER_SEP", "Thousands separator");
 
 define("_MI_formulize_TIME_FORMAT", "Time display format");
-define("_MI_formulize_TIME_FORMAT_DESC", "Controls how times are displayed in lists and read-only fields. Individual time elements can override this setting. Defaults to 12-hour if not set.");
+define("_MI_formulize_TIME_FORMAT_DESC", "Controls whether times are displayed as 12-hour or 24-hour times, in lists and read-only fields. Individual time elements can override this setting. Defaults to 12-hour if not set. The formats are under Date & time formats.");
 define("_MI_formulize_TIME_FORMAT_12", "12-hour (e.g. 1:30pm)");
 define("_MI_formulize_TIME_FORMAT_24", "24-hour (e.g. 13:30)");
+define("_MI_formulize_TIMEFORMAT12H", "12-hour time format");
+define("_MI_formulize_TIMEFORMAT12H_DESC", "How time elements set to 12-hour show times. Derived values that work out the time between two times can read them with formulize_timeValueAsISO(), whatever the format is.");
+define("_MI_formulize_TIMEFORMAT24H", "24-hour time format");
+define("_MI_formulize_TIMEFORMAT24H_DESC", "How time elements set to 24-hour show times. Derived values that work out the time between two times can read them with formulize_timeValueAsISO(), whatever the format is.");
 
 define("_MI_formulize_DEFAULTEDITICONSTYLE", "Default view/edit entry icon");
 define("_MI_formulize_DEFAULTEDITICONSTYLE_DESC", "Controls which icon is selected by default on new list-of-entries screens and new subform elements, for the link that lets a user click through to view/edit an entry. This can still be changed per screen or per subform element afterwards.");

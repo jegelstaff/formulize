@@ -11739,6 +11739,34 @@ function formulize_dateValueAsISO($value, $format = null) {
 }
 
 /**
+ * Get a time value as HH:MM:SS, from the formats a dataset shows times in (_12HTIMEFORMAT and _24HTIMEFORMAT), or from HH:MM with or without seconds
+ * Used when conditions are checked against a dataset, so times are compared the same way the database compares them, whatever the time formats are.
+ * Derived values can use it too, to work out the time between two times, since a time shown in a custom format may not be something strtotime can read.
+ *
+ * @param mixed $value The time value
+ * @param array|string|null $formats Optional. The PHP date() formats to read the value in, in the order to try them, if it isn't HH:MM. Defaults to the site's 12-hour format, then its 24-hour format.
+ * @return mixed The time as HH:MM:SS, or the value unchanged if it isn't a time in any of the formats, ie: blank, or part of a time in a search
+ */
+function formulize_timeValueAsISO($value, $formats = null) {
+	if(!is_string($value) OR trim($value) === '') {
+		return $value;
+	}
+	$value = trim($value);
+	if(preg_match('/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/', $value, $matches) AND $matches[1] < 24 AND $matches[2] < 60 AND (!isset($matches[3]) OR $matches[3] < 60)) {
+		return sprintf('%02d:%02d:%02d', $matches[1], $matches[2], isset($matches[3]) ? $matches[3] : 0);
+	}
+	$formats = $formats === null ? array(_12HTIMEFORMAT, _24HTIMEFORMAT) : (array) $formats;
+	foreach($formats as $format) {
+		$time = DateTime::createFromFormat('!'.$format, $value);
+		$errors = DateTime::getLastErrors();
+		if($time AND (!$errors OR ($errors['warning_count'] == 0 AND $errors['error_count'] == 0))) {
+			return $time->format('H:i:s');
+		}
+	}
+	return $value;
+}
+
+/**
  * Check if a term is a real date, in the format the database stores dates in, YYYY-MM-DD, with or without a time
  * A date in the database can only be compared with one of these. MySQL gives an error for anything else, where MariaDB compares them as text.
  *
@@ -15093,6 +15121,26 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			}
 		}
 
+		// times are compared as HH:MM:SS, whatever format the dataset shows them in, the same as the database compares them, and the term is read the same way, ie: 1:30pm becomes 13:30:00
+		// LIKE matches part of the time as SQL does, with the term converted for the database, or part of the time as the dataset shows it, the same as dates do
+		$timeExpression = "";
+		$timeField = $dateField; // the element the condition is on, if it's an element
+		if(!is_array($compValue) AND is_object($timeField) AND elementTypeIsOrExtends($timeField, 'time')) {
+			$timeTypeHandler = xoops_getmodulehandler($timeField->getVar('ele_type')."Element", "formulize");
+			$timeFormats = $timeTypeHandler->getTimeFormatStrings($timeField);
+			$timeAsShown = (string) $compValue;
+			$compValue = formulize_timeValueAsISO($compValue, $timeFormats);
+			if($filterTerms[$i] !== '' AND $thisOp != 'IN') {
+				if($thisOp == 'LIKE' OR $thisOp == 'NOT LIKE') {
+					$timeTermForDB = (string) $timeTypeHandler->prepareLiteralTextForDB($filterTerms[$i], $timeField, true);
+					$inTime = "(stristr('".addslashes((string) $compValue)."', '".addslashes($timeTermForDB)."') !== false OR stristr('".addslashes($timeAsShown)."', '".addslashes($filterTerms[$i])."') !== false)";
+					$timeExpression = $thisOp == 'LIKE' ? $inTime : "!$inTime";
+				} else {
+					$filterTerms[$i] = formulize_timeValueAsISO($timeTypeHandler->prepareLiteralTextForDB($filterTerms[$i], $timeField), $timeFormats);
+				}
+			}
+		}
+
 		// when a reference or the field holds several values, = and LIKE mean the field has any of the referenced values, and != and NOT LIKE mean it has none of them, the same as SQL
 		// (see _anyOfComparisonForConditionsFilterSQL). A blank reference means the field is blank, or not blank. LIKE can find a referenced value in part of one of the field's values,
 		// see formulize_referenceLikeLooksInPartOfAValue
@@ -15140,6 +15188,8 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			$evaluationCondition .= 'FALSE';
 		} elseif($dateExpression) {
 			$evaluationCondition .= $dateExpression;
+		} elseif($timeExpression) {
+			$evaluationCondition .= $timeExpression;
 		} elseif($referenceExpression) {
 			$evaluationCondition .= $referenceExpression;
 		} elseif($thisOp == "LIKE" AND $filterTermToUse != '') {
