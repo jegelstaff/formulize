@@ -660,6 +660,8 @@ define("_AM_ELE_GRID_BACKGROUND_HOR", "Alternate the shading of each row in the 
 define("_AM_ELE_GRID_BACKGROUND_VER", "Alternate the shading of each column in the table");
 define("_AM_ELE_GRID_START", "Choose the first element, which will appear in the upper left corner of the table");
 define("_AM_ELE_GRID_START_DESC", "Each table will have a number of elements in it, equal to the rows times the columns.  ie: if you have three rows and four columns, you will have 12 elements in your table.  The first element appears in the upper left corner, and the next element after that appears in the next cell to the right.  Once the end of a row has been reached, the next element appears in the first cell of the next row.  Elements are drawn from the form according to the order currently assigned to them; if you have 12 elements in your table, then the next 11 elements after the first element will be used in your table.  Therefore, make sure all the elements you want to use in tables are consecutively ordered in your form.");
+define("_AM_ELE_GRID_CONDITIONS_NOT_APPLIED", "Could not apply the table's display conditions to the element %s");
+define("_AM_ELE_GRID_CONDITIONS_NOT_CLEARED", "Could not remove the table's display conditions from the element %s, which is no longer in the table");
 
 // derived columns
 define("_AM_ELE_DERIVED", "Value derived from other elements");

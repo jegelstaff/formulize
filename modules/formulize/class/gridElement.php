@@ -261,29 +261,81 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 		}
 		$element->setVar('ele_order', figureOutOrder($position, $oldOrder, $fid));
 
+		// The grid gives its display conditions to the elements in it, below. When the starting element or the size
+		// changes, the elements that are no longer in the grid would keep those conditions, so find them before saving.
+		$elementsLeavingGrid = array();
+		$savedGridFilterSettings = array();
+		if($gridId = intval($element->getVar('ele_id')) AND $savedGrid = $this->get($gridId, true)) {
+			$savedGridFilterSettings = $savedGrid->getVar('ele_filtersettings');
+			$savedEleValue = $savedGrid->getVar('ele_value');
+			if($this->hasConditions($savedGridFilterSettings) AND is_array($savedEleValue) AND $savedEleValue[4] AND $savedEleValue[4] !== 'none') {
+				$savedElements = elementsInGrid($savedEleValue[4], $fid, $this->gridCount($savedEleValue));
+				$currentElements = (is_array($ele_value) AND $ele_value[4] AND $ele_value[4] !== 'none') ? elementsInGrid($ele_value[4], $fid, $this->gridCount($ele_value)) : array();
+				$elementsLeavingGrid = array_diff($savedElements, $currentElements);
+			}
+		}
+
 		// do the insert the normal way
 		if($result = parent::insert($element, $force)) {
 
-			// now propagate display settings to constituent elements
+			// take the grid's display conditions off elements that have left it. Only conditions that match the grid's
+			// are removed. Any others were set on the element itself.
 			$gridFilterSettings = $element->getVar('ele_filtersettings');
+			foreach($elementsLeavingGrid as $formerGridElementId) {
+				if($formerGridElementObject = $this->get($formerGridElementId)) {
+					$formerGridElementFilterSettings = $formerGridElementObject->getVar('ele_filtersettings');
+					if($this->hasConditions($formerGridElementFilterSettings) AND ($formerGridElementFilterSettings == $savedGridFilterSettings OR $formerGridElementFilterSettings == $gridFilterSettings)) {
+						$formerGridElementObject->setVar('ele_filtersettings', "");
+						if(!parent::insert($formerGridElementObject)) {
+							throw new Exception(sprintf(_AM_ELE_GRID_CONDITIONS_NOT_CLEARED, $this->elementLabel($formerGridElementObject))."\n");
+						}
+					}
+				}
+			}
+
+			// now propagate display settings to constituent elements
 			// if grid has filter settings...
-			if(is_array($gridFilterSettings) AND is_array($gridFilterSettings[0]) AND count($gridFilterSettings[0]) > 0) {
-				$gridCount = count(explode(",", $ele_value[1])) * count(explode(",", $ele_value[2]));
-				foreach(elementsInGrid($ele_value[4], $element->getVar('id_form'), $gridCount) as $gridElementId) {
+			if($this->hasConditions($gridFilterSettings)) {
+				foreach(elementsInGrid($ele_value[4], $element->getVar('id_form'), $this->gridCount($ele_value)) as $gridElementId) {
 					$gridElementObject = $this->get($gridElementId);
-					$gridElementFilterSettings = $gridElementObject->getVar('ele_filtersettings');
 					// if constitiuent element has no filter settings...
-					if(!is_array($gridElementFilterSettings) OR !is_array($gridElementFilterSettings[0]) OR count($gridElementFilterSettings[0]) == 0) {
+					if(!$this->hasConditions($gridElementObject->getVar('ele_filtersettings'))) {
 						$gridElementObject->setVar('ele_filtersettings', $gridFilterSettings);
 						if(!parent::insert($gridElementObject)) {
-							$elementLabel = $gridElementObject->getVar('ele_colhead') ? $gridElementObject->getVar('ele_colhead') : $gridElementObject->getVar('ele_caption');
-							throw new Exception("Could not apply grid display settings to the element ".$elementLabel."\n");
+							throw new Exception(sprintf(_AM_ELE_GRID_CONDITIONS_NOT_APPLIED, $this->elementLabel($gridElementObject))."\n");
 						}
 					}
 				}
 			}
 		}
 		return $result;
+	}
+
+	/**
+	 * Check whether a set of display conditions, as stored in ele_filtersettings, has any conditions in it
+	 * @param mixed $filterSettings The ele_filtersettings value of an element
+	 * @return bool True if there is at least one condition
+	 */
+	private function hasConditions($filterSettings) {
+		return (is_array($filterSettings) AND isset($filterSettings[0]) AND is_array($filterSettings[0]) AND count($filterSettings[0]) > 0);
+	}
+
+	/**
+	 * Work out how many elements are in a grid, from its row and column captions
+	 * @param array $ele_value The ele_value of the grid
+	 * @return int The number of cells in the grid
+	 */
+	private function gridCount($ele_value) {
+		return count(explode(",", $ele_value[1])) * count(explode(",", $ele_value[2]));
+	}
+
+	/**
+	 * Get the label an admin knows an element by: its column heading if it has one, otherwise its caption
+	 * @param object $elementObject The element
+	 * @return string The label
+	 */
+	private function elementLabel($elementObject) {
+		return $elementObject->getVar('ele_colhead') ? $elementObject->getVar('ele_colhead') : $elementObject->getVar('ele_caption');
 	}
 
 	/**
