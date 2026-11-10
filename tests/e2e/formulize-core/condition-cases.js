@@ -280,7 +280,8 @@ export function phpErrorsSince(since) {
  * page that doesn't finish drawing, or anything else that stops the check becomes a disagreement saying so, and the page goes
  * somewhere neutral for the next row. When a row disagrees for any reason, the PHP errors logged while it ran are added too.
  * Each disagreement is printed as soon as it's found, so the log shows how far a run has got, and a run that's stopped partway
- * still shows what it found. Nothing prints for a row that agrees.
+ * still shows what it found. For a row that can't be checked, the whole error is printed too, while its disagreement keeps only
+ * the start of it, so the summary stays short. Nothing prints for a row that agrees.
  * @param {import('@playwright/test').Page} page
  * @param {string} rowId - The row, ie: S12
  * @param {string[]} disagreements - Where the row's disagreements go
@@ -289,12 +290,14 @@ export function phpErrorsSince(since) {
 export async function checkRow(page, rowId, disagreements, check) {
 	const since = Date.now() / 1000;
 	const before = disagreements.length;
+	let fullMessage = '';
 	try {
 		await check();
 	} catch (error) {
-		const message = String(error && error.message ? error.message : error).replace(/\u001b\[[0-9;]*m/g, '');
-		const lines = message.split('\n').map(line => line.trim()).filter(line => line !== '');
-		disagreements.push(`${rowId}: could not be checked. ${lines.slice(0, 2).join(' ')}`);
+		fullMessage = String(error && error.message ? error.message : error).replace(/\u001b\[[0-9;]*m/g, '');
+		const lines = fullMessage.split('\n').map(line => line.trim()).filter(line => line !== '');
+		// three lines, since the third says what was waited for, ie: "- waiting for getByRole('button', ...)" after "Call log:"
+		disagreements.push(`${rowId}: could not be checked. ${lines.slice(0, 3).join(' ')}`);
 		await page.goto('/modules/formulize/index.php').catch(() => {});
 	}
 	if (disagreements.length > before) {
@@ -304,5 +307,9 @@ export async function checkRow(page, rowId, disagreements, check) {
 	}
 	for (const disagreement of disagreements.slice(before)) {
 		console.log(disagreement);
+	}
+	// the whole error goes in the log, call log and all, since the disagreement keeps only its start
+	if (fullMessage) {
+		console.log(`${rowId}: the whole error:\n${fullMessage}`);
 	}
 }

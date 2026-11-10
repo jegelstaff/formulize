@@ -323,6 +323,12 @@ class icms_core_Session {
 	public $enableRegenerateId = false;
 
 	/**
+	 * The ids of the sessions this request read that had data in them, for writeSession
+	 * @var	array
+	 */
+	private $sessionsReadWithData = array();
+
+	/**
 	 * Constructor
 	 * @param object $db reference to the {@link XoopsDatabase} object
 	 * Do we need this $db reference now we're using icms::$xoopsDB?????
@@ -677,6 +683,7 @@ class icms_core_Session {
 				icms::$xoopsDB->prefix('session'), icms::$xoopsDB->quoteString($sess_id));
 			if (false != $result = icms::$xoopsDB->query($sql)) {
 				if (icms::$xoopsDB->getRowsNum($result) > 0 AND list($sess_data, $sess_ip, $sess_locked) = icms::$xoopsDB->fetchRow($result)) {
+					if ($sess_data) { $this->sessionsReadWithData[$sess_id] = true; }
 					// session data locked by a request that is still plausibly running, and we haven't
 					// already loaded a session in this PHP instantiation, wait 1/3rd of a second and try again
 					if(self::sessionLockIsWorthWaitingFor($sess_locked) AND !$sessionLoaded) {
@@ -787,6 +794,7 @@ class icms_core_Session {
 	 * @return  bool
 	 **/
 	private function writeSession($sess_id, $sess_data) {
+		$readWithData = isset($this->sessionsReadWithData[$sess_id]);
 		$sess_id = icms::$xoopsDB->quoteString($sess_id);
 		$sess_data = icms::$xoopsDB->quoteString($sess_data);
 		$lockable = self::sessionLockingAvailable();
@@ -798,6 +806,15 @@ class icms_core_Session {
 			);
 		icms::$xoopsDB->queryF($sql);
 		if (!icms::$xoopsDB->getAffectedRows()) {
+			// A session this request read with data in it, and didn't destroy itself, has gone because
+			// another request deleted it, since garbage collection leaves a session alone while it's
+			// locked. Signing out does that, and so do a new session id and a password reset. Putting
+			// the row back would undo it: a request that started before someone signed out, and
+			// finished after, would sign them back in. So it stays gone. The row may also still be
+			// there with nothing changed, and then there's nothing to write.
+			if ($readWithData) {
+				return true;
+			}
 			$sql = sprintf(
 				"INSERT INTO %s (sess_id, sess_updated, sess_ip, sess_data)"
 				. " VALUES (%s, '%u', %s, %s)",
@@ -817,6 +834,9 @@ class icms_core_Session {
 	 * @return  bool
 	 **/
 	private function destroySession($sess_id) {
+		// a request that destroys its own session can go on to save it again, as a failed login does
+		// with its message for redirect_header, so writeSession doesn't hold this one back
+		unset($this->sessionsReadWithData[$sess_id]);
 		$sql = sprintf(
 			'DELETE FROM %s WHERE sess_id = %s',
 			icms::$xoopsDB->prefix('session'), icms::$xoopsDB->quoteString($sess_id)
