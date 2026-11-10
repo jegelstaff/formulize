@@ -59,7 +59,7 @@ function formulize_patch_016_my_change($prev_dbversion, $required_dbversion) {
 
 `000_schema_migrations.php` is closed to new work. It brings a site up to `dbversion` 18 and is skipped on sites already there.
 
-A new site gets the change from `sql/mysql.sql`, so a passing test suite doesn't show that the patch works. Try it against a copy of a database from before the change. For a patch that repairs old data, a spec can put the museum system into the old shape and run the real update from the admin UI. `03-validate-sequential/060-update-fixes-old-handles.spec.js` does this, and uses the system as it was beforehand to check what the update put back.
+A new site gets the change from `sql/mysql.sql`, so a passing test suite doesn't show that the patch works. Try it against a copy of a database from before the change. For a patch that repairs old data, a spec can put the museum system into the old shape and run the real update from the admin UI. `03-validate-sequential/060-update-fixes-old-handles.spec.js` does this, and uses the system as it was beforehand to check what the update put back. To make its patch run again, it uses **Set Database Version** to go back to just below the patch's gate, runs only that patch's file (`ui.php?op=patchDB-only&f=002`), then sets the version forward to the one the page says the code requires. A filtered run never moves the version. Don't run every patch from the lower version, because later patches have already run on the system and only have to be safe to run once. And don't write the current version into a spec, because it goes up with every new patch.
 
 ## What forces the update page
 

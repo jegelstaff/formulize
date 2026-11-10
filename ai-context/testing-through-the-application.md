@@ -32,7 +32,7 @@ These write data directly because Formulize can no longer produce it. Ask the us
 - `01-setup/002` stores an old SHA256 password hash, to test that login upgrades it.
 - `02-validate/039` stores raw XSS payloads, like data saved before purification.
 - `03-validate-sequential/020` writes handles into settings the way old versions stored them.
-- `03-validate-sequential/060` writes element handles with capitals and hyphens into the museum system, its data table fields and code files, then runs the real update to repair them. It keeps the system as it was first, and checks that every Formulize table and file is back to that afterwards.
+- `03-validate-sequential/060` writes element handles with capitals and hyphens into the museum system, its data table fields and code files, then runs the real patch from the admin UI to repair them. It keeps the system as it was first, and checks that every Formulize table and file is back to that afterwards.
 
 ## PHP tests are a different thing
 

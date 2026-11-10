@@ -639,9 +639,6 @@ if ($command == 'break') {
 	$procedure = $codeFolder . 'on_before_save_artifacts.php';
 	old_put($procedure, file_get_contents($procedure) . $plantedKey);
 
-	// and the system now reads as an old site's does: an update from before this version is due
-	old_write("UPDATE " . old_table('modules') . " SET dbversion = 26 WHERE dirname = 'formulize'");
-
 	ksort($changed);
 	echo json_encode($changed) . "\n";
 	exit(0);

@@ -13,7 +13,9 @@ import {
  *
  * Formulize will not create such a handle any more, so old-handles.php writes one, to real elements that drive real
  * features: in the element table, the data and revisions tables, the code files and the settings that name them. Then
- * an administrator runs the update the way a real site gets it, from the Update Formulize button.
+ * an administrator sets the database version back to before the repair, runs only the patch file that has it, and
+ * sets the version forward again. Every other patch has already run on this system, and a patch only has to be safe
+ * to run once, so none of them runs again here.
  *
  * The system was right before it was broken, so that is the yardstick: afterwards the Formulize tables and the code and
  * template files have to be what they were, and then a person has to be able to use the features that depend on those
@@ -38,6 +40,18 @@ async function runUpdate(page, button) {
 	await page.getByRole('button', { name: button }).click();
 	await expect(page.getByRole('link', { name: 'Close' })).toBeVisible({ timeout: 120000 });
 	return page.locator('body').innerText();
+}
+
+// Set the stored database version on the Set Database Version page, and give back the version the installed code
+// requires, as that page says it
+async function setDBVersion(page, version) {
+	await page.goto('/modules/formulize/admin/ui.php?op=setDBVersion');
+	const required = (await page.locator('body').innerText()).match(/Version required by the code currently installed:\s*(\d+)/);
+	expect(required, 'the page says what version the code requires').not.toBeNull();
+	await page.locator('input[name="newDBVersion"]').fill(String(version));
+	await page.getByRole('button', { name: 'Set Database Version' }).click();
+	await expect(page.locator('body')).toContainText(`to ${version}.`);
+	return parseInt(required[1], 10);
 }
 
 test.describe.serial('Updating a site with element handles in their old shapes', () => {
@@ -81,8 +95,13 @@ test.describe.serial('Updating a site with element handles in their old shapes',
 		expect(damage.some(difference => difference.includes(' has changed: '))).toBe(true);
 
 		await asAdmin(page);
-		await page.goto('/modules/formulize/admin');
-		const said = await runUpdate(page, 'Update Formulize');
+		// The search for stale spellings runs once, on the update from below dbversion 27, so the version goes back to
+		// just below that. 26 belongs to that patch, and stays the same whatever version Formulize is at now.
+		const required = await setDBVersion(page, 26);
+		expect(required).toBeGreaterThan(26);
+		expect(planted().dbversion).toBe(26);
+		await page.goto('/modules/formulize/admin/ui.php?op=patchDB-only&f=002');
+		const said = await runUpdate(page, 'Update Formulize - Database Only (002 only)');
 
 		// what the administrator is told
 		expect(said).toContain('Renaming element handles');
@@ -102,7 +121,11 @@ test.describe.serial('Updating a site with element handles in their old shapes',
 
 		// the fields, in the data table and the revisions table
 		let state = planted();
-		expect(state.dbversion).toBe(27);
+		// a run of one patch file leaves the version where it was, and the administrator sets it to what the code requires
+		expect(state.dbversion).toBe(26);
+		await setDBVersion(page, required);
+		state = planted();
+		expect(state.dbversion).toBe(required);
 		for (const fields of [state.data_fields, state.revisions_fields]) {
 			for (const field of ['artifacts_year', 'artifacts_era', 'artifacts_year_era', 'artifacts_short_name', 'artifacts_latitude', 'artifacts_donated_to_museum']) {
 				expect(fields).toContain(field);
