@@ -513,7 +513,16 @@ $modversion['table_metadata'] = array(
         "fields" => array("gl_name"),
         "joins" => array()
     ),
-    "formulize_other" => array(),
+    "formulize_other" => array(
+        "fields" => array(), // the entry, id_req, is named by SyncCompareCatalog::getRecMetadata()
+        "joins" => array(
+            array(
+                "join_table" => "formulize",
+                "join_field" => array("ele_id", "ele_id"),
+                "field" => "ele_caption"
+            )
+        )
+    ),
     "formulize_notification_conditions" => array(
         "fields" => array(),
         "joins" => array(
@@ -574,7 +583,6 @@ $modversion['table_metadata'] = array(
             )
         )
     ),
-    "formulize_entry_owner_groups" => array(),
     "formulize_application_form_link" => array(
         "fields" => array(),
         "joins" => array(
@@ -671,7 +679,7 @@ $modversion['table_metadata'] = array(
 		)
 	),
     "formulize_entry_owner_groups" => array(
-        "fields" => array("entry_id"),
+        "fields" => array(), // the entry, entry_id, is named by SyncCompareCatalog::getRecMetadata()
         "joins" => array(
             array(
                 "join_table" => "formulize_id",

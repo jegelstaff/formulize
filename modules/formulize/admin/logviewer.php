@@ -82,7 +82,8 @@ $filters = array(
     'user_timezone_offset' => $userTimezoneOffset, // Pass offset to filter function
     'log_file_date' => isset($availableFiles[$selectedFile]['date']) ? $availableFiles[$selectedFile]['date'] : null, // Date of the log file being viewed
 );
-$adminPage['filters'] = $filters;
+// the filters go back into the filter boxes, and they come from the request, so they're escaped for the page
+$adminPage['filters'] = array_map('logViewerSafeValue', $filters);
 
 // Pagination - from POST or GET
 $perPage = isset($_POST['per_page']) ? intval($_POST['per_page']) : (isset($_GET['per_page']) ? intval($_GET['per_page']) : 250);
@@ -154,6 +155,21 @@ if($entries && count($entries) > 0) {
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+/**
+ * Make a value safe to show on the page. The log holds what people sent, such as the address they asked for and what
+ * they searched for, so every string is escaped. Entities already in a value are left as they are, since the address is
+ * escaped when it's logged. Numbers are left alone, so the times keep their precision, and arrays are shown as JSON.
+ *
+ * @param mixed $value A value from the log or the request
+ * @return mixed The value, safe to show
+ */
+function logViewerSafeValue($value) {
+    if(is_array($value)) {
+        $value = json_encode($value);
+    }
+    return is_string($value) ? htmlspecialchars($value, double_encode: false) : $value;
+}
 
 function getAvailableLogFiles($logPath) {
     $files = glob($logPath . '/formulize_log_*.log');
@@ -393,7 +409,7 @@ function groupBySession($entries, $timezoneOffset = 0) {
             }
 
             $sessions[$sessionId] = array(
-                'session_id' => $sessionId,
+                'session_id' => logViewerSafeValue($sessionId),
                 'first_seen' => $entry['microtime'],
                 'last_seen' => $entry['microtime'],
                 'user_id' => $userId,
@@ -434,8 +450,8 @@ function groupBySession($entries, $timezoneOffset = 0) {
                 $isMCP = (strpos($url, '/mcp/') !== false);
 
                 $requestGroups[$requestId] = array(
-                    'request_id' => $requestId,
-                    'url' => $url,
+                    'request_id' => logViewerSafeValue($requestId),
+                    'url' => logViewerSafeValue($url),
                     'is_admin' => $isAdmin,
                     'is_mcp' => $isMCP,
                     'first_event_time' => $event['microtime'],
@@ -443,8 +459,8 @@ function groupBySession($entries, $timezoneOffset = 0) {
                 );
             }
 
-            // Enrich event data with titles
-            $enrichedEvent = $event;
+            // Enrich event data with titles. Every field is shown on the page, so they're all made safe first
+            $enrichedEvent = array_map('logViewerSafeValue', $event);
 
             // Form title lookup
             if(isset($event['form_id']) && $event['form_id'] > 0) {
@@ -473,24 +489,8 @@ function groupBySession($entries, $timezoneOffset = 0) {
                 $cacheKey = $formId . '_' . $entryId;
 
                 if(!isset($entryCache[$cacheKey])) {
-                    $form = $form_handler->get($formId);
-                    if($form && ($principalIdentifierElementId = $form->getVar('pi'))) {
-                        include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-                        $data_handler = new formulizeDataHandler($formId);
-                        $element_handler = xoops_getmodulehandler('elements', 'formulize');
-
-                        if($principalIdentifierValue = $data_handler->getElementValueInEntry($entryId, $principalIdentifierElementId)) {
-                            $principalIdentifierElementObject = $element_handler->get($principalIdentifierElementId);
-                            $principalIdentifierHandle = $principalIdentifierElementObject->getVar('ele_handle');
-                            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
-                            $principalIdentifierValueArray = prepvalues($principalIdentifierValue, $principalIdentifierHandle, $entryId);
-                            $entryCache[$cacheKey] = (isset($principalIdentifierValueArray[0]) ? $principalIdentifierValueArray[0] : '');
-                        } else {
-                            $entryCache[$cacheKey] = '';
-                        }
-                    } else {
-                        $entryCache[$cacheKey] = '';
-                    }
+                    // what people typed, or a derived value that can be HTML, so it's purified
+                    $entryCache[$cacheKey] = formulize_purifyHtmlValue(formulize_getPrincipalIdentifierValue($formId, $entryId), '', $entryId);
                 }
                 $enrichedEvent['entry_descriptor'] = $entryCache[$cacheKey];
             }

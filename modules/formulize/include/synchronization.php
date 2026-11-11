@@ -18,7 +18,7 @@
     function doExport($archiveName, $formsSelected){
         global $successfulExport;
 
-        $csvFilePaths = createCSVsAndGetPaths(syncDataTablesList($formsSelected));
+        $csvFilePaths = createCSVsAndGetPaths(syncDataTablesList($formsSelected), $formsSelected);
         $archivePath = createExportArchive($archiveName, $csvFilePaths);
         error_log(print_r($archivePath, true));
 
@@ -49,9 +49,10 @@
      * returns array of paths to the CSV files
      *
      * param tables             string array of table names to pull data from (and write to CSV)
+     * param formsSelected      Array of form ids whose data is being exported
      * return paths             string array containing paths of all CSV files written
      */
-    function createCSVsAndGetPaths($tables){
+    function createCSVsAndGetPaths($tables, $formsSelected = array()){
         $paths = Array();
         $date = date_create();
         // create directory in the "export" directory that is unique to the time created. will store export CSVs
@@ -84,6 +85,14 @@
         $formattedGroupPermData = formatDataArrayForCSV($groupPermData);
         writeCSVFile($exportDir, $t.".csv", $formattedGroupPermData);
         array_push($paths, $exportDir.$t.".csv");
+
+        // special case for PREFIX_formulize_other since we only want the Other values that belong to the entries in the data tables being exported
+        if ($formDataTables = syncFormDataTables($formsSelected)) {
+            $t = XOOPS_DB_PREFIX."_formulize_other";
+            $formattedOtherData = formatDataArrayForCSV($tableObj->getOtherValues($t, $formDataTables));
+            writeCSVFile($exportDir, $t.".csv", $formattedOtherData);
+            array_push($paths, $exportDir.$t.".csv");
+        }
 
         return $paths;
     }
@@ -345,25 +354,31 @@
         // get the default tables we need for export
         $tablesList = syncDefaultTablesList();
 
-        // get the user selected form tables, if any were selected
-        if (!empty($formsSelected)) {
-            global $xoopsDB;
-            $formTables = array();
-            // query the db for the forms that were selected by the user, $formsChecked should consist of all the id_form numbers
-            $sql = "SELECT form_handle FROM " . XOOPS_DB_PREFIX . "_formulize_id" . " WHERE id_form IN (" . implode(",", $formsSelected) . ");";
-            $result = icms::$xoopsDB->query($sql);
-            while ($row = $xoopsDB->fetchRow($result)) {
-                // extract the form_handle from the data record row and add it to the list
-                $handle = $row[0];
-                array_push($formTables, "formulize_" . $handle);
-            }
-            // add prefix to all form handles
-            foreach ($formTables as &$value) {
-                array_push($tablesList, XOOPS_DB_PREFIX . '_' . $value);
-            }
-        }
+        // add the data tables of the forms the user selected, if any were selected
+        $tablesList = array_merge($tablesList, array_values(syncFormDataTables($formsSelected)));
 
         return $tablesList;
+    }
+
+    // syncFormDataTables function returns the full names of the data tables of the given forms, keyed by form id
+    function syncFormDataTables($formsSelected) {
+        static $formDataTables = array();
+        $formsSelected = array_filter(array_map('intval', (array) $formsSelected));
+        if (empty($formsSelected)) {
+            return array();
+        }
+        $cacheKey = implode(",", $formsSelected);
+        if (!isset($formDataTables[$cacheKey])) {
+            global $xoopsDB;
+            $formDataTables[$cacheKey] = array();
+            // query the db for the forms that were selected by the user
+            $sql = "SELECT id_form, form_handle FROM " . XOOPS_DB_PREFIX . "_formulize_id" . " WHERE id_form IN (" . $cacheKey . ");";
+            $result = $xoopsDB->query($sql);
+            while ($row = $xoopsDB->fetchRow($result)) {
+                $formDataTables[$cacheKey][$row[0]] = XOOPS_DB_PREFIX . "_formulize_" . $row[1];
+            }
+        }
+        return $formDataTables[$cacheKey];
     }
 
     function getFormsInfo() {

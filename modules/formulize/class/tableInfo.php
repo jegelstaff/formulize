@@ -59,6 +59,29 @@ class tableInfo {
         return $records;
     }
 
+    // the Other values for the given forms, limited to the entries in each form's data table
+    // formDataTables is an array of form ids => full names of their data tables
+    private function getOtherRecords($otherTableName, $formDataTables) {
+        $conn = $this->openConn(XOOPS_DB_NAME);
+        $conn->query("SET NAMES utf8mb4");
+        $elementsTableName = XOOPS_DB_PREFIX."_formulize";
+        $records = array();
+        foreach($formDataTables as $fid => $dataTableName) {
+            $query = "SELECT o.* FROM ".$otherTableName." AS o
+                INNER JOIN ".$elementsTableName." AS e ON e.ele_id = o.ele_id
+                INNER JOIN `".str_replace("`", "", $dataTableName)."` AS d ON d.entry_id = o.id_req
+                WHERE e.id_form = ".intval($fid)."
+                ORDER BY o.other_id;";
+            try {
+                $records = array_merge($records, $conn->query($query)->fetchAll());
+            } catch (\PDOException $e) {
+                // the form has no data table of its own, so it has no Other values to export
+                continue;
+            }
+        }
+        return $records;
+    }
+
     public function get($tableName) {
         return array(
             "name" => $tableName,
@@ -76,6 +99,17 @@ class tableInfo {
             "columns" => $this->getTableCols($tableName),
             "types" => $this->getTableTypes($tableName),
             "records" => $this->getFilteredTableRecords($tableName, $columnName, $value)
+        );
+    }
+
+    // tableInfo->getOtherValues retrieves tableInfo for the formulize_other table, but only with the records for
+    //                  the given forms that belong to entries in their data tables
+    public function getOtherValues($otherTableName, $formDataTables) {
+        return array(
+            "name" => $otherTableName,
+            "columns" => $this->getTableCols($otherTableName),
+            "types" => $this->getTableTypes($otherTableName),
+            "records" => $this->getOtherRecords($otherTableName, $formDataTables)
         );
     }
 

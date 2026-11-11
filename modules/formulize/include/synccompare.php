@@ -28,6 +28,7 @@ class SyncCompareCatalog {
     private $changeDetails = array(); // Only set on first processing after initial upload, not present in cache.
     private $groupsToSync = array(); // group catalog that is based on the ids and names from the SOURCE system. Only set on first processing after initial upload, not present in cache.
     public $doneFilePaths = array();
+    private $recordIndex = array(); // records looked up for the review page, by table, field and value. Not cached between page loads.
 
     function __construct() {
         // open a connection to the database
@@ -154,6 +155,10 @@ class SyncCompareCatalog {
                 $newRecord = array();
                 for ($i = 0; $i < count((array) $record); $i++) {
 									$field = $fields[$i];
+									// Other values are matched by entry and element, so their ids can differ between the two systems
+									if ($tableName == "formulize_other" AND $field == "other_id") {
+										continue;
+									}
 									$value = $this->cleanEncoding($record[$i]);
 									$dbValue = $this->cleanEncoding($dbRecord[$field]);
 									if ($dbValue != $value) {
@@ -463,6 +468,9 @@ class SyncCompareCatalog {
     private function getRecord($tableName, $record, $fields) {
         if($tableName == "formulize_entry_owner_groups") {
             $result = $this->db->query('SELECT * FROM '.prefixTable($tableName).' WHERE fid='.intval($record[array_search("fid", $fields)]).' AND entry_id = '.intval($record[array_search("entry_id", $fields)]).' AND groupid = '.intval($record[array_search("groupid", $fields)]).';');
+        } elseif($tableName == "formulize_other") {
+            // an Other value belongs to an entry and an element, the same way it is found when saving an entry
+            $result = $this->db->query('SELECT * FROM '.prefixTable($tableName).' WHERE id_req = '.intval($record[array_search("id_req", $fields)]).' AND ele_id = '.intval($record[array_search("ele_id", $fields)]).' LIMIT 0,1;');
         } else {
             $primaryField = $this->getPrimaryField($tableName);
             $recPrimaryValue = $record[array_search($primaryField, $fields)];
@@ -506,8 +514,10 @@ class SyncCompareCatalog {
         // table has no metadata if not in the table_metadata list
         $tableMetadata = $this->metadata["table_metadata"];
         if (!array_key_exists($tableName, $tableMetadata)) {
-            if(isset($record['entry_id'])) { // try the entry id if it exists
-                return array('entry_id'=> $record['entry_id']);
+            // a form's data table is not in the list, so its entries are named by their principal identifier, or their entry id
+            if(isset($record['entry_id'])) {
+                $formRecord = $this->findRecord("formulize_id", "form_handle", substr($tableName, strlen("formulize_")));
+                return array('entry_id' => $this->describeEntry($formRecord, $record['entry_id'], $record));
             }
         }
 
@@ -515,7 +525,97 @@ class SyncCompareCatalog {
 
         $metadata = $this->getRecMetadataFromChanges($tableName, $tableMetaInfo, $record);
 
+        // a record that belongs to an entry is named by the entry, followed by what table_metadata adds
+        $entryIdField = false;
+        if($tableName == "formulize_other") {
+            // an Other value belongs to an entry in the form its element is in
+            $entryIdField = "id_req";
+            $elementRecord = $this->findRecord("formulize", "ele_id", $record['ele_id']);
+            $formRecord = $elementRecord ? $this->findRecord("formulize_id", "id_form", $elementRecord['id_form']) : false;
+        } elseif($tableName == "formulize_entry_owner_groups") {
+            $entryIdField = "entry_id";
+            $formRecord = $this->findRecord("formulize_id", "id_form", $record['fid']);
+        }
+        if($entryIdField) {
+            $metadata = array($entryIdField => $this->describeEntry($formRecord, $record[$entryIdField])) + $metadata;
+        }
+
         return $metadata;
+    }
+
+    /*
+     * describeEntry names an entry on the review page by the value of its form's principal identifier, or by its entry id
+     * if the form has no principal identifier or the entry has no value for it. The form, the element and the entry are
+     * looked for in this import first, since they may be new, and then in this system.
+     *
+     * param formRecord     The form's record from the formulize_id table, or false if it was not found
+     * param entryId        The entry id
+     * param dataRecord     The entry's record from the form's data table, if the caller has it already
+     * return               The principal identifier value, made safe for display, or the entry id
+     */
+    private function describeEntry($formRecord, $entryId, $dataRecord = null) {
+        $entryId = intval($entryId);
+        if(!$formRecord
+            OR !($principalIdentifierElementId = intval($formRecord['pi']))
+            OR !($elementRecord = $this->findRecord("formulize", "ele_id", $principalIdentifierElementId))) {
+            return $entryId;
+        }
+        $handle = $elementRecord['ele_handle'];
+        if($dataRecord === null) {
+            $dataRecord = $this->findRecord("formulize_".$formRecord['form_handle'], "entry_id", $entryId);
+        }
+        if(!$dataRecord OR !isset($dataRecord[$handle]) OR $dataRecord[$handle] === '') {
+            return $entryId;
+        }
+        $value = $dataRecord[$handle];
+        // show the value the way a list does, if this system already has the element, otherwise as it is stored
+        $element_handler = xoops_getmodulehandler('elements', 'formulize');
+        if(($elementObject = $element_handler->get($principalIdentifierElementId)) AND $elementObject->getVar('ele_handle') == $handle) {
+            try {
+                $value = formulize_entryDescriptorValue($value, $handle, $entryId);
+            } catch (Exception $e) {
+                // keep the value as it is stored
+            }
+        }
+        $value = formulize_purifyHtmlValue($value, $handle, $entryId);
+        return $value !== '' ? $value : $entryId;
+    }
+
+    /*
+     * findRecord returns a record from this import, or if the import does not have it, from this system
+     *
+     * param tableName      The unprefixed name of the table
+     * param field          The field to look up the record by
+     * param value          The value the field must have
+     * return               The record as an array of field => value, or false if there is none
+     */
+    private function findRecord($tableName, $field, $value) {
+        // index the import's records the first time they are looked up by this field, since a data table can have many
+        if(!isset($this->recordIndex[$tableName][$field])) {
+            $this->recordIndex[$tableName][$field] = array();
+            if(isset($this->changes[$tableName])) {
+                foreach(array("inserts", "updates") as $type) {
+                    foreach($this->changes[$tableName][$type] as $rec) {
+                        if(isset($rec[$field]) AND !isset($this->recordIndex[$tableName][$field][$rec[$field]])) {
+                            $this->recordIndex[$tableName][$field][$rec[$field]] = $rec;
+                        }
+                    }
+                }
+            }
+        }
+        if(isset($this->recordIndex[$tableName][$field][$value])) {
+            return $this->recordIndex[$tableName][$field][$value];
+        }
+        if(!$this->tableExists($tableName)) {
+            return false;
+        }
+        global $xoopsDB;
+        $sql = "SELECT * FROM ".prefixTable($tableName)." WHERE `".str_replace("`", "", $field)."` = '".formulize_db_escape($value)."' LIMIT 0,1";
+        if(($res = $xoopsDB->query($sql)) AND ($row = $xoopsDB->fetchArray($res))) {
+            $this->recordIndex[$tableName][$field][$value] = $row;
+            return $row;
+        }
+        return false;
     }
 
     // this function will search the changes list first then fallback to the DB
@@ -539,7 +639,7 @@ class SyncCompareCatalog {
                 $recTableKey = $joinTableInfo["join_field"][0];
                 $recTableKeyVal = $record[$recTableKey];
 
-                $changesTable = $this->changes[$joinTableName];
+                $changesTable = isset($this->changes[$joinTableName]) ? $this->changes[$joinTableName] : false;
                 $fieldValue = false;
                 if ($changesTable) {
                     foreach ($changesTable["inserts"] as $rec) {
@@ -575,6 +675,11 @@ class SyncCompareCatalog {
         if(strstr($tableName, "formulize_entry_owner_groups")) {
             unset($fields[array_search("owner_id", $fields)]);
             unset($record['owner_id']);
+        }
+        // the target system gives a new Other value its own id, since ids can differ between the two systems
+        if($tableName == "formulize_other") {
+            unset($fields[array_search("other_id", $fields)]);
+            unset($record['other_id']);
         }
 
         $sql = 'INSERT INTO '.prefixTable($tableName).' (`'.join("`, `", $fields).'`) VALUES (';
@@ -615,6 +720,9 @@ class SyncCompareCatalog {
         if(strstr($tableName, "formulize_entry_owner_groups")) {
             unset($record['owner_id']);
         }
+        if($tableName == "formulize_other") {
+            unset($record['other_id']);
+        }
 
         if($tableName == "formulize") {
             // get the current name, then update the field
@@ -646,6 +754,8 @@ class SyncCompareCatalog {
         // add the where clause to specify which record to update
         if(strstr($tableName, "formulize_entry_owner_groups")) {
             $sql .= ' WHERE fid='.intval($record['fid']).' AND entry_id='.intval($record['entry_id']).';';
+        } elseif($tableName == "formulize_other") {
+            $sql .= ' WHERE id_req='.intval($record['id_req']).' AND ele_id='.intval($record['ele_id']).';';
         } else {
             $primaryField = $this->getPrimaryField($tableName);
             $recPrimaryValue = $record[$primaryField];

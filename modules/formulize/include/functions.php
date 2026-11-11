@@ -2169,6 +2169,46 @@ function cutString($string, $maxlen) {
 }
 
 /**
+ * An element's value in an entry, the way a list of entries shows it, for naming the entry by. When the element has
+ * several values, only the first is used. The value is not made safe for display, so callers must do that.
+ *
+ * @param mixed $rawValue The value as it is stored in the form's data table
+ * @param string $handle The element's handle
+ * @param int $entryId The entry the value belongs to
+ * @return string The value, or an empty string if there is none
+ * @formulizeElement $handle one
+ */
+function formulize_entryDescriptorValue($rawValue, $handle, $entryId) {
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+	$preppedValues = prepvalues($rawValue, $handle, $entryId);
+	return isset($preppedValues[0]) ? strval($preppedValues[0]) : '';
+}
+
+/**
+ * The value of an entry's principal identifier, the way a list of entries shows it. The value is not made safe for
+ * display, so callers must do that.
+ *
+ * @param int $fid The form the entry belongs to
+ * @param int $entryId The entry
+ * @return string The value, or an empty string if the form has no principal identifier, or the entry has no value for it
+ */
+function formulize_getPrincipalIdentifierValue($fid, $entryId) {
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$element_handler = xoops_getmodulehandler('elements', 'formulize');
+	if(!($formObject = $form_handler->get($fid))
+		OR !($principalIdentifierElementId = $formObject->getVar('pi'))
+		OR !($principalIdentifierElementObject = $element_handler->get($principalIdentifierElementId))) {
+		return '';
+	}
+	include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
+	$data_handler = new formulizeDataHandler($fid);
+	if(!$rawValue = $data_handler->getElementValueInEntry(intval($entryId), $principalIdentifierElementId)) {
+		return '';
+	}
+	return formulize_entryDescriptorValue($rawValue, $principalIdentifierElementObject->getVar('ele_handle'), intval($entryId));
+}
+
+/**
  * Get the header list for a form. By default, returns an array of column headers, or captions if no header or an element. Or can return element IDs or handles depending on combination of parameters specified.
  *
  * @param int $fid - The form ID
@@ -14532,23 +14572,18 @@ function setTitleOfPageInTemplate($entryId = null, $renderedFormulizeScreen = nu
 					$entryDescriptor = $formObject->getSingular() . ' : ' . _formulize_ENTRY . ' ' . $entryId;
 
 					$principalIdentifierValue = null;
-					$data_handler = new formulizeDataHandler($renderedFormulizeScreen->getVar('fid'));
-					$element_handler = xoops_getmodulehandler('elements', 'formulize');
-					if($principalIdentifierElementId = $formObject->getVar('pi')) {
-						if($principalIdentifierValue = $data_handler->getElementValueInEntry($entryId, $principalIdentifierElementId)) {
-							$principalIdentifierElementObject = $element_handler->get($principalIdentifierElementId);
-							$principalIdentifierHandle = $principalIdentifierElementObject->getVar('ele_handle');
-							$principalIdentifierValueArray = prepvalues($principalIdentifierValue, $principalIdentifierHandle, $entryId);
-							$entryDescriptor = (isset($principalIdentifierValueArray[0]) ? $principalIdentifierValueArray[0] : '');
+					if($formObject->getVar('pi')) {
+						if($principalIdentifierValue = formulize_getPrincipalIdentifierValue($renderedFormulizeScreen->getVar('fid'), $entryId)) {
+							$entryDescriptor = $principalIdentifierValue;
 						}
 
 					// try for the rewriterule element value, if applicable
 					} elseif($rewriteruleElement = $renderedFormulizeScreen->getVar('rewriteruleElement')) {
+						$data_handler = new formulizeDataHandler($renderedFormulizeScreen->getVar('fid'));
+						$element_handler = xoops_getmodulehandler('elements', 'formulize');
 						if($rewriteruleElementValue = $data_handler->getElementValueInEntry($entryId, $rewriteruleElement)) {
 							$rewriteruleElementObject = $element_handler->get($rewriteruleElement);
-							$rewriteruleElementHandle = $rewriteruleElementObject->getVar('ele_handle');
-							$rewriteruleElementValueArray = prepvalues($rewriteruleElementValue, $rewriteruleElementHandle, $entryId);
-							$entryDescriptor = (isset($rewriteruleElementValueArray[0]) ? $rewriteruleElementValueArray[0] : '');
+							$entryDescriptor = formulize_entryDescriptorValue($rewriteruleElementValue, $rewriteruleElementObject->getVar('ele_handle'), $entryId);
 						}
 					}
 
