@@ -2497,7 +2497,9 @@ function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(),
 		$clear_help_javascript = "";
 		if($i==0) {
 			$boxid = "id=firstbox";
-            $clear_help_javascript = "placeholder='"._formulize_DE_SEARCH_HELP."'";
+			if($placeholder = formulize_firstSearchBoxPlaceholder()) {
+				$clear_help_javascript = "placeholder='$placeholder'";
+			}
 		}
 		$quickSearches[$cols[$i]] = packageSearches($cols[$i], $search_text, $filtersRequired, $boxid, $clear_help_javascript, $fid);
 	}
@@ -2509,6 +2511,16 @@ function createQuickSearches($searches, $settings, $hiddenQuickSearches=array(),
 	}
 
 	return $quickSearches;
+}
+
+/**
+ * The text the first column's search box shows until something is typed in it, saying where to search.
+ * Only Anari shows it ("Search here"). Lyris, and every other theme, leaves the box empty (#1089).
+ * @return string The placeholder text, or an empty string if the theme shows none
+ */
+function formulize_firstSearchBoxPlaceholder() {
+	global $xoopsConfig;
+	return (isset($xoopsConfig['theme_set']) AND $xoopsConfig['theme_set'] == 'Anari') ? _formulize_DE_SEARCH_HELP : '';
 }
 
 // go make all the necessary searches/filters for a given element
@@ -2529,8 +2541,8 @@ function packageSearches($handle, $search_text, $filtersRequired=true, $boxid=""
 	} else {
 		$types = (is_array($filtersRequired) AND isset($filtersRequired[$handle])) ? (array) $filtersRequired[$handle] : array();
 	}
-	// the first column's box says where to search, and so does its Search box if it has one
-	$placeholder = $boxid ? _formulize_DE_SEARCH_HELP : '';
+	// the first column's box says where to search, and so does its Search box if it has one (in the themes that show it)
+	$placeholder = $boxid ? formulize_firstSearchBoxPlaceholder() : '';
 	foreach($types as $type) {
 		$quickSearches += formulize_buildQuickSearchOfType($type, $handle, $search_text, $fid, placeholder: $placeholder);
 	}
