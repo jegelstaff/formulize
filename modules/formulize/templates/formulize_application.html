@@ -1,23 +1,29 @@
+<{if $allAppData}>
+<{* every section's card is the same height; one with more links than fit opens over the cards below it (fz-expand-card) *}>
+<div class="formulize-app-links fz-auto-grid fz-auto-grid--wide">
 <{foreach item=appData from=$allAppData}>
-
-<table><tr><td class='appcatspacer'></td><td>
-<div class='applinks'>
-<h1><{$appData.app_name}></h1>
-
-<{if $appData.noforms}>
-
-	<p><{$appData.noforms}></p>
-
-<{else}>
-
-<{foreach item=thisform from=$appData.formData}>
-
-	<p><a href="<{$thisform.url}>"><{$thisform.title}></a></p>
-
-<{/foreach}>
-
+	<div class="fz-expand-card">
+	<section class="fz-card">
+		<div class="fz-card__header fz-flex-nowrap fz-pb-3 fz-border-b">
+			<div class="fz-flex fz-items-center fz-gap-3 fz-min-w-0">
+				<span class="fz-badge fz-badge--icon fz-badge--accent fz-text-accent fz-rounded-lg" style="height: calc(var(--fz-spacing) * 8)" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h2.6l1.6 1.8h4.8A1.5 1.5 0 0 1 14 6.3v5.2a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5z"/></svg></span>
+				<h2 class="fz-card__title fz-text-lg"><{$appData.app_name}></h2>
+			</div>
+<{if !$appData.noforms}>
+			<span class="fz-badge fz-badge--plain fz-tabular-nums fz-shrink-0" aria-hidden="true"><{$appData.formData|@count}></span>
 <{/if}>
-</div>
-</td><td class='appcatspacer'></td></tr></table>
-
+		</div>
+<{if $appData.noforms}>
+		<p class="fz-text-muted"><{$appData.noforms}></p>
+<{else}>
+		<ul class="fz-link-list">
+<{foreach item=thisform from=$appData.formData}>
+			<li><a href="<{$thisform.url}>"><{$thisform.title}></a></li>
 <{/foreach}>
+		</ul>
+<{/if}>
+	</section>
+	</div>
+<{/foreach}>
+</div>
+<{/if}>

@@ -169,19 +169,17 @@ table {
   }
 }
 
-.applinks {
+/* The page of menu links (formulize_application.html) opens with the menu open,
+   and on a wider screen the menu sits over the left of the page, so the links
+   keep clear of it while it is open. On a phone the menu covers the page and
+   dims it instead. */
+@media (min-width: 768px) {
+  :where(.site-layout) .formulize-app-links {
+    transition: margin-left 0.5s ease-in-out;
+  }
+  :where(.site-layout:has(.site-layout__sidebar--open)) .formulize-app-links {
     margin-left: 320px;
-}
-
-.applinks h1 {
-    margin-top: 1em;
-}
-.applinks p {
-    padding-left: 0.5em;
-    margin-top: 0.75em;
-}
-table:first-child div.applinks h1 {
-    margin-top: 0;
+  }
 }
 
 .formulize_fileUploadDeleteButton {

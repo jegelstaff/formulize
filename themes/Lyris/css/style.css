@@ -4984,13 +4984,9 @@ body.formulize-popup {
   width: 100%;
 }
 
-/* Fixes layout issues with home screen pages with links */
+/* Fixes layout issues with the category page's links (formulize_cat.html) */
 .appcatspacer {
 	width: auto;
-}
-
-.applinks p {
-	padding-left: 0.5em;
 }
 
 /* ============================================================
