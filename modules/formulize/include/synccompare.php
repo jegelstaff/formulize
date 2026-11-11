@@ -546,7 +546,7 @@ class SyncCompareCatalog {
                 $recTableKey = $joinTableInfo["join_field"][0];
                 $recTableKeyVal = $record[$recTableKey];
 
-                $changesTable = $this->changes[$joinTableName];
+                $changesTable = isset($this->changes[$joinTableName]) ? $this->changes[$joinTableName] : false;
                 $fieldValue = false;
                 if ($changesTable) {
                     foreach ($changesTable["inserts"] as $rec) {
