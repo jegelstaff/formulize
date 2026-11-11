@@ -841,8 +841,10 @@ define("_AM_SITEMENU_ADD_BUTTON", "Ajouter le lien");
 define("_AM_SITEMENU_FIELD_TEXT", "Texte du lien");
 define("_AM_SITEMENU_FIELD_TEXT_HELP", "Laissez vide pour utiliser le nom du formulaire ou de l'écran.");
 define("_AM_SITEMENU_FIELD_TARGET", "Ce lien mène à");
-define("_AM_SITEMENU_TARGET_CHOOSE", "Choisissez un formulaire, un écran ou une URL");
-define("_AM_SITEMENU_TARGET_URL", "Une URL");
+define("_AM_SITEMENU_TARGET_CHOOSE", "Choisissez un formulaire ou un écran");
+define("_AM_SITEMENU_KIND_SCREEN", "Un formulaire ou un écran");
+define("_AM_SITEMENU_KIND_URL", "Une URL");
+define("_AM_SITEMENU_FIELD_SCREEN", "Formulaire ou écran");
 define("_AM_SITEMENU_FIELD_URL", "URL");
 define("_AM_SITEMENU_FIELD_URL_HELP", "Une adresse complète, comme https://www.exemple.com. Pour un écran ou un formulaire de ce site, vous pouvez écrire sid= ou fid= suivi de son numéro.");
 define("_AM_SITEMENU_FIELD_NOTE", "Une note pour ce lien");
@@ -868,7 +870,7 @@ define("_AM_SITEMENU_MANAGE_NOAPP", "Gérer ces entrées de menu");
 define("_AM_SITEMENU_DELETE", "Supprimer ce lien");
 define("_AM_SITEMENU_EMPTY", "Il n'y a encore aucune application ni aucun lien.");
 define("_AM_SITEMENU_ORDER_NOT_SAVED", "Le menu a changé depuis le chargement de cette page, le nouvel ordre n'a donc pas été enregistré. La page va afficher le menu tel qu'il est maintenant. Remettez-le en ordre, puis enregistrez vos modifications.");
-define("_AM_SITEMENU_JS_NEEDS_TARGET", "Choisissez où mène %s, puis enregistrez vos modifications."); // %s est le nom du lien
+define("_AM_SITEMENU_JS_NEEDS_TARGET", "Choisissez le formulaire ou l'écran vers lequel mène %s, puis enregistrez vos modifications."); // %s est le nom du lien
 define("_AM_SITEMENU_JS_NEEDS_URL", "Saisissez l'URL vers laquelle mène %s, puis enregistrez vos modifications."); // %s est le nom du lien
 define("_AM_SITEMENU_JS_NEW_LINK", "le nouveau lien");
 define("_AM_SITEMENU_JS_DELETE_CONFIRM", "Supprimer le lien « %s » du menu ?");

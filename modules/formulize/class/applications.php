@@ -1101,8 +1101,9 @@ class formulizeApplicationsHandler {
 	}
 
 	/**
-	 * The forms and screens a menu link can go to, for the dropdown in the admin UI, plus the choice of a URL.
-	 * @return array Keys 'fid=N', 'sid=N' and 'url', each with its label, escaped for HTML; screens are under their form
+	 * The forms and screens a menu link can go to, for the dropdown in the admin UI. A link to a URL is chosen
+	 * separately, beside the dropdown.
+	 * @return array Keys 'fid=N' and 'sid=N', each with its label, escaped for HTML; screens are under their form
 	 */
 	function getMenuLinkTargetOptions() {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -1115,7 +1116,6 @@ class formulizeApplicationsHandler {
 				$options['sid=' . intval($screen->getVar('sid'))] = "&nbsp;&nbsp;&nbsp;" . $screen->getVar('title');
 			}
 		}
-		$options['url'] = _AM_SITEMENU_TARGET_URL;
 		return $options;
 	}
 

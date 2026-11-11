@@ -108,16 +108,20 @@
 		});
 	}
 
-	// the URL field is only for a link that goes to a URL
+	// a link goes to a form or screen, chosen from the list, or to a URL, typed in: only the one chosen is shown
+	var kindOf = function (editor) {
+		var chosen = editor.querySelector('[data-sitemenu-kind]:checked');
+		return chosen ? chosen.value : 'screen';
+	};
 	form.addEventListener('change', function (event) {
-		if (!event.target.hasAttribute || !event.target.hasAttribute('data-sitemenu-target')) {
+		if (!event.target.hasAttribute || !event.target.hasAttribute('data-sitemenu-kind')) {
 			return;
 		}
 		var editor = event.target.closest('[data-sitemenu-editor]');
-		var urlField = editor && editor.querySelector('[data-sitemenu-url-field]');
-		if (urlField) {
-			urlField.hidden = event.target.value !== 'url';
-		}
+		var url = kindOf(editor) === 'url';
+		editor.querySelector('[data-sitemenu-screen-field]').hidden = url;
+		editor.querySelector('[data-sitemenu-url-field]').hidden = !url;
+		(url ? editor.querySelector('[data-sitemenu-url]') : editor.querySelector('[data-sitemenu-target]')).focus();
 	});
 
 	// a link's fields, as the menuID::text::screen::url::groupids::default_screen::note value that
@@ -140,7 +144,7 @@
 		var lands = checked(editor, 'data-sitemenu-lands').filter(function (id) { return sees.indexOf(id) !== -1; });
 		return {
 			text: clean(editor.querySelector('[data-sitemenu-text]').value),
-			target: editor.querySelector('[data-sitemenu-target]').value,
+			target: kindOf(editor) === 'url' ? 'url' : editor.querySelector('[data-sitemenu-target]').value,
 			url: clean(editor.querySelector('[data-sitemenu-url]').value),
 			note: clean(editor.querySelector('[data-sitemenu-note]').value),
 			sees: sees.length ? sees.join(',') : 'null',
@@ -170,7 +174,8 @@
 		for (var j = 0; j < editors.length; j++) {
 			var id = editors[j].getAttribute('data-sitemenu-editor');
 			var link = fields(editors[j]);
-			if (id === 'new' && link.target === '' && link.text === '') {
+			var noTarget = link.target === '' || (link.target === 'url' && emptyUrl(link.url));
+			if (id === 'new' && noTarget && link.text === '') {
 				continue; // nothing is being added
 			}
 			var problem = link.target === '' ? 'NEEDS_TARGET' : (link.target === 'url' && emptyUrl(link.url) ? 'NEEDS_URL' : '');

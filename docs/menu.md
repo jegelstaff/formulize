@@ -42,9 +42,9 @@ A new application goes at the end of the menu until you move it.
 ## Adding a link beside the applications
 
 1. On **Admin > Menu**, open **Add a link to the menu**.
-2. Choose where it goes under **This link goes to**: a form, one of its screens, or **A URL**. For a
-   URL, type the address in the **URL** box that appears.
-3. Type the **Text for this link**, or leave it blank to use the name of the form or screen.
+2. Type the **Text for this link**, or leave it blank to use the name of the form or screen.
+3. Under **This link goes to**, choose **A form or screen** and pick one from the list, or choose
+   **A URL** and type the address in the box that appears.
 4. Under **Show this link to these groups**, tick every group that should see it. A link shown to
    no groups isn't shown to anyone, not even webmasters. To show it to everyone with an account,
    tick **Registered Users**.

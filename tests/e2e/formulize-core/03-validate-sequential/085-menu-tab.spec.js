@@ -71,10 +71,17 @@ async function addTopLevelLink(page, { text, target, url, sees, landsOn = [] }) 
 	await openMenuTab(page);
 	await page.locator('#formulize-sitemenu-add > summary').click();
 	const editor = page.locator('[data-sitemenu-editor="new"]');
-	await editor.getByLabel('This link goes to').selectOption(target);
-	if (url) {
+	const goesTo = editor.getByRole('group', { name: 'This link goes to' });
+	// a form or screen is chosen from a list, and a URL typed in; only the one chosen is shown
+	await expect(goesTo.getByRole('radio', { name: 'A form or screen' })).toBeChecked();
+	if (target === 'url') {
+		await goesTo.getByRole('radio', { name: 'A URL' }).check();
+		await expect(editor.getByLabel('Form or screen', { exact: true })).toBeHidden();
 		await expect(editor.getByLabel('URL', { exact: true })).toBeVisible();
 		await editor.getByLabel('URL', { exact: true }).fill(url);
+	} else {
+		await expect(editor.getByLabel('URL', { exact: true })).toBeHidden();
+		await editor.getByLabel('Form or screen', { exact: true }).selectOption(target);
 	}
 	await editor.getByLabel('Text for this link').fill(text);
 	for (const group of sees) {
@@ -208,7 +215,7 @@ test.describe('The Menu tab', () => {
 		page.on('dialog', dialog => { alerts.push(dialog.message()); dialog.accept(); });
 		await page.getByRole('button', { name: 'Add the link' }).click();
 		await expect.poll(() => alerts.length).toBe(1);
-		expect(alerts[0]).toContain('Choose where the new link goes');
+		expect(alerts[0]).toContain('Choose the form or screen that the new link goes to');
 
 		// New links go at the end, after the applications, so ahstaff still lands on Artifacts in Museum, the start
 		// page their department's groups have

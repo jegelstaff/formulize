@@ -1342,8 +1342,10 @@ define("_AM_SITEMENU_ADD_BUTTON", "Add the link");
 define("_AM_SITEMENU_FIELD_TEXT", "Text for this link");
 define("_AM_SITEMENU_FIELD_TEXT_HELP", "Leave it blank to use the name of the form or screen.");
 define("_AM_SITEMENU_FIELD_TARGET", "This link goes to");
-define("_AM_SITEMENU_TARGET_CHOOSE", "Choose a form or screen, or a URL");
-define("_AM_SITEMENU_TARGET_URL", "A URL");
+define("_AM_SITEMENU_TARGET_CHOOSE", "Choose a form or screen");
+define("_AM_SITEMENU_KIND_SCREEN", "A form or screen");
+define("_AM_SITEMENU_KIND_URL", "A URL");
+define("_AM_SITEMENU_FIELD_SCREEN", "Form or screen");
 define("_AM_SITEMENU_FIELD_URL", "URL");
 define("_AM_SITEMENU_FIELD_URL_HELP", "A full address, such as https://www.example.com. For a screen or form on this site, you can write sid= or fid= and its number.");
 define("_AM_SITEMENU_FIELD_NOTE", "A note for this link");
@@ -1369,7 +1371,7 @@ define("_AM_SITEMENU_MANAGE_NOAPP", "Manage these menu entries");
 define("_AM_SITEMENU_DELETE", "Delete this link");
 define("_AM_SITEMENU_EMPTY", "There are no applications or links yet.");
 define("_AM_SITEMENU_ORDER_NOT_SAVED", "The menu changed since this page was loaded, so the new order wasn't saved. The page will show the menu as it is now. Put it in order again, and save your changes.");
-define("_AM_SITEMENU_JS_NEEDS_TARGET", "Choose where %s goes, then save your changes."); // %s is the link's name
+define("_AM_SITEMENU_JS_NEEDS_TARGET", "Choose the form or screen that %s goes to, then save your changes."); // %s is the link's name
 define("_AM_SITEMENU_JS_NEEDS_URL", "Type the URL that %s goes to, then save your changes."); // %s is the link's name
 define("_AM_SITEMENU_JS_NEW_LINK", "the new link");
 define("_AM_SITEMENU_JS_DELETE_CONFIRM", "Delete the link \"%s\" from the menu?");

@@ -1641,6 +1641,14 @@ input[name=delete-link-button] {
   padding: 10px 5px 10px 40px;
   border: solid 1px #9F6000; }
 
+/* The toolbar keeps room for the unsaved-changes warning, which is taller than the Save button beside it, so the
+   page doesn't move down when the warning appears. It appears when a changed field loses the focus, which happens as
+   the mouse goes down on whatever is clicked next, so a page that moved would take a checkbox or radio below the field
+   out from under the mouse before it came back up, and the click would be lost. (When the page is scrolled, the
+   toolbar floats over it, toolbar_fixed, and takes no room.) */
+#admin_toolbar:not(.toolbar_fixed) {
+  min-height: 3em; }
+
 #popupsavewarning,
 #relationship-options-popupsavewarning,
 #relationship-create-connection-popupsavewarning {
