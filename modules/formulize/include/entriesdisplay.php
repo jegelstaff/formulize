@@ -884,6 +884,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	// otherwise, if there's a bunch of go_back info, and no entry, then we should not show list, we need to display something else entirely -- comes from the calreturnform only? (used by multipage forms, but could/should they use the parent stuff instead? Nasty legacy controller issue that shall wait till that is all disentangled)
 	// otherwise, use the declared originalVentry if any, that will be the initial entry that we're showing
 	// otherwise, try the URL ve= parameter if any
+	// (the URL le= parameter is different: it keeps the list, and shows only that entry in it. See STAGE 15)
   if(isset($_POST['parent_entry']) AND isset($_POST['parent_form']) AND isset($_POST['parent_page']) AND isset($_POST['parent_subformElementId'])) {
 		$parentEntries = strstr($_POST['parent_entry'], ',') ? explode(',',$_POST['parent_entry']) : array($_POST['parent_entry']);
     $lastKey = count($parentEntries)-1;
@@ -984,7 +985,15 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	$sort = isset($_POST['sort']) ? strip_tags($_POST['sort']) : null;
 	$order = isset($_POST['order']) ? strip_tags($_POST['order']) : null;
- 	list($data, $regeneratePageNumbers, $filterToCompare, $flatScope) = formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen, $currentURL, (isset($_POST['forcequery']) ? intval($_POST['forcequery']) : 0));
+
+	// ?le=N in the URL shows only entry N of the main form, as if the list had been searched on its entry id
+	// only for the list screen the URL is for, so lists drawn inside it, or inside a form opened from it, are left alone
+	$listEntryId = 0;
+	if($screen AND isset($_GET['le']) AND isset($_GET['sid']) AND intval($_GET['sid']) == $screen->getVar('sid') AND intval($_GET['le']) > 0) {
+		$listEntryId = intval($_GET['le']);
+	}
+
+ 	list($data, $regeneratePageNumbers, $filterToCompare, $flatScope) = formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen, $currentURL, (isset($_POST['forcequery']) ? intval($_POST['forcequery']) : 0), $listEntryId);
 
 	// determine which form IDs are in the dataset, for use by clone UI and other features
 	// have to look at every entry, since a form only appears in entries that have something connected to them in that form
@@ -5460,7 +5469,8 @@ function formulize_screenLOEButton($button, $buttonText, $settings, $fid, $frid,
 
 // THIS FUNCTION HANDLES GATHERING A DATASET FOR DISPLAY IN THE LIST
 // $sort and $order are two separate parallel strings, optionally comma separated for multi column sorts
-function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen=null, $currentURL="", $forcequery = 0) {
+// $listEntryId is an entry id in the main form, from the le= URL parameter, to show only that entry. 0 for no limit
+function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen=null, $currentURL="", $forcequery = 0, $listEntryId = 0) {
 
 	// If composite data mode is active (Users/Groups management), delegate to the composite function
 	if (isset($GLOBALS['formulize_compositeDataMode'])) {
@@ -5495,6 +5505,20 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 	}
 
 	$filter = formulize_parseSearchesIntoFilter($searches);
+
+	// AND on the entry asked for with le=, if any. A filter term that is only a number is the main form's entry id, see formulize_parseFilter()
+	// done before $filterToCompare is worked out, so a different le= goes back to the first page
+	$listEntryId = intval($listEntryId);
+	if($listEntryId > 0) {
+		if(is_array($filter)) {
+			$filter[] = array(0 => "and", 1 => (string) $listEntryId);
+		} elseif($filter) {
+			$filter .= "][" . $listEntryId;
+		} else {
+			$filter = (string) $listEntryId;
+		}
+	}
+
 	$filterToCompare = is_array($filter) ? serialize($filter) : $filter;
 	$filterToCompare = md5($filterToCompare); // has so it doesn't look like a SQL injection to server security software
 

@@ -2684,10 +2684,11 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 
 	// When user is anon, add anon passcodes if any to the fundamental filters, if the passed in scope is uid=0 or [3], which would both mean "view all entries by the anon user".
 	global $xoopsUser;
+	// a scope of groups can have keys other than 0, since buildScope() makes it with array_intersect(), so look for the group rather than at key 0
 	if(!$xoopsUser AND (
-		(is_string($scope) AND $scope == "uid=0"))
-		OR (is_array($scope) AND count($scope) == 1 AND $scope[0] == XOOPS_GROUP_ANONYMOUS)
-		) {
+		(is_string($scope) AND $scope == "uid=0")
+		OR (is_array($scope) AND count($scope) == 1 AND in_array(XOOPS_GROUP_ANONYMOUS, $scope))
+		)) {
 		foreach ($_SESSION as $key => $value) {
 			if (strstr($key, 'formulize_passCode_')) {
 				$screen_handler = xoops_getmodulehandler('screen', 'formulize');
