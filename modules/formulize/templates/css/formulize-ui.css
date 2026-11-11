@@ -1168,9 +1168,9 @@
    cards open on hover and focus without it. --fz-expand-card-height sets the
    height: 18rem fits a header and six links at the default sizes; when there
    are more, the sixth shows faded, under the chevron. In a grid of one
-   column, as on a phone, there is no row to line up with, so the script makes
-   each card only as tall as it needs to be, up to that height
-   (--single-column); only one with more than that is cut off and opens. */
+   column, as on a phone, there is no row to line up with, so the script marks
+   the cards (--single-column) and each is as tall as all it holds, with no
+   fade, and never opens. */
 .fz-expand-card {
   --fz-expand-card-height: 18rem;
   --fz-expand-card-full-height: 0px; /* set by formulize-ui.js */
@@ -1196,10 +1196,20 @@
   overflow: clip;
   transition: box-shadow var(--fz-duration) var(--fz-ease-out);
 }
-/* in a grid of one column: its place is as tall as its card, up to the
-   height. The script measures the card (--fz-expand-card-full-height). */
+/* in a grid of one column: the card is in its place, not laid over it, and
+   both are as tall as all it holds. The script never marks these as having
+   more than fits, so they have no fade and don't open; hover and focus only
+   leave the card showing all of it (--fz-expand-card-open-overflow). */
 .fz-expand-card--single-column {
-  height: min(var(--fz-expand-card-height), var(--fz-expand-card-full-height));
+  --fz-expand-card-open-overflow: visible;
+  height: auto;
+}
+.fz-expand-card--single-column > .fz-card {
+  position: static;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
 }
 /* open: on hover (only where there is a pointer that hovers, so a tap on a
    phone doesn't open a card and follow a link at once), with the focus in it,

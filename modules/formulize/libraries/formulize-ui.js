@@ -204,8 +204,8 @@
 	// marks the cards that have more than fits (--overflows), which shows the
 	// fade and chevron, and measures how tall each is open, and which are too
 	// tall to open all the way and scroll instead (--scrolls); marks the cards
-	// in a grid of one column, which are only as tall as they need to be, up
-	// to the height of the others (--single-column); opens one when it
+	// in a grid of one column, as on a phone, which are as tall as they need to
+	// be and never open (--single-column); opens one when it
 	// is tapped (--open), without following a link on that first tap; closes it
 	// when anything else is tapped; closes an open card with Esc (--closed)
 	// until the pointer or the focus leaves it, or the focus moves on inside it;
@@ -228,16 +228,20 @@
 		};
 		var measure = function (slot) {
 			var card = slot.firstElementChild, last = card && card.lastElementChild;
-			if (last) {
+			// in one column, every card shows all it holds and nothing opens it,
+			// so a card that was open by a tap is closed
+			var single = oneColumn(slot);
+			slot.classList.toggle(SINGLE, single);
+			if (single) {
+				slot.classList.remove(OVERFLOWS, SCROLLS, OPEN);
+			} else if (last) {
 				// how tall the card would be to show all of it, whether it is open,
 				// closed or scrolled, to the fraction of a pixel
 				var style = getComputedStyle(card);
 				var needed = last.getBoundingClientRect().bottom - card.getBoundingClientRect().top + card.scrollTop + parseFloat(style.paddingBottom) + parseFloat(style.borderBottomWidth);
-				// the height it opens to; in one column, the height of its place
-				// when that is less than the others'; and so the page can be
-				// scrolled to a little past the bottom of an open card
+				// the height it opens to; and so the page can be scrolled to a little
+				// past the bottom of an open card
 				slot.style.setProperty('--fz-expand-card-full-height', Math.ceil(needed) + 'px');
-				slot.classList.toggle(SINGLE, oneColumn(slot));
 				// against the room it has when closed
 				slot.classList.toggle(OVERFLOWS, needed > slot.clientHeight + 1);
 				// and against the most an open card may be (max(100%, 70vh) in the
@@ -315,7 +319,7 @@
 		}
 
 		var isOpen = function (slot) {
-			return !slot.classList.contains(CLOSED) && (slot.classList.contains(OPEN) || slot.matches(':focus-within') || (canHover.matches && slot.matches(':hover')));
+			return !slot.classList.contains(SINGLE) && !slot.classList.contains(CLOSED) && (slot.classList.contains(OPEN) || slot.matches(':focus-within') || (canHover.matches && slot.matches(':hover')));
 		};
 		// a card that has closed goes back to the top of what it holds: it
 		// scrolls back up while it shrinks
