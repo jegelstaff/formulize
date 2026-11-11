@@ -198,6 +198,11 @@ class icms_core_Session {
 				// request and strand anything already in flight under the previous id.
 				if (!isset($_SESSION['xoopsUserId']) OR $_SESSION['xoopsUserId'] != $icms_user->getVar('uid')) {
 					$instance->icms_sessionRegenerateId(true);
+					// This is the moment the person signs in through Google, SAML, Drupal or another
+					// external provider, so record it as their last login, the same as
+					// include/checklogin.php does for an ordinary username and password login.
+					// Only on the transition, for the same reason as above.
+					icms::handler('icms_member')->updateUserByField($icms_user, 'last_login', time());
 				}
 				// set a few things in $_SESSION, similar to what include/checklogin.php does, and make a cookie and a database entry
 				$_SESSION['xoopsUserId'] = $icms_user->getVar('uid');
