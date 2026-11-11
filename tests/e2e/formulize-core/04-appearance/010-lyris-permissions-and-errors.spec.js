@@ -47,11 +47,15 @@ test.describe('Lyris looks: permissions', () => {
 	test('Someone who is not a Formulize admin cannot open the Looks tab or the appearance editor', async ({ page }) => {
 		await login(page, 'curator1');
 
-		// The admin pages send someone who isn't an admin away, to user.php, without showing anything. Asked
-		// for without following the redirect, since where user.php goes next is the profile module's business.
+		// The admin pages send someone logged in who isn't an admin away, to user.php with op=nopermission,
+		// without showing anything. user.php then tells them so and sends them to their applications. Asked
+		// for without following the redirect, so the test sees where the admin page itself sends them.
 		const looksTab = await page.request.get(LYRIS_LOOKS_URL, { maxRedirects: 0 });
 		expect(looksTab.status()).toBe(302);
-		expect(looksTab.headers()['location']).toMatch(/\/user\.php$/);
+		const location = new URL(looksTab.headers()['location'], E2E_TEST_BASE_URL);
+		expect(location.pathname).toBe('/user.php');
+		expect(location.searchParams.get('op')).toBe('nopermission');
+		expect(location.searchParams.get('xoops_redirect')).toBe(LYRIS_LOOKS_URL);
 		expect(await looksTab.text()).not.toContain('looks-create');
 
 		await page.goto(`/modules/formulize/appearance_editor.php?theme=Lyris&look=${lookKey}`);
