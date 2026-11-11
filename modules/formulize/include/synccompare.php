@@ -525,11 +525,19 @@ class SyncCompareCatalog {
 
         $metadata = $this->getRecMetadataFromChanges($tableName, $tableMetaInfo, $record);
 
-        // an Other value is named by the entry it belongs to, followed by its element's caption from table_metadata
+        // a record that belongs to an entry is named by the entry, followed by what table_metadata adds
+        $entryIdField = false;
         if($tableName == "formulize_other") {
+            // an Other value belongs to an entry in the form its element is in
+            $entryIdField = "id_req";
             $elementRecord = $this->findRecord("formulize", "ele_id", $record['ele_id']);
             $formRecord = $elementRecord ? $this->findRecord("formulize_id", "id_form", $elementRecord['id_form']) : false;
-            $metadata = array('id_req' => $this->describeEntry($formRecord, $record['id_req'])) + $metadata;
+        } elseif($tableName == "formulize_entry_owner_groups") {
+            $entryIdField = "entry_id";
+            $formRecord = $this->findRecord("formulize_id", "id_form", $record['fid']);
+        }
+        if($entryIdField) {
+            $metadata = array($entryIdField => $this->describeEntry($formRecord, $record[$entryIdField])) + $metadata;
         }
 
         return $metadata;

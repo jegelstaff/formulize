@@ -583,7 +583,6 @@ $modversion['table_metadata'] = array(
             )
         )
     ),
-    "formulize_entry_owner_groups" => array(),
     "formulize_application_form_link" => array(
         "fields" => array(),
         "joins" => array(
@@ -680,7 +679,7 @@ $modversion['table_metadata'] = array(
 		)
 	),
     "formulize_entry_owner_groups" => array(
-        "fields" => array("entry_id"),
+        "fields" => array(), // the entry, entry_id, is named by SyncCompareCatalog::getRecMetadata()
         "joins" => array(
             array(
                 "join_table" => "formulize_id",
