@@ -32,8 +32,8 @@ const INTRO_SEEN = 'The intro ran 2 times';
 const THANKS = '<div id="bt-thanks">All done here.</div>{thankYouNav}';
 const RENAMED_HANDLE = 'bt_renamed_form_screen';
 const NOTE_HANDLE = 'bt_note';
-// thanks text that says which entry the Thank You page is about
-const THANKS_WITH_ENTRY = '<?php\nprint "<div id=\'bt-entry\'>" . (is_numeric($entry_id) ? intval($entry_id) : "none") . "</div>" . $thankYouNav;';
+// thanks text that says which entry the Thank You page is about, and leaves the link out, so it is added below
+const THANKS_WITH_ENTRY = '<?php\nprint "<div id=\'bt-entry\'>" . (is_numeric($entry_id) ? intval($entry_id) : "none") . "</div>";';
 
 let fid = 0;
 let formSid = 0;
@@ -284,6 +284,8 @@ test('With reload blank, the Thank You page still knows the entry just saved, ne
 		await expect.poll(() => entryWithNote('A new entry'), 'the entry was saved').not.toBe('');
 		newEntryId = entryWithNote('A new entry');
 		await expect(userPage.locator('#bt-entry')).toHaveText(newEntryId);
+		// the code left the link out, so it was added below what the code printed, centred
+		await expect(userPage.locator('#bt-entry ~ #thankYouNavigation.fz-text-center')).toHaveCount(1);
 		await leavePage(userPage);
 	});
 

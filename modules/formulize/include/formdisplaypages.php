@@ -175,7 +175,7 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 	list($fid, $frid) = getFormFramework($formframe, $mainform);
 
 	// a screen with no thanks text of its own gets a heading and the link to the done destination
-	$thankstext = (is_array($thankstext) OR !formulize_authoredTextIsEmpty($thankstext)) ? $thankstext :"<div class=\"fz-stack\"><h2 class=\"fz-text-2xl fz-font-semibold\">".htmlspecialchars(trans(_formulize_DMULTI_THANKS))."</h2>{thankYouNav}</div>";
+	$thankstext = (is_array($thankstext) OR !formulize_authoredTextIsEmpty($thankstext)) ? $thankstext :"<div><h2 class=\"fz-text-2xl fz-font-semibold\">".htmlspecialchars(trans(_formulize_DMULTI_THANKS))."</h2>{thankYouNav}</div>"; // the space between them is the link's own, see multipage_boilerplate.php
 	$introtext = $introtext ? $introtext : "";
 	$mid = getFormulizeModId();
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;

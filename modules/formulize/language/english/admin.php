@@ -896,7 +896,7 @@ define("_AM_FORMULIZE_SCREEN_INTRO", "Introductory text for the first page of th
 define("_AM_FORMULIZE_SCREEN_THANKS", "Text for the Thank You page at the end of this form");
 // help under the two boxes on the Text tab of a form screen. Shown as text, so the <?php is shown as typed.
 define("_AM_FORMULIZE_SCREEN_INTRO_DESC", "HTML shown above the questions on the first page. To use PHP instead, start with <?php on the first line, and print what should appear. In PHP, \$entry_id is the entry's id number.");
-define("_AM_FORMULIZE_SCREEN_THANKS_DESC", "HTML shown on the Thank You page. Put {thankYouNav} where the link to the done destination should go. To use PHP instead, start with <?php on the first line, and print what should appear. In PHP, \$entry_id is the entry's id number, and \$thankYouNav is the link. While there is text here, the form always shows the Thank You page. Leave it empty for a simple Thank You page with the link.");
+define("_AM_FORMULIZE_SCREEN_THANKS_DESC", "HTML shown on the Thank You page. Put {thankYouNav} where the link to the done destination should go. Without it, the link goes below the text, centred. To use PHP instead, start with <?php on the first line, and print what should appear. In PHP, \$entry_id is the entry's id number, and \$thankYouNav is the link. If your code doesn't use \$thankYouNav, the link goes below what it prints. While there is text here, the form always shows the Thank You page. Leave it empty for a simple Thank You page with the link.");
 define("_AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES", "Templates for Multi page form:");
 define("_AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES_HELP", "<p>The following variables can be used in these templates to render certain text or UI elements:</p>
 <ul>
