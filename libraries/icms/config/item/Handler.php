@@ -414,7 +414,13 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 				}
 				global $icmsConfig;
 				$langFolder = isset($icmsConfig['language']) ? $icmsConfig['language'] : 'english';
-				@file_put_contents(XOOPS_ROOT_PATH . '/modules/formulize/language/' . $langFolder . '/formulize_dateformats.php', $fmlzLines);
+				$fmlzFile = XOOPS_ROOT_PATH . '/modules/formulize/language/' . $langFolder . '/formulize_dateformats.php';
+				@file_put_contents($fmlzFile, $fmlzLines);
+				// opcache only checks a file's modification time every opcache.revalidate_freq seconds (2 by default), so without this the
+				// next pages drawn would still use the old formats
+				if (function_exists('opcache_invalidate')) {
+					opcache_invalidate($fmlzFile, true);
+				}
 			}
 		}
 

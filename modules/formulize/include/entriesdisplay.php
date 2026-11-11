@@ -3985,7 +3985,10 @@ function formulize_buildTimeRangeFilter($handle, $search_text) {
 			var range = box.closest('.formulize-timerange');
 			var start = range.querySelector('input[id^=\"formulize_timerange_sta_\"]').value;
 			var end = range.querySelector('input[id^=\"formulize_timerange_end_\"]').value;
-			range.querySelector('input[type=\"hidden\"]').value = (start ? '>='+start : '') + (start && end ? '//' : '') + (end ? '<='+end : '');
+			// by id, since filterpopovers.js moves the hidden field out of this div, into the cell, when it makes the popover
+			var hidden = document.getElementById('formulize_hidden_timerange_' + box.id.replace(/^formulize_timerange_(sta|end)_/, ''));
+			if(!hidden) { return; }
+			hidden.value = (start ? '>='+start : '') + (start && end ? '//' : '') + (end ? '<='+end : '');
 			var apply = range.querySelector('.formulize-filter-apply');
 			if(apply) { apply.style.display = ''; }
 		});
