@@ -392,6 +392,10 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 		throw new Error('Unsupported accordion type: ' + accordionType);
 	}
 
+	// When the page loads, the first drawer slides open. The accordion ignores a click on another heading until it's done, and
+	// a drawer that is part way open already has one visible Delete link, so the checks below can't tell it from one that's done.
+	await waitForJQueryAnimations(page);
+
 	let linkClass = 'delete'+accordionType+'link';
 
 	// The page may load with the first accordion already open (e.g., after a delete+reload
@@ -454,6 +458,7 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 
 		return deleteVisible && deleteLinks.length === 1;
 	}, { text: accordionHeaderText, linkClass: linkClass }, { timeout });
+	await waitForJQueryAnimations(page);
 }
 
 /**
@@ -551,10 +556,25 @@ export async function waitForAdminPageReady(page) {
  * through a slow animation on a busy CI runner.
  * jQuery adds an element to its animation timers as soon as the animation is called, so a wait made right
  * after the click that starts it can't return before it begins.
+ * An animation that starts when the page loads, like the first drawer of an accordion sliding open, only
+ * begins in a ready handler, so this also waits for jQuery's ready event. Before that there is nothing
+ * animating yet, and the wait would pass at once.
  * @param {Page} page - Playwright page object
  */
 export async function waitForJQueryAnimations(page) {
-	await page.waitForFunction(() => window.jQuery && jQuery(':animated').length === 0);
+	await page.waitForFunction(() => window.jQuery && jQuery.isReady && jQuery(':animated').length === 0);
+}
+
+/**
+ * Open an application's section on the admin home page. The section slides open, and the forms in it move down
+ * while it does, so a click on one of them mid-slide can land between boxes and open nothing. This waits for
+ * the slide to finish. Clicking an application that's already open closes it.
+ * @param {Page} page - Playwright page object
+ * @param {string} appName - The application's name, as it shows after "Application: "
+ */
+export async function openApplicationAccordion(page, appName) {
+	await page.getByRole('link', { name: 'Application: ' + appName }).click();
+	await waitForJQueryAnimations(page);
 }
 
 /**
@@ -567,7 +587,10 @@ export async function waitForJQueryAnimations(page) {
  */
 export async function editScreenPage(page, title) {
 	const drawer = page.locator('[id^="drawer-"]').filter({ has: page.getByRole('link', { name: title, exact: true }) });
+	// the first drawer slides open when the page loads, and the accordion ignores a click on another heading until it's done
+	await waitForJQueryAnimations(page);
 	await drawer.getByRole('link', { name: title, exact: true }).click();
+	await waitForJQueryAnimations(page);
 	await drawer.getByRole('link', { name: 'Edit this page' }).click();
 }
 
@@ -1008,7 +1031,7 @@ export async function getFidFromFormAdminPage(page) {
 export async function createMuseumForm(page, title, piCaption = null) {
 	await page.goto('/modules/formulize/admin/ui.php?page=home');
 	await waitForAdminPageReady(page);
-	await page.getByRole('link', { name: 'Application: Museum' }).click();
+	await openApplicationAccordion(page, 'Museum');
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page);
 	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
@@ -1129,7 +1152,7 @@ export async function setMenuEntryGroups(page, appName, accordionName, groupsSel
 
 	const gotoEntry = async () => {
 		await page.goto('/modules/formulize/admin/ui.php?page=home');
-		await page.getByRole('link', { name: 'Application: ' + appName }).click();
+		await openApplicationAccordion(page, appName);
 		await page.getByRole('link', { name: 'Menu Entries' }).click();
 		await openMenuAccordion(page, accordionName);
 	};

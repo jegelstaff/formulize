@@ -1,5 +1,5 @@
 const { expect } = require('@playwright/test');
-import { saveAdminForm, waitForAdminPageReady, editScreenPage, dbQuery, dbPrefix, sqlEscape } from '../../utils';
+import { saveAdminForm, waitForAdminPageReady, editScreenPage, dbQuery, dbPrefix, sqlEscape, openApplicationAccordion } from '../../utils';
 
 // What the setup specs that add forms to the museum share: 022 adds Locations and Loan Requests, and 023 adds Visits and Offers.
 
@@ -54,7 +54,7 @@ export async function inheritPermissionsFromArtifacts(page, formTitle) {
 export async function openFormScreens(page, formTitle) {
 	await page.goto('/modules/formulize/admin/ui.php?page=home');
 	await waitForAdminPageReady(page);
-	await page.getByRole('link', { name: 'Application: Museum' }).click();
+	await openApplicationAccordion(page, 'Museum');
 	const formBox = page.locator('div.form-listing-box')
 		.filter({ has: page.locator('.form-name-text').filter({ hasText: new RegExp(`^${formTitle}$`) }) });
 	await expect(formBox).toBeVisible();

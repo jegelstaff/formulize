@@ -73,7 +73,7 @@ The accordion ignores clicks while a drawer is moving. Playwright usually gets p
 
 Only accordions that save their order can be dragged. A heading's link has `draggable="false"`, because otherwise Chromium starts its own drag of the link, the sortable stops getting mouse events, and the accordion stops responding to clicks. `dragDrawer()` in `070-admin-page-reload-keeps-drawer-open.spec.js` shows how to drag one: the sortable needs a mouse that moves in steps, which `dragTo()` doesn't do.
 
-When an admin page reloads, the drawer that was open stays open. A page with no drawer to go back to opens its first drawer, unless the accordion is one that starts closed, and the first one slides open while the page settles.
+When an admin page reloads, the drawer that was open stays open. A page with no drawer to go back to opens its first drawer, unless the accordion is one that starts closed, and the first one slides open while the page settles. Its "Edit this page" link is visible as soon as the slide starts, so an assertion on that link doesn't mean the accordion will take a click on another heading yet. Run `waitForJQueryAnimations(page)` after a load or reload before clicking another drawer's heading (run 42923973853, spec 070). `openElementAccordion()`, `openMenuAccordion()` and `editScreenPage()` do this already. On the admin home, an application's section slides open and moves the forms in it, so open it with `openApplicationAccordion(page, name)` and not a bare click on its link. `waitForJQueryAnimations()` also waits for jQuery's ready event, because a slide that starts on load only begins in a ready handler.
 
 ### Lists
 

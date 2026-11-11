@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, openElementAccordion, deleteElement, setCodeMirrorValue, showPermissionsFor } from '../../utils';
+import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, openElementAccordion, deleteElement, setCodeMirrorValue, showPermissionsFor, openApplicationAccordion } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -39,7 +39,7 @@ test.describe('Artifacts Elements', async () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto('/modules/formulize/admin/ui.php?page=home');
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await openApplicationAccordion(page, 'Museum');
 		await page.getByText('Artifacts').first().click();
 	  await page.getByRole('link', { name: 'Elements' }).first().click();
 	})
@@ -224,7 +224,7 @@ test.describe('Artifacts Elements', async () => {
 
 test('Create Donors Form', async ({ page }) => {
 	await page.goto('/modules/formulize/admin/ui.php?page=home');
-	await page.getByRole('link', { name: 'Application: Museum' }).click();
+	await openApplicationAccordion(page, 'Museum');
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page)
 	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
@@ -238,7 +238,7 @@ test('Create Donors Form', async ({ page }) => {
 test.describe('Donors Elements', async () => {
 
 	test.beforeEach(async ({ page }) => {
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await openApplicationAccordion(page, 'Museum');
 	  await page.getByRole('link', { name: 'Elements' }).nth(1).click();
 	})
 
@@ -384,7 +384,7 @@ test.describe('Donors Elements', async () => {
 })
 
 test('Create Collections Form', async ({ page }) => {
-	await page.getByRole('link', { name: 'Application: Museum' }).click();
+	await openApplicationAccordion(page, 'Museum');
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page)
 	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
@@ -398,7 +398,7 @@ test('Create Collections Form', async ({ page }) => {
 test.describe('Collections Elements', async () => {
 
 	test.beforeEach(async ({ page }) => {
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await openApplicationAccordion(page, 'Museum');
 	  await page.getByRole('link', { name: 'Elements' }).nth(1).click();
 	})
 
@@ -430,7 +430,7 @@ test.describe('Collections Elements', async () => {
 })
 
 test('Create Exhibits Form', async ({ page }) => {
-	await page.getByRole('link', { name: 'Application: Museum' }).click();
+	await openApplicationAccordion(page, 'Museum');
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page)
 	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
@@ -444,7 +444,7 @@ test('Create Exhibits Form', async ({ page }) => {
 test.describe('Exhibits Elements', async () => {
 
 	test.beforeEach(async ({ page }) => {
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await openApplicationAccordion(page, 'Museum');
 	  await page.getByRole('link', { name: 'Elements' }).nth(3).click();
 	})
 
@@ -504,7 +504,7 @@ test.describe('Exhibits Elements', async () => {
 })
 
 test('Create Surveys Form', async ({ page }) => {
-	await page.getByRole('link', { name: 'Application: Museum' }).click();
+	await openApplicationAccordion(page, 'Museum');
 	await page.getByRole('link', { name: 'Create a new form' }).click();
 	await waitForAdminPageReady(page)
 	await expect(page.locator('input[name="forms-form_title"]')).toBeVisible();
@@ -518,7 +518,7 @@ test('Create Surveys Form', async ({ page }) => {
 test.describe('Surveys Elements', async () => {
 
 	test.beforeEach(async ({ page }) => {
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await openApplicationAccordion(page, 'Museum');
 	  await page.getByRole('link', { name: 'Elements' }).nth(4).click();
 	})
 
@@ -616,7 +616,7 @@ test.describe('Surveys Elements', async () => {
 
 test.describe('Set Special Survey Permissions', async () => {
 	test('Adjust permission for flagged surveys', async ({ page }) => {
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await openApplicationAccordion(page, 'Museum');
 	  await page.locator('div[id^=form-details-box-]').nth(4).getByText('Surveys').first().click();
   	await page.getByRole('link', { name: 'Permissions', exact: true }).click();
 		await showPermissionsFor(page, ['All Staff']);
@@ -633,7 +633,7 @@ test.describe('Set Special Survey Permissions', async () => {
 
 test.describe('Create linked fields and settings', async () => {
 	test.beforeEach(async ({ page }) => {
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await openApplicationAccordion(page, 'Museum');
 	})
 
 	test('Create Donor Element', async ({ page }) => {
@@ -708,7 +708,7 @@ test.describe('Create linked fields and settings', async () => {
 			// Re-navigate from scratch and confirm the saved condition is present.
 			await page.goto('/modules/formulize/admin/ui.php?page=home');
 			await waitForAdminPageReady(page);
-			await page.getByRole('link', { name: 'Application: Museum' }).click();
+			await openApplicationAccordion(page, 'Museum');
 			await gotoArtifactsOptions();
 			if (await page.getByText('{exhibits_collections}').count() > 0) {
 				return; // persisted

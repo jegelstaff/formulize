@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, waitForAdminPageReady, openElementAccordion } from '../../utils';
+import { login, waitForAdminPageReady, openElementAccordion, openApplicationAccordion } from '../../utils';
 
 test('Update Derived Values button triggers XHR and completes successfully', async ({ page }) => {
 	let alertMessage = null;
@@ -11,7 +11,7 @@ test('Update Derived Values button triggers XHR and completes successfully', asy
 	await login(page, 'admin');
 	await page.getByRole('link', { name: 'Admin' }).click();
 	await page.getByRole('link', { name: 'Home' }).click();
-	await page.getByRole('link', { name: 'Application: Museum' }).click();
+	await openApplicationAccordion(page, 'Museum');
 	await page.getByText('Artifacts').first().click();
 	await page.getByRole('link', { name: 'Elements' }).first().click();
 

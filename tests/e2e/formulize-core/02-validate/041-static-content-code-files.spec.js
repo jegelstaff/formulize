@@ -1,11 +1,11 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, waitForAdminPageReady, openElementAccordion, setCodeMirrorValue } from '../../utils';
+import { login, saveAdminForm, waitForAdminPageReady, openElementAccordion, setCodeMirrorValue, openApplicationAccordion } from '../../utils';
 
-// Static content elements (fullWidthContent, captionedContent) can hold plain text/HTML or PHP code. When
-// the content contains $value it is treated as code: setVar writes it out to
-// modules/formulize/code/<ele_type>_<handle>.php and getVar reads it back from there, so the file is where
-// the content really lives. Everything in this file is about that code path - plain HTML, which is what the
-// Survey Intro element is created with in 01-setup/010, never goes near any of it.
+// Static content elements (fullWidthContent, captionedContent) can hold plain text/HTML or PHP code. Either
+// way setVar writes the content out to modules/formulize/code/<ele_type>_<handle>.php and getVar reads it
+// back from there, so the file is where the content really lives. When the content contains $value it is
+// treated as code, and run. This file is about content that is code; the Survey Intro element is created
+// with plain HTML in 01-setup/010, and that HTML is in the same file until this spec replaces it.
 //
 // The bug this protects against: saving an element sets ele_value TWICE - once in the type handler's
 // adminSave(), and again inside upsertElementSchemaAndResources(), which is handed whatever the first pass
@@ -51,7 +51,7 @@ const contentBox = (page) => page.locator(CONTENT_BOX);
 async function openSurveyIntroOptions(page) {
 	await page.goto('/modules/formulize/admin/ui.php?page=home');
 	await waitForAdminPageReady(page);
-	await page.getByRole('link', { name: 'Application: Museum' }).click();
+	await openApplicationAccordion(page, 'Museum');
 	// A form's name appears on this page more than once: visibly in its own box, and again inside the
 	// Connections list of every form it is related to, which relationship_listing.html renders as
 	// <em>Surveys</em> in the .form-listing-details panel - hidden until that form's box is clicked. So

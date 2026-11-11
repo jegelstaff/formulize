@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, waitForAdminPageReady, showPermissionsFor } from '../../utils';
+import { login, saveAdminForm, waitForAdminPageReady, showPermissionsFor, openApplicationAccordion } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -28,7 +28,7 @@ test.describe('Permission inheritance', () => {
 	test('Template-group permissions appear as inherited (read-only) on entry-group panels', async ({ page }) => {
 		// Open the Artifacts form's Permissions tab (Artifacts got setStandardPermissions
 		// on the template groups in 015).
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await openApplicationAccordion(page, 'Museum');
 		await page.getByText('Artifacts').first().click();
 		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
 

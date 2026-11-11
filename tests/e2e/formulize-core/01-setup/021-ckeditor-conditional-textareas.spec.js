@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, addElementForm, ElementType } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, addElementForm, ElementType, openApplicationAccordion } from '../../utils';
 
 // Rich text (CKEditor) textareas mixed with ordinary textareas, with conditions on them.
 //
@@ -39,7 +39,7 @@ test.describe('Donors rich text / plain textarea elements', () => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		await page.goto('/modules/formulize/admin/ui.php?page=home');
 		await waitForAdminPageReady(page);
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await openApplicationAccordion(page, 'Museum');
 		// The form list under an application is alphabetical by form title (applications.php
 		// orders by forms.form_title), not creation order. With all 5 Museum forms present
 		// (Artifacts, Collections, Donors, Exhibits, Surveys), Donors is the 3rd, index 2.

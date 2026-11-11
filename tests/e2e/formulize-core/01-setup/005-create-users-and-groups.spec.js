@@ -20,6 +20,7 @@ import {
 	leavePage,
 	ensureMainMenuOpen,
 	showPermissionsFor,
+	openApplicationAccordion
 } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
@@ -210,7 +211,7 @@ test.describe('D. Create Staff EAU form and its custom elements', () => {
 		// The admin home shows apps as collapsed accordions once any form exists.
 		// Expand the Staff Management accordion to reveal its 'Create a new form' link.
 		// The link's URL encodes aid=1 so the new form is auto-assigned to that app.
-		await page.getByRole('link', { name: 'Application: Staff Management' }).click();
+		await openApplicationAccordion(page, 'Staff Management');
 		await page.getByRole('link', { name: 'Create a new form' }).click();
 		await waitForAdminPageReady(page);
 		await page.getByRole('textbox', { name: 'Form title:' }).fill('Staff');

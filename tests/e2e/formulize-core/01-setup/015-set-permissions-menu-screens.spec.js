@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, editScreenPage, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape, showPermissionsFor } from '../../utils';
+import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, editScreenPage, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape, showPermissionsFor, openApplicationAccordion } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -120,7 +120,7 @@ async function inheritPermissionsFromArtifacts(page, openFormPermissions) {
 test.describe('Set Permissions', () => {
 
 	test.beforeEach(async ({ page }) => {
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await openApplicationAccordion(page, 'Museum');
 	})
 
 	test('Set permissions for Artifacts', async ({ page }) => {
@@ -237,7 +237,7 @@ test.describe('Set columns and elements for screens', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await page.goto('/modules/formulize/admin/ui.php?page=home');
-		await page.getByRole('link', { name: 'Application: Museum' }).click();
+		await openApplicationAccordion(page, 'Museum');
 	})
 
 	test('Artifacts form screen', async ({ page }) => {
@@ -410,7 +410,7 @@ test.describe('Set columns and elements for screens', () => {
 		await expect(rewriteRulesEnabled).toBeChecked();
 		// Navigate back to the Apps tab to find the Museum application.
 		await page.goto('/modules/formulize/admin/');
-  	await page.getByRole('link', { name: 'Application: Museum' }).click();
+  	await openApplicationAccordion(page, 'Museum');
   	await page.locator('div[id^=form-details-box-]').nth(4).getByRole('link', { name: 'Screens' }).click();
   	await page.getByRole('link', { name: 'Survey', exact: true }).click();
   	await page.locator('input[name="screens-rewriteruleAddress"]').fill('survey');
@@ -485,7 +485,7 @@ test.describe('Set columns and elements for screens', () => {
 		const linkCount = () => dbQuery(`SELECT COUNT(*) FROM ${dbPrefix()}_formulize_menu_links WHERE screen = 'sid=${sid}'`)[0][0];
 		for (let attempt = 1; attempt <= 3 && linkCount() === '0'; attempt++) {
 			await page.goto('/modules/formulize/admin/ui.php?page=home');
-			await page.getByRole('link', { name: 'Application: Museum' }).click();
+			await openApplicationAccordion(page, 'Museum');
 			await page.getByRole('link', { name: 'Menu Entries' }).click();
 			await waitForAdminPageReady(page);
 			await page.locator('#addmenutext').fill('Artifact origins');

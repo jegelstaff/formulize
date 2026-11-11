@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, waitForAdminPageReady, saveAdminForm, dbQuery, dbPrefix } from '../../utils';
+import { login, waitForAdminPageReady, waitForJQueryAnimations, saveAdminForm, dbQuery, dbPrefix } from '../../utils';
 
 // When an admin page reloads after a save, it goes back to the drawer that was open. This uses the pages of the Artifact form
 // screen, which 022 made. It adds a page and deletes it again, so the screen is left as it was, and that's why it's here and
@@ -33,6 +33,8 @@ test('An admin page reloads with the same drawer open, or the first one if that 
 	await page.goto(`/modules/formulize/admin/ui.php?page=screen&aid=${aid}&fid=${fid}&sid=${sid}&tab=pages`);
 	await waitForAdminPageReady(page);
 	await expect(editLink('Artifact')).toBeVisible();
+	// the first drawer slides open when the page loads, and the accordion ignores a click on another heading until it's done
+	await waitForJQueryAnimations(page);
 
 	// 022 can give the screen more pages after these three. The drags only move Appraisal among these, so the rest stay put.
 	const startingOrder = await pageNames.allTextContents();
@@ -59,6 +61,9 @@ test('An admin page reloads with the same drawer open, or the first one if that 
 	await expect(heading('New page')).toHaveCount(0);
 	await expect(editLink('Artifact')).toBeVisible();
 	await expect(editLink('Appraisal')).toBeHidden();
+	// the first drawer is sliding open after the reload, because the deleted one had nothing to go back to. Run 42923973853 clicked
+	// Appraisal while it slid, and the click was ignored.
+	await waitForJQueryAnimations(page);
 
 	// moving the open page saves and reloads, and it stays open in its new position
 	await heading('Appraisal').click();
