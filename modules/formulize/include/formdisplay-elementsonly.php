@@ -277,13 +277,20 @@ if($screen) {
         $drawerTitle = trans($titleFormObject->getVar('title'));
     }
 }
+// What the drawer header shows. A form screen with "Show the page title at the top of the
+// form" turned off shows no title full screen, so it shows none in the drawer either (issue
+// #1095). $drawerTitle itself still names what was shown, for the activity log below.
+$drawerHeaderTitle = $drawerTitle;
+if($screen AND $screen->getVar('type') == 'multiPage' AND !$screen->getUIOption('showpagetitles')) {
+    $drawerHeaderTitle = '';
+}
 // entryId/fid let the host track what is actually loaded (the add-new flow renders a
 // just-created sub entry the client has never seen); parentEntryId reports the resolved
 // parent id so a host that opened a brand-new parent can fix up its navigation state.
 // newSubEntriesAsRows says the add-new flow rendered the parent again, with the new sub
 // entries as rows in its subform, rather than the first new sub entry.
 $drawerMeta = "<script type=\"application/json\" class=\"formulize-drawer-meta\">".json_encode(array(
-    'title' => $drawerTitle,
+    'title' => $drawerHeaderTitle,
     'fid' => intval($fid),
     'entryId' => $entry_id ? intval($entry_id) : 'new',
     'parentEntryId' => $parentEntryResolved ? $parentEntryResolved : null,
