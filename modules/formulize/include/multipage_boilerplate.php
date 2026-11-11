@@ -39,13 +39,13 @@ function multipageSetHiddenFields(page, prevpage) {
 	<?php if($screen AND $screen->getVar('finishisdone')) { // user clicked to finish, there is no thanks page, so send them to the done destination ?>
   if(page == <?php print $thanksPage; ?>) {
     window.document.formulize_mainform.ventry.value = '';
-    jQuery('form[name=formulize_mainform]').attr('action', '<?php print $done_dest; ?>');
+    jQuery('form[name=formulize_mainform]').attr('action', <?php print json_encode((string) $done_dest, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP); ?>);
   }
 	<?php } ?>
   window.document.formulize_mainform.formulize_currentPage.value = page<?php print $screen ? "+'-".$screen->getVar('sid')."'" : ""; ?>;
   window.document.formulize_mainform.formulize_prevPage.value = prevpage<?php print $screen ? "+'-".$screen->getVar('sid')."'" : ""; ?>;
-  window.document.formulize_mainform.formulize_doneDest.value = '<?php print $settings['formulize_doneDest']; ?>';
-  window.document.formulize_mainform.formulize_buttonText.value = '<?php print isset($settings['formulize_buttonText']) ? $settings['formulize_buttonText'] : ""; ?>';
+  window.document.formulize_mainform.formulize_doneDest.value = <?php print json_encode((string) $settings['formulize_doneDest'], JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP); ?>;
+  window.document.formulize_mainform.formulize_buttonText.value = <?php print json_encode(isset($settings['formulize_buttonText']) ? (string) $settings['formulize_buttonText'] : "", JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP); ?>;
 }
 
 function pageJump(options, prevpage) {
@@ -77,7 +77,7 @@ if($currentPage == $thanksPage) {
     // need to deduce the form, entry, and page from
 
     if(is_array($settings)) {
-        print "<form name=calreturnform action=\"$done_dest\" method=post>\n";
+        print "<form name=calreturnform action=\"".htmlspecialchars($done_dest)."\" method=post>\n";
         writeHiddenSettings($settings, null, array(), array(), $screen);
         if($_POST['go_back_form']) {
             $go_back_page = $_POST['go_back_page'];
@@ -106,40 +106,56 @@ if($currentPage == $thanksPage) {
         return; // if we've ended up on the thanks page via conditions (last page was not shown) then we should just bail if there is not supposed to be a thanks page
     }
 
-        ob_start();
-    print "<br><hr><br><div id=\"thankYouNavigation\"><p><center>\n";
-    if($pagesSkipped) {
-        print _formulize_DMULTI_SKIP . "</p><p>\n";
-    }
-
-    if($button_text != "{NOBUTTON}") {
-        print "<a href='$done_dest'";
-        if(is_array($settings)) {
-            print " onclick=\"javascript:window.document.calreturnform.submit();return false;\"";
+    // the link to the done destination, which {thankYouNav} in the thanks text stands for, and $thankYouNav in PHP.
+    // It has its own space above, so it is set apart from whatever thanks text comes before it. Centred, it is the
+    // version added below thanks text that doesn't place the link itself.
+    $drawThankYouNav = function($centred) use ($pagesSkipped, $thankYouLinkText, $done_dest, $settings) {
+        $nav = "<div id=\"thankYouNavigation\" class=\"fz-stack fz-gap-2 fz-mt-6".($centred ? " fz-text-center" : "")."\">\n";
+        if($pagesSkipped) {
+            $nav .= "<p>" . _formulize_DMULTI_SKIP . "</p>\n";
         }
-        print ">" . $button_text . "</a>\n";
-    }
-    print "</center></p></div>";
-        $thankYouNav = ob_get_clean();
+        if($thankYouLinkText != "{NOBUTTON}") {
+            $nav .= "<div class=\"fz-cluster".($centred ? " fz-justify-center" : "")."\"><a class=\"fz-btn fz-btn--primary fz-btn--lg\" href=\"".htmlspecialchars($done_dest)."\"";
+            if(is_array($settings)) {
+                $nav .= " onclick=\"javascript:window.document.calreturnform.submit();return false;\"";
+            }
+            $nav .= ">" . htmlspecialchars(trans($thankYouLinkText)) . "</a></div>\n"; // plain text, and it can arrive in POST as formulize_buttonText
+        }
+        return $nav . "</div>";
+    };
+    $thankYouNav = $drawThankYouNav(false);
 
 		$entry = $entry_id; // legacy support because there used to be a version of entry id just called entry that was in scope at this point.
+		$form_id = $fid;
+
+		// thanks text that doesn't place the link itself, as {thankYouNav} or $thankYouNav, gets it below, so users
+		// always have a way on
+		$thanksSource = is_array($thankstext) ? (isset($thankstext[1]) ? (string) $thankstext[1] : '') : (string) $thankstext;
+		$thanksPlacesNav = (strpos($thanksSource, 'thankYouNav') !== false);
 
 		// thanks text is stored exactly as the admin typed it, so it is printed or run as it is
-		if(is_array($thankstext)) {
-			if($thankstext[0] === "PHP"){
-                eval($thankstext[1]);
-            } elseif(substr($thankstext[1], 0, 5)=='<?php') {
-				eval(substr($thankstext[1],5)); // strip out opening PHP tag
+		try {
+			if(is_array($thankstext)) {
+				if($thankstext[0] === "PHP"){
+					eval($thankstext[1]);
+				} elseif(substr(trim($thankstext[1]), 0, 5)=='<?php') {
+					eval(removeOpeningPHPTag($thankstext[1]));
+				} else {
+					print str_replace("{thankYouNav}", $thankYouNav, $thankstext[1]);
+				}
 			} else {
-				print str_replace("{thankYouNav}", $thankYouNav, $thankstext[1]);
+				if(substr(trim($thankstext), 0, 5)=='<?php') {
+					eval(removeOpeningPHPTag($thankstext));
+				} else { // HTML
+					print str_replace("{thankYouNav}", $thankYouNav, $thankstext);
+				}
 			}
-        } else {
-            if(substr($thankstext, 0, 5)=='<?php') {
-                eval(substr($thankstext,5)); // strip out opening PHP tag
-            } else { // HTML
-                print str_replace("{thankYouNav}", $thankYouNav, $thankstext);
-            }
-        }
+		} catch (Throwable $e) {
+			error_log("Formulize Error: the thanks text of screen ".(is_object($screen) ? $screen->getVar('sid') : 0)." could not run: ".$e->getMessage());
+		}
+		if(!$thanksPlacesNav) {
+			print $drawThankYouNav(true);
+		}
 
 		unset($entry);
 

@@ -4497,6 +4497,18 @@ function removeOpeningPHPTag($string) {
 }
 
 /**
+ * Whether text an administrator wrote - HTML, or PHP code - has nothing in it. Blank space, or an opening PHP tag on its
+ * own, is nothing, so a box someone emptied, or left with only the tag a code editor starts with, is treated as empty,
+ * the same way a form procedure is.
+ *
+ * @param string $text The text
+ * @return bool True if there is nothing in it
+ */
+function formulize_authoredTextIsEmpty($text) {
+	return removeOpeningPHPTag((string) $text) === '';
+}
+
+/**
  * Add an opening PHP tag to a block of code if it does not already start with one.
  *
  * Custom code is stored without any requirement to include the tag, and Formulize strips it before

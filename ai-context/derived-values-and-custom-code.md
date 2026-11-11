@@ -1,6 +1,6 @@
 # Derived values and custom code
 
-People write PHP in Formulize: derived value formulas, form procedures, code in text and static content elements, and application code. That code is kept in files, not the database.
+People write PHP in Formulize: derived value formulas, form procedures, code in text and static content elements, a form screen's intro and thanks text, and application code. That code is kept in files, not the database, and so is the HTML in static content elements and in a form screen's intro and thanks text.
 
 ## Where the code lives
 
@@ -9,13 +9,18 @@ Everything here is in `modules/formulize/code/`, which holds only `index.html` i
 | What | File |
 |---|---|
 | Derived value formula | `derived_<handle>.php` |
-| Code in a text, textarea, number or static content element | `<ele_type>_<handle>.php` |
+| Code in a text, textarea or number element | `<ele_type>_<handle>.php` |
+| All the content of a static content element (`fullWidthContent`, `captionedContent`), text, HTML or code | `<ele_type>_<handle>.php` |
+| A form screen's intro text and thanks text, HTML or code | `multipage_introtext_<screen handle>.php`, `multipage_thankstext_<screen handle>.php` |
 | Form procedures | `on_before_save_<form handle>.php`, `on_after_save_<form handle>.php`, `on_delete_<form handle>.php`, `custom_edit_check_<form handle>.php` |
+| A list screen's custom button code | `custom_code_<effect>_<button handle>_<screen handle>.php`, `custom_html_...` |
 | Application code, which runs on every page of the application | `application_custom_code_<application id>.php` |
 
 A template screen's code is different. It's in `templates/screens/<theme>/<sid>/code.php`, with the screen's other templates.
 
-**The file is the source of truth.** `getVar()` reads the file, and saving writes it through `formulize_writeCodeToFile()`. For elements, a copy can still be in `ele_value`, which `getVar()` uses only when there's no file. Code can be in `ele_value` with no file, for example after `cloneForm()`, which copies element rows and no files. That's why a handler's `clearEleValueFileKeysForInsert` only blanks the database copy when `codeFileHasContentForElement()` says the file holds it. Otherwise a save that had nothing to do with the code would destroy the only copy.
+**The file is the source of truth.** `getVar()` reads the file, and saving writes it through `formulize_writeCodeToFile()`. Text that is empty, or only an opening `<?php`, has no file: see `formulize_authoredTextIsEmpty()`. For elements, a copy can still be in `ele_value`, which `getVar()` uses only when there's no file. Code can be in `ele_value` with no file, for example from before a site's code folder was restored, or on an element saved before it had a handle. That's why a handler's `clearEleValueFileKeysForInsert` only blanks the database copy when `codeFileHasContentForElement()` says the file holds it. Otherwise a save that had nothing to do with the code would destroy the only copy.
+
+**Files named for a handle move with it.** `cloneForm()` copies each element's file to its clone's handle. A form screen's text files move when its handle changes, are copied when it's cloned, and are removed when it's deleted, in `formulizeMultiPageScreenHandler`. A form screen reads its text with the handle it was loaded with, and only writes a text that was set on the object, so a save that didn't touch the text can't put back an old copy.
 
 **Files arrive by routes Formulize knows nothing about,** such as a deploy or a restored backup. So form procedures aren't cached by file date. The wrapper Formulize generates around a procedure is named with a hash of its source, in the ICMS cache folder, so a change of source can't run stale code. See `formulizeForm::procedure_cache_filename()`.
 

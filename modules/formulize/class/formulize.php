@@ -430,10 +430,16 @@ class formulizeHandler {
 	 * This is the high-level upsert apparatus for form screens, analogous to upsertFormSchemaAndResources for forms.
 	 * It handles create-vs-update, seeding sensible defaults for new screens, permission/lock checks,
 	 * the screen_handle a new screen ends up with, the multi-page insert() serialization quirk (array fields
-	 * must be set already-serialized), and thankstext/introtext, which are stored exactly as given.
+	 * must be set already-serialized), and thankstext/introtext, which are stored exactly as given, in files.
 	 *
-	 * Callers (MCP tools, admin save handlers) pass INTERNAL object-var values as keys (e.g. navstyle,
-	 * showpagetitles as 0/1 (0=off, 1=on), buttontext as an array, etc.). The pages/pagetitles/conditions arrays should be
+	 * It also keeps the Thank You page settings consistent, whoever saves them and in whatever order: a screen with
+	 * thanks text has a Thank You page (finishisdone 0), a screen with a Thank You page has the Save and Continue
+	 * button (shownextbutton 1), since that is the button that leads to it, and the link on the Thank You page
+	 * always has some text.
+	 *
+	 * Callers (MCP tools, admin save handlers) pass INTERNAL object-var values as keys (e.g. showtabs,
+	 * showprevbutton, showsavebutton, showclosebutton, shownextbutton and showpagetitles as 0/1 (0=off, 1=on),
+	 * buttontext as an array, etc.). The pages/pagetitles/conditions arrays should be
 	 * plain (unserialized) PHP arrays in internal format - use buildPageStorageArrays() to construct them from
 	 * a friendly page definition list.
 	 *
@@ -518,12 +524,26 @@ class formulizeHandler {
 			$screen->setVar('buttontext', serialize(array_merge($current, $incoming)));
 		}
 
-		// HTML text fields: insert() stores them exactly as they are on the object. A provided value is set as it is.
-		// One that was not provided keeps the value loaded from the database, which is already in that form.
+		// HTML/PHP text fields: insert() writes them to their files exactly as they are on the object. A provided value
+		// is set as it is. One that was not provided is left alone, and its file with it.
 		foreach(array('thankstext', 'introtext') as $textField) {
 			if(array_key_exists($textField, $properties)) {
-				$screen->setVar($textField, $properties[$textField]);
+				$screen->setVar($textField, (string) $properties[$textField]);
 			}
+		}
+
+		// the Thank You page settings, kept consistent - see the docblock
+		if(!formulize_authoredTextIsEmpty($screen->getVar('thankstext', 'n'))) {
+			$screen->setVar('finishisdone', 0);
+		}
+		if($screen->getVar('finishisdone') == 0) {
+			$screen->setVar('shownextbutton', 1);
+		}
+		$currentButtonText = $screen->getVar('buttontext');
+		$currentButtonText = is_array($currentButtonText) ? $currentButtonText : array();
+		if(!isset($currentButtonText['thankyoulinktext']) OR trim((string) $currentButtonText['thankyoulinktext']) === '') {
+			$currentButtonText['thankyoulinktext'] = trans(_formulize_DMULTI_CONTINUE);
+			$screen->setVar('buttontext', serialize($currentButtonText));
 		}
 
 		// The handle: whatever was asked for, and otherwise settled by the screen handler from the title, or

@@ -42,7 +42,9 @@ $screens = $processedValues['screens'];
 
 
 $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-$screen = $screen_handler->get($sid);
+if(!$screen = $screen_handler->get($sid)) {
+  return; // no such form screen
+}
 // CHECK IF THE FORM IS LOCKED DOWN AND SCOOT IF SO
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $formObject = $form_handler->get($screen->getVar('fid'));
@@ -53,13 +55,21 @@ if($formObject->getVar('lockedform')) {
 if(!$gperm_handler->checkRight("edit_form", $screen->getVar('fid'), $groups, $mid)) {
   return;
 }
-// delegate persistence to the shared upsert apparatus (introtext/thankstext are passed and stored exactly as typed)
+// whether the screen has text for its Thank You page, which turns the Thank You page on - see formulizeHandler::upsertMultiPageScreen()
+$hadThanksText = !formulize_authoredTextIsEmpty($screen->getVar('thankstext', 'n'));
+
+// delegate persistence to the shared upsert apparatus (introtext/thankstext are passed and written to their files exactly as typed)
 $properties = array(
-    'introtext' => $screens['introtext'],
-    'thankstext' => $screens['thankstext'],
+    'introtext' => isset($screens['introtext']) ? $screens['introtext'] : '',
+    'thankstext' => isset($screens['thankstext']) ? $screens['thankstext'] : '',
 );
 try {
   formulizeHandler::upsertMultiPageScreen($properties, $sid);
+  // the Options tab shows the Thank You page as held on while there is thanks text, so it has to be drawn again
+  // when that changes. Reloading after all the forms are saved keeps whatever the Options tab saved as well.
+  if($hadThanksText != !formulize_authoredTextIsEmpty($properties['thankstext'])) {
+    print "/* eval */ reloadWithScrollPosition();";
+  }
 } catch (Exception $e) {
   print "Error: could not save the screen properly: ".$e->getMessage();
 }

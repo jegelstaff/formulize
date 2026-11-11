@@ -54,21 +54,21 @@ abstract class formulizeStaticContentElement extends formulizeElement {
 		parent::__construct();
 	}
 
-	// write code to a file, when the content is PHP code authored via the admin UI (content containing $value).
-	// The code file is named from the element's ele_type, so each concrete type gets its own naming (eg: fullWidthContent_handle.php).
+	// Write the content to its file, whether it is text, HTML or PHP code (content containing $value). The file is named
+	// from the element's ele_type, so each concrete type gets its own naming (eg: fullWidthContent_handle.php).
 	// The content is written to the file and left in the object as well: the object always holds the value it was
 	// given, so anything reading it back (including a second setVar in the same save, which is what the admin save
-	// path does) sees the real content and not a blank that would be mistaken for the code having been removed.
+	// path does) sees the real content and not a blank that would be mistaken for the content having been removed.
 	public function setVar($key, $value, $not_gpc = false) {
 		if($key == 'ele_value') {
 			$valueToWrite = is_array($value) ? $value : unserialize($value);
 			// only act when the content is actually part of what we were handed, so a caller setting other keys
-			// in ele_value cannot delete the code file by omission
-			if(isset($valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT])) {
+			// in ele_value cannot delete the file by omission
+			if(is_array($valueToWrite) AND array_key_exists(ELE_VALUE_STATICCONTENT_CONTENT, $valueToWrite) AND $this->getVar('ele_handle')) {
 				$filename = $this->getVar('ele_type').'_'.$this->getVar('ele_handle').'.php';
-				if(strstr((string)$valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT], "\$value")) {
+				if(!formulize_authoredTextIsEmpty($valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT])) {
 					formulize_writeCodeToFile($filename, $valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT]);
-				// delete the code file if it exists but the value no longer contains code (these elements can hold code or plain text/HTML)
+				// an element with no content has no file
 				} elseif(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
 					unlink(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
 				}
@@ -125,10 +125,10 @@ abstract class formulizeStaticContentElementHandler extends formulizeElementsHan
 			return $ele_value; // nothing we can read, so nothing to strip - leave it exactly as it arrived
 		}
 		if(isset($valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT])) {
-			// only take it out of the database copy once the file is there to hold it - see codeFileHasContentForElement()
-			if(strstr((string)$valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT], "\$value") // the same condition setVar writes the file on
-				AND $this->codeFileHasContentForElement($element)) {
-					$valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT] = "";
+			// all the content is kept in the file, but it only comes out of the database copy once the file is there
+			// to hold it - see codeFileHasContentForElement()
+			if($this->codeFileHasContentForElement($element)) {
+				$valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT] = "";
 			}
 		}
 		// hand it back the way it came: insert() passes this straight to quoteString()

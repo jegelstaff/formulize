@@ -46,10 +46,21 @@ class formulizeMultiPageScreen extends formulizeScreen {
 	}
 
 
+	// The text the administrator wrote for the top of the first page and for the Thank You page. It is kept in
+	// files, not the database - see codeFileName() - and read into the object the first time it is asked for.
+	const TEXT_VARS = array('introtext', 'thankstext');
+
+	// The handle the screen had when it was loaded, which its text files are named for. A handle set on the object
+	// since then only names the files once insert() has moved them.
+	protected $loadedScreenHandle = '';
+
+	// Which of TEXT_VARS have been read from their files into the object
+	protected $textReadFromFile = array();
+
 	function __construct() {
 		parent::__construct();
-		$this->initVar("introtext", XOBJ_DTYPE_TXTAREA);
-		$this->initVar("thankstext", XOBJ_DTYPE_TXTAREA);
+		$this->initVar("introtext", XOBJ_DTYPE_TXTAREA); // not a column - read from a file, see getVar()
+		$this->initVar("thankstext", XOBJ_DTYPE_TXTAREA); // not a column - read from a file, see getVar()
 		$this->initVar("donedest", XOBJ_DTYPE_TXTBOX, NULL, false, 255);
 		$this->initVar("buttontext", XOBJ_DTYPE_ARRAY);
 		$this->initVar("finishisdone", XOBJ_DTYPE_INT);
@@ -60,7 +71,14 @@ class formulizeMultiPageScreen extends formulizeScreen {
 		$this->initVar("printall", XOBJ_DTYPE_INT); //nmc - 2007.03.24
 		$this->initVar("paraentryform", XOBJ_DTYPE_INT);
 		$this->initVar("paraentryrelationship", XOBJ_DTYPE_INT);
-		$this->initVar("navstyle", XOBJ_DTYPE_INT);
+		// which navigation the screen offers, each 1 for on and 0 for off: the tabs across the top, and the four
+		// buttons at the bottom. prev is Save and Go Back (Save and Close on the first page), next is Save and
+		// Continue (Save and Finish on the last page). See formulize_multipageButtonSet().
+		$this->initVar('showtabs', XOBJ_DTYPE_INT);
+		$this->initVar('showprevbutton', XOBJ_DTYPE_INT);
+		$this->initVar('showsavebutton', XOBJ_DTYPE_INT);
+		$this->initVar('showclosebutton', XOBJ_DTYPE_INT);
+		$this->initVar('shownextbutton', XOBJ_DTYPE_INT);
 		$this->initVar("dobr", XOBJ_DTYPE_INT, 1, false);
 		$this->initVar("dohtml", XOBJ_DTYPE_INT, 1, false);
 		$this->assignVar("dobr", false); // don't convert line breaks to <br> when using the getVar method
@@ -131,6 +149,53 @@ class formulizeMultiPageScreen extends formulizeScreen {
         return ($this->getVar($option) == 1);
     }
 
+	/**
+	 * The name of the file in modules/formulize/code/ that holds one of the screen's texts, for a given handle.
+	 * @param string $textVar introtext or thankstext
+	 * @param string $screenHandle The screen's handle
+	 * @return string The file name, or '' when there is no handle to name it for
+	 */
+	public static function codeFileName($textVar, $screenHandle) {
+		$screenHandle = (string) $screenHandle;
+		if(!in_array($textVar, self::TEXT_VARS) OR $screenHandle === '') {
+			return '';
+		}
+		return 'multipage_'.$textVar.'_'.$screenHandle.'.php';
+	}
+
+	// remember the handle the screen was loaded with, which is what its text files are named for until insert() moves them
+	public function assignVar($key, $value) {
+		if($key == 'screen_handle') {
+			$this->loadedScreenHandle = (string) $value;
+		}
+		parent::assignVar($key, $value);
+	}
+
+	// The handle the text files are named for right now. insert() calls this once it has moved them.
+	public function setLoadedScreenHandle($handle) {
+		$this->loadedScreenHandle = (string) $handle;
+	}
+
+	/**
+	 * The intro and thanks text are read from their files the first time they are asked for. Once one has been set
+	 * on the object, the object holds what it was given until insert() writes it, so a second getVar in the same
+	 * save sees the new text rather than the file it is about to replace.
+	 */
+	public function getVar($key, $format = 's') {
+		if(in_array($key, self::TEXT_VARS) AND $this->isVarClean($key) AND !isset($this->textReadFromFile[$key])) {
+			$this->textReadFromFile[$key] = true;
+			$contents = '';
+			if($fileName = self::codeFileName($key, $this->loadedScreenHandle)) {
+				$path = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileName;
+				if(file_exists($path)) {
+					$contents = strval(file_get_contents($path));
+				}
+			}
+			parent::assignVar($key, $contents);
+		}
+		return parent::getVar($key, $format);
+	}
+
 }
 
 #[AllowDynamicProperties]
@@ -152,23 +217,35 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 
 	function insert($screen, $force=false) {
 		$update = !$screen->getVar('sid') ? false : true;
+		// the handle the screen has now, since its text files are named for it - see moveTextFiles()
+		$storedHandle = '';
+		if ($update AND $result = $this->db->query("SELECT screen_handle FROM ".$this->db->prefix('formulize_screen')." WHERE sid = ".intval($screen->getVar('sid')))) {
+			$row = $this->db->fetchArray($result);
+			$storedHandle = $row ? (string) $row['screen_handle'] : '';
+		}
+		// read the text the screen has before its handle can change, so a text nobody touched stays where it is
+		foreach(formulizeMultiPageScreen::TEXT_VARS as $textVar) {
+			$screen->getVar($textVar, 'n');
+		}
 		if(!$sid = parent::insert($screen, $force)) { // write the basic info to the db, handle cleaning vars and all that jazz.  Object passed by reference, so updates will have affected it in the other method.
 			return false;
 		}
 		$screen->assignVar('sid', $sid);
+		$currentHandle = $screen->getVar('screen_handle', 'n');
+		if($storedHandle !== '' AND $storedHandle !== $currentHandle) {
+			$this->carryTextFiles($storedHandle, $currentHandle, true);
+		}
+		$screen->setLoadedScreenHandle($currentHandle);
 		// standard flags used by xoopsobject class
 
         // cleanvars not called, so serialize must be used below to construct the query
-        // introtext and thankstext are stored exactly as the admin typed them, so entities like &nbsp; survive.
-        // They are escaped once when shown in the admin textarea, and printed or run unchanged on the front end.
+        // introtext and thankstext are not columns: they are written to their files below, exactly as the admin typed them
 
 		// note: conditions is not written to the DB yet, since we're not gathering that info from the UI
 		if (!$update) {
-                 $sql = sprintf("INSERT INTO %s (sid, introtext, thankstext, donedest, buttontext, finishisdone, pages, pagetitles, conditions, disabledpages, printall, paraentryform, paraentryrelationship, navstyle, displaycolumns, column1width, column2width, showpagetitles, showpageindicator, showpageselector, displayheading, reloadblank, elementdefaults, formorder) VALUES (%u, %s, %s, %s, %s, %u, %s, %s, %s, %s, %u, %u, %u, %u, %u, %s, %s, %u, %u, %u, %u, %u, %s, %s)",
+                 $sql = sprintf("INSERT INTO %s (sid, donedest, buttontext, finishisdone, pages, pagetitles, conditions, disabledpages, printall, paraentryform, paraentryrelationship, showtabs, showprevbutton, showsavebutton, showclosebutton, shownextbutton, displaycolumns, column1width, column2width, showpagetitles, showpageindicator, showpageselector, displayheading, reloadblank, elementdefaults, formorder) VALUES (%u, %s, %s, %u, %s, %s, %s, %s, %u, %u, %u, %u, %u, %u, %u, %u, %u, %s, %s, %u, %u, %u, %u, %u, %s, %s)",
                     $this->db->prefix('formulize_screen_multipage'),
                     $screen->getVar('sid'),
-                    $this->db->quoteString($screen->getVar('introtext', "n")),
-                    $this->db->quoteString($screen->getVar('thankstext', "n")),
                     $this->db->quoteString($screen->getVar('donedest')),
                     $this->db->quoteString(serialize($screen->getVar('buttontext'))),
                     $screen->getVar('finishisdone'),
@@ -179,7 +256,11 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
                     $screen->getVar('printall'),
                     $screen->getVar('paraentryform'),
                     $screen->getVar('paraentryrelationship'),
-                    $screen->getVar('navstyle'),
+                    $screen->getVar('showtabs'),
+                    $screen->getVar('showprevbutton'),
+                    $screen->getVar('showsavebutton'),
+                    $screen->getVar('showclosebutton'),
+                    $screen->getVar('shownextbutton'),
                     $screen->getVar('displaycolumns'),
                     $this->db->quoteString($screen->getVar('column1width')),
                     $this->db->quoteString($screen->getVar('column2width')),
@@ -193,7 +274,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
                     );
                     //nmc 2007.03.24 added 'printall' & fixed pagetitles
              } else {
-                 $sql = sprintf("UPDATE %s SET introtext = %s, thankstext = %s, donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, disabledpages = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u, navstyle = %u, displaycolumns = %u, column1width = %s, column2width = %s, showpagetitles = %u, showpageindicator = %u, showpageselector = %u, displayheading = %u, reloadblank = %u, elementdefaults = %s, formorder = %s WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('introtext', "n")), $this->db->quoteString($screen->getVar('thankstext', "n")), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString(serialize($screen->getVar('buttontext'))), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $this->db->quoteString(serialize($screen->getVar('disabledpages'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('navstyle'),  $screen->getVar('displaycolumns'), $this->db->quoteString($screen->getVar('column1width')), $this->db->quoteString($screen->getVar('column2width')), $screen->getVar('showpagetitles'), $screen->getVar('showpageindicator'), $screen->getVar('showpageselector'), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('elementdefaults'))), $this->db->quoteString(serialize($screen->getVar('formorder'))), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
+                 $sql = sprintf("UPDATE %s SET donedest = %s, buttontext = %s, finishisdone = %u, pages = %s, pagetitles = %s, conditions = %s, disabledpages = %s, printall = %u, paraentryform = %u, paraentryrelationship = %u, showtabs = %u, showprevbutton = %u, showsavebutton = %u, showclosebutton = %u, shownextbutton = %u, displaycolumns = %u, column1width = %s, column2width = %s, showpagetitles = %u, showpageindicator = %u, showpageselector = %u, displayheading = %u, reloadblank = %u, elementdefaults = %s, formorder = %s WHERE sid = %u", $this->db->prefix('formulize_screen_multipage'), $this->db->quoteString($screen->getVar('donedest')), $this->db->quoteString(serialize($screen->getVar('buttontext'))), $screen->getVar('finishisdone'), $this->db->quoteString(serialize($screen->getVar('pages'))), $this->db->quoteString(serialize($screen->getVar('pagetitles'))), $this->db->quoteString(serialize($screen->getVar('conditions'))), $this->db->quoteString(serialize($screen->getVar('disabledpages'))), $screen->getVar('printall'), $screen->getVar('paraentryform'), $screen->getVar('paraentryrelationship'), $screen->getVar('showtabs'), $screen->getVar('showprevbutton'), $screen->getVar('showsavebutton'), $screen->getVar('showclosebutton'), $screen->getVar('shownextbutton'), $screen->getVar('displaycolumns'), $this->db->quoteString($screen->getVar('column1width')), $this->db->quoteString($screen->getVar('column2width')), $screen->getVar('showpagetitles'), $screen->getVar('showpageindicator'), $screen->getVar('showpageselector'), $screen->getVar('displayheading'), $screen->getVar('reloadblank'), $this->db->quoteString(serialize($screen->getVar('elementdefaults'))), $this->db->quoteString(serialize($screen->getVar('formorder'))), $screen->getVar('sid')); //nmc 2007.03.24 added 'printall'
              }
 					if($force) {
 						$result = $this->db->queryF($sql);
@@ -232,8 +313,82 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
             if (!$success1 || !$success2 || !$success3 || !$success4 || !$success5 || !$success6) {
                 return false;
             }
+            if (!$this->writeTextFiles($screen)) {
+                return false;
+            }
          }
 		 return $sid;
+	}
+
+	/**
+	 * Write the intro and thanks text that were set on the screen object to their files, exactly as they were typed.
+	 * Only a text set on this object is written, so an object loaded before something else changed a file can't put
+	 * the old text back when it is saved for some other reason. A text that is empty - see
+	 * formulize_authoredTextIsEmpty() - has no file.
+	 * @param formulizeMultiPageScreen $screen The screen, after its row has been written, so its handle is final
+	 * @return bool False if a file could not be written or removed
+	 */
+	function writeTextFiles($screen) {
+		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		foreach(formulizeMultiPageScreen::TEXT_VARS as $textVar) {
+			if($screen->isVarClean($textVar)) {
+				continue;
+			}
+			if(!$fileName = formulizeMultiPageScreen::codeFileName($textVar, $screen->getVar('screen_handle', 'n'))) {
+				return false;
+			}
+			$text = (string) $screen->getVar($textVar, 'n');
+			if(formulize_authoredTextIsEmpty($text)) {
+				if(file_exists($codeDir.$fileName) AND !unlink($codeDir.$fileName)) {
+					error_log("Formulize Error: could not remove $codeDir$fileName");
+					return false;
+				}
+			} elseif(formulize_writeCodeToFile($fileName, $text) === false) {
+				error_log("Formulize Error: could not write $codeDir$fileName");
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Carry a screen's intro and thanks text files over to another screen handle: moved when the screen's handle
+	 * changes, copied when it is cloned. A file already under the other handle is left as it is.
+	 * @param string $fromHandle The handle the files are named for
+	 * @param string $toHandle The handle they are to be named for
+	 * @param bool $move Whether to move the files, rather than copy them
+	 * @return void
+	 */
+	function carryTextFiles($fromHandle, $toHandle, $move) {
+		if($fromHandle === $toHandle) {
+			return;
+		}
+		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		foreach(formulizeMultiPageScreen::TEXT_VARS as $textVar) {
+			$from = formulizeMultiPageScreen::codeFileName($textVar, $fromHandle);
+			$to = formulizeMultiPageScreen::codeFileName($textVar, $toHandle);
+			if($from AND $to AND file_exists($codeDir.$from) AND !file_exists($codeDir.$to)) {
+				if(!($move ? rename($codeDir.$from, $codeDir.$to) : copy($codeDir.$from, $codeDir.$to))) {
+					error_log("Formulize Error: could not ".($move ? "move" : "copy")." $codeDir$from to $codeDir$to");
+				}
+			}
+		}
+	}
+
+	/**
+	 * Remove a deleted screen's intro and thanks text files
+	 * @param string $screenHandle The handle of the screen that has been deleted
+	 * @return void
+	 */
+	function deleteTextFiles($screenHandle) {
+		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		foreach(formulizeMultiPageScreen::TEXT_VARS as $textVar) {
+			if($fileName = formulizeMultiPageScreen::codeFileName($textVar, $screenHandle)) {
+				if(file_exists($codeDir.$fileName) AND !unlink($codeDir.$fileName)) {
+					error_log("Formulize Error: could not remove $codeDir$fileName of a deleted screen");
+				}
+			}
+		}
 	}
 
 	/**
@@ -408,10 +563,17 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
     include_once XOOPS_ROOT_PATH . "/modules/formulize/include/formdisplaypages.php";
     $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
 
-    // straight string is the thank you text. If saved as array, then multiple texts will be present so extract thank you link text, and pass whole thing as button text too
+    // the text for the link on the Thank You page is one of the button texts. thankyoulinktext is the key it is saved
+    // under; thankYouLinkText is accepted too, in case anything ever saved it that way. Blank falls back to the default in displayFormPages.
     $buttonText = $screen->getVar('buttontext');
-    $thankYouLinkText = (is_array($buttonText) AND isset($buttonText['thankYouLinkText'])) ? $buttonText['thankYouLinkText'] : "";
     $buttonText = is_array($buttonText) ? $buttonText : array();
+    $thankYouLinkText = '';
+    foreach(array('thankyoulinktext', 'thankYouLinkText') as $thankYouLinkKey) {
+        if(isset($buttonText[$thankYouLinkKey]) AND trim((string) $buttonText[$thankYouLinkKey]) !== '') {
+            $thankYouLinkText = $buttonText[$thankYouLinkKey];
+            break;
+        }
+    }
 
     updateMultipageTemplates($screen);
 
@@ -599,6 +761,16 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
         if (!$result) {
             return false;
         }
+
+        // the clone has a handle of its own, so it needs its own copies of the text files
+        $handles = array();
+        $handleResult = $this->db->query("SELECT sid, screen_handle FROM ".$this->db->prefix('formulize_screen')." WHERE sid IN (".intval($sid).", ".intval($newsid).")");
+        while($handleResult AND $row = $this->db->fetchArray($handleResult)) {
+            $handles[intval($row['sid'])] = (string) $row['screen_handle'];
+        }
+        if(isset($handles[intval($sid)]) AND isset($handles[intval($newsid)])) {
+            $this->carryTextFiles($handles[intval($sid)], $handles[intval($newsid)], false);
+        }
     }
 
     public function setDefaultFormScreenVars($defaultFormScreen, $formObject)
@@ -617,9 +789,14 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
         $defaultFormScreen->setVar('pagetitles',serialize(array(0=>$formObject->getSingular())));
         $defaultFormScreen->setVar('pages', serialize(array(0=>array())));
         $defaultFormScreen->setVar('disabledpages', serialize(array(0=>0)));
-        $defaultFormScreen->setVar('navstyle', 1);
+        // tabs across the top, and Save and Close at the bottom. No Thank You page, so no Save and Continue.
+        $defaultFormScreen->setVar('showtabs', 1);
+        $defaultFormScreen->setVar('showprevbutton', 0);
+        $defaultFormScreen->setVar('showsavebutton', 1);
+        $defaultFormScreen->setVar('showclosebutton', 1);
+        $defaultFormScreen->setVar('shownextbutton', 0);
         $defaultFormScreen->setVar('buttontext', serialize(array(
-            'thankyoulinktext'=>'',
+            'thankyoulinktext'=>trans(_formulize_DMULTI_CONTINUE),
             'leaveButtonText'=>trans(_formulize_SAVE_AND_LEAVE),
             'prevButtonText'=>trans(_formulize_DMULTI_PREV),
             'saveButtonText'=>trans(_formulize_SAVE),

@@ -893,7 +893,10 @@ define("_AM_FORMULIZE_SCREEN_PARAENTRYRELATIONSHIP", "If previous answers are sh
 define("_AM_FORMULIZE_SCREEN_PARAENTRYREL_BYGROUP", "Entries belong to the same group");
 
 define("_AM_FORMULIZE_SCREEN_INTRO", "Introductory text for the first page of this form");
-define("_AM_FORMULIZE_SCREEN_THANKS", "Thank-you text for the final page of this form");
+define("_AM_FORMULIZE_SCREEN_THANKS", "Text for the Thank You page at the end of this form");
+// help under the two boxes on the Text tab of a form screen. Shown as text, so the <?php is shown as typed.
+define("_AM_FORMULIZE_SCREEN_INTRO_DESC", "HTML shown above the questions on the first page. To use PHP instead, start with <?php on the first line, and print what should appear. In PHP, \$entry_id is the entry's id number.");
+define("_AM_FORMULIZE_SCREEN_THANKS_DESC", "HTML shown on the Thank You page. Put {thankYouNav} where the link to the done destination should go. Without it, the link goes below the text, centred. To use PHP instead, start with <?php on the first line, and print what should appear. In PHP, \$entry_id is the entry's id number, and \$thankYouNav is the link. If your code doesn't use \$thankYouNav, the link goes below what it prints. While there is text here, the form always shows the Thank You page. Leave it empty for a simple Thank You page with the link.");
 define("_AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES", "Templates for Multi page form:");
 define("_AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES_HELP", "<p>The following variables can be used in these templates to render certain text or UI elements:</p>
 <ul>
@@ -917,11 +920,32 @@ define("_AM_FORMULIZE_SCREEN_MULTIPAGE_TEMPLATES_INTRO", "Leave these blank to u
 define("_AM_FORMULIZE_SCREEN_TOPTEMPLATE", "Template for the top part of the page, above the form");
 define("_AM_FORMULIZE_SCREEN_ELEMENTTEMPLATE", "This template will be used once for drawing each element on the page");
 define("_AM_FORMULIZE_SCREEN_BOTTOMTEMPLATE", "Template for the bottom part of the page, below the form");
-define("_AM_FORMULIZE_SCREEN_FINISHISDONE", "The final page of the form should be...");
-define("_AM_FORMULIZE_SCREEN_FINISHISDONE_THANKSPAGE", "<b>The Thank-you page</b>, which the user gets after clicking the \"Save and Finish\" button on the last page with questions");
-define("_AM_FORMULIZE_SCREEN_FINISHISDONE_FINISHBUTTON", "<b>The last page with questions</b>, and when the user clicks the \"Save and Finish\" button, they leave the form");
-define("_AM_FORMULIZE_SCREEN_DONEDEST", "The URL that users go to when leaving the form (Optional, Formulize will usually set this automatically when the form is displayed, based on where the user came from.  If the last page of the form has questions, then the next page the users go to should be a Formulize page or else the answers to the questions won't be saved)");
-define("_AM_FORMULIZE_SCREEN_THANKYOULINKTEXT", "If the Thank-you page is shown, what should be used as the clickable text for the URL?");
+// the Options tab of a form screen
+define("_AM_FORMULIZE_SCREEN_MP_APPEARANCE", "Appearance");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWTABS", "Show navigation tabs at the top of the form");
+define("_AM_FORMULIZE_SCREEN_MP_BUTTONS", "Show these buttons at the bottom of the form:");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWPREVBUTTON", "Save and Go Back");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWSAVEBUTTON", "Save");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWCLOSEBUTTON", "Close");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWNEXTBUTTON", "Save and Continue");
+define("_AM_FORMULIZE_SCREEN_MP_BUTTONS_DESC", "On the first page, Save and Go Back is called Save and Close, and leaves the form. On the last page, Save and Continue is called Save and Finish.");
+define("_AM_FORMULIZE_SCREEN_MP_NEXT_FORCED", "A form with a Thank You page always has the Save and Continue button, because that is how users reach the Thank You page.");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWPAGEINDICATOR", "Show 'page 1 of X'");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWPAGESELECTOR", "Show the page selection dropdown list");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWPAGETITLES", "Show the page title at the top of the form");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWTHANKSPAGE", "Show a Thank You page at the end of the form");
+define("_AM_FORMULIZE_SCREEN_MP_THANKSPAGE_FORCED", "This form has text for its Thank You page, on the Text tab, so it always shows the Thank You page. To turn it off, empty that text.");
+define("_AM_FORMULIZE_SCREEN_MP_BUTTONSTEXT", "Buttons, text and behaviour");
+define("_AM_FORMULIZE_SCREEN_MP_RELOAD_LEGEND", "After saving a new entry");
+define("_AM_FORMULIZE_SCREEN_MP_RELOAD", "How should the form reload, after the user has saved a new entry?");
+define("_AM_FORMULIZE_SCREEN_MP_RELOAD_ENTRY", "Reload showing the entry the user has just created");
+define("_AM_FORMULIZE_SCREEN_MP_RELOAD_BLANK", "Reload blank, so another new entry can be created");
+define("_AM_FORMULIZE_SCREEN_MP_RELOAD_DESC", "Only applies to forms with one page. When a user arrives from a list of entries, this setting is ignored, and the button the user clicked takes precedence (either the Add one entry button or the Add multiple entries button).");
+define("_AM_FORMULIZE_SCREEN_DONEDEST", "Where do users go when leaving this form?");
+define("_AM_FORMULIZE_SCREEN_DONEDEST_BACK", "Back to the previous page");
+define("_AM_FORMULIZE_SCREEN_DONEDEST_URL", "A specific URL");
+define("_AM_FORMULIZE_SCREEN_DONEDEST_URL_DESC", "If the last page of the form has questions, use the URL of a Formulize page, or the answers on that page won't be saved.");
+define("_AM_FORMULIZE_SCREEN_THANKYOULINKTEXT", "What is the clickable text for the done destination link on the Thank You page?");
 define("_AM_FORMULIZE_SCREEN_LEAVEBUTTONTEXT", "Text for the Save and Close button");
 define("_AM_FORMULIZE_SCREEN_PREVBUTTONTEXT", "Text for the Save and Go Back button");
 define("_AM_FORMULIZE_SCREEN_SAVEBUTTONTEXT", "Text for the Save button");

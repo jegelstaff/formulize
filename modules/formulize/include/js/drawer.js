@@ -764,8 +764,8 @@
     //
     // Unlike the full screen strip there is no leading "save and leave" tab: that is not
     // a page. Where the screen's button set already carries a leave action (page one's
-    // "prev" slot) the footer has it; where the screen offers no nav buttons at all
-    // (navstyle 1) the footer picks it up from the form button metadata instead. Either
+    // "prev" slot) the footer has it; where the screen offers tabs but neither paging
+    // button the footer picks it up from the form button metadata instead. Either
     // way it is a button, and only ever in one place.
     function renderPageTabs() {
         if (!tabsEl) { return; }
@@ -817,12 +817,14 @@
         if (!goToPage(targetPage)) { showDrawerNotice(S().fixPageErrors); }
     }
 
-    // The Previous/Next controls follow the screen's navstyle, as they do full screen:
-    // present when it asks for buttons (0) or for tabs and buttons (2), absent when it
-    // asks for tabs alone (1) because the tab strip above now provides the navigation.
-    // The one deviation is navstyle 3, which offers no navigation at all: full screen
-    // gets away with that because page URLs and the jump-to selector remain reachable in
-    // a full page, whereas in the drawer it would strand the user on page one.
+    // The Previous/Next controls follow the screen's Save and Go Back and Save and
+    // Continue settings, as they do full screen (showNavButtons is either of them), and
+    // are absent when it offers tabs alone, because the tab strip above provides the
+    // navigation. The one deviation is a screen with no tabs and neither paging button,
+    // which offers no navigation at all: full screen gets away with that because page URLs
+    // and the jump-to selector remain reachable in a full page, whereas in the drawer it
+    // would strand the user on page one, so the paging buttons are shown anyway
+    // (nav.buttonsWithPaging).
     function drawerShowsNavButtons(nav) {
         // keyed off whether the strip is actually drawn, not merely configured: if every
         // page but this one is conditioned away the tabs collapse, and the buttons are
@@ -830,8 +832,8 @@
         return !!nav && (nav.showNavButtons || !drawerTabsVisible(nav));
     }
 
-    // A screen configured for buttons only (navstyle 0) or for no navigation at all
-    // (navstyle 3) gets no tabs here, exactly as it gets none full screen. Neither does a
+    // A screen configured without tabs gets no tabs here, exactly as it gets none full
+    // screen. Neither does a
     // form with only one reachable page, so a single page form is untouched.
     function drawerTabsVisible(nav) {
         return !!(nav && nav.showTabs && nav.totalPages > 1 && nav.pages && nav.pages.length > 1);
@@ -897,7 +899,11 @@
         // pieces of metadata, which past page one produced a previous-page control AND a
         // save-and-leave control where full screen shows only the first (the button-set
         // difference flagged in the previous round of this review).
-        var navSet = (multiPage && navButtons && nav.buttons && nav.buttons.length) ? nav.buttons : null;
+        // When the screen offers neither paging button and the tab strip isn't drawn either,
+        // drawerShowsNavButtons() still asks for buttons so the user isn't stranded, and the
+        // set to draw then is the one with Save and Go Back and Save and Continue put back.
+        var navSource = (nav && !nav.showNavButtons && nav.buttonsWithPaging) ? nav.buttonsWithPaging : (nav ? nav.buttons : null);
+        var navSet = (multiPage && navButtons && navSource && navSource.length) ? navSource : null;
 
         if (navSet) {
             navSet.forEach(function (slotButton) {
@@ -912,8 +918,8 @@
             return;
         }
 
-        // No multipage button set to follow: either a single page form, or a screen whose
-        // navstyle asks for tabs alone (navstyle 1), where full screen has no prev/next
+        // No multipage button set to follow: either a single page form, or a screen that
+        // offers tabs and neither paging button, where full screen has no prev/next
         // controls and offers save-and-leave as the leading tab of its tab strip instead.
         // The drawer's strip carries pages only, so that control becomes a footer button
         // here — in the bar's "prev" slot, which is literally where full screen puts the

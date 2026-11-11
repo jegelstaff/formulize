@@ -87,6 +87,20 @@ Files that people upload to your forms are stored in the ```uploads``` folder. F
 
 See [making sure the uploads folder can't run files](../deploying_a_website/uploads_not_executable) for how to check it and how to fix it on Apache and nginx.
 
+### Important: block web access to the code folder
+
+Formulize keeps what you write in the admin pages in the ```modules/formulize/code``` folder: form procedures, derived value formulas, the content of Text for display elements, and the text of a form's first page and Thank You page. Formulize reads these files itself, and they must not be reachable from a web browser, where they could show content meant only for some people, or run on their own.
+
+On Apache, the ```.htaccess``` file that comes with Formulize in that folder blocks it, as long as your server lets ```.htaccess``` files take effect. On nginx, add this inside the ```server``` block for your site, then reload nginx. If your website is in a subfolder of its domain, add the subfolder to the start of the rule, such as ```^/system/modules/formulize/code/```.
+
+```
+location ~ ^/modules/formulize/code/ {
+    deny all;
+}
+```
+
+To check that it worked, go to ```https://www.mysite.com/modules/formulize/code/index.html``` in a web browser (use your own site's address). You should see a "Forbidden" page. If the browser goes back to the page you were on instead, the folder can still be reached, so check the settings above.
+
 ### Next steps
 
 Regardless of how you get the files on your server, the next steps are the same:

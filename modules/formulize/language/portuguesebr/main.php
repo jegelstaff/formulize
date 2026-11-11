@@ -620,14 +620,13 @@ define("_formulize_DE_NOT_TEMPTEXT", "Use este arquivo de modelo personalizado: 
 define("_formulize_DE_NOT_SUBJTEXT", "Use esta linha de assunto personalizada: ");
 
 // multi-page forms
-define("_formulize_DMULTI_THANKS", "<h1>Concluído!</h1><p>Muito obrigado por preencher este formulário. Nós realmente ficamos muito gratos.</p>");
+define("_formulize_DMULTI_THANKS", "Obrigado!");
 define("_formulize_DMULTI_NEXT", "Salvar e avançar >>");
 define("_formulize_DMULTI_PREV", "<< Salvar e voltar");
 define("_formulize_DMULTI_SAVE", "Salvar e concluir >>");
 define("_formulize_DMULTI_PAGE", "Página");
 define("_formulize_DMULTI_OF", "de");
 define("_formulize_DMULTI_SKIP", "Uma ou mais páginas foram saltadas porque elas não se aplicam");
-define("_formulize_DMULTI_ALLDONE", "Abandonar este formulário e continuar navegando no site");
 define("_formulize_DMULTI_JUMPTO", "Saltar para a página:");
 define("_formulize_DMULTI_YOUAREON", "Você está na:");
 

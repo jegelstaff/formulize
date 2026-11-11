@@ -709,14 +709,14 @@ define("_formulize_DE_NOT_SUBJTEXT", "Use this custom subject line: ");
 define("_formulize_DE_NOT_DIGEST_SUBJECT", "Notification Digest");
 
 // multi-page forms
-define("_formulize_DMULTI_THANKS", "<h1>You're done!</h1><p>Thanks for taking the time to fill in that form.  We really appreciate it.</p>{thankYouNav}");
+define("_formulize_DMULTI_THANKS", "Thank you!"); // the heading of the Thank You page, when the screen has no thanks text of its own
 define("_formulize_DMULTI_NEXT", "Save and Continue");
 define("_formulize_DMULTI_PREV", "Save and Go Back");
 define("_formulize_DMULTI_SAVE", "Save and Finish");
 define("_formulize_DMULTI_PAGE", "Page");
 define("_formulize_DMULTI_OF", "of");
 define("_formulize_DMULTI_SKIP", "One or more pages was skipped because they don't apply");
-define("_formulize_DMULTI_ALLDONE", "Leave this form and continue browsing the site");
+define("_formulize_DMULTI_CONTINUE", "Continue");
 define("_formulize_DMULTI_JUMPTO", "Jump to page:");
 define("_formulize_DMULTI_YOUAREON", "You are on:");
 

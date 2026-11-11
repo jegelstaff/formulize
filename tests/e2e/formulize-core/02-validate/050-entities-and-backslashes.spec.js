@@ -160,10 +160,8 @@ test('Build a form with typed defaults, static content and screen text', async (
 
 	await openFormScreenText(page);
 	await setCodeMirrorValue(page, 'textarea[name="screens-introtext"]', INTRO);
+	// thanks text turns the thank-you page on by itself
 	await setCodeMirrorValue(page, 'textarea[name="screens-thankstext"]', THANKS);
-	// a new form screen ends on its last page of questions, so make it end on the thank-you page instead
-	await page.locator('a', { hasText: /^Options$/ }).first().click();
-	await page.locator('#screens-finishisdone-0').check();
 	await saveAdminForm(page);
 
 	// let the end user see the form and make entries in it

@@ -3,8 +3,9 @@
  * Tests for the code files that element types write into modules/formulize/code/.
  *
  * Six element types can hold admin-authored PHP in ele_value, and all of them keep that code in a file
- * rather than only in the database: captionedContent and fullWidthContent (content containing $value),
- * text, number and textarea (a default value containing $default), and derived (its formula). Three
+ * rather than only in the database: captionedContent and fullWidthContent (all of their content, whether
+ * text, HTML or code containing $value), text, number and textarea (a default value containing $default),
+ * and derived (its formula). Three
  * different setVar/getVar pairs implement this - formulizeStaticContentElement, formulizeTextElement
  * (inherited by number and textarea) and formulizeDerivedElement - which is why this file checks all six
  * rather than one of each shape.
@@ -22,8 +23,10 @@
  *
  * 2. REMOVING THE CODE REMOVES THE FILE. The types that can hold either code or a plain value must delete
  *    the file when the value stops being code, or the file goes on winning on read (see 3) and the change
- *    silently fails to take. The mirror of 1: a delete must happen when it is meant to, and never when it
- *    is not - a caller setting other keys of ele_value must not delete the file by omission.
+ *    silently fails to take. The static content types keep a plain value in the file as well, so for them
+ *    it is emptying the content - or leaving only an opening PHP tag - that removes the file. The mirror of
+ *    1: a delete must happen when it is meant to, and never when it is not - a caller setting other keys of
+ *    ele_value must not delete the file by omission.
  *
  * 3. THE FILE IS THE TRUTH ON READ. getVar prefers the file over the stored value, which is what lets code
  *    be edited on disk and picked up without a save. The check reads a value the way the database would
@@ -154,6 +157,7 @@ $types = array(
         'file'     => 'captionedContent_' . CODE_FILE_TEST_HANDLE . '.php',
         'code'     => '<?php $value = "captioned content built by code";',
         'notCode'  => '<p>plain HTML with no code in it</p>',
+        'allInFile' => true, // HTML and text are kept in the file too
     ),
     array(
         'label'    => 'fullWidthContent',
@@ -163,6 +167,7 @@ $types = array(
         'file'     => 'fullWidthContent_' . CODE_FILE_TEST_HANDLE . '.php',
         'code'     => '<?php $value = "full width content built by code";',
         'notCode'  => '<h1>plain HTML with no code in it</h1>',
+        'allInFile' => true, // HTML and text are kept in the file too
     ),
     array(
         'label'    => 'derived',
@@ -238,6 +243,22 @@ foreach ($types as $type) {
     $partial = newElement($type['class'], $type['ele_type']);
     $partial->setVar('ele_value', array(99 => 'some unrelated setting'));
     check('  an ele_value without the code key leaves the file alone', fileContents($type['file']), $type['code']);
+
+    if (!empty($type['allInFile'])) {
+        // HTML is content like any other, and is kept in the file in place of the code.
+        $plain = newElement($type['class'], $type['ele_type']);
+        $plain->setVar('ele_value', array($type['key'] => $type['notCode']));
+        check('  replacing the code with HTML writes the HTML to the file', fileContents($type['file']), $type['notCode']);
+        check('  the object holds the HTML', storedValue($plain, $type['key']), $type['notCode']);
+        // Only an opening PHP tag, which is what a code editor starts with, is no content at all.
+        $tagOnly = newElement($type['class'], $type['ele_type']);
+        $tagOnly->setVar('ele_value', array($type['key'] => "<?php
+
+"));
+        check('  content that is only an opening PHP tag deletes the file', fileContents($type['file']), null);
+        // And emptying the content removes the file.
+        $type['notCode'] = '';
+    }
 
     // Replacing the code with something that is not code does mean remove it.
     $cleared = newElement($type['class'], $type['ele_type']);
@@ -383,10 +404,15 @@ foreach ($types as $type) {
     ok('  an array ele_value comes back as an array', is_array($result), 'got a ' . gettype($result));
     check('  the code is not written to the database', is_array($result) ? $result[$type['key']] : null, '');
 
-    // a value that is not code is not in a file, so the database is the only place it can live
     $result = $method->invoke($handler, serialize(array($type['key'] => $type['notCode'])), $element);
     $unpacked = is_string($result) ? unserialize($result) : $result;
-    check('  a value that is not in a file is left alone', $unpacked[$type['key']], $type['notCode']);
+    if (!empty($type['allInFile'])) {
+        // HTML is kept in the file too, so while the file holds the content it is not in the database either
+        check('  HTML is not written to the database while the file holds the content', $unpacked[$type['key']], '');
+    } else {
+        // a value that is not code is not in a file, so the database is the only place it can live
+        check('  a value that is not in a file is left alone', $unpacked[$type['key']], $type['notCode']);
+    }
 
     // a brand new element can have an ele_value that is not a serialized array at all
     check('  an unreadable ele_value is handed back untouched', $method->invoke($handler, '', $element), '');
