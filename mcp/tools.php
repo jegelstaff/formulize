@@ -46,7 +46,7 @@ Menu items are grouped by application. To read one application\'s menu, use get_
 
 A menu is not one list that everybody sees. Each item is shown only to the groups named against it, so what any person actually sees is the items visible to the groups they belong to. A webmaster calling this tool gets the full picture regardless of groups, which is what makes it useful for auditing the whole menu. Anyone else gets exactly what they would see live: only items shown to their own groups, and only for forms they have permission on.
 
-Menu items are shown in rank order, which is the order they appear on screen.',
+The top level of the menu is the applications, "Forms with no app" (application_id 0, shown as General Forms) and the links that sit beside the applications rather than in one (top-level menu items). The applications come back in the order they appear in the menu, each with its menu_position, and the top-level menu items come back in top_level_menu_items, each with its menu_position too, so the two lists can be read together as one menu. Within an application, menu items are in rank order, which is the order they appear on screen. Use change_menu_order to change the order of the top level.',
 				'inputSchema' => [
 					'type' => 'object',
 					'properties' => [
@@ -803,7 +803,9 @@ Groups generated from the entries in a form cannot be given menu permissions dir
 
 			$this->tools['create_menu_item'] = [
 				'name' => 'create_menu_item',
-				'description' => 'Add an item to an application\'s menu. Menu items are grouped by application. New items go to the bottom; use change_menu_item_order to move them.
+				'description' => 'Add an item to an application\'s menu, or to the top level of the menu, beside the applications. Menu items are grouped by application. New items go to the bottom; use change_menu_item_order to move them within an application, and change_menu_order to move a top-level item.
+
+Give application_id to add the item to that application, or top_level: true to add it to the top level of the menu instead, as a link of its own beside the applications. A top-level item is for something that does not belong to any one application, such as a help page or a dashboard everyone uses.
 
 A menu item gives users an easy way to reach a form. When selecting the groups that should see the menu item, take into account which groups have permission to interact with the form. The menu item itself does not affect user permissions in any way, it only provides a convenient link in the user interface. Use get_form_permissions_by_group if you need to learn who can actually use the form.
 
@@ -817,11 +819,15 @@ A menu item can also be set as a group\'s start page, meaning members of that gr
 					'properties' => array_merge(
 						[ 'application_id' => [
 							'type' => 'integer',
-							'description' => 'Required. The application whose menu this item is added to. Use list_applications to find application ids.'
+							'description' => 'Required, unless top_level is true. The application whose menu this item is added to. Use list_applications to find application ids.'
+						],
+						'top_level' => [
+							'type' => 'boolean',
+							'description' => 'Optional. Set true to add the item to the top level of the menu, beside the applications, instead of to an application. Leave out application_id when you do.'
 						] ],
 						$this->menuItemProperties('create', $menuGroupsDescription)
 					),
-					'required' => ['application_id', 'link_text', 'target', 'groups_that_can_see']
+					'required' => ['link_text', 'target', 'groups_that_can_see']
 				]
 			];
 
@@ -849,7 +855,7 @@ Deleting a menu item removes the link in the user interface only; the form or sc
 
 			$this->tools['change_menu_item_order'] = [
 				'name' => 'change_menu_item_order',
-				'description' => 'Set the order of the items in an application\'s menu, top to bottom. Use list_menu_items to see the current order.
+				'description' => 'Set the order of the items in an application\'s menu, top to bottom. Use list_menu_items to see the current order. To order the top level of the menu - the applications themselves and the items beside them - use change_menu_order instead.
 
 Order matters beyond appearance. If a user has multiple menu items that are set to be their start page, the one highest in this order wins.',
 				'inputSchema' => [
@@ -866,6 +872,40 @@ Order matters beyond appearance. If a user has multiple menu items that are set 
 						]
 					],
 					'required' => ['application_id', 'order']
+				]
+			];
+
+			$this->tools['change_menu_order'] = [
+				'name' => 'change_menu_order',
+				'description' => 'Set the order of the top level of the menu, top to bottom: the applications, "Forms with no app" (shown as General Forms), and the menu items that sit beside the applications rather than in one. Use list_menu_items to see what is there now and where each one is.
+
+List every application and every top-level menu item, once each. Name "Forms with no app" as { "type": "application", "id": 0 }; it has to be in the list while it has menu items, and can be left out when it has none. Leaving anything else out is refused rather than guessed at, so the result does not depend on what the order was beforehand.
+
+This changes only the top level. The items inside an application keep their order; use change_menu_item_order for those. Order matters beyond appearance: if someone has more than one start page, the one highest in the menu wins, counting the top level first and then the order within an application.',
+				'inputSchema' => [
+					'type' => 'object',
+					'properties' => [
+						'items' => [
+							'type' => 'array',
+							'description' => 'Required. Everything at the top level of the menu, in the order it should appear from top to bottom.',
+							'items' => [
+								'type' => 'object',
+								'properties' => [
+									'type' => [
+										'type' => 'string',
+										'enum' => ['application', 'menu_item'],
+										'description' => 'application for an application (or "Forms with no app", with id 0), menu_item for a top-level menu item.'
+									],
+									'id' => [
+										'type' => 'integer',
+										'description' => 'The application_id, or the menu_id of the top-level menu item.'
+									]
+								],
+								'required' => ['type', 'id']
+							]
+						]
+					],
+					'required' => ['items']
 				]
 			];
 
@@ -4515,6 +4555,13 @@ Do not use foreign key values with linked elements; use the readable value inste
 		if(!$applicationId) {
 			throw new FormulizeMCPException('application_id is required', 'invalid_data');
 		}
+		if($applicationId == FORMULIZE_MENU_TOP_LEVEL) {
+			throw new FormulizeMCPException(
+				'The top level of the menu is ordered with change_menu_order, not change_menu_item_order.',
+				'invalid_data',
+				context: [ 'hint' => 'change_menu_order takes the applications and the top-level menu items together, since they share the top level.' ]
+			);
+		}
 		$applicationSql = "SELECT appid FROM ".$xoopsDB->prefix('formulize_applications')." WHERE appid = $applicationId";
 		if(!$applicationResult = $xoopsDB->query($applicationSql) OR !$xoopsDB->fetchArray($applicationResult)) {
 			throw new FormulizeMCPException(
@@ -4589,6 +4636,102 @@ Do not use foreign key values with linked elements; use the readable value inste
 	}
 
 	/**
+	 * Set the order of the top level of the menu: the applications, "Forms with no app" and the top-level menu items.
+	 *
+	 * Saved by formulizeApplicationsHandler::saveTopLevelMenuOrder(), the same as the Menu tab of the admin UI, which
+	 * also decides what a complete list is. See ai-context/menus.md.
+	 *
+	 * @param array $arguments 'items', each with 'type' ('application' or 'menu_item') and 'id'
+	 * @return array The top level of the menu in its new order
+	 * @throws FormulizeMCPException on permission failure, or a list that is not exactly the top level of the menu
+	 */
+	private function change_menu_order($arguments) {
+
+		if (!$this->isUserAWebmaster()) {
+			throw new FormulizeMCPException(
+				'Permission denied: Only webmasters can change a menu.',
+				'authentication_error',
+			);
+		}
+
+		if(!isset($arguments['items']) OR !is_array($arguments['items']) OR !$arguments['items']) {
+			throw new FormulizeMCPException('items is required, and must list everything at the top level of the menu.', 'invalid_data');
+		}
+		$application_handler = xoops_getmodulehandler('applications', 'formulize');
+		$order = [];
+		$requestedKeys = [];
+		foreach($arguments['items'] as $item) {
+			$type = is_array($item) ? ($item['type'] ?? '') : '';
+			if(!in_array($type, ['application', 'menu_item'], true) OR !isset($item['id']) OR !is_numeric($item['id'])) {
+				throw new FormulizeMCPException(
+					'Each item needs a type, application or menu_item, and an id.',
+					'invalid_data',
+					context: [ 'hint' => 'For example: [{ "type": "application", "id": 3 }, { "type": "menu_item", "id": 41 }, { "type": "application", "id": 0 }]' ]
+				);
+			}
+			$order[] = [ $type == 'application' ? 'application' : 'link', intval($item['id']) ];
+			$requestedKeys[] = ($type == 'application' ? 'application:' : 'link:').intval($item['id']);
+		}
+
+		if(!$application_handler->saveTopLevelMenuOrder($order)) {
+			// say everything that is wrong at once, as change_menu_item_order does
+			$currentKeys = array_keys($application_handler->getTopLevelMenuPositions());
+			$noAppHasItems = count(xoops_getmodulehandler('applicationMenuLinks', 'formulize')->get(0, true)) > 0;
+			$requiredKeys = $noAppHasItems ? $currentKeys : array_values(array_diff($currentKeys, ['application:0']));
+			$describe = function($keys) {
+				return implode(', ', array_map(function($key) {
+					list($type, $id) = explode(':', $key);
+					return ($type == 'link' ? 'menu_item ' : 'application ').$id;
+				}, $keys));
+			};
+			$problems = [];
+			if($missing = array_values(array_diff($requiredKeys, $requestedKeys))) {
+				$problems[] = count($missing).' left out ('.$describe($missing).')';
+			}
+			if($unknown = array_values(array_diff($requestedKeys, $currentKeys))) {
+				$problems[] = count($unknown).' not at the top level of the menu ('.$describe($unknown).')';
+			}
+			if($duplicated = array_values(array_unique(array_diff_assoc($requestedKeys, array_unique($requestedKeys))))) {
+				$problems[] = count($duplicated).' listed more than once ('.$describe($duplicated).')';
+			}
+			throw new FormulizeMCPException(
+				'items must list every application and every top-level menu item exactly once'.($noAppHasItems ? ', and "Forms with no app" (application 0)' : '').': '.implode('; ', $problems ?: ['the list could not be read']).'.',
+				'invalid_data',
+				context: [
+					'top_level_of_the_menu' => array_map(function($key) {
+						list($type, $id) = explode(':', $key);
+						return [ 'type' => ($type == 'link' ? 'menu_item' : 'application'), 'id' => intval($id) ];
+					}, $requiredKeys),
+					'hint' => 'Use list_menu_items to see the top level of the menu, then send all of it in the order you want.'
+				]
+			);
+		}
+
+		return [
+			'success' => true,
+			'message' => 'Put the '.count($order).' things at the top level of the menu in order.',
+			'top_level_of_the_menu' => $this->topLevelMenuSummary(),
+		];
+	}
+
+	/**
+	 * The top level of the menu in order, briefly: what each thing is, its id and its name.
+	 *
+	 * @return array
+	 */
+	private function topLevelMenuSummary() {
+		$summary = [];
+		foreach(xoops_getmodulehandler('applications', 'formulize')->getTopLevelMenu(true) as $menuItem) {
+			if($menuItem['type'] == 'link') {
+				$summary[] = [ 'menu_position' => $menuItem['position'], 'type' => 'menu_item', 'id' => $menuItem['id'], 'name' => trans($menuItem['link']->getVar('text', 'n')) ];
+			} else {
+				$summary[] = [ 'menu_position' => $menuItem['position'], 'type' => 'application', 'id' => $menuItem['id'], 'name' => $menuItem['type'] == 'noapp' ? 'Forms with no app' : trans($menuItem['application']->getVar('name', 'n')) ];
+			}
+		}
+		return $summary;
+	}
+
+	/**
 	 * Add an item to an application's menu.
 	 *
 	 * @param array $arguments 'application_id', 'link_text' and 'target' required; groups and note optional
@@ -4605,17 +4748,33 @@ Do not use foreign key values with linked elements; use the readable value inste
 		}
 
 		global $xoopsDB;
-		$applicationId = intval($arguments['application_id'] ?? 0);
-		if(!$applicationId) {
-			throw new FormulizeMCPException('application_id is required', 'invalid_data');
-		}
-		$applicationSql = "SELECT appid FROM ".$xoopsDB->prefix('formulize_applications')." WHERE appid = $applicationId";
-		if(!$applicationResult = $xoopsDB->query($applicationSql) OR !$xoopsDB->fetchArray($applicationResult)) {
+		$topLevel = !empty($arguments['top_level']);
+		if($topLevel AND isset($arguments['application_id'])) {
 			throw new FormulizeMCPException(
-				"There is no application with the id $applicationId.",
+				'Give application_id or top_level, not both.',
 				'invalid_data',
-				context: [ 'hint' => 'Use the list_applications tool to see the applications in this system.' ]
+				context: [ 'hint' => 'top_level: true puts the item beside the applications, in no application. Leave out application_id to do that, or leave out top_level to add the item to the application.' ]
 			);
+		}
+		if($topLevel) {
+			$applicationId = FORMULIZE_MENU_TOP_LEVEL;
+		} else {
+			$applicationId = intval($arguments['application_id'] ?? 0);
+			if(!$applicationId) {
+				throw new FormulizeMCPException(
+					'application_id is required, unless top_level is true.',
+					'invalid_data',
+					context: [ 'hint' => 'Use the list_applications tool to see the applications in this system, or set top_level to true to put the item beside them.' ]
+				);
+			}
+			$applicationSql = "SELECT appid FROM ".$xoopsDB->prefix('formulize_applications')." WHERE appid = $applicationId";
+			if(!$applicationResult = $xoopsDB->query($applicationSql) OR !$xoopsDB->fetchArray($applicationResult)) {
+				throw new FormulizeMCPException(
+					"There is no application with the id $applicationId.",
+					'invalid_data',
+					context: [ 'hint' => 'Use the list_applications tool to see the applications in this system.' ]
+				);
+			}
 		}
 
 		$linkText = $this->menuItemTextValue($arguments['link_text'] ?? '', 'link_text');
@@ -4659,7 +4818,9 @@ Do not use foreign key values with linked elements; use the readable value inste
 			'success' => true,
 			'message' => 'Added "'.$linkText.'" to the menu.',
 			'menu_item' => $this->menuItemById($newMenuId),
-			'where_it_went' => 'New items go to the bottom of the menu. Use change_menu_item_order to move it.',
+			'where_it_went' => $topLevel
+				? 'New top-level items go to the bottom of the top level of the menu, after the applications. Use change_menu_order to move it.'
+				: 'New items go to the bottom of the menu. Use change_menu_item_order to move it.',
 		];
 	}
 
@@ -5018,56 +5179,74 @@ Do not use foreign key values with linked elements; use the readable value inste
 			}
 		}
 
-		$limitApplicationsSQL = "";
+		$permittedApplicationIds = null; // every application, for a webmaster
 		if(!$this->isUserAWebmaster()) {
 			$permittedApplications = $this->applications_list();
 			$permittedApplications = isset($permittedApplications['applications']) ? $permittedApplications['applications'] : [];
-			$validApplicationIds = array_filter(array_map('intval', array_column($permittedApplications, 'id')));
-			$limitApplicationsSQL = count($validApplicationIds) > 0 ? "WHERE a.appid IN (".implode(',', $validApplicationIds).")" : "WHERE a.appid = 0"; // no valid applications, so return nothing
+			$permittedApplicationIds = array_filter(array_map('intval', array_column($permittedApplications, 'id')));
 		}
+		$filterItems = function($menuItems) use ($formId, $screenId) {
+			if(!$formId AND !$screenId) {
+				return $menuItems;
+			}
+			return array_values(array_filter($menuItems, function($menuItem) use ($formId, $screenId) {
+				// goes_to carries form_id for an item pointing at a form AND for one pointing at a
+				// screen, since a screen belongs to a form - so filtering by form catches both ways of
+				// reaching it, which is what someone asking "what leads to this form" means.
+				$target = $menuItem['goes_to'];
+				if($formId AND intval($target['form_id'] ?? 0) != $formId) {
+					return false;
+				}
+				if($screenId AND intval($target['screen_id'] ?? 0) != $screenId) {
+					return false;
+				}
+				return true;
+			}));
+		};
 
 		// Grouped by application rather than returned as one flat list, because an item's application is what
-		// determines where it appears, and a flat list would leave that out.
+		// determines where it appears, and a flat list would leave that out. The applications are in the order
+		// they are in the menu, and the items beside them are listed separately, with their places among them.
 		$applications = [];
+		$topLevelMenuItems = [];
 		$totalItems = 0;
-		$applicationSql = "SELECT a.appid, a.name FROM ".$xoopsDB->prefix('formulize_applications')." AS a $limitApplicationsSQL ORDER BY a.name";
-		if($applicationResult = $xoopsDB->query($applicationSql)) {
-			while($applicationRow = $xoopsDB->fetchArray($applicationResult)) {
-				$menuItems = $this->menuItemsForApplication(intval($applicationRow['appid']));
-				if($formId OR $screenId) {
-					$menuItems = array_values(array_filter($menuItems, function($menuItem) use ($formId, $screenId) {
-						// goes_to carries form_id for an item pointing at a form AND for one pointing at a
-						// screen, since a screen belongs to a form - so filtering by form catches both ways of
-						// reaching it, which is what someone asking "what leads to this form" means.
-						$target = $menuItem['goes_to'];
-						if($formId AND intval($target['form_id'] ?? 0) != $formId) {
-							return false;
-						}
-						if($screenId AND intval($target['screen_id'] ?? 0) != $screenId) {
-							return false;
-						}
-						return true;
-					}));
-					// an application contributing nothing to a filtered result is noise, not information
-					if(!$menuItems) {
-						continue;
-					}
+		$application_handler = xoops_getmodulehandler('applications', 'formulize');
+		$topLevelItems = $this->menuItemsForApplication(FORMULIZE_MENU_TOP_LEVEL);
+		$topLevelItemsById = array_combine(array_column($topLevelItems, 'menu_id'), $topLevelItems);
+		foreach($application_handler->getTopLevelMenu(true) as $menuEntry) {
+			if($menuEntry['type'] == 'link') {
+				if(!isset($topLevelItemsById[$menuEntry['id']]) OR !$filterItems([$topLevelItemsById[$menuEntry['id']]])) {
+					continue;
 				}
-				$totalItems += count($menuItems);
-				$applications[] = [
-					'application_id' => intval($applicationRow['appid']),
-					'name' => trans($applicationRow['name']),
-					'menu_items' => $menuItems,
-					'menu_item_count' => count($menuItems),
-				];
+				$topLevelMenuItems[] = array_merge([ 'menu_position' => $menuEntry['position'] ], $topLevelItemsById[$menuEntry['id']]);
+				$totalItems++;
+				continue;
 			}
+			if($permittedApplicationIds !== null AND $menuEntry['id'] AND !in_array($menuEntry['id'], $permittedApplicationIds)) {
+				continue;
+			}
+			$menuItems = $filterItems($this->menuItemsForApplication($menuEntry['id']));
+			// an application contributing nothing to a filtered result is noise, not information, and so is
+			// "Forms with no app" when nothing in it can be seen
+			if(!$menuItems AND ($formId OR $screenId OR $menuEntry['type'] == 'noapp')) {
+				continue;
+			}
+			$totalItems += count($menuItems);
+			$applications[] = [
+				'application_id' => $menuEntry['id'],
+				'name' => $menuEntry['type'] == 'noapp' ? 'Forms with no app' : trans($menuEntry['application']->getVar('name', 'n')),
+				'menu_position' => $menuEntry['position'],
+				'menu_items' => $menuItems,
+				'menu_item_count' => count($menuItems),
+			];
 		}
 
 		$response = [
 			'applications' => $applications,
+			'top_level_menu_items' => $topLevelMenuItems,
 			'menu_item_count' => $totalItems,
 		];
-		$response['how_to_read_the_menus'] = 'Every item is shown only to the groups listed against it, so what any one person sees is the items whose groups they belong to, which may be none of them. That means there is no single "the menu" to read: two people can open the same application and be looking at completely different lists. An item that is a start page for a group is where members of that group land when they log in, and the first such item in rank order wins for someone in more than one of those groups. A webmaster calling this tool sees every item in the system regardless of groups; anyone else sees only what is actually shown to them.';
+		$response['how_to_read_the_menus'] = 'Every item is shown only to the groups listed against it, so what any one person sees is the items whose groups they belong to, which may be none of them. That means there is no single "the menu" to read: two people can open the same application and be looking at completely different lists. The top level of the menu is the applications and the top-level menu items together, in menu_position order. An item that is a start page for a group is where members of that group land when they log in, and the first such item in the menu wins for someone in more than one of those groups: the one whose application, or which itself, has the lowest menu_position, then the one highest in its application. A webmaster calling this tool sees every item in the system regardless of groups; anyone else sees only what is actually shown to them.';
 		if(!$totalItems) {
 			$response['about_the_empty_result'] = $this->isUserAWebmaster()
 				? (($formId OR $screenId)

@@ -45,44 +45,45 @@ $form_handler = xoops_getmodulehandler('forms', 'formulize');
 $application_handler = xoops_getmodulehandler('applications', 'formulize');
 $allowedForms = allowedForms();
 
+// the sections of links to show: the whole menu, in its order (see ai-context/menus.md), or one application
+$sections = array();
 if(isset($_GET['id']) AND $_GET['id'] === "all") {
-    $applicationsToDraw = $application_handler->getAllApplications();
-    $applicationsToDraw[] = 0; // add in forms with no app at the end of the list
+    foreach($application_handler->getTopLevelMenu() as $menuItem) {
+        if($menuItem['type'] == 'link') {
+            // links at the top level of the menu that are next to each other share a section
+            $lastSection = end($sections);
+            if($lastSection AND $lastSection['topLevel']) {
+                $sections[key($sections)]['links'][] = $menuItem['link'];
+            } else {
+                $sections[] = array('app_name' => _AM_MENU_TOP_LEVEL_LINKS, 'links' => array($menuItem['link']), 'topLevel' => true);
+            }
+        } else {
+            $sections[] = array('app_name' => $menuItem['type'] == 'noapp' ? _AM_CATGENERAL : $menuItem['application']->getVar('name'), 'links' => $menuItem['links'], 'topLevel' => false);
+        }
+    }
 } else {
     $aid = (isset($_GET['id'])) ? intval($_GET['id']) : 0 ;
-    $applicationsToDraw = array($aid);
+    if($aid AND $application = $application_handler->get($aid)) {
+        $sections[] = array('app_name' => $application->getVar('name'), 'links' => $application_handler->getMenuLinksForApp($aid), 'topLevel' => false);
+    } else {
+        $sections[] = array('app_name' => _AM_CATGENERAL, 'links' => $application_handler->getMenuLinksForApp(0), 'topLevel' => false);
+    }
 }
 
 $allAppData = array();
-$soloLink = 'start';
-foreach($applicationsToDraw as $aid) {
-    if(is_object($aid)) {
-        $aid = $aid->getVar('appid'); // when 'all' is requested, the array will be of objects, not ids
+$allNavData = array();
+foreach($sections as $section) {
+    $formsToSend = getNavDataForForms($section['links']);
+    if(count($formsToSend) > 0) {
+        $allAppData[] = array('app_name'=>$section['app_name'], 'noforms'=>0, 'formData'=>$formsToSend);
+        $allNavData = array_merge($allNavData, $formsToSend);
     }
-    $links;
-    if($aid) {
-        $links = $application_handler->getMenuLinksForApp($aid);
-        $application = $application_handler->get($aid);
-        $app_name = $application->getVar('name');
-    } else {
-        $links = $application_handler->getMenuLinksForApp(0);
-        $app_name = _AM_CATGENERAL;
-    }
-    $formsToSend = getNavDataForForms($links);
-    if(count((array) $formsToSend)==1) {
-        $soloLink = $soloLink === 'start' ? $formsToSend[0]['url'] : ""; // will only be set to a URL the first time, if there is anything else
-    } elseif(count((array) $formsToSend)>0) {
-        $allAppData[] = array('app_name'=>$app_name, 'noforms'=>0, 'formData'=>$formsToSend);
-        $soloLink = count($formsToSend) > 1 ? "" : $soloLink;
-    }
-
 }
 
 // only one link in the entire menu, so go to that page
-if($soloLink AND $soloLink != 'start') {
-    header("location: ".$soloLink);
+if(count($allNavData) == 1) {
+    header("location: ".$allNavData[0]['url']);
     exit();
-
 }
 // no links in the entire menu, boot the user to the homepage. Anons will be able to login there.
 global $xoopsUser;

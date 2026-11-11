@@ -36,7 +36,14 @@ require_once "../../mainfile.php";
 */
 
 $application_handler = xoops_getmodulehandler('applications', 'formulize');
-$application_list = $application_handler->getAllApplications();
+// the applications in the order they are in the menu (see ai-context/menus.md). The links at the top level of the
+// menu, beside the applications, have no place in this list.
+$application_list = array();
+foreach ($application_handler->getTopLevelMenu() as $menuItem) {
+    if ($menuItem['type'] == 'application') {
+        $application_list[] = $menuItem['application'];
+    }
+}
 
 // Convert the list of applications retrieved from application handler into an array representation
 $applications_array = array();

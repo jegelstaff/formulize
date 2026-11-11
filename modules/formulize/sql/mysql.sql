@@ -71,7 +71,7 @@ CREATE TABLE `formulize_tokens` (
 
 CREATE TABLE `formulize_menu_links` (
     `menu_id` int(11) unsigned NOT NULL auto_increment,
-    `appid` int(11) unsigned NOT NULL,
+    `appid` int(11) NOT NULL,
     `screen` varchar(11),
     `rank` int(11),
     `url` varchar(255),
@@ -79,6 +79,15 @@ CREATE TABLE `formulize_menu_links` (
     `note` text,
     PRIMARY KEY (`menu_id`),
     INDEX i_menus_appid (appid)
+) ENGINE=InnoDB;
+
+CREATE TABLE `formulize_menu_order` (
+    `order_id` int(11) unsigned NOT NULL auto_increment,
+    `item_type` varchar(20) NOT NULL default '',
+    `item_id` int(11) NOT NULL default 0,
+    `position` int(11) NOT NULL default 0,
+    PRIMARY KEY (`order_id`),
+    UNIQUE KEY i_menu_order_item (`item_type`, `item_id`)
 ) ENGINE=InnoDB;
 
 CREATE TABLE `formulize_menu_permissions` (

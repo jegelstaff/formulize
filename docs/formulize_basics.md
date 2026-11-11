@@ -46,7 +46,7 @@ These are the words you'll meet when you use Formulize or build something with i
 | Template screen | Shows whatever you want, in a custom template |
 
 **Menu**
-: How people get around. A menu item leads to a form or a screen. It's only a link, so it doesn't give anyone permission to use the form, and having permission doesn't put an item in someone's menu. You set those separately.
+: How people get around. A menu item leads to a form, a screen or a web address. Most items are inside an application, and some can be beside the applications, at the top of the menu. It's only a link, so it doesn't give anyone permission to use the form, and having permission doesn't put an item in someone's menu. You set those separately. See [The menu](../menu/).
 
 **Saved view**
 : A list set up a particular way, with its columns, searches and sort order. Saved views are a handy way to store list settings so you can easily see those entries again.

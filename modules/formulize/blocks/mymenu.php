@@ -38,22 +38,15 @@ function block_formulizeMENU_show() {
 
 	$application_handler = xoops_getmodulehandler('applications', 'formulize');
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
-	$allApplications = $application_handler->getAllApplications();
+	// the top level of the menu, in order: the applications, "Forms with no app", and the links beside them.
+	// See ai-context/menus.md.
 	$menuTexts = array();
-	$i = 0;
-
-	foreach ($allApplications as $thisApplication) {
-		$links = $thisApplication->getVar('links');
-		if (count((array)$links) > 0) {
-			$menuTexts[$i]['application'] = $thisApplication;
-			$menuTexts[$i]['links'] = $links;
-			$i++;
+	foreach ($application_handler->getTopLevelMenu() as $menuItem) {
+		if ($menuItem['type'] == 'link') {
+			$menuTexts[] = array('link' => $menuItem['link']);
+		} elseif (count((array)$menuItem['links']) > 0) {
+			$menuTexts[] = array('application' => ($menuItem['type'] == 'noapp' ? 0 : $menuItem['application']), 'links' => $menuItem['links']);
 		}
-	}
-	$links = $application_handler->getMenuLinksForApp(0);
-	if (count((array)$links) > 0) {
-		$menuTexts[$i]['links'] = $links;
-		$menuTexts[$i]['application'] = 0;
 	}
 
 	list($ugContent, $ugData) = drawUsersAndGroupsMenuSection();
@@ -69,9 +62,18 @@ function block_formulizeMENU_show() {
 		$menuData = array();
 
 		if ($hasMenuEntries) {
-			$forceOpen = count((array)$menuTexts) == 1;
+			// a menu with one application in it shows its links already open
+			$applicationSections = count(array_filter($menuTexts, function ($thisMenuData) { return isset($thisMenuData['links']); }));
+			$forceOpen = $applicationSections == 1;
 			foreach ($menuTexts as $thisMenuData) {
-				list($content, $data) = drawMenuSection($thisMenuData['application'], $thisMenuData['links'], $forceOpen, $form_handler);
+				if (isset($thisMenuData['link'])) {
+					list($content, $data) = drawTopLevelMenuLink($thisMenuData['link']);
+					if ($content === false) {
+						continue;
+					}
+				} else {
+					list($content, $data) = drawMenuSection($thisMenuData['application'], $thisMenuData['links'], $forceOpen, $form_handler);
+				}
 				$innerContent .= $content;
 				$menuData[] = $data;
 			}
@@ -122,7 +124,6 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 		$name = printSmart($application->getVar('name'), 200);
 		$forms = $application->getVar('forms');
 	}
-	static $topwritten = false;
 
 	$itemurl = XOOPS_URL."/modules/formulize/application.php?id=$aid";
 
@@ -146,12 +147,7 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 	}
 
 
-	if (!$topwritten) {
-		$block = "<a class=\"menuTop$menuActive\" href=\"$itemurl\">$name</a>";
-		$topwritten = 1;
-	} else {
-		$block = "<a class=\"menuMain$menuActive\" href=\"$itemurl\">$name</a>";
-	}
+	$block = "<a class=\"".formulize_menuItemClass()."$menuActive\" href=\"$itemurl\">$name</a>";
 
 	$data = array('url'=>$itemurl, 'title'=>$name, 'active'=>($menuActive ? 1 : 0), 'target'=>'', 'icon'=>'');
 
@@ -202,19 +198,7 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 			continue;
 		}
 		$target = (!$url OR strstr($url, XOOPS_URL)) ? "" : " target='_blank' ";
-		$menuSubActive="";
-		if(getCurrentURL() == XOOPS_URL.'/modules/formulize/index.php?'.$menulink->getVar("screen")
-			OR trim(getCurrentURL(), '/') == trim($suburl, '/')
-			OR getCurrentURL() == $url
-			OR trim(XOOPS_URL.'/'.$formulizeCanonicalURI, '/') == trim($url, '/')
-			OR (getCurrentURL() == XOOPS_URL.'/modules/formulize/'
-				AND (
-					$menulink->getVar("screen") == 'sid='.$defaultSid
-					OR $menulink->getVar("screen") == 'fid='.$defaultFid
-				))
-			){
-			$menuSubActive=" menuSubActive";
-		}
+		$menuSubActive = formulize_menuLinkIsActive($menulink, $url, $suburl, $defaultFid, $defaultSid) ? " menuSubActive" : "";
 		$text = $menulink->getVar("text");
 		$data['subs'][] = array('url'=>$suburl, 'title'=>$text, 'active'=>($menuSubActive ? 1 : 0), 'target'=>$target);
 		if($shouldShowSubs) { // Build legacy HTML-string output (for non-template mode)
@@ -224,5 +208,62 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 
 	$data['expanded'] = $shouldShowSubs ? 1 : 0;
 
+	return array($block, $data);
+}
+
+/**
+ * The legacy menu's class for the next item at the top level: menuTop for the first one drawn, menuMain for the rest.
+ * @return string The class
+ */
+function formulize_menuItemClass() {
+	static $topWritten = false;
+	if (!$topWritten) {
+		$topWritten = true;
+		return 'menuTop';
+	}
+	return 'menuMain';
+}
+
+/**
+ * Whether a menu link goes to the page being shown, or to the user's start page when that is what is being shown.
+ * @param object $menulink A formulizeApplicationMenuLink
+ * @param string $url The link's URL, from buildMenuLinkURL()
+ * @param string $suburl The link's URL, from resolveMenuLinkURL()
+ * @param int $defaultFid The form of the user's start page, from getDefaultScreenForUser()
+ * @param int $defaultSid The screen of the user's start page, from getDefaultScreenForUser()
+ * @return bool True if it is the link to the page being shown
+ */
+function formulize_menuLinkIsActive($menulink, $url, $suburl, $defaultFid, $defaultSid) {
+	global $formulizeCanonicalURI;
+	return (getCurrentURL() == XOOPS_URL.'/modules/formulize/index.php?'.$menulink->getVar("screen")
+		OR trim(getCurrentURL(), '/') == trim($suburl, '/')
+		OR getCurrentURL() == $url
+		OR trim(XOOPS_URL.'/'.$formulizeCanonicalURI, '/') == trim($url, '/')
+		OR (getCurrentURL() == XOOPS_URL.'/modules/formulize/'
+			AND (
+				$menulink->getVar("screen") == 'sid='.$defaultSid
+				OR $menulink->getVar("screen") == 'fid='.$defaultFid
+			)));
+}
+
+/**
+ * Draw a link at the top level of the menu, beside the applications. See ai-context/menus.md.
+ * @param object $menulink A formulizeApplicationMenuLink whose appid is FORMULIZE_MENU_TOP_LEVEL
+ * @return array The legacy menu's HTML and the data for the menu template (with no subs, so it is drawn as a plain
+ * link), or false and false when the link goes to a form that no longer exists
+ */
+function drawTopLevelMenuLink($menulink) {
+	include_once XOOPS_ROOT_PATH."/modules/formulize/class/applications.php";
+	$url = buildMenuLinkURL($menulink);
+	$suburl = resolveMenuLinkURL($menulink);
+	if ($suburl === false) {
+		return array(false, false);
+	}
+	list($defaultFid, $defaultSid) = formulizeApplicationMenuLinksHandler::getDefaultScreenForUser();
+	$active = formulize_menuLinkIsActive($menulink, $url, $suburl, $defaultFid, $defaultSid);
+	$newWindow = ($url AND !strstr($url, XOOPS_URL));
+	$text = $menulink->getVar("text");
+	$block = "<a class=\"".formulize_menuItemClass().($active ? " menuActive" : "")."\"".($newWindow ? " target='_blank'" : "")." href='".htmlspecialchars($suburl)."'>".$text."</a>";
+	$data = array('url' => $suburl, 'title' => $text, 'active' => ($active ? 1 : 0), 'target' => ($newWindow ? '_blank' : ''), 'icon' => '');
 	return array($block, $data);
 }

@@ -2543,6 +2543,11 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
    and its body keeps the admin's 10pt for everything else on the page. */
 html:has(.formulize-admin-ui) {
   font-size: 100%; }
+
+/* the Save button is the one thing in the admin's own rules sized in rem, so on such a page it keeps the size it has
+   with the root at 10pt */
+html:has(.formulize-admin-ui) #savebutton input {
+  font-size: calc(10pt * 1.1); }
 .admin-ui .fz-table thead {
   border: 0; }
 

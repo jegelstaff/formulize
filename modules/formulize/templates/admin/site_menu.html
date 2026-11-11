@@ -1,0 +1,203 @@
+<{* The Menu tab: the top level of the menu, in order (admin/site_menu.php, saved by admin/save/site_menu_save.php).
+    The first admin page built with Formulize UI from the start; .formulize-admin-ui gets it the fixes it needs
+    inside the admin (formulize-admin.css). See ai-context/menus.md. *}>
+<link rel="stylesheet" type="text/css" media="all" href="<{$adminPage.sitemenu.uiStylesheet}>">
+<script type="text/javascript" src="<{$adminPage.sitemenu.uiScript}>"></script>
+<script type="text/javascript" src="<{$adminPage.sitemenu.textScript}>"></script>
+<style>
+/* The tab's own layout. The classes are formulize-, since they are Formulize's own; everything else is Formulize UI. */
+.formulize-sitemenu { font-family: var(--fz-font-sans); font-size: var(--fz-text-sm); line-height: var(--fz-leading-normal); color: var(--fz-color-text); max-width: 60rem; }
+.formulize-sitemenu__choices { max-height: 14rem; overflow: auto; padding: calc(var(--fz-spacing) * 2); border: 1px solid var(--fz-color-border); border-radius: var(--fz-radius-md); background: var(--fz-color-surface); }
+</style>
+
+<div class="formulize-sitemenu formulize-admin-ui">
+<form id="formulize-sitemenu-form" class="formulize-admin-form fz-stack fz-gap-5" onsubmit="return false;">
+	<{php}>print $GLOBALS['xoopsSecurity']->getTokenHTML()<{/php}>
+	<input type="hidden" name="formulize_admin_handler" value="site_menu">
+	<input type="hidden" name="formulize_admin_key" value="0">
+	<input type="hidden" name="deletemenuitem" value="">
+	<input type="hidden" name="menuorder" value="">
+
+	<div class="fz-stack fz-gap-2">
+		<h2 class="fz-text-xl fz-font-semibold"><{$smarty.const._AM_SITEMENU_TITLE}></h2>
+		<p class="fz-text-muted"><{$smarty.const._AM_SITEMENU_INTRO}></p>
+	</div>
+
+	<details class="fz-disclosure" id="formulize-sitemenu-add">
+		<summary><{$smarty.const._AM_SITEMENU_ADD_TITLE}></summary>
+		<div class="fz-stack">
+			<p class="fz-text-muted"><{$smarty.const._AM_SITEMENU_ADD_HELP}></p>
+			<{include file="db:admin/site_menu_link.html" prefix="new" link=$adminPage.sitemenu.newLink groups=$adminPage.sitemenu.newLinkGroups targets=$adminPage.sitemenu.targets landingHelp=$adminPage.sitemenu.landingHelp}>
+			<div class="fz-cluster">
+				<button type="button" class="fz-btn fz-btn--primary" id="formulize-sitemenu-add-button"><{$smarty.const._AM_SITEMENU_ADD_BUTTON}></button>
+			</div>
+		</div>
+	</details>
+
+	<section class="fz-stack fz-gap-3" aria-labelledby="formulize-sitemenu-list-title">
+		<h3 class="fz-text-lg fz-font-semibold" id="formulize-sitemenu-list-title"><{$smarty.const._AM_SITEMENU_LIST_TITLE}></h3>
+		<{if $adminPage.sitemenu.items}>
+		<ol class="fz-accordion" id="formulize-sitemenu-list" aria-labelledby="formulize-sitemenu-list-title" data-fz-moved="<{$adminPage.sitemenu.movedText}>">
+			<{foreach from=$adminPage.sitemenu.items item=item}>
+			<li class="fz-accordion__item" data-id="<{$item.key}>">
+				<button type="button" class="fz-accordion__handle" aria-label="<{$item.moveLabel}>"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="6" cy="4" r="1.2"/><circle cx="10" cy="4" r="1.2"/><circle cx="6" cy="8" r="1.2"/><circle cx="10" cy="8" r="1.2"/><circle cx="6" cy="12" r="1.2"/><circle cx="10" cy="12" r="1.2"/></svg></button>
+				<details class="fz-accordion__details" name="formulize-sitemenu">
+					<summary class="fz-accordion__summary"><span class="fz-accordion__title"><{$item.title}></span><span class="fz-accordion__meta"><{$item.meta}></span></summary>
+					<div class="fz-accordion__body">
+						<{if $item.type == 'link'}>
+						<{include file="db:admin/site_menu_link.html" prefix=$item.menu_id link=$item groups=$item.groups targets=$adminPage.sitemenu.targets landingHelp=$adminPage.sitemenu.landingHelp}>
+						<div class="fz-cluster">
+							<button type="button" class="fz-btn fz-btn--danger fz-btn--sm" data-sitemenu-delete="<{$item.menu_id}>" data-sitemenu-name="<{$item.title}>"><{$smarty.const._AM_SITEMENU_DELETE}></button>
+						</div>
+						<{else}>
+						<{if $item.description}><p class="fz-text-muted"><{$item.description}></p><{/if}>
+						<{if $item.links}>
+						<div class="fz-card fz-card--flush fz-overflow-x-auto">
+							<table class="fz-table fz-table--multiline">
+								<tbody>
+								<{foreach from=$item.links item=link}>
+								<tr><td><span class="fz-font-medium"><{$link.text}></span><br><span class="fz-text-muted"><{$link.goesTo}></span></td><td class="fz-text-muted"><{$link.seenBy}></td></tr>
+								<{/foreach}>
+								</tbody>
+							</table>
+						</div>
+						<{/if}>
+						<p class="fz-text-muted"><{$smarty.const._AM_SITEMENU_APP_LINKS_ELSEWHERE}></p>
+						<div class="fz-cluster"><a class="fz-btn fz-btn--sm" href="<{$item.manageUrl}>"><{$item.manageText}></a></div>
+						<{/if}>
+					</div>
+				</details>
+			</li>
+			<{/foreach}>
+		</ol>
+		<{else}>
+		<div class="fz-empty"><p><{$smarty.const._AM_SITEMENU_EMPTY}></p></div>
+		<{/if}>
+	</section>
+</form>
+</div>
+
+<script type="text/javascript">
+// The Menu tab's own script, in plain JavaScript (the admin UI runs jQuery 1.4.2; only the hook into its Save
+// button uses jQuery, so this runs before the save that it fills in).
+(function () {
+	var t = formulizeText(<{$adminPage.sitemenu.scriptText}>);
+	var form = document.getElementById('formulize-sitemenu-form');
+	var list = document.getElementById('formulize-sitemenu-list');
+
+	var warn = function () {
+		if (typeof setDisplay === 'function') {
+			setDisplay('savewarning', 'block');
+		}
+	};
+	var save = function () {
+		jQuery('.savebutton').click();
+	};
+
+	// the order of the menu, written when it changes, so an order that wasn't changed isn't saved
+	if (list) {
+		list.addEventListener('fz-accordion-reorder', function () {
+			var keys = [];
+			for (var i = 0; i < list.children.length; i++) {
+				if (list.children[i].getAttribute('data-id')) {
+					keys.push(list.children[i].getAttribute('data-id'));
+				}
+			}
+			form.elements.menuorder.value = keys.join(',');
+			warn();
+		});
+	}
+
+	// the URL field is only for a link that goes to a URL
+	form.addEventListener('change', function (event) {
+		if (!event.target.hasAttribute || !event.target.hasAttribute('data-sitemenu-target')) {
+			return;
+		}
+		var editor = event.target.closest('[data-sitemenu-editor]');
+		var urlField = editor && editor.querySelector('[data-sitemenu-url-field]');
+		if (urlField) {
+			urlField.hidden = event.target.value !== 'url';
+		}
+	});
+
+	// a link's fields, as the menuID::text::screen::url::groupids::default_screen::note value that
+	// insertMenuLink() and updateMenuLink() take. :: would split a value, so it is made a single colon.
+	var clean = function (value) {
+		return String(value).trim().replace(/::/g, ':');
+	};
+	var checked = function (editor, attribute) {
+		var ids = [];
+		var boxes = editor.querySelectorAll('[' + attribute + ']');
+		for (var i = 0; i < boxes.length; i++) {
+			if (boxes[i].checked) {
+				ids.push(boxes[i].value);
+			}
+		}
+		return ids;
+	};
+	var fields = function (editor) {
+		var sees = checked(editor, 'data-sitemenu-sees');
+		var lands = checked(editor, 'data-sitemenu-lands').filter(function (id) { return sees.indexOf(id) !== -1; });
+		return {
+			text: clean(editor.querySelector('[data-sitemenu-text]').value),
+			target: editor.querySelector('[data-sitemenu-target]').value,
+			url: clean(editor.querySelector('[data-sitemenu-url]').value),
+			note: clean(editor.querySelector('[data-sitemenu-note]').value),
+			sees: sees.length ? sees.join(',') : 'null',
+			lands: lands.length ? lands.join(',') : 'null'
+		};
+	};
+	var addMenuItem = function (id, link) {
+		var input = document.createElement('input');
+		input.type = 'hidden';
+		input.name = 'menu_items[]';
+		input.setAttribute('data-sitemenu-item', '');
+		input.value = [id, link.text, link.target, link.target === 'url' ? link.url : '', link.sees, link.lands, link.note].join('::');
+		form.appendChild(input);
+	};
+	var emptyUrl = function (url) {
+		return url === '' || url === 'http://' || url === 'https://';
+	};
+
+	// before the admin UI saves the form: one menu_items[] for each link, and one for a new link if there is one.
+	// Bound with jQuery, before the admin UI's own handler, so a link that can't be saved can stop the save.
+	jQuery('.savebutton').click(function (event) {
+		var old = form.querySelectorAll('[data-sitemenu-item]');
+		for (var i = 0; i < old.length; i++) {
+			old[i].parentNode.removeChild(old[i]);
+		}
+		var editors = form.querySelectorAll('[data-sitemenu-editor]');
+		for (var j = 0; j < editors.length; j++) {
+			var id = editors[j].getAttribute('data-sitemenu-editor');
+			var link = fields(editors[j]);
+			if (id === 'new' && link.target === '' && link.text === '') {
+				continue; // nothing is being added
+			}
+			var problem = link.target === '' ? 'NEEDS_TARGET' : (link.target === 'url' && emptyUrl(link.url) ? 'NEEDS_URL' : '');
+			if (problem) {
+				var name = id === 'new' ? t.text('NEW_LINK') : editors[j].closest('.fz-accordion__item').querySelector('.fz-accordion__title').textContent;
+				alert(t.text(problem, name));
+				event.stopImmediatePropagation();
+				return false;
+			}
+			addMenuItem(id === 'new' ? 'null' : id, link);
+		}
+	});
+
+	var addButton = document.getElementById('formulize-sitemenu-add-button');
+	if (addButton) {
+		addButton.addEventListener('click', save);
+	}
+
+	form.addEventListener('click', function (event) {
+		var button = event.target.closest ? event.target.closest('[data-sitemenu-delete]') : null;
+		if (!button) {
+			return;
+		}
+		if (confirm(t.text('DELETE_CONFIRM', button.getAttribute('data-sitemenu-name')))) {
+			form.elements.deletemenuitem.value = button.getAttribute('data-sitemenu-delete');
+			save();
+		}
+	});
+})();
+</script>
