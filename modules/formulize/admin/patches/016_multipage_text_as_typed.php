@@ -31,6 +31,15 @@ function formulize_patch_016_multipage_text_as_typed($prev_dbversion, $required_
     }
 
     $table = $xoopsDB->prefix('formulize_screen_multipage');
+
+    // 018_text_to_code_files moves this text into files and drops the columns, after this has run. If an update gets
+    // that far and then stops at a later patch, this runs again on the retry, and has nothing left to correct.
+    $existing = $xoopsDB->queryF("SHOW COLUMNS FROM $table LIKE 'introtext'");
+    if ($existing AND $xoopsDB->getRowsNum($existing) == 0) {
+        echo '<p>Form screen intro and thanks text is already kept in files, as it was typed. result: OK</p>';
+        return true;
+    }
+
     if (!$result = $xoopsDB->queryF("SELECT sid, introtext, thankstext FROM $table")) {
         echo '<p>016_multipage_text_as_typed: could not read the form screens: ' . htmlspecialchars($xoopsDB->error()) . '</p>';
         return false;

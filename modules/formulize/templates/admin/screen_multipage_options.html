@@ -12,15 +12,34 @@
 
 <div class="panel-content content">
 	<fieldset>
-        <legend>Appearance</legend>
+        <legend><{$smarty.const._AM_FORMULIZE_SCREEN_MP_APPEARANCE}></legend>
 
         <div class="form-item">
-            <input id="navstyletabs" type="checkbox" name="navstyletabs" value=1 <{$content.navstyletabs}>> <label for="navstyletabs">Show navigation tabs at the top of the form</label><br>
-            <input id="navstylebuttons" type="checkbox" name="navstylebuttons" value=1 <{$content.navstylebuttons}>> <label for="navstylebuttons">Show navigation buttons at the bottom of the form</label><br>
-            <input id="showpageindicator" type="checkbox" name="screens-showpageindicator" value=1 <{$content.showpageindicator}>> <label for="showpageindicator">Show 'page 1 of X'</label><br>
-            <input id="showpageselector" type="checkbox" name="screens-showpageselector" value=1 <{$content.showpageselector}>> <label for="showpageselector">Show the page selection dropdown list</label><br>
-            <input id="showpagetitles" type="checkbox" name="screens-showpagetitles" value=1 <{$content.showpagetitles}>> <label for="showpagetitles">Show the page title at the top of the form</label>
+            <input id="showtabs" type="checkbox" name="screens-showtabs" value=1 <{$content.showtabs}>> <label for="showtabs"><{$smarty.const._AM_FORMULIZE_SCREEN_MP_SHOWTABS}></label><br>
+            <p><{$smarty.const._AM_FORMULIZE_SCREEN_MP_BUTTONS}></p>
+            <div class="formulize-mp-buttons">
+                <input id="showprevbutton" type="checkbox" name="screens-showprevbutton" value=1 <{$content.showprevbutton}>> <label for="showprevbutton"><{$smarty.const._AM_FORMULIZE_SCREEN_MP_SHOWPREVBUTTON}></label><br>
+                <input id="showsavebutton" type="checkbox" name="screens-showsavebutton" value=1 <{$content.showsavebutton}>> <label for="showsavebutton"><{$smarty.const._AM_FORMULIZE_SCREEN_MP_SHOWSAVEBUTTON}></label><br>
+                <input id="showclosebutton" type="checkbox" name="screens-showclosebutton" value=1 <{$content.showclosebutton}>> <label for="showclosebutton"><{$smarty.const._AM_FORMULIZE_SCREEN_MP_SHOWCLOSEBUTTON}></label><br>
+                <input id="shownextbutton" type="checkbox" name="screens-shownextbutton" value=1 <{$content.shownextbutton}>> <label for="shownextbutton"><{$smarty.const._AM_FORMULIZE_SCREEN_MP_SHOWNEXTBUTTON}></label>
+                <{* a disabled checkbox is not sent, so while a Thank You page holds Save and Continue on, this sends it instead *}>
+                <input id="shownextbutton-forced" type="hidden" name="screens-shownextbutton" value=1 disabled="disabled">
+                <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_MP_BUTTONS_DESC}> <span id="shownextbutton-forced-note"><{$smarty.const._AM_FORMULIZE_SCREEN_MP_NEXT_FORCED}></span></div>
+            </div>
+            <input id="showpageindicator" type="checkbox" name="screens-showpageindicator" value=1 <{$content.showpageindicator}>> <label for="showpageindicator"><{$smarty.const._AM_FORMULIZE_SCREEN_MP_SHOWPAGEINDICATOR}></label><br>
+            <input id="showpageselector" type="checkbox" name="screens-showpageselector" value=1 <{$content.showpageselector}>> <label for="showpageselector"><{$smarty.const._AM_FORMULIZE_SCREEN_MP_SHOWPAGESELECTOR}></label><br>
+            <input id="showpagetitles" type="checkbox" name="screens-showpagetitles" value=1 <{$content.showpagetitles}>> <label for="showpagetitles"><{$smarty.const._AM_FORMULIZE_SCREEN_MP_SHOWPAGETITLES}></label><br>
+            <input id="showthankspage" type="checkbox" name="showthankspage" value=1 <{$content.showthankspage}><{if $content.thankstextexists}> disabled="disabled"<{/if}>> <label for="showthankspage"><{$smarty.const._AM_FORMULIZE_SCREEN_MP_SHOWTHANKSPAGE}></label>
+            <{if $content.thankstextexists}>
+            <input type="hidden" name="showthankspage" value=1>
+            <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_MP_THANKSPAGE_FORCED}></div>
+            <{/if}>
 	    </div>
+
+        <div class="form-item" id="thankyoulinktext-item">
+            <label for="thankyoulinktext"><{$smarty.const._AM_FORMULIZE_SCREEN_THANKYOULINKTEXT}></label><br>
+            <input type="text" id="thankyoulinktext" name="thankyoulinktext" value="<{$content.thankyoulinktext}>" size="50" maxlength="255"/>
+        </div>
 
         <div class="form-item">
             <p>Layout Options:<br>
@@ -43,33 +62,22 @@
         </div>
     </fieldset>
 	<fieldset>
-		<legend>Buttons, text and behaviour</legend>
+		<legend><{$smarty.const._AM_FORMULIZE_SCREEN_MP_BUTTONSTEXT}></legend>
 	  <div class="form-item">
-		<label for="screens-finishisdone"><{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE}></label><br>
-		<input type="radio" id=screens-finishisdone-0 name="screens-finishisdone" value=0> <{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE_THANKSPAGE}><br />
-		<input type="radio" id=screens-finishisdone-1 name="screens-finishisdone" value=1> <{$smarty.const._AM_FORMULIZE_SCREEN_FINISHISDONE_FINISHBUTTON}>
-	  </div><br><br>
+		  <p><{$smarty.const._AM_FORMULIZE_SCREEN_DONEDEST}></p>
+		  <div class="form-radios">
+			  <label for="donedestmode-back"><input type="radio" id="donedestmode-back" name="donedestmode" value="back"<{if $content.donedestmode eq 'back'}> checked="checked"<{/if}>/> <{$smarty.const._AM_FORMULIZE_SCREEN_DONEDEST_BACK}></label>
+		  </div>
+		  <div class="form-radios">
+			  <label for="donedestmode-url"><input type="radio" id="donedestmode-url" name="donedestmode" value="url"<{if $content.donedestmode eq 'url'}> checked="checked"<{/if}>/> <{$smarty.const._AM_FORMULIZE_SCREEN_DONEDEST_URL}></label>
+			  <div id="donedest-url-item" style="margin-left: 2em;">
+				  <input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>" size="50" maxlength="255" aria-label="<{$smarty.const._AM_FORMULIZE_SCREEN_DONEDEST_URL}>"/>
+				  <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_DONEDEST_URL_DESC}></div>
+			  </div>
+		  </div>
+	  </div><br>
 
 	  <div class="form-item">
-		  <label for="screens-donedest"><{$smarty.const._AM_FORMULIZE_SCREEN_DONEDEST}></label><br>
-      <input type="text" id="screens-donedest" name="screens-donedest" value="<{$content.donedest}>" size="50" maxlength="255"/><br><br>
-	  </div>
-
-      <div class="form-item">
-            <p>How should the form reload, after the user has saved a <b>new</b> entry?</p>
-            <div class="form-radios">
-              <label for="entry"><input type="radio" id="entry" name="screens-reloadblank" value=0 />Reload showing the entry the user has just created</label>
-            </div>
-            <div class="form-radios">
-              <label for="blank"><input type="radio" id="blank" name="screens-reloadblank" value=1 />Reload blank, so another new entry can be created</label>
-            <div class="description">Only applies to forms with one page. When a user arrives from a list of entries, this setting will be ignored and the button the user clicked will take precedence (either the <b>Add one entry</b> button or the <b>Add multiple entries</b> button).</div>
-            </div>
-      </div>
-      <br><hr><br>
-	  <div class="form-item">
-		  <label for="thankyoulinktext"><{$smarty.const._AM_FORMULIZE_SCREEN_THANKYOULINKTEXT}></label><br>
-      <input type="text" id="thankyoulinktext" name="thankyoulinktext" value="<{$content.thankyoulinktext}>" size="50" maxlength="255"/><br><br>
-      	  <div class="form-item">
 		  <label for="leaveButtonText"><{$smarty.const._AM_FORMULIZE_SCREEN_LEAVEBUTTONTEXT}></label><br>
       <input type="text" id="leaveButtonText" name="leaveButtonText" value="<{$content.leaveButtonText}>" size="50" maxlength="255"/><br><br>
 	  </div>
@@ -161,14 +169,58 @@
 	  </div>
 	</fieldset>
 
+    <fieldset>
+      <legend><{$smarty.const._AM_FORMULIZE_SCREEN_MP_RELOAD_LEGEND}></legend>
+      <div class="form-item">
+            <p><{$smarty.const._AM_FORMULIZE_SCREEN_MP_RELOAD}></p>
+            <div class="form-radios">
+              <label for="entry"><input type="radio" id="entry" name="screens-reloadblank" value=0<{if $content.reloadblank eq 'entry'}> checked="checked"<{/if}> /><{$smarty.const._AM_FORMULIZE_SCREEN_MP_RELOAD_ENTRY}></label>
+            </div>
+            <div class="form-radios">
+              <label for="blank"><input type="radio" id="blank" name="screens-reloadblank" value=1<{if $content.reloadblank eq 'blank'}> checked="checked"<{/if}> /><{$smarty.const._AM_FORMULIZE_SCREEN_MP_RELOAD_BLANK}></label>
+            <div class="description"><{$smarty.const._AM_FORMULIZE_SCREEN_MP_RELOAD_DESC}></div>
+            </div>
+      </div>
+    </fieldset>
+
 </div>
 
 </form>
 
 <script type='text/javascript'>
-$("#screens-finishisdone-<{$content.finishisdone}>").attr('checked',1);
-$("#<{$content.reloadblank}>").attr('checked', true);
+// Written for jQuery 1.4.2, which the admin UI runs on: bind, not on; attr and removeAttr, not prop.
 $("#<{$content.displaycolumns}>").attr('checked', true);
+
+// The Thank You page: while it is on, its link text can be set, and Save and Continue is held on, since that is the
+// button that leads to it. A disabled checkbox is not sent, so a hidden field sends Save and Continue in its place.
+function formulizeMultipageThanksPageChanged() {
+    var thanksPage = $('#showthankspage').is(':checked');
+    var nextButton = $('#shownextbutton');
+    if (thanksPage) {
+        $('#thankyoulinktext-item').show();
+        nextButton.attr('checked', 'checked').attr('disabled', 'disabled');
+        $('#shownextbutton-forced').removeAttr('disabled');
+        $('#shownextbutton-forced-note').show();
+    } else {
+        $('#thankyoulinktext-item').hide();
+        nextButton.removeAttr('disabled');
+        $('#shownextbutton-forced').attr('disabled', 'disabled');
+        $('#shownextbutton-forced-note').hide();
+    }
+}
+$('#showthankspage').bind('click', formulizeMultipageThanksPageChanged);
+formulizeMultipageThanksPageChanged();
+
+// The done destination: the box for the URL is only there when a specific URL is chosen
+function formulizeMultipageDoneDestChanged() {
+    if ($('#donedestmode-url').is(':checked')) {
+        $('#donedest-url-item').show();
+    } else {
+        $('#donedest-url-item').hide();
+    }
+}
+$('input[name=donedestmode]').bind('click', formulizeMultipageDoneDestChanged);
+formulizeMultipageDoneDestChanged();
 
 $("#edadd").click(function() {
     appendDefault($('#elementchoice').val(), $('#elementchoice').children('option:selected').text(), $('#elementdefault').val().replace(/"/g, '&quot;'));
@@ -204,6 +256,9 @@ if($("#formorder-sortable").length) {
 </script>
 
 <style>
+    .formulize-mp-buttons {
+        margin: 0 0 0.75em 1.5em;
+    }
     .adefault:hover {
         color: red;
         text-decoration: line-through;

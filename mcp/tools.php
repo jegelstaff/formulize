@@ -163,7 +163,7 @@ The form may also include \'entry_description\', \'usage_notes\' and \'data_conv
 				'name' => 'get_element_details',
 				'description' => 'Get the full settings of one or more specific elements in a form. Use this after get_form_details, which lists every element in a form but only gives you their id, handle, caption and type. This tool gives you everything else about the elements you name: the options in a list, the alternative text shown for those options, whether the element is required, which groups can see it, the conditions that control when it is displayed or disabled, and the type-specific settings that vary from one kind of element to another.
 
-For some kinds of element, the result includes \'properties\': the settings in exactly the format that the update tool for that kind of element accepts, including settings that are not in use yet. To change a setting, edit it there and send it back in the update tool\'s properties. \'ele_value\' is the raw form of the same settings, as stored in the database.
+For some kinds of element, the result includes \'properties\': the settings in exactly the format that the update tool for that kind of element accepts, including settings that are not in use yet. To change a setting, edit it there and send it back in the update tool\'s properties. \'raw_settings\' is the same settings in the form Formulize keeps them internally, including the content of a Text for display element, the formula of a derived value, and the default value of a text box. Read it for elements that have no \'properties\', but never send it to an update tool.
 
 Ask for several elements in one call rather than one at a time. If some of the elements you ask for cannot be found, the ones that were found are still returned, and the ones that were not are reported back to you so you can correct them.',
 				'inputSchema' => [
@@ -600,9 +600,21 @@ This tool takes two calls. Call it first with just the element, and it will NOT 
 					'type' => 'boolean',
 					'description' => 'Optional. Show page-navigation tabs across the top of the form, one per page. Default is true. On an exceptionally long form with many pages, or a form where jumping to an arbitrary page is not desired, you may want to set this to false.'
 				],
-				'show_navigation_buttons' => [
+				'show_save_and_go_back_button' => [
 					'type' => 'boolean',
-					'description' => 'Optional. Show the page-navigation buttons at the bottom of the form. Default is false. On an exceptionally long form with many pages, or a form where jumping to an arbitrary page is not required, you may want to set this to true. This setting controls only the previous and next navigation buttons. It does NOT affect the Save button or the Close button, both of which always appear at the bottom of the form regardless of this setting; to hide the Save button or the Close button, set their label to an empty string via button_text.'
+					'description' => 'Optional. Show the Save and Go Back button at the bottom of the form, which saves and goes to the previous page. On the first page it is the Save and Close button instead, which saves and leaves the form. Default is false. Useful on a long form with many pages, especially when show_navigation_tabs is false.'
+				],
+				'show_save_button' => [
+					'type' => 'boolean',
+					'description' => 'Optional. Show the Save button at the bottom of the form, which saves and stays on the page. Only shown to users who can save the entry. Default is true.'
+				],
+				'show_close_button' => [
+					'type' => 'boolean',
+					'description' => 'Optional. Show the Close button at the bottom of the form, which leaves the form without saving. Default is true.'
+				],
+				'show_save_and_continue_button' => [
+					'type' => 'boolean',
+					'description' => 'Optional. Show the Save and Continue button at the bottom of the form, which saves and goes to the next page. On the last page it is the Save and Finish button instead. Default is false. A form screen with a Thanks page always has this button, because it is how users reach the Thanks page, so it cannot be turned off while show_thanks_page is true.'
 				],
 				'show_page_indicator' => [
 					'type' => 'boolean',
@@ -631,25 +643,29 @@ This tool takes two calls. Call it first with just the element, and it will NOT 
 				],
 				'button_text' => [
 					'type' => 'object',
-					'description' => 'Optional. Custom labels for the form buttons. Only include the ones you want to change; the rest keep their existing/default labels. Hide buttons by setting an empty string as the value.',
+					'description' => 'Optional. Custom labels for the form buttons. Only include the ones you want to change; the rest keep their existing/default labels. A label set to an empty string uses the default label. Which buttons appear is set by show_save_and_go_back_button, show_save_button, show_close_button and show_save_and_continue_button, not by the labels.',
 					'properties' => [
-						'previous_page' => [ 'type' => 'string', 'description' => 'Button to save and go back to the previous page. This is one of the page-navigation buttons, so it only appears when show_navigation_buttons is true. Default is "Save and Go Back".' ],
-						'next_page' => [ 'type' => 'string', 'description' => 'Button to save and go on to the next page. This is one of the page-navigation buttons, so it only appears when show_navigation_buttons is true. Default is "Save and Continue".' ],
-						'save' => [ 'type' => 'string', 'description' => 'Button to save without changing page or closing. Always shown at the bottom of the form (regardless of show_navigation_buttons) if the user can save; set to an empty string to hide it. Default is "Save".' ],
-						'close' => [ 'type' => 'string', 'description' => 'Button to close the screen without saving. Always shown at the bottom of the form (regardless of show_navigation_buttons); set to an empty string to hide it. Default is "Close".' ],
-						'save_and_close' => [ 'type' => 'string', 'description' => 'When show_navigation_buttons is true, this is the previous_page label when on the first page, and clicking it will save and close the form. When show_navigation_tabs is true, this text is used for a special leftmost tab which the user can click to save and close the form. Default is "Save and Close".' ],
-						'save_and_finish' => [ 'type' => 'string', 'description' => 'When show_navigation_buttons is true, this is the next_page label when on the last page. Used to save and finish (which will either close the screen, or take the user to the Thanks page if show_thanks_page is true). Default is "Save and Finish".' ],
-						'printable_view' => [ 'type' => 'string', 'description' => 'Button to open the printable version of the form. Default is "Printable Version".' ],
-						'thankyou_link' => [ 'type' => 'string', 'description' => 'Text of the link on the Thanks page that leaves the form. Default is "Leave this form and continue browsing the site".' ]
+						'previous_page' => [ 'type' => 'string', 'description' => 'Label of the Save and Go Back button, which saves and goes back to the previous page. It only appears when show_save_and_go_back_button is true. Default is "Save and Go Back".' ],
+						'next_page' => [ 'type' => 'string', 'description' => 'Label of the Save and Continue button, which saves and goes on to the next page. It only appears when show_save_and_continue_button is true. Default is "Save and Continue".' ],
+						'save' => [ 'type' => 'string', 'description' => 'Label of the Save button, which saves without changing page or closing. It only appears when show_save_button is true, and the user can save. Default is "Save".' ],
+						'close' => [ 'type' => 'string', 'description' => 'Label of the Close button, which closes the screen without saving. It only appears when show_close_button is true. Default is "Close".' ],
+						'save_and_close' => [ 'type' => 'string', 'description' => 'The label of the Save and Go Back button on the first page, where clicking it saves and closes the form. When show_navigation_tabs is true, this text is also used for a special leftmost tab which the user can click to save and close the form. Default is "Save and Close".' ],
+						'save_and_finish' => [ 'type' => 'string', 'description' => 'The label of the Save and Continue button on the last page. Used to save and finish (which will either close the screen, or take the user to the Thanks page if show_thanks_page is true). Default is "Save and Finish".' ],
+						'printable_view' => [ 'type' => 'string', 'description' => 'Button to open the printable version of the form. Set to an empty string to hide it. Default is "Printable Version".' ],
+						'thankyou_link' => [ 'type' => 'string', 'description' => 'Text of the link on the Thanks page that leaves the form. Default is "Continue".' ]
 					]
 				],
 				'show_thanks_page' => [
 					'type' => 'boolean',
-					'description' => 'Optional. When false (default), finishing the form is treated as done and no Thanks page is shown. When true, a Thanks page is shown after the user finishes.'
+					'description' => 'Optional. When false (default), finishing the form is treated as done and no Thanks page is shown. When true, a Thanks page is shown after the user finishes, and the Save and Continue button is turned on. A screen with thanks_text always shows the Thanks page, so this cannot be set to false while it has thanks_text; set thanks_text to an empty string first.'
 				],
 				'thanks_text' => [
 					'type' => 'string',
-					'description' => 'Optional. The message shown to the user on the Thanks page after they finish the form (only used when show_thanks_page is true). May contain HTML markup.'
+					'description' => 'Optional. What the Thanks page shows after the user finishes the form. HTML, where {thankYouNav} stands for the link that leaves the form; or PHP code, starting with <?php, which prints what should appear and can use $entry_id and $thankYouNav. Setting it turns on the Thanks page (show_thanks_page) and the Save and Continue button. An empty string removes it, and the Thanks page then shows "Thank you!" and the link.'
+				],
+				'intro_text' => [
+					'type' => 'string',
+					'description' => 'Optional. What appears above the questions on the first page of the form. HTML, or PHP code starting with <?php, which prints what should appear and can use $entry_id. An empty string removes it.'
 				]
 			];
 
@@ -2600,42 +2616,20 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 	 * Only keys actually present in $arguments are included, so this supports partial updates. The pages property is
 	 * handled separately by each tool method (create builds them, update patches them).
 	 * @param array $arguments The tool arguments.
-	 * @param formulizeMultiPageScreen|null $existingScreen The current screen when updating (used to recompute navstyle from partial input), or null when creating.
+	 * @param formulizeMultiPageScreen|null $existingScreen The current screen when updating, or null when creating. Each setting is its own property now, so nothing has to be worked out from it.
 	 * @return array The internal $properties array for the upsert method.
 	 */
 	private function buildFormScreenProperties($arguments, $existingScreen) {
 		$properties = array();
 
-		// Navigation appearance -> combined navstyle. Recompute only if a nav field was provided, preserving the
-		// other half from the existing screen (update) or the default (create: tabs on, buttons off => navstyle 1).
-		if(array_key_exists('show_navigation_tabs', $arguments) OR array_key_exists('show_navigation_buttons', $arguments)) {
-			if($existingScreen) {
-				$currentNavstyle = intval($existingScreen->getVar('navstyle'));
-				$tabs = in_array($currentNavstyle, array(1, 2));
-				$buttons = in_array($currentNavstyle, array(0, 2));
-			} else {
-				$tabs = true;
-				$buttons = false;
-			}
-			if(array_key_exists('show_navigation_tabs', $arguments)) {
-				$tabs = (bool) $arguments['show_navigation_tabs'];
-			}
-			if(array_key_exists('show_navigation_buttons', $arguments)) {
-				$buttons = (bool) $arguments['show_navigation_buttons'];
-			}
-			if($tabs AND $buttons) {
-				$properties['navstyle'] = 2;
-			} elseif($tabs AND !$buttons) {
-				$properties['navstyle'] = 1;
-			} elseif(!$tabs AND $buttons) {
-				$properties['navstyle'] = 0;
-			} else {
-				$properties['navstyle'] = 3;
-			}
-		}
-
-		// show_page_* booleans -> 1 (show) / 0 (hide)
+		// the navigation and show_page_* booleans -> 1 (show) / 0 (hide). Only what was provided is set, so an update
+		// leaves the rest as they are, and a new screen gets the defaults from setDefaultFormScreenVars().
 		$showMap = array(
+			'show_navigation_tabs' => 'showtabs',
+			'show_save_and_go_back_button' => 'showprevbutton',
+			'show_save_button' => 'showsavebutton',
+			'show_close_button' => 'showclosebutton',
+			'show_save_and_continue_button' => 'shownextbutton',
 			'show_page_indicator' => 'showpageindicator',
 			'show_page_selector' => 'showpageselector',
 			'show_page_titles' => 'showpagetitles',
@@ -2691,7 +2685,21 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 			$properties['finishisdone'] = $arguments['show_thanks_page'] ? 0 : 1;
 		}
 		if(array_key_exists('thanks_text', $arguments)) {
-			$properties['thankstext'] = $arguments['thanks_text'];
+			$properties['thankstext'] = (string) $arguments['thanks_text'];
+		}
+		if(array_key_exists('intro_text', $arguments)) {
+			$properties['introtext'] = (string) $arguments['intro_text'];
+		}
+		// a Thanks page is reached with Save and Continue, so the upsert holds that button on while there is one -
+		// see formulizeHandler::upsertMultiPageScreen(). Asking for both at once is refused rather than ignored.
+		if(array_key_exists('show_save_and_continue_button', $arguments) AND !$arguments['show_save_and_continue_button']
+			AND array_key_exists('show_thanks_page', $arguments) AND $arguments['show_thanks_page']) {
+			throw new FormulizeMCPException('A form screen with a Thanks page always has the Save and Continue button, because that is how users reach the Thanks page. Leave show_save_and_continue_button out, or set show_thanks_page to false.', 'invalid_data');
+		}
+		// thanks text turns the Thanks page on, so asking for text and no Thanks page at once is refused rather than ignored
+		if(array_key_exists('show_thanks_page', $arguments) AND !$arguments['show_thanks_page']
+			AND array_key_exists('thanks_text', $arguments) AND !formulize_authoredTextIsEmpty($arguments['thanks_text'])) {
+			throw new FormulizeMCPException('A form screen with thanks_text always shows the Thanks page. Set thanks_text to an empty string to turn the Thanks page off.', 'invalid_data');
 		}
 
 		return $properties;
@@ -3807,10 +3815,15 @@ Do not use foreign key values with linked elements; use the readable value inste
 			'help_text_for_users' => $elementObject->getVar('ele_desc'),
 			'required' => $elementObject->getVar('ele_required') ? true : false,
 			'list_search_interface' => array_search($elementObject->listSearchType(), formulizeHandler::listScreenSearchTypes()),
-			// in the same shape this tool accepts, when the element type can report it that way
-			'properties' => $this->publicElementProperties($elementObject->getValues(null, 'n')) ?? $elementObject->getVar('ele_value'),
 			'display_conditions' => $this->tidyUpOldConditionsArrayFormat($elementObject->getVar('ele_filtersettings'))
 		];
+		// the settings in the same shape this tool accepts, when the element type can report them that way, and
+		// otherwise as Formulize keeps them, under a name that can't be taken for something to send back
+		if($publicProperties = $this->publicElementProperties($elementObject->getValues(null, 'n'))) {
+			$returnValue['properties'] = $publicProperties;
+		} else {
+			$returnValue['raw_settings'] = $elementObject->getVar('ele_value');
+		}
 		if(!empty($notes)) {
 			$returnValue['notes'] = $notes;
 		}

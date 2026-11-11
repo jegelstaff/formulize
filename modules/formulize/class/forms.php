@@ -2075,7 +2075,7 @@ class formulizeFormsHandler {
 		// deliberately kept: formulize_deletion_logs, which may be consulted in audits after the form is gone, and
 		// formulize_digest_data, since digests are experimental and how they intersect with other features is unsettled.
 		// formulize_entry_owner_groups is removed by dropDataTable() below.
-		$sql = "SELECT sid, type FROM ".$this->db->prefix("formulize_screen")." WHERE fid=$fid";
+		$sql = "SELECT sid, type, screen_handle FROM ".$this->db->prefix("formulize_screen")." WHERE fid=$fid";
 		if($res = $this->db->query($sql)) {
 			$application_handler = xoops_getmodulehandler('applications', 'formulize');
 			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -2086,6 +2086,9 @@ class formulizeFormsHandler {
 				}
 				$application_handler->deleteMenuLinkByScreen("sid=".intval($array['sid']));
 				$screen_handler->deleteTemplateFiles($array['sid']);
+				if($array['type'] == 'multiPage') {
+					xoops_getmodulehandler('multiPageScreen', 'formulize')->deleteTextFiles($array['screen_handle']);
+				}
 			}
 			$sql = "DELETE FROM ".$this->db->prefix("formulize_screen")." WHERE fid=$fid";
 			if(!$this->db->query($sql)) {
@@ -2868,6 +2871,20 @@ class formulizeFormsHandler {
 		$replaceSQL = "UPDATE ". $this->db->prefix("formulize") . " SET ele_handle=CONCAT('".$oldFormHandle."_',ele_id) WHERE ele_handle=\"replace_with_ele_id\"";
 		if(!$result = $this->db->queryF($replaceSQL)) {
 			throw new Exception("Could not set the ele_handle values for the new form. ".$this->db->error());
+		}
+
+		// the cloned elements need copies of the files their content and code are kept in, named for their new handles,
+		// since the database copy of what is in a file is blank - see clearEleValueFileKeysForInsert()
+		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		foreach($getelements as $ele) {
+			if(!isset($oldNewEleIdMap[$ele['ele_handle']])) {
+				continue;
+			}
+			$fromFile = $codeDir.$ele['ele_type'].'_'.$ele['ele_handle'].'.php';
+			$toFile = $codeDir.$ele['ele_type'].'_'.$oldNewEleIdMap[$ele['ele_handle']].'.php';
+			if(file_exists($fromFile) AND !file_exists($toFile) AND !copy($fromFile, $toFile)) {
+				error_log("Formulize Error: could not copy $fromFile to $toFile when cloning form $fid");
+			}
 		}
 
 	  // Need to create the new data table now -- July 1 2007

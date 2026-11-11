@@ -7,7 +7,7 @@ Formulize keeps some working state in files on purpose. It runs on an ordinary L
 | `modules/formulize/temp/` | Entry lock files and lock token files |
 | `modules/formulize/cache/` | Cached data, such as compiled derived value formulas |
 | `cache/` | Cached data, such as linked element option lists |
-| `modules/formulize/code/` | Custom code. See [derived-values-and-custom-code](derived-values-and-custom-code.md). |
+| `modules/formulize/code/` | Custom code, and the text and HTML admins write for static content and form screens. Its `.htaccess` refuses every web request, because a file run on its own would run outside Formulize. See [derived-values-and-custom-code](derived-values-and-custom-code.md). |
 | `modules/formulize/templates/screens/<theme>/<sid>/` | A screen's own templates |
 
 The web server must be able to write to these. `writableFilesAndFolders.json` at the repo root is the full list of what must be writable. See [Writable files and folders](../docs/writable_folders.md).

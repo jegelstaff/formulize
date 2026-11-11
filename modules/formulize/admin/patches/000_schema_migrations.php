@@ -379,7 +379,13 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
         $sql['add_ele_exportoptions'] = "ALTER TABLE ". $xoopsDB->prefix("formulize")." ADD `ele_exportoptions` text NOT NULL";
         $sql['add_fundamental_filters'] = "ALTER TABLE ".$xoopsDB->prefix('formulize_screen_listofentries')." ADD `fundamental_filters` text NOT NULL";
         $sql['add_screen_anonNeedsPasscode'] = "ALTER TABLE ".$xoopsDB->prefix('formulize_screen')." ADD `anonNeedsPasscode` tinyint(1) NOT NULL";
-        $sql['add_navstyle'] = "ALTER TABLE ".$xoopsDB->prefix('formulize_screen_multipage')." ADD `navstyle` tinyint(1) NOT NULL default 0";
+        // navstyle was replaced by showtabs and the button settings in 017_multipage_buttons_and_tabs, which drops it. A
+        // retry of an update that got past 017 runs this again, and adding navstyle back would have 017 convert every
+        // screen a second time, from the default of 0.
+        $navstyleSupersededCheck = $xoopsDB->queryF("SHOW COLUMNS FROM ".$xoopsDB->prefix('formulize_screen_multipage')." LIKE 'showtabs'");
+        if (!$navstyleSupersededCheck OR $xoopsDB->getRowsNum($navstyleSupersededCheck) == 0) {
+            $sql['add_navstyle'] = "ALTER TABLE ".$xoopsDB->prefix('formulize_screen_multipage')." ADD `navstyle` tinyint(1) NOT NULL default 0";
+        }
         $sql['form_screen_elementdefaults'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_form") . " ADD `elementdefaults` text NOT NULL";
         $sql['form_screen_displaycolumns'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_form") . " ADD `displaycolumns` tinyint(1) NOT NULL default 2";
         $sql['form_screen_column1width'] = "ALTER TABLE ".$xoopsDB->prefix("formulize_screen_form") . " ADD `column1width` varchar(255) NULL default NULL";

@@ -394,16 +394,17 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     $multipageOptions['paraentryform'] = $screen->getVar('paraentryform');
     $multipageOptions['paraentryrelationship'] = $screen->getVar('paraentryrelationship');
     $multipageOptions['donedest'] = $screen->getVar('donedest');
-    $multipageOptions['finishisdone'] = $screen->getVar('finishisdone');
-    $navstyle = $screen->getVar('navstyle') ? $screen->getVar('navstyle') : 0;
-    $multipageOptions['navstyletabs'] = ($navstyle == 1 OR $navstyle == 2) ? 'checked' : '';
-    $multipageOptions['navstylebuttons'] = ($navstyle == 0 OR $navstyle == 2) ? 'checked' : '';
-    $multipageOptions['showpageselector'] = $screen->getUIOption('showpageselector') ? 'checked' : '';
-    $multipageOptions['showpageindicator'] = $screen->getUIOption('showpageindicator') ? 'checked' : '';
-    $multipageOptions['showpagetitles'] = $screen->getUIOption('showpagetitles') ? 'checked' : '';
+    // a screen with no done destination of its own sends people back where they came from
+    $multipageOptions['donedestmode'] = trim((string) $screen->getVar('donedest', 'n')) === '' ? 'back' : 'url';
+    foreach(array('showtabs', 'showprevbutton', 'showsavebutton', 'showclosebutton', 'shownextbutton', 'showpageselector', 'showpageindicator', 'showpagetitles') as $uiOption) {
+        $multipageOptions[$uiOption] = $screen->getUIOption($uiOption) ? 'checked' : '';
+    }
+    // a screen with text for its Thank You page always has one - see formulizeHandler::upsertMultiPageScreen()
+    $multipageOptions['thankstextexists'] = !formulize_authoredTextIsEmpty($screen->getVar('thankstext', 'n'));
+    $multipageOptions['showthankspage'] = ($multipageOptions['thankstextexists'] OR !$screen->getVar('finishisdone')) ? 'checked' : '';
     $buttonText = $screen->getVar('buttontext');
-    $multipageOptions['thankyoulinktext'] = is_array($buttonText) ? $buttonText['thankyoulinktext'] : $buttonText;
-    $multipageOptions['thankyoulinktext'] = $multipageOptions['thankyoulinktext'] ? $multipageOptions['thankyoulinktext'] : '';
+    $multipageOptions['thankyoulinktext'] = (is_array($buttonText) AND isset($buttonText['thankyoulinktext'])) ? $buttonText['thankyoulinktext'] : '';
+    $multipageOptions['thankyoulinktext'] = htmlspecialchars(trim((string) $multipageOptions['thankyoulinktext']) !== '' ? $multipageOptions['thankyoulinktext'] : trans(_formulize_DMULTI_CONTINUE)); // goes in a value attribute
     $multipageOptions['prevButtonText'] = (is_array($buttonText) AND $buttonText['prevButtonText']) ? $buttonText['prevButtonText'] : '';
     $multipageOptions['leaveButtonText'] = (is_array($buttonText) AND $buttonText['leaveButtonText']) ? $buttonText['leaveButtonText'] : '';
     $multipageOptions['saveButtonText'] = (is_array($buttonText) AND $buttonText['saveButtonText']) ? $buttonText['saveButtonText'] :  '';
@@ -422,6 +423,9 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
     // stored exactly as typed, so escape once for the textarea, which shows it as it was typed
     $multipageText['introtext'] = htmlspecialchars((string) $screen->getVar('introtext', 'n'));
     $multipageText['thankstext'] = htmlspecialchars((string) $screen->getVar('thankstext', 'n'));
+    // the help names <?php, which has to show as typed
+    $multipageText['introtextdesc'] = htmlspecialchars(_AM_FORMULIZE_SCREEN_INTRO_DESC);
+    $multipageText['thankstextdesc'] = htmlspecialchars(_AM_FORMULIZE_SCREEN_THANKS_DESC);
 
     // template data
     updateMultipageTemplates($screen);

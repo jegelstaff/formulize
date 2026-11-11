@@ -202,11 +202,15 @@ foreach ($keepSuffixes as $suffix) {
 $thisScreen->setVar('pages', serialize(array(0 => $orderedIds)));
 $thisScreen->setVar('pagetitles', serialize(array(0 => _formulize_SIGNUP_ACCOUNT_DETAILS)));
 $thisScreen->setVar('showpagetitles', 1);
-$thisScreen->setVar('navstyle', 3);        // buttons only
+$thisScreen->setVar('showtabs', 0);        // one page, so no tabs
 $thisScreen->setVar('showpageindicator', 2); // off
 $thisScreen->setVar('showpageselector', 2); // off
 
 // One button, labelled for signing up.
+$thisScreen->setVar('showprevbutton', 0);
+$thisScreen->setVar('showsavebutton', 1);
+$thisScreen->setVar('showclosebutton', 0);
+$thisScreen->setVar('shownextbutton', 0);
 $thisScreen->setVar('buttontext', array(
 	'thankyoulinktext' => '',
 	'leaveButtonText' => '',

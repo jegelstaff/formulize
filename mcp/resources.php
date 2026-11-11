@@ -711,10 +711,16 @@ trait resources {
 			'element_id' => $row['ele_id'],
 			'form_id' => $row['id_form']
 		];
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		$elementObject = $element_handler->get($row['ele_id']);
+		// what the element keeps in a file - the content of a static content element, the code of a derived value or
+		// a text box - is blank in the row, and the element object reads it from the file
+		if($elementObject AND is_array($objectEleValue = $elementObject->getVar('ele_value'))) {
+			$row['ele_value'] = $objectEleValue;
+		}
 		// the search interface the element gets in lists, in the vocabulary the element tools accept, as it is in
 		// effect: the one chosen, or the default for this kind of element when none has been chosen
-		$element_handler = xoops_getmodulehandler('elements', 'formulize');
-		if(($elementObject = $element_handler->get($row['ele_id'])) AND $elementObject->hasData) {
+		if($elementObject AND $elementObject->hasData) {
 			$additionalFields['list_search_interface'] = array_search($elementObject->listSearchType(), formulizeHandler::listScreenSearchTypes());
 			$additionalFields['list_search_interface_is_default'] = ((string) ($row['ele_searchtype'] ?? '') === '');
 		}
@@ -724,6 +730,12 @@ trait resources {
 		// Done before anything below alters the row, so it gets the same values as an element object's getValues(null, 'n')
 		if($properties = $this->publicElementProperties($row)) {
 			$additionalFields['properties'] = $properties;
+		}
+		// the settings as Formulize keeps them, for the element types that cannot report them as properties. Named so
+		// they are not taken for the properties the update tools accept, and so the column name means nothing to rely on.
+		if(array_key_exists('ele_value', $row)) {
+			$row['raw_settings'] = $row['ele_value'];
+			unset($row['ele_value']);
 		}
 		// both of these are built by parseSubmittedConditions(), so both are stored as parallel arrays
 		// and both need converting into something readable
@@ -1792,17 +1804,16 @@ That makes the template groups the right place to set and change permissions tha
 							$processedFields[$field] = true;
 						}
 					}
-					// the loop below decodes every text field not marked as processed. A form screen's intro and thanks
-					// text are stored exactly as typed, so they are marked here to keep them out of it.
-					if($row['type'] == 'multiPage') {
-						$processedFields['introtext'] = true;
-						$processedFields['thankstext'] = true;
-					}
 					foreach($screenTypeData as $field=>$value) {
 						if(!isset($processedFields[$field]) AND is_string($value)) {
 							$screenTypeData[$field] = undoAllHTMLChars($value);
 							$processedFields[$field] = true;
 						}
+					}
+					// a form screen's intro and thanks text are not columns, but files, read by the screen object exactly as typed
+					if($row['type'] == 'multiPage' AND $multiPageScreen = xoops_getmodulehandler('multiPageScreen', 'formulize')->get($row['sid'])) {
+						$screenTypeData['introtext'] = (string) $multiPageScreen->getVar('introtext', 'n');
+						$screenTypeData['thankstext'] = (string) $multiPageScreen->getVar('thankstext', 'n');
 					}
 					if($row['type'] == 'listOfEntries') {
 						return $this->listScreenDetails($row, $screenTypeData);

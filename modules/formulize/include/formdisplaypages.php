@@ -156,14 +156,19 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 	if(!$done_dest AND isset($_POST['formulize_doneDest']) AND $_POST['formulize_doneDest']) { $done_dest = $_POST['formulize_doneDest']; } // probably won't ever have these things in post if they're not defined, since the posted values are originally based on what is passed in to this function??
 	if(!$thankYouLinkText AND isset($_POST['formulize_buttonText']) AND $_POST['formulize_buttonText']) { $thankYouLinkText = $_POST['formulize_buttonText']; }
 
-    $thankYouLinkText = $thankYouLinkText ? $thankYouLinkText : _formulize_DMULTI_ALLDONE;
+    $thankYouLinkText = trim((string) $thankYouLinkText) !== '' ? $thankYouLinkText : trans(_formulize_DMULTI_CONTINUE);
+
+    // the labels exactly as the screen has them, before blanks are filled with the standard ones, since whether the
+    // screen has a save and leave tab depends on whether it gave the leave button a label - see formulizeMultipageSaveAndLeaveText
+    $configuredButtonText = $saveAndContinueButtonText;
 
     $settings['formulize_doneDest'] = $done_dest;
     $settings['formulize_buttonText'] = $thankYouLinkText; // formulize_buttonText is some ancient name for the key in POST, and should be re-examined and refactored (or removed? does anything depend on this??)
 
 	list($fid, $frid) = getFormFramework($formframe, $mainform);
 
-	$thankstext = $thankstext ? $thankstext : _formulize_DMULTI_THANKS;
+	// a screen with no thanks text of its own gets a heading and the link to the done destination
+	$thankstext = (is_array($thankstext) OR !formulize_authoredTextIsEmpty($thankstext)) ? $thankstext :"<div class=\"fz-stack\"><h2 class=\"fz-text-2xl fz-font-semibold\">".htmlspecialchars(trans(_formulize_DMULTI_THANKS))."</h2>{thankYouNav}</div>";
 	$introtext = $introtext ? $introtext : "";
 	$mid = getFormulizeModId();
 	$uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
@@ -290,7 +295,19 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 		if($pages[$currentPage][0] !== "HTML" AND $pages[$currentPage][0] !== "PHP") {
 
 			if($currentPage == 1 AND $pages[1][0] !== "HTML" AND $pages[1][0] !== "PHP" AND (!isset($_POST['goto_sfid']) OR !$_POST['goto_sfid'])) { // only show intro text on first page if there's actually a form there
-					print $introtext; // stored exactly as the admin typed it
+					// stored exactly as the admin typed it: HTML is printed, and PHP is run the same way as the thanks text (see multipage_boilerplate.php)
+					if(substr(trim($introtext), 0, 5) == '<?php') {
+						$entry = $entry_id; // the same names the thanks text has
+						$form_id = $fid;
+						try {
+							eval(removeOpeningPHPTag($introtext));
+						} catch (Throwable $e) {
+							error_log("Formulize Error: the intro text of screen ".(is_object($screen) ? $screen->getVar('sid') : 0)." could not run: ".$e->getMessage());
+						}
+						unset($entry);
+					} else {
+						print $introtext;
+					}
 			}
 
 			$forminfo['elements'] = $pages[$currentPage];
@@ -357,7 +374,8 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			// this bar can never disagree about the set (PR #127 review). All this does
 			// with it is turn each slot into markup.
 			$multipageButtonSet = formulize_multipageButtonSet($saveAndContinueButtonText, $usersCanSave, $currentPage,
-				pageIsThanksPageOrEquivalent($nextPage, $currentPage, $thanksPage, $pages, $conditions, $entry_id, $fid, $frid));
+				pageIsThanksPageOrEquivalent($nextPage, $currentPage, $thanksPage, $pages, $conditions, $entry_id, $fid, $frid),
+				formulize_multipageShownButtons($screen));
 			$previousButtonText = isset($multipageButtonSet['prev']) ? $multipageButtonSet['prev'] : '';
 			$saveButtonText = isset($multipageButtonSet['save']) ? $multipageButtonSet['save'] : '';
 			$nextButtonText = isset($multipageButtonSet['next']) ? $multipageButtonSet['next'] : '';
@@ -381,9 +399,9 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 
 			// setting up the basic templateVars for all templates
 			$templateVariables = array(
-					// navstyle - 0 is buttons, 1 is tabs, 2 is tabs and buttons, 3 is nothing at all
-					'previousPageButton' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 3) ? "" : $previousPageButton),
-					'nextPageButton' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 3) ? "" : $nextPageButton),
+					// which buttons are drawn is the screen's showprevbutton etc, already applied by formulize_multipageButtonSet
+					'previousPageButton' => $previousPageButton,
+					'nextPageButton' => $nextPageButton,
 					'savePageButton' => $savePageButton,
 					'closePageButton' => $closePageButton,
 					'totalPages' => $totalPages,
@@ -401,7 +419,7 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 					'usersCanSave' => $usersCanSave,
 					'showpageindicator' => $screen->getUIOption("showpageindicator"),
 					'showpageselector' => $screen->getUIOption("showpageselector"),
-					'showTabs' => (($screen->getVar('navstyle') == 1 OR $screen->getVar('navstyle') == 2) ? true : false)
+					'showTabs' => ($screen->getVar('showtabs') == 1)
 					);
 
 			// the tab strip shows the reachable pages, decided by the same function the
@@ -409,7 +427,7 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			$templateVariables['pageTitles'] = formulize_visibleMultipagePages($pages, $templateVariables['pageTitles'], $conditions, $entry_id, $fid, $frid, $userCanViewPrivateElements);
 			$templateVariables['aboveBelow'] = 'above';
 
-			$templateVariables['saveAndLeave'] = formulizeMultipageSaveAndLeaveText($saveAndContinueButtonText, $originalDoneDest, $single_result, $view_globalscope, $view_groupscope, $done_dest);
+			$templateVariables['saveAndLeave'] = formulizeMultipageSaveAndLeaveText($configuredButtonText, $originalDoneDest, $single_result, $view_globalscope, $view_groupscope, $done_dest);
 			$printableViewButonText = $saveAndContinueButtonText['printableViewButtonText'] ? $saveAndContinueButtonText['printableViewButtonText'] : "{NOBUTTON}";
 			$buttonArray = array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}", 2=>"{NOBUTTON}", 3=>$printableViewButonText);
 			$GLOBALS['formulize_displayingMultipageScreen']['templateVariables'] = $templateVariables;
@@ -436,31 +454,38 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 		// (see the !$elements_only branch above). Published in action bar order as
 		// {slot, text} pairs -- slot being the `name` generatePrevNextButtonMarkup puts
 		// on the full screen button -- so the drawer renders full screen's set rather
-		// than assembling its own from the individual labels. navstyle is NOT applied
-		// here: it is published separately as showNavButtons, and the drawer's one
-		// documented deviation from it (navstyle 3 would strand the user on page one in
-		// a drawer) is applied client side.
-		$navButtonSet = formulize_multipageButtonSet($navButtonText, $usersCanSave, $currentPage, $nextIsThanks);
+		// than assembling its own from the individual labels. The screen's choice of
+		// buttons is applied, exactly as full screen applies it. A second set, with the
+		// paging buttons always in it, is published for the drawer's one documented
+		// deviation: a screen with no tabs and neither paging button would strand the user
+		// on page one in a drawer, so there the drawer shows them anyway (client side).
+		$navShownButtons = formulize_multipageShownButtons($screen);
+		$navButtonSet = formulize_multipageButtonSet($navButtonText, $usersCanSave, $currentPage, $nextIsThanks, $navShownButtons);
 		$navButtons = array();
 		foreach($navButtonSet as $navSlot=>$navSlotText) {
 			$navButtons[] = array('slot'=>$navSlot, 'text'=>trans($navSlotText));
 		}
+		$navPagingButtonSet = formulize_multipageButtonSet($navButtonText, $usersCanSave, $currentPage, $nextIsThanks, array('prev'=>true, 'next'=>true) + $navShownButtons);
+		$navPagingButtons = array();
+		foreach($navPagingButtonSet as $navSlot=>$navSlotText) {
+			$navPagingButtons[] = array('slot'=>$navSlot, 'text'=>trans($navSlotText));
+		}
 		$navPreviousButtonText = isset($navButtonSet['prev']) ? trans($navButtonSet['prev']) : '';
 		$navNextButtonText = isset($navButtonSet['next']) ? trans($navButtonSet['next']) : '';
-		// Which navigation affordances the screen is configured to offer. navstyle is a
-		// single setting with four states: 0 buttons, 1 tabs, 2 tabs and buttons, 3 nothing
-		// at all. Full screen reads it at the top of this function to decide what the
-		// templates draw; publishing it here lets the drawer honour the same configuration
-		// instead of inventing its own navigation.
-		$navStyle = is_object($screen) ? intval($screen->getVar('navstyle')) : 0;
+		// Which navigation affordances the screen is configured to offer: the tabs, and
+		// the paging buttons (Save and Go Back, Save and Continue). Full screen reads the
+		// same settings to decide what the templates draw; publishing them here lets the
+		// drawer honour the same configuration instead of inventing its own navigation.
+		$navShowTabs = is_object($screen) ? ($screen->getVar('showtabs') == 1) : false;
+		$navShowPagingButtons = ($navShownButtons['prev'] OR $navShownButtons['next']);
 		$navVisiblePages = formulize_visibleMultipagePages($pages, $pageTitles, $conditions, $entry_id, $fid, $frid, $userCanViewPrivateElements);
 		$navPages = array();
 		foreach($navVisiblePages as $navPageNumber=>$navPageTitle) {
 			$navPages[] = array('page'=>intval($navPageNumber), 'title'=>trans($navPageTitle));
 		}
 		$navMeta = array(
-			'showTabs'        => ($navStyle == 1 OR $navStyle == 2),
-			'showNavButtons'  => ($navStyle == 0 OR $navStyle == 2),
+			'showTabs'        => $navShowTabs,
+			'showNavButtons'  => $navShowPagingButtons,
 			'pages'           => $navPages,
 			'showPageIndicator' => (bool) (is_object($screen) ? $screen->getUIOption("showpageindicator") : false),
 			'showPageSelector'  => (bool) (is_object($screen) ? $screen->getUIOption("showpageselector") : false),
@@ -475,6 +500,7 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			'entryId'      => (is_numeric($entry_id) ? intval($entry_id) : 0),
 			'pageTitle'    => (isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : ''),
 			'buttons'            => $navButtons,
+			'buttonsWithPaging'  => $navPagingButtons,
 			'previousButtonText' => $navPreviousButtonText,
 			'nextButtonText'     => $navNextButtonText,
 			'pageWord'           => _formulize_DMULTI_PAGE,
@@ -492,8 +518,8 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 		// Recorded rather than printed so the endpoint can publish the entry belonging to
 		// the form it was actually asked to render. Recording it before displayForm runs
 		// is what makes this the version the host sees for a multipage screen.
-		$multipageSaveButtonText = (isset($navButtonText['saveButtonText']) AND $navButtonText['saveButtonText'] AND $usersCanSave) ? trans($navButtonText['saveButtonText']) : null;
-		$multipageCloseButtonText = (isset($navButtonText['closeButtonText']) AND $navButtonText['closeButtonText']) ? trans($navButtonText['closeButtonText']) : null;
+		$multipageSaveButtonText = ($navShownButtons['save'] AND isset($navButtonText['saveButtonText']) AND $navButtonText['saveButtonText'] AND $usersCanSave) ? trans($navButtonText['saveButtonText']) : null;
+		$multipageCloseButtonText = ($navShownButtons['close'] AND isset($navButtonText['closeButtonText']) AND $navButtonText['closeButtonText']) ? trans($navButtonText['closeButtonText']) : null;
 		$multipagePrintableViewText = (isset($navButtonText['printableViewButtonText']) AND $navButtonText['printableViewButtonText']) ? $navButtonText['printableViewButtonText'] : "{NOBUTTON}";
 		$multipagePrintableViewButtons = formulize_resolveFormButtons(
 			array(0=>"{NOBUTTON}", 1=>"{NOBUTTON}", 2=>"{NOBUTTON}", 3=>$multipagePrintableViewText),
@@ -507,7 +533,7 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			// full screen tab. When the screen is not tabbed its previous/finish control
 			// plays that role instead, and the host already has it from the paging
 			// metadata above, so there is nothing extra to offer.
-			'saveAndLeave'  => ($navStyle == 1 OR $navStyle == 2) ? (formulizeMultipageSaveAndLeaveText($saveAndContinueButtonText, $originalDoneDest, $single_result, $view_globalscope, $view_groupscope, $done_dest) ?: null) : null,
+			'saveAndLeave'  => $navShowTabs ? (formulizeMultipageSaveAndLeaveText($configuredButtonText, $originalDoneDest, $single_result, $view_globalscope, $view_groupscope, $done_dest) ?: null) : null,
 			'done'          => $multipageCloseButtonText,
 			'printAction'   => null,
 			'printFields'   => null,
@@ -623,15 +649,14 @@ function pageIsThanksPageOrEquivalent($pageNumber, $activePageNumber, $thanksPag
 	return $pageNumber == $thanksPageNumber ? true : false;
 }
 
-// Resolve the multipage screen's button text settings, falling back to the standard
-// language constants when the screen has no configured button text at all.
-// Note the all-or-nothing fallback is deliberate and matches the historical behaviour:
-// once a screen has a button text array, an empty value in it means "no button".
+// Resolve the multipage screen's button text settings. A label the screen leaves blank
+// gets the standard one from the language constants: whether a button appears at all is
+// up to the screen's showprevbutton, showsavebutton, showclosebutton and shownextbutton
+// settings (see formulize_multipageShownButtons), not its label.
+// The printable view label is the exception. It has no setting of its own, so a blank
+// one still means no printable view button.
 function formulizeMultipageButtonText($saveAndContinueButtonText) {
-    if(is_array($saveAndContinueButtonText)) {
-        return $saveAndContinueButtonText;
-    }
-    return array(
+    $defaults = array(
         'prevButtonText' => trans(_formulize_DMULTI_PREV),
         'leaveButtonText' => trans(_formulize_SAVE_AND_LEAVE),
         'saveButtonText' => trans(_formulize_SAVE),
@@ -639,6 +664,36 @@ function formulizeMultipageButtonText($saveAndContinueButtonText) {
         'nextButtonText' => trans(_formulize_DMULTI_NEXT),
         'printableViewButtonText' => trans(_formulize_PRINTVIEW),
         'closeButtonText' => trans(_formulize_DONE),
+    );
+    if(!is_array($saveAndContinueButtonText)) {
+        return $defaults;
+    }
+    foreach($defaults as $key=>$defaultText) {
+        if($key == 'printableViewButtonText') {
+            continue;
+        }
+        if(!isset($saveAndContinueButtonText[$key]) OR trim((string) $saveAndContinueButtonText[$key]) === '') {
+            $saveAndContinueButtonText[$key] = $defaultText;
+        }
+    }
+    return $saveAndContinueButtonText;
+}
+
+/**
+ * Which of the four action bar buttons a multipage screen is set to show. A call with no
+ * screen, which only very old code makes, shows them all, as it always has.
+ * @param object|null $screen The multipage screen
+ * @return array slot name (prev, save, close, next) => true or false
+ */
+function formulize_multipageShownButtons($screen) {
+    if(!is_object($screen)) {
+        return array('prev'=>true, 'save'=>true, 'close'=>true, 'next'=>true);
+    }
+    return array(
+        'prev'  => $screen->getVar('showprevbutton') == 1,
+        'save'  => $screen->getVar('showsavebutton') == 1,
+        'close' => $screen->getVar('showclosebutton') == 1,
+        'next'  => $screen->getVar('shownextbutton') == 1,
     );
 }
 
@@ -720,8 +775,9 @@ function formulizeMultipageNextButtonText($buttonText, $usersCanSave, $nextIsTha
  *   close - leave without saving
  *   next  - the next-page button, becoming the finish button on the last page
  *
- * A slot with no text is not a button, exactly as generatePrevNextButtonMarkup treats
- * it, and is left out of the returned set.
+ * A slot the screen is set not to show (see formulize_multipageShownButtons) is left out
+ * of the returned set, and so is a slot with no text, exactly as
+ * generatePrevNextButtonMarkup treats it.
  *
  * @param array $buttonText The screen's resolved button text, i.e. the return of
  *                          formulizeMultipageButtonText()
@@ -729,9 +785,11 @@ function formulizeMultipageNextButtonText($buttonText, $usersCanSave, $nextIsTha
  * @param int $currentPage The page being rendered
  * @param bool $nextIsThanksPage Whether the page after this one is (or resolves to)
  *                               the thanks page
+ * @param array|null $shownButtons Which slots the screen shows, the return of
+ *                                 formulize_multipageShownButtons(). Null shows them all.
  * @return array slot name => untranslated button text, in action bar order
  */
-function formulize_multipageButtonSet($buttonText, $usersCanSave, $currentPage, $nextIsThanksPage) {
+function formulize_multipageButtonSet($buttonText, $usersCanSave, $currentPage, $nextIsThanksPage, $shownButtons = null) {
     $slots = array(
         'prev'  => formulizeMultipagePreviousButtonText($buttonText, $currentPage),
         'save'  => (is_array($buttonText) AND isset($buttonText['saveButtonText'])) ? $buttonText['saveButtonText'] : '',
@@ -740,6 +798,7 @@ function formulize_multipageButtonSet($buttonText, $usersCanSave, $currentPage, 
     );
     $set = array();
     foreach($slots as $slot=>$text) {
+        if(is_array($shownButtons) AND empty($shownButtons[$slot])) { continue; }
         // the same two tests generatePrevNextButtonMarkup applies before it emits anything
         if(!$text OR ($slot == 'save' AND !$usersCanSave)) { continue; }
         $set[$slot] = $text;

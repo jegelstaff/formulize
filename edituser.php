@@ -81,12 +81,16 @@ list($pages, $pageTitles, $pageConditions) = $type_handler->traverseScreenPages(
 if(count($pages) == 1) {
 	$thisScreen->setVar('pagetitles', array(0 => _US_EDITPROFILE));
 	$thisScreen->setVar('showpagetitles', 1);
-	$thisScreen->setVar('navstyle', 3); // buttons only
+	$thisScreen->setVar('showtabs', 0); // one page, so no tabs
 	$thisScreen->setVar('showpageindicator', 2); // off
 	$thisScreen->setVar('showpageselector', 2); // off
 }
 
 // limit to the Save button
+$thisScreen->setVar('showprevbutton', 0);
+$thisScreen->setVar('showsavebutton', 1);
+$thisScreen->setVar('showclosebutton', 0);
+$thisScreen->setVar('shownextbutton', 0);
 $thisScreen->setVar('buttontext', array(
 	'thankyoulinktext'=>'',
 	'leaveButtonText'=>'',

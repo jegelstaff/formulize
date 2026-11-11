@@ -410,11 +410,39 @@ define("_AM_FORMULIZE_SCREEN_CONS_HELP", "Les conditions sont très utiles pour 
 define("_AM_FORMULIZE_SCREEN_CONS_NONE", "Toujours afficher cette page");
 define("_AM_FORMULIZE_SCREEN_CONS_PAGE", "Conditions pour afficher cette page");
 define("_AM_FORMULIZE_SCREEN_CONS_YES", "N'afficher que si les conditions suivantes sont réunies:");
-define("_AM_FORMULIZE_SCREEN_DONEDEST", "L' URL du lien que les utilisateurs auront à la fin du formulaire");
 define("_AM_FORMULIZE_SCREEN_FORM", "Créer ou modifier un Screen");
-define("_AM_FORMULIZE_SCREEN_FINISHISDONE", "La page finale du formulaire devrait être...");
-define("_AM_FORMULIZE_SCREEN_FINISHISDONE_THANKSPAGE", "<b>La page de remerciements</b>, vers lequel l'utilisateur va après avoir cliqué le bouton \"Sauver et terminer\" sur la dernière page avec des questions");
-define("_AM_FORMULIZE_SCREEN_FINISHISDONE_FINISHBUTTON", "<b>La dernière page avec des questions</b>, et quand l'utilisateur clique le bouton \"Sauver et terminer\" , il quitte le formulaire");
+// l'onglet Options d'un écran de formulaire
+define("_AM_FORMULIZE_SCREEN_MP_APPEARANCE", "Apparence");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWTABS", "Afficher les onglets de navigation en haut du formulaire");
+define("_AM_FORMULIZE_SCREEN_MP_BUTTONS", "Afficher ces boutons au bas du formulaire :");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWPREVBUTTON", "Enregistrer et revenir");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWSAVEBUTTON", "Enregistrer");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWCLOSEBUTTON", "Fermer");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWNEXTBUTTON", "Enregistrer et continuer");
+define("_AM_FORMULIZE_SCREEN_MP_BUTTONS_DESC", "Sur la première page, Enregistrer et revenir s'appelle Enregistrer et quitter, et quitte le formulaire. Sur la dernière page, Enregistrer et continuer s'appelle Enregistrer et terminer.");
+define("_AM_FORMULIZE_SCREEN_MP_NEXT_FORCED", "Un formulaire qui a une page de remerciement a toujours le bouton Enregistrer et continuer, car c'est ce bouton qui mène à la page de remerciement.");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWPAGEINDICATOR", "Afficher « page 1 de X »");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWPAGESELECTOR", "Afficher la liste déroulante pour choisir une page");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWPAGETITLES", "Afficher le titre de la page en haut du formulaire");
+define("_AM_FORMULIZE_SCREEN_MP_SHOWTHANKSPAGE", "Afficher une page de remerciement à la fin du formulaire");
+define("_AM_FORMULIZE_SCREEN_MP_THANKSPAGE_FORCED", "Ce formulaire a un texte pour sa page de remerciement, dans l'onglet Texte, donc il affiche toujours la page de remerciement. Pour la retirer, videz ce texte.");
+define("_AM_FORMULIZE_SCREEN_MP_BUTTONSTEXT", "Boutons, textes et comportement");
+define("_AM_FORMULIZE_SCREEN_MP_RELOAD_LEGEND", "Après l'enregistrement d'une nouvelle entrée");
+define("_AM_FORMULIZE_SCREEN_MP_RELOAD", "Comment le formulaire doit-il se recharger, une fois qu'une nouvelle entrée a été enregistrée ?");
+define("_AM_FORMULIZE_SCREEN_MP_RELOAD_ENTRY", "Le recharger avec l'entrée que l'utilisateur vient de créer");
+define("_AM_FORMULIZE_SCREEN_MP_RELOAD_BLANK", "Le recharger vide, pour créer une autre entrée");
+define("_AM_FORMULIZE_SCREEN_MP_RELOAD_DESC", "Ne s'applique qu'aux formulaires d'une seule page. Quand l'utilisateur arrive d'une liste d'entrées, ce réglage est ignoré, et c'est le bouton sur lequel il a cliqué qui compte (le bouton Ajouter une entrée ou le bouton Ajouter plusieurs entrées).");
+define("_AM_FORMULIZE_SCREEN_DONEDEST", "Où vont les utilisateurs quand ils quittent ce formulaire ?");
+define("_AM_FORMULIZE_SCREEN_DONEDEST_BACK", "Ils reviennent à la page précédente");
+define("_AM_FORMULIZE_SCREEN_DONEDEST_URL", "Une adresse précise");
+define("_AM_FORMULIZE_SCREEN_DONEDEST_URL_DESC", "Si la dernière page du formulaire a des questions, utilisez l'adresse d'une page de Formulize, sinon les réponses de cette page ne seront pas enregistrées.");
+define("_AM_FORMULIZE_SCREEN_THANKYOULINKTEXT", "Quel est le texte du lien vers la destination finale, sur la page de remerciement ?");
+define("_AM_FORMULIZE_SCREEN_LEAVEBUTTONTEXT", "Texte du bouton Enregistrer et quitter");
+define("_AM_FORMULIZE_SCREEN_PREVBUTTONTEXT", "Texte du bouton Enregistrer et revenir");
+define("_AM_FORMULIZE_SCREEN_SAVEBUTTONTEXT", "Texte du bouton Enregistrer");
+define("_AM_FORMULIZE_SCREEN_CLOSEBUTTONTEXT", "Texte du bouton Fermer");
+define("_AM_FORMULIZE_SCREEN_NEXTBUTTONTEXT", "Texte du bouton Enregistrer et continuer");
+define("_AM_FORMULIZE_SCREEN_FINISHBUTTONTEXT", "Texte du bouton Enregistrer et terminer");
 define("_AM_FORMULIZE_SCREEN_INSERTPAGE", "Insérer une nouvelle page ici");
 define("_AM_FORMULIZE_SCREEN_INTRO", "Texte en introduction pour la première page du formulaire");
 define("_AM_FORMULIZE_SCREEN_LOE_ADDCUSTOMBUTTON", "Ajouter un bouton personnalisé");
@@ -615,7 +643,10 @@ define("_AM_FORMULIZE_SCREEN_PRINTALL_NONE", "Non, et pas non plus l'habituel bo
 define("_AM_FORMULIZE_SCREEN_PRINTALL_Y", "Oui"); //nmc 2007.03.24
 define("_AM_FORMULIZE_SCREEN_SAVE", "Sauvegarder cet écran");
 define("_AM_FORMULIZE_SCREEN_SAVED", "Les détails pour cet écran ont été sauvés dans la base de données");
-define("_AM_FORMULIZE_SCREEN_THANKS", "Texte de remerciement pour la dernière page de ce formulaire");
+define("_AM_FORMULIZE_SCREEN_THANKS", "Texte de la page de remerciement à la fin de ce formulaire");
+// l'aide sous les deux zones de l'onglet Texte d'un écran de formulaire. Affichée comme du texte, donc le <?php s'affiche tel quel.
+define("_AM_FORMULIZE_SCREEN_INTRO_DESC", "Du HTML affiché au-dessus des questions de la première page. Pour utiliser du PHP, commencez par <?php sur la première ligne, et affichez avec print ce qui doit apparaître. En PHP, \$entry_id est le numéro de l'entrée.");
+define("_AM_FORMULIZE_SCREEN_THANKS_DESC", "Du HTML affiché sur la page de remerciement. Mettez {thankYouNav} là où doit se trouver le lien vers la destination finale. Pour utiliser du PHP, commencez par <?php sur la première ligne, et affichez avec print ce qui doit apparaître. En PHP, \$entry_id est le numéro de l'entrée, et \$thankYouNav est le lien. Tant qu'il y a du texte ici, le formulaire affiche toujours la page de remerciement. Laissez vide pour une page de remerciement simple, avec le lien.");
 define("_AM_FORMULIZE_SCREEN_TITLE", "Titre de cet écran");
 define("_AM_FORMULIZE_SCREEN_TYPE", "Type: ");
 define("_AM_FORMULIZE_SELECT_FRAMEWORK", "Inter-relation utilisé sur cet écran, s'il y en a un");

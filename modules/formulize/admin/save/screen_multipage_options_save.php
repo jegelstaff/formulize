@@ -42,7 +42,9 @@ $screens = $processedValues['screens'];
 
 
 $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-$screen = $screen_handler->get($sid);
+if(!$screen = $screen_handler->get($sid)) {
+  return; // no such form screen
+}
 
 // CHECK IF THE FORM IS LOCKED DOWN AND SCOOT IF SO
 $form_handler = xoops_getmodulehandler('forms', 'formulize');
@@ -66,16 +68,8 @@ $buttonText = array(
 		'closeButtonText'=>$_POST['closeButtonText']
 );
 
-$navstyle = 1;
-if($_POST['navstyletabs'] == 1 AND $_POST['navstylebuttons'] == 1) {
-    $navstyle = 2;
-} elseif($_POST['navstyletabs'] != 1 AND $_POST['navstylebuttons'] != 1) {
-    $navstyle = 3; // show nothing!
-} elseif($_POST['navstyletabs'] == 1 AND $_POST['navstylebuttons'] != 1) {
-    $navstyle = 1;
-} elseif($_POST['navstyletabs'] != 1 AND $_POST['navstylebuttons'] == 1) {
-    $navstyle = 0;
-}
+// "Back to the previous page" is no done destination of the screen's own: Formulize works out where the user came from
+$donedest = (isset($_POST['donedestmode']) AND $_POST['donedestmode'] == 'url' AND isset($screens['donedest'])) ? trim((string) $screens['donedest']) : '';
 
 $column1width = null;
 if(isset($_POST['singlecolumn1width']) AND isset($screens['displaycolumns']) AND $screens['displaycolumns'] == 1) {
@@ -102,17 +96,23 @@ if(isset($_POST['formorder']) AND trim($_POST['formorder']) !== "") {
 $properties = array(
     'paraentryform' => $screens['paraentryform'],
     'paraentryrelationship' => $screens['paraentryrelationship'],
-    'donedest' => $screens['donedest'],
+    'donedest' => $donedest,
     'buttontext' => $buttonText, // plain array; upsert serializes it
     'printall' => $screens['printall'],
-    'finishisdone' => $screens['finishisdone'],
-    'navstyle' => $navstyle,
+    // a screen with thanks text, or one whose Thank You page is on, always ends on the Thank You page, and has the
+    // Save and Continue button - the upsert makes sure of both
+    'finishisdone' => !empty($_POST['showthankspage']) ? 0 : 1,
     'displaycolumns' => isset($screens['displaycolumns']) ? $screens['displaycolumns'] : 2,
     'column1width' => $column1width,
     'column2width' => isset($screens['column2width']) ? $screens['column2width'] : null,
-    'showpagetitles' => $screens['showpagetitles'] ? 1 : 0,
-    'showpageindicator' => $screens['showpageindicator'] ? 1 : 0,
-    'showpageselector' => $screens['showpageselector'] ? 1 : 0,
+    'showtabs' => !empty($screens['showtabs']) ? 1 : 0,
+    'showprevbutton' => !empty($screens['showprevbutton']) ? 1 : 0,
+    'showsavebutton' => !empty($screens['showsavebutton']) ? 1 : 0,
+    'showclosebutton' => !empty($screens['showclosebutton']) ? 1 : 0,
+    'shownextbutton' => !empty($screens['shownextbutton']) ? 1 : 0,
+    'showpagetitles' => !empty($screens['showpagetitles']) ? 1 : 0,
+    'showpageindicator' => !empty($screens['showpageindicator']) ? 1 : 0,
+    'showpageselector' => !empty($screens['showpageselector']) ? 1 : 0,
     'elementdefaults' => isset($screens['elementdefaults']) ? $screens['elementdefaults'] : "",
     'reloadblank' => $screens['reloadblank'],
 );

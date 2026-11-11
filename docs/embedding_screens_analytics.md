@@ -179,8 +179,8 @@ one listener on `document` covers every screen on your page.
 ## Things to know
 
 **Forms without a thank-you page never send `formulize:completed`, or `form_submit`.** These are
-multi-page forms where **The final page of the form should be** is set to *The last page with
-questions*. When the visitor clicks Save and Finish, they leave the form straight away. To count
+forms where **Show a Thank You page at the end of the form** is not checked, on the screen's
+Options tab. When the visitor clicks Save and Finish, they leave the form straight away. To count
 those visitors, listen for `formulize:saved` with `newEntry` set to `true`.
 
 **Started means the visitor changed something.** Many forms put the cursor in their first field

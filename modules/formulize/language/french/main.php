@@ -489,7 +489,7 @@ define("_formulize_DELETE_CHECKED", "Supprimer ce qui est sélectionné");
 define("_formulize_DELETECONFIRM", "Cochez cette boîte ainsi que le bouton effacer");
 define("_formulize_DLHEADER", "Votre fichier est pret à être téléchargé.");
 define("_formulize_DLTEXT", "<b>Cliquez droit sur le lien suivant et sélectionnez <i>Sauvegarde</i>.</b> (Ctrl-click sur Mac.)  Une fois le fichier sauvegardé sur votre ordinateur, vous pourrez l'ouvrir avec un logiciel tableur. Si les champs ne s'alignent pas proprement lorque vous ouvre le fichier, tentez d'exporter avec un délimitateur différent.");
-define("_formulize_DMULTI_ALLDONE", "Quitter le formulaire et continuer de naviguer sur le site");
+define("_formulize_DMULTI_CONTINUE", "Continuer");
 define("_formulize_DMULTI_JUMPTO", "Sauter à la page");
 define("_formulize_DMULTI_NEXT", "Enregistrer et continuer");
 define("_formulize_DMULTI_OF", "de");
@@ -497,7 +497,7 @@ define("_formulize_DMULTI_PAGE", "Page");
 define("_formulize_DMULTI_PREV", "Revenir");
 define("_formulize_DMULTI_SAVE", "Enregistrer et Terminer");
 define("_formulize_DMULTI_SKIP", "Une ou plusieurs pages furent sautées car elles ne s'appliquent pas");
-define("_formulize_DMULTI_THANKS", "<h1>Vous y êtes arrivés!</h1><p>Merci d'avoir pris le temps.  Nous apprécions beaucoup.</p>{thankYouNav}");
+define("_formulize_DMULTI_THANKS", "Merci !"); // le titre de la page de remerciement, quand l'écran n'a pas de texte de remerciement à lui
 define("_formulize_DMULTI_YOUAREON", "Vous êtes à la page:");
 define("_formulize_DONE", "Fini");
 define("_formulize_exfile", "données_exportees_");

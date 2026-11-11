@@ -579,6 +579,12 @@ class formulizeScreenHandler {
 
 	function delete($sid, $type) {
 		self::$typedScreenHandoff = null;
+		// a form screen's intro and thanks text are files named for its handle, so the handle is needed before the row goes
+		$screenHandle = '';
+		if($type == 'multiPage' AND $handleResult = $this->db->query("SELECT screen_handle FROM ".$this->db->prefix("formulize_screen")." WHERE sid=".intval($sid))) {
+			$handleRow = $this->db->fetchArray($handleResult);
+			$screenHandle = $handleRow ? (string) $handleRow['screen_handle'] : '';
+		}
  		$sql1 ="DELETE FROM " . $this->db->prefix("formulize_screen") . " WHERE sid=" . intval($sid);
 		$sql2 = "DELETE FROM " . $this->db->prefix("formulize_screen_".strtolower($type)) . " WHERE sid=" . intval($sid);
 		if(!$result = $this->db->query($sql1)) {
@@ -588,6 +594,9 @@ class formulizeScreenHandler {
 			return false;
 		}
 		$this->deleteTemplateFiles($sid);
+		if($screenHandle !== '') {
+			xoops_getmodulehandler('multiPageScreen', 'formulize')->deleteTextFiles($screenHandle);
+		}
 		return true;
 	}
 
