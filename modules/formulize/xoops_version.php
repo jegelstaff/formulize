@@ -513,7 +513,16 @@ $modversion['table_metadata'] = array(
         "fields" => array("gl_name"),
         "joins" => array()
     ),
-    "formulize_other" => array(),
+    "formulize_other" => array(
+        "fields" => array("id_req"),
+        "joins" => array(
+            array(
+                "join_table" => "formulize",
+                "join_field" => array("ele_id", "ele_id"),
+                "field" => "ele_caption"
+            )
+        )
+    ),
     "formulize_notification_conditions" => array(
         "fields" => array(),
         "joins" => array(

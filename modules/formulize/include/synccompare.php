@@ -154,6 +154,10 @@ class SyncCompareCatalog {
                 $newRecord = array();
                 for ($i = 0; $i < count((array) $record); $i++) {
 									$field = $fields[$i];
+									// Other values are matched by entry and element, so their ids can differ between the two systems
+									if ($tableName == "formulize_other" AND $field == "other_id") {
+										continue;
+									}
 									$value = $this->cleanEncoding($record[$i]);
 									$dbValue = $this->cleanEncoding($dbRecord[$field]);
 									if ($dbValue != $value) {
@@ -463,6 +467,9 @@ class SyncCompareCatalog {
     private function getRecord($tableName, $record, $fields) {
         if($tableName == "formulize_entry_owner_groups") {
             $result = $this->db->query('SELECT * FROM '.prefixTable($tableName).' WHERE fid='.intval($record[array_search("fid", $fields)]).' AND entry_id = '.intval($record[array_search("entry_id", $fields)]).' AND groupid = '.intval($record[array_search("groupid", $fields)]).';');
+        } elseif($tableName == "formulize_other") {
+            // an Other value belongs to an entry and an element, the same way it is found when saving an entry
+            $result = $this->db->query('SELECT * FROM '.prefixTable($tableName).' WHERE id_req = '.intval($record[array_search("id_req", $fields)]).' AND ele_id = '.intval($record[array_search("ele_id", $fields)]).' LIMIT 0,1;');
         } else {
             $primaryField = $this->getPrimaryField($tableName);
             $recPrimaryValue = $record[array_search($primaryField, $fields)];
@@ -576,6 +583,11 @@ class SyncCompareCatalog {
             unset($fields[array_search("owner_id", $fields)]);
             unset($record['owner_id']);
         }
+        // the target system gives a new Other value its own id, since ids can differ between the two systems
+        if($tableName == "formulize_other") {
+            unset($fields[array_search("other_id", $fields)]);
+            unset($record['other_id']);
+        }
 
         $sql = 'INSERT INTO '.prefixTable($tableName).' (`'.join("`, `", $fields).'`) VALUES (';
 
@@ -615,6 +627,9 @@ class SyncCompareCatalog {
         if(strstr($tableName, "formulize_entry_owner_groups")) {
             unset($record['owner_id']);
         }
+        if($tableName == "formulize_other") {
+            unset($record['other_id']);
+        }
 
         if($tableName == "formulize") {
             // get the current name, then update the field
@@ -646,6 +661,8 @@ class SyncCompareCatalog {
         // add the where clause to specify which record to update
         if(strstr($tableName, "formulize_entry_owner_groups")) {
             $sql .= ' WHERE fid='.intval($record['fid']).' AND entry_id='.intval($record['entry_id']).';';
+        } elseif($tableName == "formulize_other") {
+            $sql .= ' WHERE id_req='.intval($record['id_req']).' AND ele_id='.intval($record['ele_id']).';';
         } else {
             $primaryField = $this->getPrimaryField($tableName);
             $recPrimaryValue = $record[$primaryField];
