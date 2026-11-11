@@ -225,7 +225,8 @@ Each screen has an **Appearance** tab, between **Settings** and **Relationships*
 - **Introductory text** is shown above the screen: instructions, or anything people should read
   first. It is all shown, however long it is. In a list it sits above the entries, and scrolls away
   as people scroll down to them, leaving the column headings at the top. Write it in the rich text
-  editor, or choose **Edit as code** to write the HTML yourself. If you have changed the screen's
+  editor, or choose **Edit as code**, at the end of the editor's toolbar, to write the HTML yourself.
+  **Edit as rich text**, under the code, goes back to the editor. If you have changed the screen's
   templates, it shows only where one of your templates has `$introductoryText`. Template screens
   don't have it, since their template is the whole screen.
 - **Templates**, on the sub-tab beside the options, are the screen's templates. Template screens keep

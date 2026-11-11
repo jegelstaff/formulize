@@ -672,7 +672,8 @@ if ($screen_id != "new") {
     $appearance['siteLook'] = '';
     $appearance['editorUrl'] = '';
     $appearance['usesWidth'] = false;
-    if ($appearanceTheme AND formulize_themeSupportsAppearance($appearanceTheme)) {
+    $appearance['usesLooks'] = ($appearanceTheme AND formulize_themeSupportsAppearance($appearanceTheme));
+    if ($appearance['usesLooks']) {
         $looks = formulize_getAppearanceLooks($appearanceTheme);
         $siteLook = formulize_getAppearanceSiteLook($appearanceTheme);
         // every look, as the Looks tab has them: each under the look it is based on, indented. The site

@@ -1252,7 +1252,7 @@ define("_AM_SCREEN_APPEARANCE_WIDTH_FULL", "Use full screen width");
 define("_AM_SCREEN_APPEARANCE_WIDTH_DESC", "How wide this screen can get on a large screen. A list often needs the full width for its columns.");
 define("_AM_SCREEN_APPEARANCE_NOTHEME", "The site's theme doesn't use Looks or a page width, so there is nothing to choose here.");
 define("_AM_SCREEN_APPEARANCE_INTRO", "Introductory text");
-define("_AM_SCREEN_APPEARANCE_INTRO_DESC", "Shown above the screen's content: instructions, or anything else people should read first. Leave it empty for none. If you have changed this screen's templates, put <code>\$introductoryText</code> in a template where you want it to appear. To lay it out with <a href='".XOOPS_URL."/modules/formulize/styleguide.php' target='_blank'>Formulize UI</a> classes, such as a callout, edit it as code: the rich text editor keeps its own formatting, not classes.");
+define("_AM_SCREEN_APPEARANCE_INTRO_DESC", "Shown above the screen's content: instructions, or anything else people should read first. Leave it empty for none. If you have changed this screen's templates, put <code>\$introductoryText</code> in a template where you want it to appear. To lay it out with <a href='".XOOPS_URL."/modules/formulize/styleguide.php' target='_blank'>Formulize UI</a> classes, such as a callout, choose Edit as code at the end of the editor's toolbar: the rich text editor keeps its own formatting, not classes.");
 define("_AM_SCREEN_APPEARANCE_INTRO_CODE", "Edit as code");
 define("_AM_SCREEN_APPEARANCE_INTRO_RICH", "Edit as rich text");
 define("_AM_SCREEN_APPEARANCE_INTRO_TORICH_CONFIRM", "The rich text editor may change or remove some of the code, such as classes, styles and some tags. Switch to rich text anyway?");

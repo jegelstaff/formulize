@@ -17,7 +17,8 @@
   <fieldset>
     <legend><{$smarty.const._AM_SCREEN_APPEARANCE_LOOK_LEGEND}></legend>
 
-    <{if $content.looks|@count > 1}>
+    <{* shown with only the one look as well, so the link to the editor is there, and the Looks tab is named *}>
+    <{if $content.usesLooks}>
     <div class="form-item">
       <label for="screens-look"><{$smarty.const._AM_SCREEN_APPEARANCE_LOOK}></label>
       <select id="screens-look" name="screens-look" data-site-look="<{$content.siteLook}>">
@@ -35,7 +36,7 @@
     <{/if}>
 
     <{if $content.usesWidth}>
-    <{if $content.looks|@count > 1}><br><{/if}>
+    <{if $content.usesLooks}><br><{/if}>
     <div class="form-item">
       <label for="screens-pagewidth-look"><{$smarty.const._AM_SCREEN_APPEARANCE_WIDTH}></label>
       <div class="form-radios">
@@ -48,7 +49,7 @@
     </div>
     <{/if}>
 
-    <{if $content.looks|@count <= 1 AND !$content.usesWidth}>
+    <{if !$content.usesLooks AND !$content.usesWidth}>
     <p><{$smarty.const._AM_SCREEN_APPEARANCE_NOTHEME}></p>
     <{/if}>
   </fieldset>
@@ -58,12 +59,11 @@
     <legend><{$smarty.const._AM_SCREEN_APPEARANCE_INTRO}></legend>
     <div class="form-item">
       <div class="description"><{$smarty.const._AM_SCREEN_APPEARANCE_INTRO_DESC}></div>
-      <p><button type="button" id="formulize-screen-intro-toggle"
-        data-to-code="<{$smarty.const._AM_SCREEN_APPEARANCE_INTRO_CODE}>"
-        data-to-rich="<{$smarty.const._AM_SCREEN_APPEARANCE_INTRO_RICH}>"
-        data-confirm="<{$smarty.const._AM_SCREEN_APPEARANCE_INTRO_TORICH_CONFIRM}>"></button></p>
       <input type="hidden" id="screens-toptextcode" name="screens-toptextcode" value="<{$content.toptextcode}>">
-      <textarea id="screens-toptext" name="screens-toptext" rows="10" style="width: 100%;"><{$content.toptext}></textarea>
+      <textarea id="screens-toptext" name="screens-toptext" rows="10" style="width: 100%;" data-to-code="<{$smarty.const._AM_SCREEN_APPEARANCE_INTRO_CODE}>"><{$content.toptext}></textarea>
+      <{* Under the code editor, which draws itself straight after the textarea. The rich text editor has its own button, in its toolbar. *}>
+      <p id="formulize-screen-intro-torich" style="display: none;"><button type="button"
+        data-confirm="<{$smarty.const._AM_SCREEN_APPEARANCE_INTRO_TORICH_CONFIRM}>"><{$smarty.const._AM_SCREEN_APPEARANCE_INTRO_RICH}></button></p>
     </div>
   </fieldset>
   <{/if}>
@@ -126,18 +126,55 @@ $(document).ready(function() {
   // The introductory text is edited in the rich text editor, or as code. The editor keeps only the
   // markup it understands, so text saved as code opens as code, and is never put through the editor
   // unless someone asks for that. Whichever is in use keeps the textarea up to date, since the textarea
-  // is what the Save button sends.
+  // is what the Save button sends. The rich text editor switches to code with a button at the end of its
+  // toolbar, and the code editor switches back with the button under it.
+  // CKEditor's own Source button isn't used: it isn't in our build, and leaving it puts the code through
+  // the editor, which is what editing as code avoids.
   var textarea = document.getElementById('screens-toptext');
   if (!textarea) {
     return;
   }
   var modeField = $('#screens-toptextcode');
-  var toggle = $('#formulize-screen-intro-toggle');
+  var toRich = $('#formulize-screen-intro-torich');
+  var toRichButton = toRich.find('button');
   var richEditor = null;
   var codeEditor = null;
 
   function markUnsaved() {
     setDisplay('savewarning', 'block');
+  }
+
+  // The toolbar button. A plugin can't import CKEditor's button class from the prebuilt build, so it
+  // borrows the class from one of the editor's own buttons.
+  function editAsCodeButton(editor) {
+    editor.ui.componentFactory.add('formulizeEditAsCode', function(locale) {
+      var ButtonView = editor.ui.componentFactory.create('bold').constructor;
+      var button = new ButtonView(locale);
+      button.set({
+        label: textarea.getAttribute('data-to-code'),
+        withText: true,
+        tooltip: false,
+        'class': 'formulize-intro-edit-as-code'
+      });
+      button.on('execute', function() {
+        setTimeout(switchToCode, 0); // after the editor has finished handling the click
+      });
+      return button;
+    });
+  }
+
+  function switchToCode() {
+    if (!richEditor) {
+      return;
+    }
+    var editor = richEditor;
+    var markup = editor.getData();
+    richEditor = null;
+    editor.destroy().then(function() {
+      textarea.value = markup;
+      startCode();
+      markUnsaved();
+    });
   }
 
   function startCode() {
@@ -158,7 +195,7 @@ $(document).ready(function() {
     codemirrors.push(codeEditor); // refreshed with the admin UI's others, when the tab is shown
     codeEditor.refresh();
     modeField.val(1);
-    toggle.text(toggle.attr('data-to-rich'));
+    toRich.show();
   }
 
   function startRich() {
@@ -167,8 +204,14 @@ $(document).ready(function() {
       return;
     }
     modeField.val(0);
-    toggle.text(toggle.attr('data-to-code'));
-    ClassicEditor.create(textarea).then(function(editor) {
+    toRich.hide();
+    ClassicEditor.create(textarea, {
+      extraPlugins: [editAsCodeButton],
+      toolbar: {
+        items: ClassicEditor.defaultConfig.toolbar.items.concat(['|', 'formulizeEditAsCode']),
+        shouldNotGroupWhenFull: true // wrap, so the button isn't hidden in the overflow menu
+      }
+    }).then(function(editor) {
       richEditor = editor;
       editor.model.document.on('change:data', function() {
         textarea.value = editor.getData();
@@ -180,18 +223,9 @@ $(document).ready(function() {
     });
   }
 
-  toggle.bind('click', function() {
-    if (richEditor) {
-      var editor = richEditor;
-      var markup = editor.getData();
-      richEditor = null;
-      editor.destroy().then(function() {
-        textarea.value = markup;
-        startCode();
-        markUnsaved();
-      });
-    } else if (codeEditor) {
-      if (!confirm(toggle.attr('data-confirm'))) {
+  toRichButton.bind('click', function() {
+    if (codeEditor) {
+      if (!confirm(toRichButton.attr('data-confirm'))) {
         return false;
       }
       codeEditor.save();

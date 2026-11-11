@@ -74,11 +74,17 @@ async function openAppearanceTab(page, sid) {
 // Write a screen's introductory text as code, and save the tab
 async function saveIntroductoryText(page, sid, html) {
 	await openAppearanceTab(page, sid);
-	const toggle = page.locator('#formulize-screen-intro-toggle');
-	if (await toggle.textContent() === 'Edit as code') {
-		await toggle.click();
+	// opens in whichever editor the text was saved in: the rich text editor has the button at the end of its toolbar
+	const toCode = page.locator('.ck-toolbar').getByRole('button', { name: 'Edit as code' });
+	const toRich = page.getByRole('button', { name: 'Edit as rich text' });
+	await expect(toCode.or(toRich)).toBeVisible();
+	if (await toCode.isVisible()) {
+		await toCode.click();
 	}
-	await expect(toggle).toHaveText('Edit as rich text');
+	// the way back is under the code editor
+	await expect(toRich).toBeVisible();
+	await expect(toCode).toHaveCount(0);
+	expect((await toRich.boundingBox()).y).toBeGreaterThan((await page.locator('.CodeMirror').first().boundingBox()).y);
 	await setCodeMirrorValue(page, 'textarea[name="screens-toptext"]', html);
 	await saveAdminForm(page);
 }
@@ -142,7 +148,7 @@ test.describe("A screen's Appearance tab", () => {
 
 		// kept as written, and opens as code again
 		await openAppearanceTab(page, screens.listOfEntries);
-		await expect(page.locator('#formulize-screen-intro-toggle')).toHaveText('Edit as rich text');
+		await expect(page.getByRole('button', { name: 'Edit as rich text' })).toBeVisible();
 		expect(dbQuery(`SELECT toptextcode FROM ${dbPrefix()}_formulize_screen WHERE sid = ${screens.listOfEntries}`)[0][0]).toBe('1');
 	});
 });
