@@ -1797,9 +1797,11 @@ export async function openElementSettings(page, handle, tab) {
 export async function removeConditions(page, open, deleteLinks) {
 	await open(page);
 	while (await page.locator(deleteLinks).count() > 0) {
+		// The click has its own timeout, shorter than the navigation's, so a click that can't land fails with the reason
+		// Playwright gives, ie: another element intercepts it, rather than with the navigation that never came
 		await Promise.all([
 			page.waitForNavigation({ waitUntil: 'networkidle', timeout: 120000 }),
-			page.locator(deleteLinks).first().click(),
+			page.locator(deleteLinks).first().click({ timeout: 30000 }),
 		]);
 		await open(page);
 	}
