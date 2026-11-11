@@ -1,0 +1,17 @@
+# This folder holds what administrators write in Formulize: form procedures, derived value formulas, the content of
+# static content elements, and the intro and thanks text of form screens. Formulize reads and runs these files itself.
+# Nothing here is meant to be requested from a browser, and a file requested directly would run on its own, outside
+# Formulize, or show content meant only for some people. So every request for anything in this folder is refused.
+#
+# nginx and some other servers ignore .htaccess files. See docs/deploying_a_website.md for the rule to add there.
+
+# Apache 2.4
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+
+# Apache 2.2
+<IfModule !mod_authz_core.c>
+    Order Deny,Allow
+    Deny from all
+</IfModule>
