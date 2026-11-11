@@ -9,7 +9,8 @@ const { webContainer } = require('../../docker-containers');
 // The Options tab has a checkbox for each of the four buttons at the bottom of the form, and one for the Thank You
 // page. A Thank You page holds the Save and Continue button on, since that is how users reach it, and text written
 // for the Thank You page turns the page on. The link on the Thank You page says Continue unless the admin says
-// otherwise. When the screen has no done destination of its own, users go back where they came from.
+// otherwise. When the screen has no done destination of its own, users go back where they came from. A screen set to
+// reload blank waits until after the Thank You page, which is still about the entry just saved, new or edited.
 //
 // The intro and thanks text are kept in files in modules/formulize/code/, named for the screen's handle, and so is
 // the content of a static content element, HTML as well as PHP. A file moves when the screen's handle changes, and
@@ -30,6 +31,9 @@ const INTRO = '<?php\nprint "<p id=\'bt-intro\'>The intro ran " . (1 + 1) . " ti
 const INTRO_SEEN = 'The intro ran 2 times';
 const THANKS = '<div id="bt-thanks">All done here.</div>{thankYouNav}';
 const RENAMED_HANDLE = 'bt_renamed_form_screen';
+const NOTE_HANDLE = 'bt_note';
+// thanks text that says which entry the Thank You page is about
+const THANKS_WITH_ENTRY = '<?php\nprint "<div id=\'bt-entry\'>" . (is_numeric($entry_id) ? intval($entry_id) : "none") . "</div>" . $thankYouNav;';
 
 let fid = 0;
 let formSid = 0;
@@ -112,6 +116,16 @@ test('Build a form with static content, and let the end user see it', async ({ p
 	await saveAdminForm(page);
 	await expect(page.getByRole('heading')).toContainText('Static content');
 
+	// a box to type in, so that finishing the form saves an entry
+	await page.goto(`/modules/formulize/admin/ui.php?page=form&fid=${fid}&tab=elements`);
+	await waitForAdminPageReady(page);
+	await addElementForm(page, ElementType.text);
+	await waitForAdminPageReady(page);
+	await page.locator('input[name="elements-ele_caption"]').fill('Note');
+	await page.locator('input[name="elements-ele_handle"]').fill(NOTE_HANDLE);
+	await saveAdminForm(page);
+	await expect(page.getByRole('heading')).toContainText('Note');
+
 	// HTML is kept in the element's file, like code, and not in the database
 	expect(codeFile(`fullWidthContent_${CONTENT_HANDLE}.php`), 'the content is in its file').toBe(CONTENT);
 	const [storedEleValue] = dbQuery(`SELECT ele_value FROM ${dbPrefix()}_formulize WHERE ele_handle = '${CONTENT_HANDLE}'`)[0];
@@ -128,11 +142,13 @@ test('Build a form with static content, and let the end user see it', async ({ p
 	const group = page.getByRole('group', { name: END_USER_GROUP });
 	await group.locator('input[name$="_view_form"]').first().check();
 	await group.locator('input[name$="_add_own_entry"]').first().check();
+	await group.locator('input[name$="_update_own_entry"]').first().check();
 	await saveAdminForm(page);
 	await page.goto(permissionsTab);
 	await showPermissionsFor(page, [END_USER_GROUP]);
 	await expect(group.locator('input[name$="_view_form"]').first()).toBeChecked();
 	await expect(group.locator('input[name$="_add_own_entry"]').first()).toBeChecked();
+	await expect(group.locator('input[name$="_update_own_entry"]').first()).toBeChecked();
 });
 
 test('A new form screen has tabs, Save and Close, and no Thank You page', async ({ page, browser }) => {
@@ -238,6 +254,55 @@ test('The text files move with the screen\'s handle', async ({ page }) => {
 	await openText(page);
 	expect(await editorValue(page, 'screens-thankstext')).toBe(THANKS);
 	expect(await editorValue(page, 'screens-introtext')).toBe(INTRO);
+});
+
+test('With reload blank, the Thank You page still knows the entry just saved, new or edited', async ({ page, browser }) => {
+	test.setTimeout(180000);
+	await login(page, 'admin');
+	await openOptions(page);
+	await page.locator('#blank').check();
+	await saveAdminForm(page);
+	await openOptions(page);
+	await expect(page.locator('#blank')).toBeChecked();
+
+	await openText(page);
+	await setCodeMirrorValue(page, 'textarea[name="screens-thankstext"]', THANKS_WITH_ENTRY);
+	await saveAdminForm(page);
+	await openOptions(page);
+	await expect(page.locator('#showthankspage')).toBeChecked();
+
+	const [formHandle] = dbQuery(`SELECT form_handle FROM ${dbPrefix()}_formulize_id WHERE id_form = ${fid}`)[0];
+	const entryWithNote = (note) => {
+		const rows = dbQuery(`SELECT entry_id FROM ${dbPrefix()}_formulize_${formHandle.replace(/[^A-Za-z0-9_]/g, '')} WHERE ${NOTE_HANDLE} = '${sqlEscape(note)}'`);
+		return rows.length ? rows[0][0] : '';
+	};
+
+	let newEntryId = '';
+	await asEndUser(browser, async userPage => {
+		await userPage.getByRole('textbox', { name: 'Note' }).fill('A new entry');
+		await finishForm(userPage);
+		await expect.poll(() => entryWithNote('A new entry'), 'the entry was saved').not.toBe('');
+		newEntryId = entryWithNote('A new entry');
+		await expect(userPage.locator('#bt-entry')).toHaveText(newEntryId);
+		await leavePage(userPage);
+	});
+
+	// the same entry, opened again and changed
+	const context = await browser.newContext();
+	const userPage = await context.newPage();
+	try {
+		await login(userPage, END_USER);
+		await userPage.goto(`/modules/formulize/index.php?sid=${formSid}&ve=${newEntryId}`);
+		const note = userPage.getByRole('textbox', { name: 'Note' });
+		await expect(note).toHaveValue('A new entry');
+		await note.fill('An edited entry');
+		await finishForm(userPage);
+		await expect(userPage.locator('#bt-entry')).toHaveText(newEntryId);
+		expect(entryWithNote('An edited entry'), 'the edit went to the same entry').toBe(newEntryId);
+		await leavePage(userPage);
+	} finally {
+		await context.close();
+	}
 });
 
 test('Emptying the text removes its files, and the Thank You page can be turned off again', async ({ page, browser }) => {

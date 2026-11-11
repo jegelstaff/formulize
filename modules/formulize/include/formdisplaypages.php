@@ -130,7 +130,14 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 		global $xoopsUser;
 		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 
-    if(count((array) $pages) == 1 AND $screen) {
+    // a request going to the Thank You page is still about the entry just saved, so reload blank waits until after it,
+    // and the thanks text gets that entry's id
+    $headingToThanksPage = (!$elements_only
+        AND isset($_POST['formulize_currentPage'])
+        AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))
+        AND intval($_POST['formulize_currentPage']) == count((array) $pages) + 1);
+
+    if(count((array) $pages) == 1 AND $screen AND !$headingToThanksPage) {
 			$reloadblank = isset($_POST['originalReloadBlank']) ? $_POST['originalReloadBlank'] : $screen->getVar('reloadblank');
 			// figure out the form's properties...
 			// if it's more than one entry per user, and we have requested reload blank, then override multi is 0, otherwise 1
