@@ -473,24 +473,7 @@ function groupBySession($entries, $timezoneOffset = 0) {
                 $cacheKey = $formId . '_' . $entryId;
 
                 if(!isset($entryCache[$cacheKey])) {
-                    $form = $form_handler->get($formId);
-                    if($form && ($principalIdentifierElementId = $form->getVar('pi'))) {
-                        include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
-                        $data_handler = new formulizeDataHandler($formId);
-                        $element_handler = xoops_getmodulehandler('elements', 'formulize');
-
-                        if($principalIdentifierValue = $data_handler->getElementValueInEntry($entryId, $principalIdentifierElementId)) {
-                            $principalIdentifierElementObject = $element_handler->get($principalIdentifierElementId);
-                            $principalIdentifierHandle = $principalIdentifierElementObject->getVar('ele_handle');
-                            include_once XOOPS_ROOT_PATH . "/modules/formulize/include/elementdisplay.php";
-                            $principalIdentifierValueArray = prepvalues($principalIdentifierValue, $principalIdentifierHandle, $entryId);
-                            $entryCache[$cacheKey] = (isset($principalIdentifierValueArray[0]) ? $principalIdentifierValueArray[0] : '');
-                        } else {
-                            $entryCache[$cacheKey] = '';
-                        }
-                    } else {
-                        $entryCache[$cacheKey] = '';
-                    }
+                    $entryCache[$cacheKey] = formulize_getPrincipalIdentifierValue($formId, $entryId);
                 }
                 $enrichedEvent['entry_descriptor'] = $entryCache[$cacheKey];
             }

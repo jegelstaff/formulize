@@ -514,7 +514,7 @@ $modversion['table_metadata'] = array(
         "joins" => array()
     ),
     "formulize_other" => array(
-        "fields" => array("id_req"),
+        "fields" => array(), // the entry, id_req, is named by SyncCompareCatalog::getRecMetadata()
         "joins" => array(
             array(
                 "join_table" => "formulize",
