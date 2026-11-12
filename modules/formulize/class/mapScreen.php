@@ -107,7 +107,7 @@ class formulizeMapScreenHandler extends formulizeScreenHandler {
             'fid' => $formObject->getVar('fid'),
             'frid' => -1,
             'type' => 'map',
-            'theme' => $xoopsConfig['theme_set'],
+            'theme' => formulize_storedSiteTheme(),
             'columns' => serialize(array()),
             'fundamental_filters' => serialize(array()),
             'filter_button_text' => _AM_MAP_FILTER_BUTTON_DEFAULT,

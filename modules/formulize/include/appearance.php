@@ -1595,9 +1595,11 @@ function formulize_getAppearancePreviewScreens($theme = null) {
  *
  * @param string $screen a screen key, eg: 'form'
  * @param string|null $theme theme folder name, defaults to the active theme
+ * @param string|null $logoTheme the theme whose logo to show, to see the sample
+ *                               with another theme's logo; defaults to the theme's own
  * @return string the markup, or '' if the theme has no such sample
  */
-function formulize_renderAppearancePreview($screen, $theme = null) {
+function formulize_renderAppearancePreview($screen, $theme = null, $logoTheme = null) {
     global $xoopsConfig;
     $theme = formulize_resolveAppearanceTheme($theme);
     $screens = formulize_getAppearancePreviewScreens($theme);
@@ -1606,9 +1608,10 @@ function formulize_renderAppearancePreview($screen, $theme = null) {
     }
     $dir = formulize_getAppearancePreviewDir($theme);
     $html = (string) file_get_contents($dir . '/' . $screen . '.html');
-    $logo = formulize_getAppearanceLogoUrl($theme);
+    $logoTheme = $logoTheme ? formulize_resolveAppearanceTheme($logoTheme) : $theme;
+    $logo = formulize_getAppearanceLogoUrl($logoTheme);
     $values = array(
-        'logo_url' => htmlspecialchars($logo ? $logo : XOOPS_URL . '/themes/' . $theme . '/images/logo.png', ENT_QUOTES),
+        'logo_url' => htmlspecialchars($logo ? $logo : XOOPS_URL . '/themes/' . $logoTheme . '/images/logo.png', ENT_QUOTES),
         'site_name' => htmlspecialchars(isset($xoopsConfig['sitename']) ? $xoopsConfig['sitename'] : '', ENT_QUOTES),
     );
     for ($depth = 0; $depth < 4; $depth++) {
@@ -1834,6 +1837,51 @@ function formulize_saveAppearanceUploads($submitted, $theme, &$errors, $only = n
         }
     }
     return $submitted;
+}
+
+/**
+ * Give some of a theme's looks a logo or favicon that is already on the server,
+ * such as the one another theme shows: the file is copied into the theme's
+ * appearance folder, named the way an uploaded one is (see
+ * formulize_saveAppearanceUploads), and set on each look that has none of its
+ * own yet.
+ *
+ * @param string $setting the image's setting: 'appearance_logo' or 'appearance_favicon'
+ * @param string $sourceFile the path of the image file
+ * @param string $theme theme folder name
+ * @param array $lookKeys the looks to give the image to
+ * @return string '' when done, or what went wrong
+ */
+function formulize_adoptAppearanceImage($setting, $sourceFile, $theme, $lookKeys) {
+    $uploads = formulize_appearanceUploads();
+    if (!isset($uploads[$setting])) {
+        return '';
+    }
+    $upload = $uploads[$setting];
+    $looks = formulize_getAppearanceLooks($theme);
+    $lookKeys = array_values(array_filter($lookKeys, function ($key) use ($looks, $setting) {
+        return isset($looks[$key]) AND empty($looks[$key]['settings'][$setting]);
+    }));
+    if (!$lookKeys) {
+        return '';
+    }
+    $mimeType = is_file($sourceFile) ? mime_content_type($sourceFile) : '';
+    if (!isset($upload['types'][$mimeType])) {
+        return sprintf(_AM_APPEARANCE_UPLOAD_WRONG_TYPE, $upload['noun'], $upload['typesLabel']);
+    }
+    $appearanceDir = formulize_prepareAppearanceDir($theme);
+    $fileName = $upload['filePrefix'] . time() . '-' . bin2hex(random_bytes(4)) . '.' . $upload['types'][$mimeType];
+    if (!$appearanceDir OR !copy($sourceFile, $appearanceDir . '/' . $fileName)) {
+        return sprintf(_AM_APPEARANCE_UPLOAD_NOT_MOVED, $upload['noun'], formulize_getAppearanceDir($theme));
+    }
+    foreach ($lookKeys as $key) {
+        $looks[$key]['settings'][$setting] = $fileName;
+    }
+    if ($error = formulize_saveAppearanceLooks($theme, $looks)) {
+        unlink($appearanceDir . '/' . $fileName);
+        return $error;
+    }
+    return '';
 }
 
 /**

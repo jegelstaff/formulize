@@ -211,10 +211,18 @@ if(isset($_POST['themeswitch']) AND $_POST['themeswitch'] AND isset($_GET['sid']
     $screen_handler->insert($screen);
     // a template screen has no default templates to fall back on, so it takes its own along to a theme where it
     // has none yet
-    if($screen->getVar('type') == 'template') {
-        $template_screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
-        if(!$template_screen_handler->copyTemplatesToTheme($screen, $previousTheme, $_POST['themeswitch'])) {
-            print "<p>Error: could not copy the screen's code and template from the ".htmlspecialchars($previousTheme)." theme.</p>";
+    if($screen->getVar('type') == 'template' AND !$screen_handler->copyTemplateFilesToTheme($screen, $previousTheme, $_POST['themeswitch'])) {
+        print "<p>Error: could not copy the screen's code and template from the ".htmlspecialchars($previousTheme)." theme.</p>";
+    }
+}
+
+// copy the screen's own templates from another theme, into the theme the Templates tab is showing, where the
+// screen has none yet
+if(isset($_POST['copytemplatesfrom']) AND $_POST['copytemplatesfrom'] AND isset($_GET['sid']) AND isset(formulize_selectableThemesList()[$_POST['copytemplatesfrom']])) {
+    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+    if($screen = $screen_handler->get($_GET['sid'])) {
+        if(!$screen_handler->copyTemplateFilesToTheme($screen, $_POST['copytemplatesfrom'], $screen->getVar('theme'))) {
+            print "<p>".sprintf(_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FAILED, htmlspecialchars($_POST['copytemplatesfrom']))."</p>";
         }
     }
 }

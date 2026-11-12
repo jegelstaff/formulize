@@ -198,7 +198,7 @@ function make_data(&$dbm, &$cm, $adminname, $adminlogin_name, $adminpass, $admin
 	$regdate = time();
 	//$dbadminname= addslashes($adminname);
 	// RMV-NOTIFY (updated for extra columns in user table)
-	$dbm->insert('users', " VALUES (1,'','".addslashes($adminname)."','".addslashes($adminmail)."','".XOOPS_URL."/','blank.gif','".$regdate."','','','',0,'','','','','".$temp."',0,0,7,5,'iTheme','0.0',".time().",'thread',0,2,0,'','','','0','".addslashes($language)."', '', '".addslashes($adminsalt)."', 0, 0, 1, '".addslashes($adminlogin_name)."')");
+	$dbm->insert('users', " VALUES (1,'','".addslashes($adminname)."','".addslashes($adminmail)."','".XOOPS_URL."/','blank.gif','".$regdate."','','','',0,'','','','','".$temp."',0,0,7,5,'Lyris','0.0',".time().",'thread',0,2,0,'','','','0','".addslashes($language)."', '', '".addslashes($adminsalt)."', 0, 0, 1, '".addslashes($adminlogin_name)."')");
 
 	// data for table 'block_module_link'
 
@@ -235,10 +235,10 @@ function make_data(&$dbm, &$cm, $adminname, $adminlogin_name, $adminpass, $admin
 	$dbm->insert('config', " VALUES (" . ++$i . ", 0, $c, 'server_TZ', '_MD_AM_SERVERTZ', '0', '_MD_AM_SERVERTZDSC', 'timezone', 'float', " . $p++ . ")");
 	$dbm->insert('config', " VALUES (" . ++$i . ", 0, $c, 'default_TZ', '_MD_AM_DEFAULTTZ', '0', '_MD_AM_DEFAULTTZDSC', 'timezone', 'float', " . $p++ . ")");
 	$dbm->insert('config', " VALUES (" . ++$i . ", 0, $c, 'use_ext_date', '_MD_AM_EXT_DATE', '"._EXT_DATE_FUNC."', '_MD_AM_EXT_DATEDSC', 'yesno', 'int', " . $p++ . ")");
-	$dbm->insert('config', " VALUES (" . ++$i . ", 0, $c, 'theme_set', '_MD_AM_DTHEME', 'iTheme', '_MD_AM_DTHEMEDSC', 'theme', 'other', " . $p++ . ")");
-	$dbm->insert('config', " VALUES (" . ++$i . ", 0, $c, 'theme_admin_set', '_MD_AM_ADMIN_DTHEME', 'iTheme', '_MD_AM_ADMIN_DTHEME_DESC', 'theme_admin', 'other', " . $p++ . ")");
+	$dbm->insert('config', " VALUES (" . ++$i . ", 0, $c, 'theme_set', '_MD_AM_DTHEME', 'Lyris', '_MD_AM_DTHEMEDSC', 'theme', 'other', " . $p++ . ")");
+	$dbm->insert('config', " VALUES (" . ++$i . ", 0, $c, 'theme_admin_set', '_MD_AM_ADMIN_DTHEME', 'Lyris', '_MD_AM_ADMIN_DTHEME_DESC', 'theme_admin', 'other', " . $p++ . ")");
 	$dbm->insert('config', " VALUES (" . ++$i . ", 0, $c, 'theme_fromfile', '_MD_AM_THEMEFILE', '0', '_MD_AM_THEMEFILEDSC', 'yesno', 'int', " . $p++ . ")");
-	$dbm->insert('config', " VALUES (" . ++$i . ", 0, $c, 'theme_set_allowed', '_MD_AM_THEMEOK', '".serialize(array('iTheme'))."', '_MD_AM_THEMEOKDSC', 'theme_multi', 'array', " . $p++ . ")");
+	$dbm->insert('config', " VALUES (" . ++$i . ", 0, $c, 'theme_set_allowed', '_MD_AM_THEMEOK', '".serialize(array('Lyris', 'Anari'))."', '_MD_AM_THEMEOKDSC', 'theme_multi', 'array', " . $p++ . ")");
 	$dbm->insert('config', " VALUES (" . ++$i . ", 0, $c, 'template_set', '_MD_AM_DTPLSET', 'default', '_MD_AM_DTPLSETDSC', 'tplset', 'other', " . $p++ . ")");
 	$dbm->insert('config', " VALUES (" . ++$i . ", 0, $c, 'editor_default', '_MD_AM_EDITOR_DEFAULT', 'dhtmltextarea', '_MD_AM_EDITOR_DEFAULT_DESC', 'editor', 'text', " . $p++ . ")");
 	$dbm->insert('config', " VALUES (" . ++$i . ", 0, $c, 'editor_enabled_list', '_MD_AM_EDITOR_ENABLED_LIST', '".addslashes(serialize(array('dhtmltextarea', 'FCKeditor', 'tinymce')))."', '_MD_AM_EDITOR_ENABLED_LIST_DESC', 'editor_multi', 'array', " . $p++ . ")");

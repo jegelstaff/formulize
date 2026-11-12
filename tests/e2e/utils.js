@@ -1577,6 +1577,65 @@ export function restoreSiteTheme(state) {
 	}
 }
 
+/**
+ * Choose the site's theme, and the theme webmasters see, on Admin > Appearance > Settings, and save, the way an
+ * administrator does. Saving a new site theme also moves every user, and every screen, to it, which
+ * setSiteThemeInDb() doesn't do. Call it signed in as a webmaster.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} site the theme pages are shown in (theme_set)
+ * @param {string} admin the theme webmasters are shown (theme_admin_set)
+ */
+export async function chooseSiteThemes(page, site, admin) {
+	const settingsUrl = '/modules/formulize/admin/ui.php?page=appearance&view=settings';
+	await page.goto(settingsUrl);
+	await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
+	await page.locator('#theme_set').selectOption(site);
+	await page.locator('#theme_admin_set').selectOption(admin);
+	await Promise.all([
+		page.waitForURL(/page=appearance/),
+		page.getByRole('button', { name: 'Save your changes' }).click(),
+	]);
+	await page.goto(settingsUrl);
+	await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
+	await expect(page.locator('#theme_set')).toHaveValue(site);
+	await expect(page.locator('#theme_admin_set')).toHaveValue(admin);
+}
+
+/**
+ * Check which theme the page is shown in: Lyris's pages are a .lyris-app, Anari's a .site-layout, and each links
+ * its own stylesheets.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} theme 'Lyris' or 'Anari'
+ */
+export async function expectSiteTheme(page, theme) {
+	await page.goto('/modules/formulize/application.php');
+	const marker = { Lyris: '.lyris-app', Anari: '.site-layout' }[theme];
+	if (marker) {
+		await expect(page.locator(marker).first()).toBeAttached();
+	}
+	await expect(page.locator(`link[rel="stylesheet"][href*="/themes/${theme}/"]`).first()).toBeAttached();
+	for (const other of ['Lyris', 'Anari'].filter(t => t !== theme)) {
+		await expect(page.locator(`link[rel="stylesheet"][href*="/themes/${other}/"]`)).toHaveCount(0);
+	}
+}
+
+/**
+ * Set the stored database version on the Set Database Version page. Use it only to make a patch run again on a
+ * site where every other patch has already run (see ai-context/update-patches.md).
+ * @param {import('@playwright/test').Page} page
+ * @param {number} version
+ * @returns {Promise<number>} the version the installed code requires, as that page says it
+ */
+export async function setDBVersion(page, version) {
+	await page.goto('/modules/formulize/admin/ui.php?op=setDBVersion');
+	const required = (await page.locator('body').innerText()).match(/Version required by the code currently installed:\s*(\d+)/);
+	expect(required, 'the page says what version the code requires').not.toBeNull();
+	await page.locator('input[name="newDBVersion"]').fill(String(version));
+	await page.getByRole('button', { name: 'Set Database Version' }).click();
+	await expect(page.locator('body')).toContainText(`to ${version}.`);
+	return parseInt(required[1], 10);
+}
+
 export const LYRIS_LOOKS_URL = '/modules/formulize/admin/ui.php?page=appearance&view=looks&theme=Lyris';
 
 /**

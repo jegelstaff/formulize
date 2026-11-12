@@ -123,8 +123,7 @@ function formulize_pwaPath($url) {
  */
 function formulize_pwaSiteTheme() {
     include_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
-    $systemConfig = icms::$config->getConfigsByCat(ICMS_CONF);
-    return formulize_resolveAppearanceTheme(isset($systemConfig['theme_set']) ? $systemConfig['theme_set'] : '');
+    return formulize_resolveAppearanceTheme(formulize_storedSiteTheme());
 }
 
 /**

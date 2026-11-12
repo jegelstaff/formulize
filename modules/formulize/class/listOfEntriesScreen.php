@@ -521,7 +521,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 				'fid' => $formObject->getVar('fid'),
 				'frid' => -1,
 				'type' => 'listOfEntries',
-				'theme' => $xoopsConfig['theme_set'],
+				'theme' => formulize_storedSiteTheme(),
 				// the list's content: columns, custom buttons and filters. ARRAY-typed vars with no non-null initVar default
 				'advanceview' => serialize(array()),
 				'hiddencolumns' => serialize(array()),

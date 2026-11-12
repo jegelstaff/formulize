@@ -31,7 +31,7 @@ title: Updating Formulize
 
 4. Login to your website _with a webmaster account_.
 
-5. _If a database and configuration update is required,_ you will be redirected to the admin side where you can click a button to apply the update. __Backup your files and database before applying updates__. If you are _not_ directed automatically to the admin side then there's nothing more to do.
+5. _If a database and configuration update is required,_ you will be redirected to the admin side where you can click a button to apply the update. __Backup your files and database before applying updates__. If you are _not_ directed automatically to the admin side then there's nothing more to do. If your site uses the Anari theme, the update asks you about switching to Lyris before it runs. See [Switching your site to Lyris](/documentation/switching_to_lyris/).
 
 6. Celebrate a succesful upgrade! 🎉
 

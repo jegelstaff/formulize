@@ -1375,3 +1375,121 @@ define("_AM_SITEMENU_JS_NEEDS_TARGET", "Choose the form or screen that %s goes t
 define("_AM_SITEMENU_JS_NEEDS_URL", "Type the URL that %s goes to, then save your changes."); // %s is the link's name
 define("_AM_SITEMENU_JS_NEW_LINK", "the new link");
 define("_AM_SITEMENU_JS_DELETE_CONFIRM", "Delete the link \"%s\" from the menu?");
+// Changing the site's theme, and the Templates tab for each theme
+define("_AM_FORMULIZE_SITE_THEME_NOT_INSTALLED", "The %s theme isn't installed, so the site can't use it.");
+define("_AM_FORMULIZE_SITE_THEME_NOT_SAVED", "The theme settings could not be saved. Try again on Admin > Appearance > Settings.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FROM", "Copy this screen's templates from %s");
+define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_DESC", "This screen has templates of its own in another theme. You can start from a copy of them. They keep that theme's markup, which this theme may not style completely.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FAILED", "The screen's templates could not be copied from the %s theme. Check that the web server can write to the modules/formulize/templates/screens folder.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATES_NOT_SITE_THEME", "Your site uses %1\$s. These are this screen's %2\$s templates, which are only used where %2\$s is the theme.");
+
+// The update page
+define("_AM_FORMULIZE_UPDATE_TOKEN_FAILED", "The update didn't run, because the page had expired. Nothing has changed.");
+define("_AM_FORMULIZE_UPDATE_TOKEN_RETRY", "Go back to the update page");
+
+// The 8.30 update's questions about Lyris
+define("_AM_FORMULIZE_LYRIS_TITLE", "Update Formulize");
+define("_AM_FORMULIZE_LYRIS_UPDATE_BUTTON", "Update Formulize");
+define("_AM_FORMULIZE_LYRIS_INTRO", "Formulize now comes with a new theme, Lyris. Before the update runs, you can choose whether your site switches to it. Nothing changes until you click <b>Update Formulize now</b> at the end.");
+define("_AM_FORMULIZE_LYRIS_INTRO_ADMIN", "Formulize now comes with a new theme, Lyris. Before the update runs, you can choose whether webmasters see the site in it. Nothing changes until you click <b>Update Formulize now</b> at the end.");
+define("_AM_FORMULIZE_LYRIS_STEP_THEME", "Formulize has a new theme");
+define("_AM_FORMULIZE_LYRIS_STEP_THEME_INTRO", "Lyris is the new standard theme. It works well on phones, opens entries in a drawer beside the list, and its colours, fonts and logo can all be set in Appearance. Anari will still work, and you can switch at any time.");
+define("_AM_FORMULIZE_LYRIS_PREVIEW_ANARI", "Anari, the theme your site uses now");
+define("_AM_FORMULIZE_LYRIS_PREVIEW_ANARI_ADMIN", "Anari, the theme webmasters see now");
+define("_AM_FORMULIZE_LYRIS_PREVIEW_LYRIS", "Lyris, the new theme");
+define("_AM_FORMULIZE_LYRIS_PREVIEW_SHOW", "Show:");
+define("_AM_FORMULIZE_LYRIS_CHOICE_LEGEND", "What would you like to do?");
+define("_AM_FORMULIZE_LYRIS_CHOICE_SWITCH", "Switch my site to Lyris");
+define("_AM_FORMULIZE_LYRIS_CHOICE_SWITCH_DESC", "Everyone sees the site in Lyris.");
+define("_AM_FORMULIZE_LYRIS_CHOICE_TRY", "Try Lyris myself first");
+define("_AM_FORMULIZE_LYRIS_CHOICE_TRY_DESC", "Webmasters see the site in Lyris, and everyone else still sees Anari, until you switch the site.");
+define("_AM_FORMULIZE_LYRIS_CHOICE_KEEP", "Keep Anari for now");
+define("_AM_FORMULIZE_LYRIS_CHOICE_KEEP_DESC", "The site stays as it is. You can switch later.");
+define("_AM_FORMULIZE_LYRIS_CHOICE_ADMIN", "Use Lyris for webmasters");
+define("_AM_FORMULIZE_LYRIS_CHOICE_ADMIN_DESC", "Webmasters see the site in Lyris. Your site's own theme stays the theme everyone else sees.");
+define("_AM_FORMULIZE_LYRIS_CHOICE_KEEP_ADMIN", "Keep the current theme for webmasters");
+define("_AM_FORMULIZE_LYRIS_CHOICE_KEEP_ADMIN_DESC", "Webmasters keep seeing Anari. You can change this later.");
+define("_AM_FORMULIZE_LYRIS_CHOICE_REQUIRED", "Choose one of these to go on.");
+define("_AM_FORMULIZE_LYRIS_STEP_LOOK", "How Lyris looks");
+define("_AM_FORMULIZE_LYRIS_STEP_LOOK_INTRO", "Choose the look Lyris starts with: its colours and fonts.");
+define("_AM_FORMULIZE_LYRIS_LOOK_LEGEND", "Looks");
+define("_AM_FORMULIZE_LYRIS_USE_LOGO", "Use your current logo in Lyris");
+define("_AM_FORMULIZE_LYRIS_USE_ICON", "Use your current browser icon in Lyris");
+define("_AM_FORMULIZE_LYRIS_USE_LOGO_AND_ICON", "Use your current logo and browser icon in Lyris");
+define("_AM_FORMULIZE_LYRIS_USE_ICON_ALT", "Your current browser icon");
+define("_AM_FORMULIZE_LYRIS_USE_LOGO_ALT", "Your current logo");
+define("_AM_FORMULIZE_LYRIS_STEP_LOOK_LATER", "You can change the look and the logo any time, in Appearance.");
+define("_AM_FORMULIZE_LYRIS_STEP_SETTINGS", "Lyris's screen settings");
+define("_AM_FORMULIZE_LYRIS_STEP_SETTINGS_INTRO", "New screens start with these settings in Lyris. These screens still have the settings they started with in their theme, and you can switch them to Lyris's. The drawer works in any theme.");
+define("_AM_FORMULIZE_LYRIS_STEP_SETTINGS_LATER", "Unchecked screens keep the settings they have. You can change any screen's settings later.");
+define("_AM_FORMULIZE_LYRIS_STEP_TEMPLATES", "Screens with their own templates");
+define("_AM_FORMULIZE_LYRIS_STEP_TEMPLATES_INTRO", "These screens have custom templates in the theme they use now. Checked screens get a copy of their templates for Lyris. The copies keep the old theme's markup, which Lyris may not style completely. Unchecked screens use Lyris's standard templates.");
+define("_AM_FORMULIZE_LYRIS_SELECT_ALL", "Select all");
+define("_AM_FORMULIZE_LYRIS_SELECT_NONE", "Select none");
+define("_AM_FORMULIZE_LYRIS_STEP_TEMPLATES_LATER", "Any screen's templates can be copied later, on its Templates tab.");
+define("_AM_FORMULIZE_LYRIS_STEP_SUMMARY", "Ready to update");
+define("_AM_FORMULIZE_LYRIS_STEP_SUMMARY_INTRO", "The update will make these changes, as well as everything else it does:");
+define("_AM_FORMULIZE_LYRIS_STEP_SUMMARY_BACKUP", "The update makes changes to your database and files. Back up your site before you go on.");
+define("_AM_FORMULIZE_LYRIS_AFTER_TITLE", "After the update");
+define("_AM_FORMULIZE_LYRIS_AFTER_SWITCH", "Look around your site in Lyris. Check the screens that have custom templates, and change your look in Appearance > Looks if you want to. To switch back, go to Appearance > Settings.");
+define("_AM_FORMULIZE_LYRIS_AFTER_TRY", "Look around your site in Lyris. Everyone else still sees Anari. When you're ready, set the default theme to Lyris in Appearance > Settings.");
+define("_AM_FORMULIZE_LYRIS_AFTER_ADMIN", "Look around your site in Lyris. Everyone else still sees your site's own theme. You can change the theme webmasters see in Appearance > Settings.");
+define("_AM_FORMULIZE_LYRIS_AFTER_KEEP", "To switch to Lyris later, go to Appearance > Settings. To try it first, change only the admin theme there.");
+define("_AM_FORMULIZE_LYRIS_SCREEN_WHERE", "%1\$s: %2\$s"); // %1$s is the application, %2$s is the form
+
+// The labels for Lyris's screen settings, offered in the update. A setting is offered only if it has a label here,
+// for its value (..._<TYPE>_<SETTING>_<VALUE>), or for any value, with the value in %s (..._<TYPE>_<SETTING>)
+define("_AM_FORMULIZE_LYRIS_SETTING_LISTOFENTRIES_EDITDESTINATION_DRAWER", "Open entries in the drawer");
+define("_AM_FORMULIZE_LYRIS_SETTING_LISTOFENTRIES_USESEARCH_2", "Hide the search boxes until they're opened");
+define("_AM_FORMULIZE_LYRIS_SETTING_LISTOFENTRIES_ENTRIESPERPAGE", "Show %s entries per page");
+define("_AM_FORMULIZE_LYRIS_SETTING_MULTIPAGE_DISPLAYCOLUMNS_1", "Put labels above fields");
+
+// What the update did, in its results
+define("_AM_FORMULIZE_LYRIS_APPLY_NO_LYRIS", "The Lyris theme isn't installed, so nothing was changed about it.");
+define("_AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_DONE", "Copied the templates of %s screens for Lyris.");
+define("_AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_DONE_ONE", "Copied the templates of 1 screen for Lyris.");
+define("_AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_FAILED", "Could not copy the templates of the screen \"%1\$s\" from the %2\$s theme. Check that the web server can write to the modules/formulize/templates/screens folder, and run the update again.");
+define("_AM_FORMULIZE_LYRIS_APPLY_SETTINGS_DONE", "Gave %s screens Lyris's screen settings.");
+define("_AM_FORMULIZE_LYRIS_APPLY_SETTINGS_DONE_ONE", "Gave 1 screen Lyris's screen settings.");
+define("_AM_FORMULIZE_LYRIS_APPLY_SETTINGS_FAILED", "Could not change the settings of the screen \"%s\". Run the update again.");
+define("_AM_FORMULIZE_LYRIS_APPLY_IMAGES_DONE", "Lyris now shows the logo and browser icon you brought along.");
+define("_AM_FORMULIZE_LYRIS_APPLY_SCREENS_FAILED", "Could not set every screen's theme to Lyris. Run the update again.");
+define("_AM_FORMULIZE_LYRIS_APPLY_SWITCHED", "Your site now uses Lyris.");
+define("_AM_FORMULIZE_LYRIS_APPLY_ADMIN_SWITCHED", "Webmasters now see the site in Lyris.");
+define("_AM_FORMULIZE_LYRIS_APPLY_NOTHING_CHOSEN", "Nothing was changed about the theme. A webmaster can switch to Lyris in Appearance > Settings.");
+
+// What to do after the update
+define("_AM_FORMULIZE_LYRIS_NEXT_TITLE", "What to do next");
+define("_AM_FORMULIZE_LYRIS_NEXT_SWITCHED_LOOK", "<a href='%s'>Look around your site</a> in Lyris.");
+define("_AM_FORMULIZE_LYRIS_NEXT_SWITCHED_TEMPLATES", "These screens have custom templates that weren't copied, so they use Lyris's standard templates. You can copy them on each screen's Templates tab:");
+define("_AM_FORMULIZE_LYRIS_NEXT_LOOKS", "Change Lyris's colours, fonts and logo in <a href='%s'>Appearance > Looks</a>.");
+define("_AM_FORMULIZE_LYRIS_NEXT_SWITCHED_BACK", "To switch back to Anari, change the default theme and the admin theme in <a href='%s'>Appearance > Settings</a>.");
+define("_AM_FORMULIZE_LYRIS_NEXT_TRY", "Webmasters now see the site in Lyris, and everyone else still sees Anari.");
+define("_AM_FORMULIZE_LYRIS_NEXT_TRY_READY", "When you're ready, set the default theme to Lyris in <a href='%s'>Appearance > Settings</a>.");
+define("_AM_FORMULIZE_LYRIS_NEXT_ADMIN", "Webmasters now see the site in Lyris, and everyone else still sees your site's own theme.");
+define("_AM_FORMULIZE_LYRIS_NEXT_ADMIN_BACK", "To change the theme webmasters see, change the admin theme in <a href='%s'>Appearance > Settings</a>.");
+define("_AM_FORMULIZE_LYRIS_NEXT_KEEP", "To switch to Lyris later, change the default theme and the admin theme in <a href='%s'>Appearance > Settings</a>. To try it first, change only the admin theme.");
+define("_AM_FORMULIZE_LYRIS_NEXT_KEEP_TEMPLATES", "You can prepare templates for Lyris ahead of time, on any screen's Templates tab.");
+define("_AM_FORMULIZE_LYRIS_NEXT_DOCS", "Read more about <a href='%s' target='_blank'>switching to Lyris</a>.");
+
+// Words for the update's questions, in the page's script
+define("_AM_FORMULIZE_JS_LYRIS_CANCEL", "Cancel");
+define("_AM_FORMULIZE_JS_LYRIS_BACK", "Back");
+define("_AM_FORMULIZE_JS_LYRIS_NEXT", "Next");
+define("_AM_FORMULIZE_JS_LYRIS_UPDATE", "Update Formulize now");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_SWITCH", "Your site switches to Lyris.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_TRY", "Webmasters see the site in Lyris. Everyone else still sees Anari.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_ADMIN", "Webmasters see the site in Lyris. Everyone else still sees your site's own theme.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_KEEP", "The themes stay as they are.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_LOOK", "Lyris starts with the %s look.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_LOGO", "Lyris shows your current logo.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_ICON", "Lyris shows your current browser icon.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_LOGO_AND_ICON", "Lyris shows your current logo and browser icon.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_SETTINGS", "%s screens get Lyris's screen settings.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_SETTINGS_ONE", "1 screen gets Lyris's screen settings.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_SETTINGS_NONE", "Every screen keeps its settings.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_TEMPLATES", "%s screens get copies of their templates for Lyris.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_TEMPLATES_ONE", "1 screen gets a copy of its templates for Lyris.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_TEMPLATES_NONE", "No screen gets a copy of its templates for Lyris.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_TEMPLATE_SCREENS", "%s template screens get copies of their code and template for Lyris, since they have nothing else to use there.");
+define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_TEMPLATE_SCREENS_ONE", "1 template screen gets a copy of its code and template for Lyris, since it has nothing else to use there.");

@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, waitForAdminPageReady } from '../../utils';
+import { login, waitForAdminPageReady, chooseSiteThemes, expectSiteTheme } from '../../utils';
 
 test.describe('Installation of Formulize', () => {
 	test('Run the Installer', async ({ page }) => {
@@ -63,9 +63,17 @@ test.describe('Installation of Formulize', () => {
 		await expect(page.locator('h2')).toContainText('Installation completed');
 		await expect(page.getByRole('button', { name: 'Show my site' })).toBeVisible();
   	await page.getByRole('button', { name: 'Show my site' }).click();
-		// Running instance
-		await expect(page.locator('#main-logo').getByRole('link', { name: 'Logo image' })).toBeVisible();
+		// Running instance, in Lyris, the theme a new site starts with
+		await expect(page.locator('a.lyris-header__brand')).toBeVisible();
 
+	}),
+	// Most of the suite is written for Anari, so the site is switched to it straight away, before anything
+	// else is made, the way an administrator would: on Admin > Appearance > Settings. 04-appearance switches
+	// to Lyris and back for the specs written for it.
+	test('Switch the site to Anari', async ({ page }) => {
+		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+		await chooseSiteThemes(page, 'Anari', 'Anari');
+		await expectSiteTheme(page, 'Anari');
 	}),
 	test('Update Formulize', async ({ page }) => {
 

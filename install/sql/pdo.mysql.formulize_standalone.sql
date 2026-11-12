@@ -28,10 +28,10 @@ INSERT INTO `REPLACE_WITH_PREFIX_config` (`conf_id`, `conf_modid`, `conf_catid`,
 (6, 0, 1, 'server_TZ', '_MD_AM_SERVERTZ', 'REPLACE_WITH_TIMEZONE', '_MD_AM_SERVERTZDSC', 'timezone', 'float', 5),
 (7, 0, 1, 'default_TZ', '_MD_AM_DEFAULTTZ', 'REPLACE_WITH_TIMEZONE', '_MD_AM_DEFAULTTZDSC', 'timezone', 'float', 6),
 (8, 0, 1, 'use_ext_date', '_MD_AM_EXT_DATE', '1', '_MD_AM_EXT_DATEDSC', 'yesno', 'int', 7),
-(9, 0, 1, 'theme_set', '_MD_AM_DTHEME', 'Anari', '_MD_AM_DTHEMEDSC', 'theme', 'other', 8),
-(10, 0, 1, 'theme_admin_set', '_MD_AM_ADMIN_DTHEME', 'Anari', '_MD_AM_ADMIN_DTHEME_DESC', 'theme_admin', 'other', 9),
+(9, 0, 1, 'theme_set', '_MD_AM_DTHEME', 'Lyris', '_MD_AM_DTHEMEDSC', 'theme', 'other', 8),
+(10, 0, 1, 'theme_admin_set', '_MD_AM_ADMIN_DTHEME', 'Lyris', '_MD_AM_ADMIN_DTHEME_DESC', 'theme_admin', 'other', 9),
 (11, 0, 1, 'theme_fromfile', '_MD_AM_THEMEFILE', '0', '_MD_AM_THEMEFILEDSC', 'yesno', 'int', 10),
-(12, 0, 1, 'theme_set_allowed', '_MD_AM_THEMEOK', 'a:1:{i:0;s:5:"Anari";}', '_MD_AM_THEMEOKDSC', 'theme_multi', 'array', 11),
+(12, 0, 1, 'theme_set_allowed', '_MD_AM_THEMEOK', 'a:2:{i:0;s:5:"Lyris";i:1;s:5:"Anari";}', '_MD_AM_THEMEOKDSC', 'theme_multi', 'array', 11),
 (13, 0, 1, 'template_set', '_MD_AM_DTPLSET', 'default', '_MD_AM_DTPLSETDSC', 'tplset', 'other', 12),
 (14, 0, 1, 'editor_default', '_MD_AM_EDITOR_DEFAULT', 'dhtmltextarea', '_MD_AM_EDITOR_DEFAULT_DESC', 'editor', 'text', 13),
 (15, 0, 1, 'editor_enabled_list', '_MD_AM_EDITOR_ENABLED_LIST', 'a:3:{i:0;s:13:"dhtmltextarea";i:1;s:9:"FCKeditor";i:2;s:7:"tinymce";}', '_MD_AM_EDITOR_ENABLED_LIST_DESC', 'editor_multi', 'array', 14),
@@ -514,7 +514,7 @@ INSERT INTO `REPLACE_WITH_PREFIX_profile_visibility` (`fieldid`, `user_group`, `
 (32, 2, 0);
 
 
-UPDATE `REPLACE_WITH_PREFIX_users` SET theme='Anari';
+UPDATE `REPLACE_WITH_PREFIX_users` SET theme='Lyris';
 
 UPDATE `REPLACE_WITH_PREFIX_block_module_link` SET page_id=1 WHERE block_id = 2 AND module_id = 0;
 

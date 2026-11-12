@@ -175,6 +175,7 @@ $(document).ready(function() {
   <input type="hidden" name="accordion_active" value="">
   <input type="hidden" name="themeswitch" value="">
   <input type="hidden" name="seedtemplates" value="">
+  <input type="hidden" name="copytemplatesfrom" value="">
   <input type="hidden" name="open_group_conditions_panels" value="">
 </form>
 
@@ -582,6 +583,12 @@ $(document).ready(function() {
 	// seed the templates, only possible when no custom templates yet exist for a screen.
 	$("#seedtemplates").click(function() {
 		window.document.scrollposition.seedtemplates.value = 1;
+		reloadWithScrollPosition();
+	});
+
+	// copy the screen's own templates from another theme, only possible when it has none yet in the theme shown
+	$(".copytemplatesfrom").click(function() {
+		window.document.scrollposition.copytemplatesfrom.value = $(this).attr('data-theme');
 		reloadWithScrollPosition();
 	});
 

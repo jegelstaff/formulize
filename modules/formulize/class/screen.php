@@ -408,12 +408,9 @@ class formulizeScreenHandler {
 		$core = self::readScreenDefaultsFile(XOOPS_ROOT_PATH . '/modules/formulize/include/screen_defaults.json');
 		$coreDefaults = (isset($core[$screenType]) AND is_array($core[$screenType])) ? $core[$screenType] : array();
 		if($theme === null) {
-			// The stored setting, not $xoopsConfig['theme_set']: include/common.php swaps that for the admin theme
-			// when a webmaster is signed in, and for a theme chosen in the session, but the defaults are the
-			// defaults of the theme everyone sees. The config handler's cached copy is untouched by those swaps.
-			$config_handler = xoops_gethandler('config');
-			$systemConfig = $config_handler->getConfigsByCat(ICMS_CONF);
-			$theme = isset($systemConfig['theme_set']) ? $systemConfig['theme_set'] : '';
+			// the stored setting, since the defaults are the defaults of the theme everyone sees, not the admin
+			// theme a webmaster is looking at
+			$theme = formulize_storedSiteTheme();
 		}
 		$theme = (string) $theme;
 		// a theme is a folder directly in themes/, so the name can never reach anywhere else
@@ -904,6 +901,101 @@ class formulizeScreenHandler {
             }
             formulize_removeScreenTemplateFolderIfEmpty($folder);
         }
+    }
+
+    /**
+     * The template files a screen has of its own in one theme, in templates/screens/<theme>/<sid>/ and the folders
+     * in it. Templates that say nothing (see formulize_screenTemplateIsEmpty) aren't counted, since the screen is
+     * drawn with the default in their place.
+     *
+     * @param int $sid The screen.
+     * @param string $theme The theme's folder name.
+     * @return array path inside the screen's folder => full path of the file
+     */
+    function templateFilesInTheme($sid, $theme) {
+        $sid = intval($sid);
+        if(!$sid OR !isset(formulize_selectableThemesList()[$theme])) {
+            return array();
+        }
+        $folder = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$sid;
+        if(!is_dir($folder)) {
+            return array();
+        }
+        $files = array();
+        foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($folder, FilesystemIterator::SKIP_DOTS)) as $file) {
+            if($file->isFile() AND !formulize_screenTemplateIsEmpty(file_get_contents($file->getPathname()))) {
+                $files[substr($file->getPathname(), strlen($folder) + 1)] = $file->getPathname();
+            }
+        }
+        return $files;
+    }
+
+    /**
+     * Give a screen copies of its own templates from one theme, in a theme where it has none yet. The files are
+     * copied as they are, so they keep the markup of the theme they came from. A screen that already has templates
+     * in the other theme is left alone, so nothing that was made there is ever replaced. A template screen's code
+     * and template are copied by its own handler (formulizeTemplateScreenHandler::copyTemplatesToTheme).
+     *
+     * @param object $screen The screen.
+     * @param string $fromTheme The theme to copy the templates from.
+     * @param string $toTheme The theme to copy them to.
+     * @return bool Whether everything there was to copy was copied.
+     */
+    function copyTemplateFilesToTheme($screen, $fromTheme, $toTheme) {
+        $themes = formulize_selectableThemesList();
+        if(!is_object($screen) OR !isset($themes[$fromTheme]) OR !isset($themes[$toTheme])) {
+            return false;
+        }
+        if($fromTheme === $toTheme) {
+            return true;
+        }
+        if($screen->getVar('type') == 'template') {
+            $template_screen_handler = xoops_getmodulehandler('templateScreen', 'formulize');
+            return $template_screen_handler->copyTemplatesToTheme($screen, $fromTheme, $toTheme);
+        }
+        $sid = intval($screen->getVar('sid'));
+        if($this->templateFilesInTheme($sid, $toTheme)) {
+            return true;
+        }
+        $targetFolder = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$toTheme."/".$sid;
+        $copied = true;
+        foreach($this->templateFilesInTheme($sid, $fromTheme) as $path => $sourceFile) {
+            $targetFile = $targetFolder."/".$path;
+            if((!is_dir(dirname($targetFile)) AND !mkdir(dirname($targetFile), 0777, true)) OR !copy($sourceFile, $targetFile)) {
+                error_log("ERROR: Could not copy template file $sourceFile of screen $sid to the $toTheme theme");
+                $copied = false;
+            }
+        }
+        return $copied;
+    }
+
+    /**
+     * Set every screen's theme, which decides which theme's templates its Templates tab shows and edits. Called when
+     * the site's theme changes (see formulize_siteThemeChanged), so the tab opens on the templates the site is using.
+     * A template screen has no defaults to fall back on, so first each one takes its code and template along to the
+     * new theme, where it has none there yet.
+     *
+     * @param string $theme The theme's folder name.
+     * @return bool Whether the screens were changed.
+     */
+    function setThemeForAllScreens($theme) {
+        if(!isset(formulize_selectableThemesList()[$theme])) {
+            return false;
+        }
+        $copied = true;
+        foreach($this->getObjects(new Criteria('type', 'template')) as $screen) {
+            if($screen->getVar('theme') AND $screen->getVar('theme') !== $theme AND isset(formulize_selectableThemesList()[$screen->getVar('theme')])
+                AND !$this->copyTemplateFilesToTheme($screen, $screen->getVar('theme'), $theme)) {
+                $copied = false;
+            }
+        }
+        self::$typedScreenHandoff = null;
+        $sql = "UPDATE ".$this->db->prefix('formulize_screen')." SET theme = ".$this->db->quoteString($theme);
+        if(!$this->db->queryF($sql)) {
+            error_log("ERROR: Could not set the theme of every screen to $theme: ".$this->db->error());
+            return false;
+        }
+        return $copied;
     }
 
 }

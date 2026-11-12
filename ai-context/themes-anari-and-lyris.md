@@ -25,9 +25,21 @@ For what a theme has to supply, read [What Formulize expects from a theme](../do
 
 A theme's `screen-defaults.json`, in its folder, holds every setting with a fixed value that new screens start with. Each theme's file lists all of them, even where its value is the standard one, and `tests/screen_defaults_test.php` fails if a theme's file leaves one out. When you add a setting to `modules/formulize/include/screen_defaults.json`, which has Formulize's standard values and fills in for a theme without a file, add it to every theme's file too. Words, which are in the site's language, and values from the form stay in each type's `setDefault…ScreenVars()`.
 
-The 8.30 update wizard reads Lyris's file through `getThemeScreenDefaults()` on the screen handler, so don't rename either one without changing the wizard. It offers only the settings it has a label for, so a setting that matters there needs a label in the wizard. See [Choose the settings new screens start with](../docs/themes.md) for the format, and `applyDefaultScreenVars()` in `class/screen.php` for how they're applied.
+The 8.30 update wizard reads Lyris's file through `getThemeScreenDefaults()` on the screen handler, so don't rename either one without changing the wizard. It offers only the settings it has a label for, so a setting that matters there needs a label: a language constant `_AM_FORMULIZE_LYRIS_SETTING_<TYPE>_<SETTING>_<VALUE>`, or `..._<TYPE>_<SETTING>` with the value in its `%s`. See [Choose the settings new screens start with](../docs/themes.md) for the format, and `applyDefaultScreenVars()` in `class/screen.php` for how they're applied.
 
 Screen templates are the difference that catches people out. A change to the default markup of a screen may have to be made in the Lyris, Anari and global `default/` folders, because each has its own copy. See [Screen Templates](architecture-overview.md#screen-templates).
+
+## The site's theme, and each screen's
+
+- **Read the site's theme with `formulize_storedSiteTheme()`,** in `include/functions/site_themes.php`. `$xoopsConfig['theme_set']` is the admin theme for a webmaster, and a theme chosen in the session for anyone else, so it's the wrong answer for "which theme does the site use". New screens are stamped with the stored theme, and their defaults come from it.
+- **A screen's own templates are kept per theme,** in `templates/screens/<theme>/<sid>/`. Drawing a screen uses the templates of the theme the page is drawn in. A screen's stored `theme` only decides which folder its Templates tab edits.
+- **When the site's theme changes, every screen's theme follows it,** through `formulize_siteThemeChanged()`, which the system preferences save calls (Admin > Appearance > Settings saves through it). It also resets every user's own theme, as the core always has. A change to the admin theme alone moves nothing.
+- **Template screens have no default templates,** so `setThemeForAllScreens()` copies each one's code and template to the new theme first, where it has none there. `templateScreen::render()` also falls back to the screen's own theme folder when the theme the page is drawn in has neither file.
+- **`copyTemplateFilesToTheme()`** on the screen handler copies a screen's templates between themes, only where the target has none. The Templates tab offers it as a button, and the 8.30 update uses it.
+
+## Switching a site from Anari
+
+The 8.30 update asks a webmaster on an Anari site about Lyris before the patches run (`admin/lyris_update_wizard.php`, `include/lyris_update.php`). It appears only when the stored `dbversion` is below the one patch `021_lyris_update_choices.php` is gated on, the person is in the Webmasters group, and the stored site theme or admin theme is Anari. System > Modules > Update sends Formulize's update to Formulize's own update page in that case. `op.php` reads the answers before calling `icms_module_update()`, and patch 021 applies them. Template screens get Lyris copies of their files whatever was chosen. To try the wizard again on a site that's already up to date, set the database version one below that gate. Every other patch has run there already. See [Switching your site to Lyris](../docs/switching_to_lyris.md) for what webmasters are told.
 
 ## Work in both themes
 

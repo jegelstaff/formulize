@@ -599,9 +599,9 @@ switch ($op) {
 						$lang_updated = TRUE;
 					}
 					// if default theme has been changed
+					// every user's theme, and every screen's, follows it
 					if (!$theme_updated && $config->getVar('conf_catid') == ICMS_CONF && $config->getVar('conf_name') == 'theme_set') {
-						$member_handler = icms::handler('icms_member');
-						$member_handler->updateUsersByField('theme', ${$config->getVar('conf_name')});
+						formulize_siteThemeChanged(${$config->getVar('conf_name')});
 						$theme_updated = TRUE;
 					}
 					// if password encryption has been changed
