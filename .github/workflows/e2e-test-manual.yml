@@ -152,6 +152,9 @@ jobs:
     - name: PHP logic tests (blocked file-extension lists in step)
       run: docker exec formulize-web-1 php /var/www/html/tests/blocked_extensions_sync_test.php
 
+    - name: PHP logic tests (the text of Other options in element values)
+      run: docker exec formulize-web-1 php /var/www/html/tests/other_text_values_test.php
+
     - name: Install dependencies
       run: npm ci
       working-directory: tests/e2e

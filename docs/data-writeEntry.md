@@ -21,6 +21,14 @@ This method calls the "On Before Save" and "On After Save" procedures, if any, f
 
 This method updates the revision table for a form, if the form has the revision table feature turned on.
 
+### Other options
+
+Radio buttons and checkboxes can have an Other option, such as ```{OTHER|30}```, where people type their own text. To save that text, put it after the Other option and a colon, as part of the element's value: ```{OTHER|30}:Pending review```.
+
+The "On Before Save" and "On After Save" procedures still get the Other option on its own in the element's value, such as ```$status = "{OTHER|30}"```. The text is in an array called ```$otherValues```, keyed by element handle, and what was saved before is in ```$currentValues['otherValues']```. An "On Before Save" procedure can change or clear the text by setting ```$otherValues['status']```. These variables are only there for forms that have an Other option.
+
+### Entry Ownership Information
+
 __This method does _not_ write any entry ownership information to the Entry Owner Groups database table__. Therefore, it is most suitable for surgical modifications to existing entries. If you are writing a new entry to the database, you will need to set the entry owner groups with the [setEntryOwnerGroups](../setEntryOwnerGroups/) method, or you can use the [formulize_writeEntry](../../../functions/formulize_writeEntry/) function instead of this method.
 
 ## Parameters
@@ -35,7 +43,7 @@ __$update_metadata__ - Optional. A boolean to indicate whether the modification 
 
 Returns __the entry id of the entry that was written__ to the database.
 
-Returns __null__ if no data was written to the database. Nothing will be written if all the values in the $values array match the existing values in the database.
+Returns __null__ if no data was written to the database. Nothing will be written if all the values in the $values array match the existing values in the database, including the text of any Other options.
 
 If the query fails, page execution terminates and an error is displayed.
 
@@ -59,4 +67,13 @@ $values = array(
 );
 $dataHandler = new formulizeDataHandler(SURVEY_FORM_ID);
 $entry_id = $dataHandler->writeEntry(29, $values, update_metadata: false);
+~~~
+
+~~~php
+// Set the Other option of the Status radio buttons in entry 29
+$values = array(
+    'survey_status'=>'{OTHER|30}:Pending review'
+);
+$dataHandler = new formulizeDataHandler(SURVEY_FORM_ID);
+$entry_id = $dataHandler->writeEntry(29, $values);
 ~~~

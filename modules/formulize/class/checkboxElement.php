@@ -697,6 +697,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 
 	global $myts;
 	$selected_value = '';
+	$otherText = null;
 			$opt_count = 1;
 			$numberOfSelectionsFound = 0;
 	$ele_id = $element->getVar('ele_id');
@@ -706,13 +707,9 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 					if (is_array($value)) {
 							if (in_array($opt_count, $value) ) {
 									$numberOfSelectionsFound++;
-									$otherValue = checkOther($v['key'], $ele_id, $entry_id, $subformBlankCounter);
-									if($otherValue !== false) {
-											if($subformBlankCounter !== null) {
-													$GLOBALS['formulize_other'][$ele_id]['blanks'][$subformBlankCounter] = $otherValue;
-											} else {
-													$GLOBALS['formulize_other'][$ele_id][$entry_id] = $otherValue;
-											}
+									$typedText = checkOther($v['key'], $ele_id, $entry_id, $subformBlankCounter);
+									if(is_string($typedText)) {
+											$otherText = $myts->htmlSpecialChars($typedText);
 									}
 									$v['key'] = $myts->htmlSpecialChars($v['key']);
 									$selected_value = $selected_value.'*=+*:'.$v['key'];
@@ -731,7 +728,10 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 					$opt_count++;
 			}
 
-			return formulize_db_escape($selected_value); // strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
+			// strictly speaking, formulize will already escape all values it writes to the database, but it's always a good habit to never trust what the user is sending you!
+			// What was typed into the Other box goes after the Other option, as {OTHER|30}:text, and writeEntry saves it. It's added after the
+			// escaping, since writeEntry escapes it when it's written, and escaping it twice would double any backslashes in it.
+			return formulize_attachOtherText(formulize_db_escape($selected_value), $otherText);
 	}
 
 	// this method will handle any final actions that have to happen after data has been saved

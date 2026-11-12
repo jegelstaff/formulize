@@ -322,7 +322,6 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
                             $formulize_allWrittenFids[$elementFid] = $elementFid;
                         }
                         $notEntriesList['new_entry'][$elementFid][] = $writtenEntryId; // log the notification info
-                        writeOtherValues($writtenEntryId, $elementFid, $subformBlankCounter); // write the other values for this entry
                         if($creation_user == 0) { // handle cookies for anonymous users
                             formulize_setAnonEntryCookie($elementFid, $writtenEntryId); // signed + hardened cookie so the entry id cannot be forged or enumerated
                         }
@@ -345,7 +344,6 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
                         $formulize_allWrittenFids[$elementFid] = $elementFid;
                     }
                     $notEntriesList['update_entry'][$elementFid][] = $writtenEntryId; // log the notification info
-                    writeOtherValues($writtenEntryId, $elementFid); // write the other values for this entry
                     afterSavingLogic($values, $writtenEntryId);
                 }
             }

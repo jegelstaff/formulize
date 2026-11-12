@@ -595,7 +595,18 @@ EOF;
         }
     }
 
-    public function onBeforeSave($entry_id, $element_values) {
+    /**
+     * Run the form's before-save procedure, if it has one
+     *
+     * @param int|string $entry_id The entry being saved, or 'new'
+     * @param array $element_values The values being saved, keyed by element handle
+     * @param array|null $otherValues For a form with Other options, the text in each Other box, keyed by element handle, as it will be
+     * saved. The procedure gets it as $otherValues, and what it sets there is returned with the values, under 'otherValues'. Null for a
+     * form with no Other options, and then the procedure doesn't get it.
+     * @param array $currentOtherValues The text in each Other box before this save, which the procedure gets as $currentValues['otherValues']
+     * @return array The values to save, or false if the procedure stopped the save, and the entry's values as they are in the database
+     */
+    public function onBeforeSave($entry_id, $element_values, $otherValues = null, $currentOtherValues = array()) {
 
         // get all the values of fields from the existing entry
         $existingValues = array();
@@ -618,7 +629,14 @@ EOF;
         if (strlen($this->on_before_save) > 0 and (file_exists($this->on_before_save_filename) or $this->cache_on_before_save_code())) {
             include_once $this->on_before_save_filename;
 
-            $element_values = call_user_func($this->on_before_save_function_name, $entry_id, $element_values, $this->getVar('id_form'), $existingValues);
+            // the procedure turns each value into a variable, so the Other text arrives as $otherValues, and get_defined_vars() returns it
+            $procedureValues = $element_values;
+            $procedureCurrentValues = $existingValues;
+            if($otherValues !== null) {
+                $procedureValues['otherValues'] = $otherValues;
+                $procedureCurrentValues['otherValues'] = $currentOtherValues;
+            }
+            $element_values = call_user_func($this->on_before_save_function_name, $entry_id, $procedureValues, $this->getVar('id_form'), $procedureCurrentValues);
 
 						if($element_values === false) { return array(false, $existingValues); } // user aborted save
 
@@ -629,14 +647,32 @@ EOF;
                     $element_values[str_replace('elementId','',$key)] = $value;
                 }
             }
+        } elseif($otherValues !== null) {
+            $element_values['otherValues'] = $otherValues; // no procedure, so the Other text goes back as it came
         }
         return array($element_values, $existingValues);
     }
 
-    public function onAfterSave($entry_id, $element_values, $existing_values, $originalEntryId) {
+    /**
+     * Run the form's after-save procedure, if it has one
+     *
+     * @param int $entry_id The entry that was saved
+     * @param array $element_values The values that were saved, keyed by element handle
+     * @param array $existing_values The entry's values before the save
+     * @param int|string $originalEntryId The entry id the save was asked for, which is 'new' for a new entry
+     * @param array|null $otherValues For a form with Other options, the text in each Other box as it was saved, which the procedure gets
+     * as $otherValues. Null for a form with no Other options.
+     * @param array $currentOtherValues The text in each Other box before the save, which the procedure gets as $currentValues['otherValues']
+     * @return void
+     */
+    public function onAfterSave($entry_id, $element_values, $existing_values, $originalEntryId, $otherValues = null, $currentOtherValues = array()) {
         // if there is any code to run after saving, include it (write if necessary), and run the function
         if (strlen($this->on_after_save) > 0 and (file_exists($this->on_after_save_filename) or $this->cache_on_after_save_code())) {
             include_once $this->on_after_save_filename;
+            if($otherValues !== null) {
+                $element_values['otherValues'] = $otherValues;
+                $existing_values['otherValues'] = $currentOtherValues;
+            }
             call_user_func($this->on_after_save_function_name, $entry_id, $this->getVar('id_form'), $element_values, $existing_values, ($originalEntryId == 'new'));
         }
     }
