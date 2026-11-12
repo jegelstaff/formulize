@@ -15667,5 +15667,6 @@ function formulize_columnSearchDefaults($handles) {
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/pwa.php';
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/linked_sources.php';
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/alternate_urls.php';
+require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/site_themes.php';
 // not in include/functions, because formulize_deleteEntryLock.php requires it too, without the rest of Formulize
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/entryLocks.php';

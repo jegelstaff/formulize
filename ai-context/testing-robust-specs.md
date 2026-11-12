@@ -141,5 +141,6 @@ Only `04-appearance/` runs on **Lyris**. Those specs switch the site to Lyris, t
 - A passing suite says little about Lyris's UI, apart from looks and the Appearance editor. Verify other Lyris work by driving the running app directly. A throwaway Playwright script against the dev instance works well.
 - Put new Lyris tests in `04-appearance/`, and don't add Lyris assertions to the other specs.
 - When a change branches on the theme, confirm the Anari path is genuinely untouched, rather than relying on the suite to catch a regression.
+- Switch themes through the page with `chooseSiteThemes()` in `utils.js`, as `01-setup/001` and `04-appearance/020` do. Saving a new site theme there also moves every screen's theme, which decides the folder its Templates tab edits. `setSiteThemeInDb()` and `restoreSiteTheme()` leave the screens where they were, so a spec that uses them mustn't touch screen templates.
 
 See [themes-anari-and-lyris](themes-anari-and-lyris.md).

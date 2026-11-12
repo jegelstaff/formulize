@@ -128,7 +128,18 @@ if (!$opResults AND isset($_GET['op'])) {
             break;
         case "patch40":
         case "patchDB":
+            // the questions about Lyris, for a webmaster on a site that uses Anari, are asked before the update runs
+            include_once XOOPS_ROOT_PATH . '/modules/formulize/include/lyris_update.php';
+            $lyrisWizardApplies = formulize_lyrisUpdateWizardApplies();
             if (isset($_POST['patch40'])) {
+                if (!icms::$security->check(true, false, 'formulize_update_token')) {
+                    echo '<p>' . _AM_FORMULIZE_UPDATE_TOKEN_FAILED . '</p>'
+                        . '<p><a href="' . XOOPS_URL . '/modules/formulize/admin/ui.php?op=patchDB">' . _AM_FORMULIZE_UPDATE_TOKEN_RETRY . '</a></p>';
+                    break;
+                }
+                // the answers are read now, against the site as it is before the update, and patch 021 applies them
+                $lyrisChoices = $lyrisWizardApplies ? formulize_lyrisUpdateReadChoices($_POST) : null;
+                formulize_lyrisUpdateChoices($lyrisChoices);
                 // Load the language strings used by icms_module_update() for template/block status lines.
                 icms_loadLanguageFile('system', 'modulesadmin', true);
                 icms_loadLanguageFile('system', 'blocksadmin', true);
@@ -138,13 +149,28 @@ if (!$opResults AND isset($_GET['op'])) {
                 // icms_module_update()'s returned msgs string is echoed here so it's captured too.
                 include_once ICMS_MODULES_PATH . '/system/admin/modulesadmin/modulesadmin.php';
                 echo icms_module_update('formulize');
+                // what to do next, once the update has applied the answers
+                // (the stored version, since the module handler's copy of the module is the one from before the update)
+                if ($lyrisChoices) {
+                    $versionResult = $xoopsDB->query("SELECT dbversion FROM " . $xoopsDB->prefix('modules') . " WHERE dirname = 'formulize'");
+                    $versionRow = $versionResult ? $xoopsDB->fetchArray($versionResult) : false;
+                    if ($versionRow AND intval($versionRow['dbversion']) >= FORMULIZE_LYRIS_UPDATE_DBVERSION) {
+                        echo formulize_lyrisUpdateNextSteps($lyrisChoices);
+                    }
+                }
             } else {
                 // op=patchDB in the URL but no form submission — show the warning without running anything.
                 echo '<h1>Your Formulize installation needs to be updated!</h1>'
-                    . '<h2>Warning: this process makes changes to your database and files. Backup your system before proceeding.</h2>'
-                    . '<form action="' . XOOPS_URL . '/modules/formulize/admin/ui.php?op=patchDB" method="post">'
-                    . '<input type="submit" name="patch40" value="Update Formulize">'
-                    . '</form>';
+                    . '<h2>Warning: this process makes changes to your database and files. Backup your system before proceeding.</h2>';
+                if ($lyrisWizardApplies) {
+                    // the questions, in a dialog whose last step submits the update
+                    include XOOPS_ROOT_PATH . '/modules/formulize/admin/lyris_update_wizard.php';
+                } else {
+                    echo '<form action="' . XOOPS_URL . '/modules/formulize/admin/ui.php?op=patchDB" method="post">'
+                        . $GLOBALS['xoopsSecurity']->getTokenHTML('formulize_update_token')
+                        . '<input type="submit" name="patch40" value="Update Formulize">'
+                        . '</form>';
+                }
             }
             break;
     }

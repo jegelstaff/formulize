@@ -130,7 +130,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             'fid' => $formObject->getVar('fid'),
             'frid' => -1,
             'type' => 'template',
-            'theme' => $xoopsConfig['theme_set'],
+            'theme' => formulize_storedSiteTheme(),
             'savebuttontext' => _formulize_SAVE,
             'donebuttontext' => _formulize_SAVE_AND_LEAVE,
         ));
@@ -226,6 +226,13 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
 
         $custom_code_filename = $this->custom_code_filename($screen);
         $template_filename = $this->template_filename($screen);
+        // a template screen has no defaults to fall back on, so when the theme the page is drawn in has neither its
+        // code nor its template, as when the site has just changed themes, it uses the ones in its own theme
+        if (!file_exists($custom_code_filename) AND !file_exists($template_filename) AND $screen->getVar('theme')
+            AND isset(formulize_selectableThemesList()[$screen->getVar('theme')])) {
+            $custom_code_filename = $this->custom_code_filename($screen, $screen->getVar('theme'));
+            $template_filename = $this->template_filename($screen, $screen->getVar('theme'));
+        }
 
         $GLOBALS['formulize_screenCurrentlyRendering'] = $screen;
 

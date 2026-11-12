@@ -1,0 +1,9 @@
+<{* On every screen's Templates tab, under the theme picker: a word when the theme shown isn't the site's, and a
+   button for each other theme the screen has templates of its own in, when it has none in the theme shown *}>
+<{if $content.notSiteThemeNotice}>
+	<p><{$content.notSiteThemeNotice}></p>
+<{/if}>
+<{if $content.copyFromThemes}>
+	<p><{$smarty.const._AM_FORMULIZE_SCREEN_TEMPLATES_COPY_DESC}></p>
+	<p><{foreach from=$content.copyFromThemes item=copyFrom}><input type="button" class="copytemplatesfrom" data-theme="<{$copyFrom.theme}>" value="<{$copyFrom.label}>"> <{/foreach}></p>
+<{/if}>

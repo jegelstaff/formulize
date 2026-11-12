@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const { execFileSync } = require('child_process');
 const { webContainer } = require('../../docker-containers');
-import { dbQuery, dbPrefix, openArtifactOriginsMap, expectArtifactOriginsMap, loadSavedView, expectCoinsByName, expectArtifactOriginsList } from '../../utils';
+import { dbQuery, dbPrefix, setDBVersion, openArtifactOriginsMap, expectArtifactOriginsMap, loadSavedView, expectCoinsByName, expectArtifactOriginsList } from '../../utils';
 import {
 	asAdmin, formIdOf, expectYearEraToFollowTheYear, expectANewArtifactToGetItsIdNumber, expectTheDonorListToWork,
 	expectSurveyToOfferTheExhibitsArtifacts, asCurator,
@@ -40,18 +40,6 @@ async function runUpdate(page, button) {
 	await page.getByRole('button', { name: button }).click();
 	await expect(page.getByRole('link', { name: 'Close' })).toBeVisible({ timeout: 120000 });
 	return page.locator('body').innerText();
-}
-
-// Set the stored database version on the Set Database Version page, and give back the version the installed code
-// requires, as that page says it
-async function setDBVersion(page, version) {
-	await page.goto('/modules/formulize/admin/ui.php?op=setDBVersion');
-	const required = (await page.locator('body').innerText()).match(/Version required by the code currently installed:\s*(\d+)/);
-	expect(required, 'the page says what version the code requires').not.toBeNull();
-	await page.locator('input[name="newDBVersion"]').fill(String(version));
-	await page.getByRole('button', { name: 'Set Database Version' }).click();
-	await expect(page.locator('body')).toContainText(`to ${version}.`);
-	return parseInt(required[1], 10);
 }
 
 test.describe.serial('Updating a site with element handles in their old shapes', () => {

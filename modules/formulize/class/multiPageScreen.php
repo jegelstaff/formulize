@@ -786,7 +786,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	{
         global $xoopsConfig;
         $this->applyDefaultScreenVars($defaultFormScreen, array(
-            'theme' => $xoopsConfig['theme_set'],
+            'theme' => formulize_storedSiteTheme(),
             'title' => $formObject->getSingular(),
             'screen_handle' => $this->makeHandleUnique($formObject->getSingular()),
             'fid' => $formObject->getVar('fid'),

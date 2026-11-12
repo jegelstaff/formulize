@@ -49,7 +49,9 @@ if (!$xoopsUser OR !$gperm_handler->checkRight('module_admin', getFormulizeModId
 
 $theme = formulize_resolveAppearanceTheme(isset($_GET['theme']) ? (string) $_GET['theme'] : '');
 $screen = isset($_GET['screen']) ? (string) $_GET['screen'] : '';
-$markup = formulize_renderAppearancePreview($screen, $theme);
+// another theme's logo, to see this theme the way it would look with it, as the 8.30 update does with the site's logo
+$logoTheme = (isset($_GET['logofrom']) AND isset(formulize_getAppearanceThemes()[(string) $_GET['logofrom']])) ? (string) $_GET['logofrom'] : null;
+$markup = formulize_renderAppearancePreview($screen, $theme, $logoTheme);
 if ($markup === '') {
 	header('HTTP/1.1 404 Not Found');
 	exit();

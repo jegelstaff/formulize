@@ -134,7 +134,7 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
 			'fid' => $formObject->getVar('fid'),
 			'frid' => -1,
 			'type' => 'calendar',
-			'theme' => $xoopsConfig['theme_set'],
+			'theme' => formulize_storedSiteTheme(),
 			'datasets' => serialize(array()),
 		));
 	}

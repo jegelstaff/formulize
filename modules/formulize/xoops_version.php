@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 35,
+	'dbversion' => 36,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -938,6 +938,9 @@ $modversion['templates'][] = array(
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/screen_list_templates.html',
+	'description' => '');
+$modversion['templates'][] = array(
+	'file' => 'admin/screen_templates_theme.html',
 	'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/screen_list_headings.html',
