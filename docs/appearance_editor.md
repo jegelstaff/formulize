@@ -40,6 +40,9 @@ Each look is a row. A look based on another is listed under it, indented, with a
 - **Used by**: *The site*, if it is the site look, and how many screens are set to it. *+N
   indirectly* counts the screens that use a look based on it, which a change to it reaches too.
   Click it to see them, with a link to each screen's Appearance tab.
+- **Preview** shows a small picture of a form and a list with the look, as it was last saved.
+  **Form** and **List** switch between them. Click the picture to see it as large as your window
+  allows, and click it again, or press Esc, to go back.
 - **Edit** opens the look in the **simple editor** or the **advanced editor** (see below).
 - **⋯** has everything else you can do to a look:
   - **Create look based on this**.

@@ -85,6 +85,12 @@ if($isPageView) {
     $redirectUrl = XOOPS_URL . "/modules/formulize/admin/ui.php?page=" . $subjectSlug . "&view=" . $activeViewSlug;
     $sections = isset($view['sections']) ? $view['sections'] : array();
     $adminPage['settingsForm'] = formulize_renderConfigSettingsForm($sections, $redirectUrl);
+    // anything the view adds after its settings, which its file prints (see 'include' in the registry)
+    if (!empty($view['include'])) {
+        ob_start();
+        include XOOPS_ROOT_PATH . "/modules/formulize/admin/" . basename($view['include']) . ".php";
+        $adminPage['settingsForm'] .= ob_get_clean();
+    }
     $adminPage['subview_template'] = 'db:admin/configsettings.html';
     // Render the standard admin save toolbar (above the tabs), bound to submit the
     // settings form by its id. Same look/position as the regular Formulize Save button.

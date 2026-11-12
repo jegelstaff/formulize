@@ -221,8 +221,8 @@ if ($op == 'uninstall_ok') {
 	exit();
 }
 
-// Formulize asks a webmaster on a site that uses Anari about Lyris before it updates, on its own update page, so its
-// update goes through there. That page runs the same icms_module_update().
+// Formulize asks a webmaster on a site that uses a theme other than Lyris about Lyris before it updates, on its own
+// update page, so its update goes through there. That page runs the same icms_module_update().
 if (($op == 'update' || $op == 'update_ok') && isset($module) && $module == 'formulize') {
 	include_once ICMS_MODULES_PATH . '/formulize/include/lyris_update.php';
 	if (formulize_lyrisUpdateWizardApplies()) {

@@ -34,6 +34,8 @@
  *                       ...
  *                   ),
  *               ),
+ *               'include' => '<file-slug>',    // optional: admin/<slug>.php, which prints
+ *                                              // something to go after the settings form
  *           ),
  *           '<view-slug>' => array(
  *               'name' => 'Sub-nav Label',
@@ -199,9 +201,11 @@ return array(
         'name' => _AM_CFG_TAB_APPEARANCE,
         'views' => array(
             // The site's theme and footers come first, so the Appearance tab opens on them.
+            // The first time the site's theme is changed to Lyris here, saving asks about Lyris first.
             'settings' => array(
                 'name' => _AM_CFG_VIEW_APPEARANCE_SETTINGS,
                 'type' => 'settings',
+                'include' => 'lyris_switch_wizard',
                 'sections' => array(
                     _AM_CFG_SEC_APPEARANCE => array(
                         array('name' => 'theme_set', 'scope' => 'system'),

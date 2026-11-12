@@ -9,15 +9,24 @@
 ##  (at your option) any later version.                                      ##
 ###############################################################################
 
-// The 8.30 update's questions about Lyris, on the update page, for a webmaster on a site that uses Anari (see
-// include/lyris_update.php). The Update Formulize button opens them in a dialog, and the last step submits the update
-// with the answers. Nothing changes until then, and Cancel changes nothing, so on a site that hasn't been updated yet,
-// the questions can be opened and closed as often as you like.
+// The questions about Lyris (see include/lyris_update.php), in a dialog. They're asked in two places:
 //
-// Included by admin/op.php. It runs before the update, so it can't use a Smarty template from the database, since a
-// new template only gets there when the update runs. It's built with Formulize UI, inside .formulize-admin-ui, which
-// gets it the fixes it needs inside the admin (formulize-admin.css). The admin UI runs jQuery 1.4.2, so the script
-// here uses plain JavaScript.
+// - The 8.30 update, on the update page, for a webmaster on a site that uses any theme but Lyris, which for most
+//   sites is Anari. Included by admin/op.php. The
+//   Update Formulize button opens the dialog, which starts by asking whether to switch, and the last step submits
+//   the update with the answers.
+// - Appearance > Settings, when the site's theme is changed to Lyris for the first time. Included by
+//   admin/lyris_switch_wizard.php, which sets $lyrisWizardContext to 'switch'. Lyris was chosen already, so the
+//   dialog starts with its looks. Saving the settings opens it, and the last step sends the answers to
+//   admin/save/lyris_switch_save.php, which switches the theme, and then saves the settings.
+//
+// Nothing changes until the last step, and Cancel changes nothing, so the questions can be opened and closed as often
+// as you like.
+//
+// The update draws this before it runs, so it can't use a Smarty template from the database, since a new template
+// only gets there when the update runs. It's built with Formulize UI, inside .formulize-admin-ui, which gets it the
+// fixes it needs inside the admin (formulize-admin.css). The admin UI runs jQuery 1.4.2, so the script here uses
+// plain JavaScript.
 
 if (!defined('XOOPS_ROOT_PATH')) {
     exit();
@@ -25,20 +34,25 @@ if (!defined('XOOPS_ROOT_PATH')) {
 
 include_once XOOPS_ROOT_PATH . '/modules/formulize/include/lyris_update.php';
 
-$lyrisScenario = formulize_lyrisUpdateScenario();
-$lyrisThemeChoices = formulize_lyrisUpdateThemeChoices();
+// switching on Appearance > Settings, or else the update
+$lyrisSwitching = (isset($lyrisWizardContext) AND $lyrisWizardContext == 'switch');
+// the theme the site is moving from, and its name, for the words that name it
+$lyrisFromTheme = formulize_lyrisUpdateFromTheme();
+$lyrisFromName = htmlspecialchars($lyrisFromTheme);
+// when switching, the theme was chosen already, so there are no choices about it, and switching is the answer
+$lyrisThemeChoices = $lyrisSwitching ? array() : formulize_lyrisUpdateThemeChoices();
 $lyrisChoiceDescriptions = array(
     'switch' => _AM_FORMULIZE_LYRIS_CHOICE_SWITCH_DESC,
-    'try' => _AM_FORMULIZE_LYRIS_CHOICE_TRY_DESC,
-    'keep' => $lyrisScenario == 'site' ? _AM_FORMULIZE_LYRIS_CHOICE_KEEP_DESC : _AM_FORMULIZE_LYRIS_CHOICE_KEEP_ADMIN_DESC,
-    'admin' => _AM_FORMULIZE_LYRIS_CHOICE_ADMIN_DESC,
+    'try' => sprintf(_AM_FORMULIZE_LYRIS_CHOICE_TRY_DESC, $lyrisFromName),
+    'keep' => _AM_FORMULIZE_LYRIS_CHOICE_KEEP_DESC,
 );
+// every look Lyris has on this site, the ones it comes with and any added since
 $lyrisLooks = formulize_lyrisUpdateLooks();
 $lyrisSiteLook = formulize_getAppearanceSiteLook(FORMULIZE_LYRIS_UPDATE_TO);
 // the site's own logo and browser icon, to bring along to Lyris, with the addresses to show them at
 $lyrisImageUrls = array();
 $lyrisRootPath = str_replace('\\', '/', XOOPS_ROOT_PATH);
-foreach (formulize_lyrisUpdateImagesToCarry() as $setting => $imagePath) {
+foreach (formulize_lyrisUpdateImagesToCarry($lyrisFromTheme) as $setting => $imagePath) {
     $imagePath = str_replace('\\', '/', $imagePath);
     if (strpos($imagePath, $lyrisRootPath . '/') === 0) {
         $lyrisImageUrls[$setting] = XOOPS_URL . substr($imagePath, strlen($lyrisRootPath));
@@ -55,8 +69,19 @@ $lyrisTemplateScreens = formulize_lyrisUpdateTemplateScreensToCopy();
 $lyrisScreens = formulize_lyrisUpdateScreens();
 $lyrisScreenTypes = formulize_getScreenTypes();
 
-// the sample screens both themes have, to compare them by
-$lyrisPreviewScreens = array_intersect_key(formulize_getAppearancePreviewScreens(FORMULIZE_LYRIS_UPDATE_FROM), formulize_getAppearancePreviewScreens(FORMULIZE_LYRIS_UPDATE_TO));
+// The sample screens to show. In the update, the ones the site's theme and Lyris both have, so they can be compared
+// side by side. A theme has samples when it has an appearance_preview folder, as Anari does, and a theme copied from
+// Anari usually still has Anari's, which are drawn with its own stylesheets. When the site's theme has none, or when
+// switching, where there's no comparing, they're Lyris's own, and Lyris is shown on its own.
+$lyrisPreviewScreens = formulize_getAppearancePreviewScreens(FORMULIZE_LYRIS_UPDATE_TO);
+$lyrisFromPreviews = false;
+if (!$lyrisSwitching AND isset(formulize_getAppearanceThemes()[$lyrisFromTheme])) {
+    $lyrisSharedPreviews = array_intersect_key(formulize_getAppearancePreviewScreens($lyrisFromTheme), $lyrisPreviewScreens);
+    if ($lyrisSharedPreviews) {
+        $lyrisPreviewScreens = $lyrisSharedPreviews;
+        $lyrisFromPreviews = true;
+    }
+}
 $lyrisPreviewScreen = isset($lyrisPreviewScreens['list']) ? 'list' : (string) key($lyrisPreviewScreens);
 $lyrisPreviewUrl = XOOPS_URL . '/modules/formulize/appearance_preview.php';
 
@@ -68,11 +93,28 @@ foreach ($lyrisScreens as $sid => $screenInfo) {
     }
 }
 
-$lyrisFormAction = XOOPS_URL . '/modules/formulize/admin/ui.php?op=patchDB';
-$lyrisPreviewCaptions = array(
-    FORMULIZE_LYRIS_UPDATE_FROM => $lyrisScenario == 'site' ? _AM_FORMULIZE_LYRIS_PREVIEW_ANARI : _AM_FORMULIZE_LYRIS_PREVIEW_ANARI_ADMIN,
-    FORMULIZE_LYRIS_UPDATE_TO => _AM_FORMULIZE_LYRIS_PREVIEW_LYRIS,
-);
+$lyrisFormAction = XOOPS_URL . ($lyrisSwitching ? '/modules/formulize/admin/save.php' : '/modules/formulize/admin/ui.php?op=patchDB');
+// the steps there are, in order, which decides the one that's first
+$lyrisSteps = array_keys(array_filter(array(
+    'theme' => !$lyrisSwitching,
+    'look' => count($lyrisLooks) > 1,
+    'settings' => (bool) $lyrisSettings,
+    'templates' => (bool) $lyrisTemplateGroups,
+    'summary' => true,
+)));
+$lyrisFirstStep = $lyrisSteps[0];
+// when switching, there's nothing to ask when there's only the summary, and the theme simply changes
+if ($lyrisSwitching AND $lyrisFirstStep == 'summary') {
+    return;
+}
+// the previews on the update's first step, by theme, with their captions
+$lyrisPreviewCaptions = array();
+if (!$lyrisSwitching) {
+    if ($lyrisFromPreviews) {
+        $lyrisPreviewCaptions[$lyrisFromTheme] = sprintf(_AM_FORMULIZE_LYRIS_PREVIEW_CURRENT, $lyrisFromName);
+    }
+    $lyrisPreviewCaptions[FORMULIZE_LYRIS_UPDATE_TO] = _AM_FORMULIZE_LYRIS_PREVIEW_LYRIS;
+}
 // the samples are shown in turn, the list first, until one is chosen
 if (isset($lyrisPreviewScreens['list'])) {
     $lyrisPreviewScreens = array('list' => $lyrisPreviewScreens['list']) + $lyrisPreviewScreens;
@@ -114,6 +156,16 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
     }
     return $html . '</div>';
 };
+
+/**
+ * When switching, a line at the top of the first step, saying why the questions are being asked.
+ *
+ * @param string $step the step being drawn
+ * @return string HTML, or '' for the update, and for the other steps
+ */
+$lyrisSwitchIntro = function ($step) use ($lyrisSwitching, $lyrisFirstStep) {
+    return ($lyrisSwitching AND $step == $lyrisFirstStep) ? '<div class="fz-callout"><p>' . _AM_FORMULIZE_LYRIS_SWITCH_INTRO . '</p></div>' : '';
+};
 ?>
 <link rel="stylesheet" type="text/css" media="all" href="<?php echo htmlspecialchars(XOOPS_URL . formulize_uiStylesheetPath()); ?>">
 <script type="text/javascript" src="<?php echo htmlspecialchars(XOOPS_URL . formulize_uiScriptPath()); ?>"></script>
@@ -143,25 +195,33 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
 </style>
 
 <div class="formulize-lyris formulize-admin-ui fz-stack fz-gap-3">
-    <p><?php echo $lyrisScenario == 'site' ? _AM_FORMULIZE_LYRIS_INTRO : _AM_FORMULIZE_LYRIS_INTRO_ADMIN; ?></p>
+    <?php if (!$lyrisSwitching) { ?>
+    <p><?php echo _AM_FORMULIZE_LYRIS_INTRO; ?></p>
     <div class="fz-cluster">
         <button type="button" class="fz-btn fz-btn--primary" id="formulize-lyris-open" commandfor="formulize-lyris-wizard" command="show-modal"><?php echo _AM_FORMULIZE_LYRIS_UPDATE_BUTTON; ?></button>
     </div>
+    <?php } ?>
 
     <dialog class="fz-dialog fz-dialog--wide" id="formulize-lyris-wizard" aria-labelledby="formulize-lyris-title" style="width: min(90rem, calc(100vw - var(--fz-spacing) * 8)); height: calc(100vh - var(--fz-spacing) * 8); height: calc(100dvh - var(--fz-spacing) * 8);">
     <form id="formulize-lyris-form" action="<?php echo htmlspecialchars($lyrisFormAction); ?>" method="post">
+        <?php if ($lyrisSwitching) { ?>
+        <?php echo $GLOBALS['xoopsSecurity']->getTokenHTML('formulize_lyris_switch_token'); ?>
+        <input type="hidden" name="formulize_admin_handler" value="lyris_switch">
+        <?php } else { ?>
         <?php echo $GLOBALS['xoopsSecurity']->getTokenHTML('formulize_update_token'); ?>
         <input type="hidden" name="patch40" value="1">
+        <?php } ?>
 
         <div class="fz-dialog__header">
-            <h2 class="fz-dialog__title" id="formulize-lyris-title"><?php echo _AM_FORMULIZE_LYRIS_TITLE; ?></h2>
+            <h2 class="fz-dialog__title" id="formulize-lyris-title"><?php echo $lyrisSwitching ? _AM_FORMULIZE_LYRIS_SWITCH_TITLE : _AM_FORMULIZE_LYRIS_TITLE; ?></h2>
             <span class="fz-text-sm fz-text-muted" id="formulize-lyris-progress"></span>
         </div>
 
+        <?php if (!$lyrisSwitching) { ?>
         <div class="fz-dialog__body formulize-lyris-step" data-step="theme">
             <div class="fz-stack fz-gap-1">
                 <h3 class="fz-text-lg fz-font-semibold"><?php echo _AM_FORMULIZE_LYRIS_STEP_THEME; ?></h3>
-                <p class="fz-text-muted"><?php echo _AM_FORMULIZE_LYRIS_STEP_THEME_INTRO; ?></p>
+                <p class="fz-text-muted"><?php echo sprintf(_AM_FORMULIZE_LYRIS_STEP_THEME_INTRO, $lyrisFromName); ?></p>
             </div>
             <?php if ($lyrisPreviewScreens) { ?>
             <?php echo $lyrisPreviewSwitch(); ?>
@@ -173,6 +233,9 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
                 </figure>
                 <?php } ?>
             </div>
+            <?php if (!$lyrisFromPreviews) { ?>
+            <p class="fz-text-sm fz-text-muted"><?php echo sprintf(_AM_FORMULIZE_LYRIS_PREVIEW_NONE, $lyrisFromName); ?></p>
+            <?php } ?>
             <?php } ?>
             <fieldset class="fz-field">
                 <legend class="fz-field__label"><?php echo _AM_FORMULIZE_LYRIS_CHOICE_LEGEND; ?></legend>
@@ -187,9 +250,11 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
             </fieldset>
             <div class="fz-callout fz-callout--warning formulize-lyris-pick-one" role="status" hidden><p><?php echo _AM_FORMULIZE_LYRIS_CHOICE_REQUIRED; ?></p></div>
         </div>
+        <?php } ?>
 
         <?php if (count($lyrisLooks) > 1) { ?>
         <div class="fz-dialog__body formulize-lyris-step" data-step="look" hidden>
+            <?php echo $lyrisSwitchIntro('look'); ?>
             <div class="fz-stack fz-gap-1">
                 <h3 class="fz-text-lg fz-font-semibold"><?php echo _AM_FORMULIZE_LYRIS_STEP_LOOK; ?></h3>
                 <p class="fz-text-muted"><?php echo _AM_FORMULIZE_LYRIS_STEP_LOOK_INTRO; ?></p>
@@ -224,6 +289,7 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
 
         <?php if ($lyrisSettings) { ?>
         <div class="fz-dialog__body formulize-lyris-step" data-step="settings" hidden>
+            <?php echo $lyrisSwitchIntro('settings'); ?>
             <div class="fz-stack fz-gap-2">
                 <h3 class="fz-text-lg fz-font-semibold"><?php echo _AM_FORMULIZE_LYRIS_STEP_SETTINGS; ?></h3>
                 <p class="fz-text-muted"><?php echo _AM_FORMULIZE_LYRIS_STEP_SETTINGS_INTRO; ?></p>
@@ -234,7 +300,7 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
                     <thead><tr>
                         <th scope="col"><?php echo htmlspecialchars(isset($lyrisScreenTypes[$type]) ? $lyrisScreenTypes[$type]['name'] : $type); ?></th>
                         <?php foreach ($offered['columns'] as $property => $label) { ?>
-                        <th scope="col"><label class="fz-choice"><input type="checkbox" class="fz-checkbox formulize-lyris-setting-all" data-column="<?php echo htmlspecialchars($type . '-' . $property); ?>"> <?php echo $label; ?></label></th>
+                        <th scope="col"><label class="fz-choice"><input type="checkbox" class="fz-checkbox formulize-lyris-setting-all" data-column="<?php echo htmlspecialchars($type . '-' . $property); ?>"<?php echo $lyrisSwitching ? ' checked' : ''; ?>> <?php echo $label; ?></label></th>
                         <?php } ?>
                     </tr></thead>
                     <tbody>
@@ -242,7 +308,7 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
                         <tr>
                             <td><span class="fz-font-medium"><?php echo $lyrisScreens[$sid]['title']; ?></span><br><span class="fz-text-muted"><?php echo $lyrisScreens[$sid]['where']; ?></span></td>
                             <?php foreach ($offered['columns'] as $property => $label) { ?>
-                            <td><?php if (in_array($property, $properties)) { ?><input type="checkbox" class="fz-checkbox formulize-lyris-setting" data-column="<?php echo htmlspecialchars($type . '-' . $property); ?>" name="lyris_screen_settings[<?php echo intval($sid); ?>][]" value="<?php echo htmlspecialchars($property); ?>" aria-label="<?php echo htmlspecialchars(strip_tags($lyrisScreens[$sid]['title'] . ': ' . $label)); ?>"><?php } ?></td>
+                            <td><?php if (in_array($property, $properties)) { ?><input type="checkbox" class="fz-checkbox formulize-lyris-setting" data-column="<?php echo htmlspecialchars($type . '-' . $property); ?>" name="lyris_screen_settings[<?php echo intval($sid); ?>][]" value="<?php echo htmlspecialchars($property); ?>"<?php echo $lyrisSwitching ? ' checked' : ''; ?> aria-label="<?php echo htmlspecialchars(strip_tags($lyrisScreens[$sid]['title'] . ': ' . $label)); ?>"><?php } ?></td>
                             <?php } ?>
                         </tr>
                     <?php } ?>
@@ -256,6 +322,7 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
 
         <?php if ($lyrisTemplateGroups) { ?>
         <div class="fz-dialog__body formulize-lyris-step" data-step="templates" hidden>
+            <?php echo $lyrisSwitchIntro('templates'); ?>
             <div class="fz-stack fz-gap-2">
                 <h3 class="fz-text-lg fz-font-semibold"><?php echo _AM_FORMULIZE_LYRIS_STEP_TEMPLATES; ?></h3>
                 <p class="fz-text-muted"><?php echo _AM_FORMULIZE_LYRIS_STEP_TEMPLATES_INTRO; ?></p>
@@ -282,26 +349,35 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
 
         <div class="fz-dialog__body formulize-lyris-step" data-step="summary" hidden>
             <div class="fz-stack fz-gap-2">
-                <h3 class="fz-text-lg fz-font-semibold"><?php echo _AM_FORMULIZE_LYRIS_STEP_SUMMARY; ?></h3>
-                <p class="fz-text-muted formulize-lyris-summary-intro"><?php echo _AM_FORMULIZE_LYRIS_STEP_SUMMARY_INTRO; ?></p>
+                <h3 class="fz-text-lg fz-font-semibold"><?php echo $lyrisSwitching ? _AM_FORMULIZE_LYRIS_SWITCH_SUMMARY : _AM_FORMULIZE_LYRIS_STEP_SUMMARY; ?></h3>
+                <p class="fz-text-muted formulize-lyris-summary-intro"><?php echo $lyrisSwitching ? _AM_FORMULIZE_LYRIS_SWITCH_SUMMARY_INTRO : _AM_FORMULIZE_LYRIS_STEP_SUMMARY_INTRO; ?></p>
                 <p class="formulize-lyris-summary-keep" hidden><?php echo _AM_FORMULIZE_LYRIS_STEP_SUMMARY_KEEP; ?></p>
             </div>
             <ul class="fz-list-none fz-stack fz-gap-2 formulize-lyris-summary"></ul>
-            <?php foreach (array_keys($lyrisThemeChoices) as $choice) { ?>
+            <?php foreach ($lyrisSwitching ? array('switch') : array_keys($lyrisThemeChoices) as $choice) { ?>
             <div class="fz-callout formulize-lyris-after" data-choice="<?php echo htmlspecialchars($choice); ?>" hidden>
-                <p class="fz-callout__title"><?php echo _AM_FORMULIZE_LYRIS_AFTER_TITLE; ?></p>
-                <p><?php echo constant('_AM_FORMULIZE_LYRIS_AFTER_' . strtoupper($choice)); ?></p>
+                <p class="fz-callout__title"><?php echo $lyrisSwitching ? _AM_FORMULIZE_LYRIS_SWITCH_AFTER_TITLE : _AM_FORMULIZE_LYRIS_AFTER_TITLE; ?></p>
+                <p><?php echo sprintf(constant('_AM_FORMULIZE_LYRIS_AFTER_' . strtoupper($choice)), $lyrisFromName); ?></p>
             </div>
             <?php } ?>
-            <div class="fz-callout fz-callout--warning"><p><?php echo _AM_FORMULIZE_LYRIS_STEP_SUMMARY_BACKUP; ?></p></div>
+            <div class="fz-callout fz-callout--warning"><p><?php echo $lyrisSwitching ? _AM_FORMULIZE_LYRIS_SWITCH_SUMMARY_BACKUP : _AM_FORMULIZE_LYRIS_STEP_SUMMARY_BACKUP; ?></p></div>
+            <?php if ($lyrisSwitching) { ?>
+            <div class="fz-callout fz-callout--danger formulize-lyris-problems" role="alert" hidden>
+                <p class="fz-callout__title"><?php echo _AM_FORMULIZE_LYRIS_SWITCH_PROBLEMS; ?></p>
+                <div class="formulize-lyris-problems__list"></div>
+            </div>
+            <?php } ?>
         </div>
 
         <div class="fz-dialog__footer">
             <button type="button" class="fz-btn" commandfor="formulize-lyris-wizard" command="close"><?php echo _AM_FORMULIZE_JS_LYRIS_CANCEL; ?></button>
+            <?php if ($lyrisSwitching) { ?>
+            <button type="button" class="fz-btn fz-btn--ghost" id="formulize-lyris-plain"><?php echo _AM_FORMULIZE_LYRIS_SWITCH_PLAIN; ?></button>
+            <?php } ?>
             <span class="fz-spacer"></span>
             <button type="button" class="fz-btn" id="formulize-lyris-back" hidden><?php echo _AM_FORMULIZE_JS_LYRIS_BACK; ?></button>
             <button type="button" class="fz-btn fz-btn--primary" id="formulize-lyris-next"><?php echo _AM_FORMULIZE_JS_LYRIS_NEXT; ?></button>
-            <button type="submit" class="fz-btn fz-btn--primary" id="formulize-lyris-update" hidden><?php echo _AM_FORMULIZE_JS_LYRIS_UPDATE; ?></button>
+            <button type="submit" class="fz-btn fz-btn--primary" id="formulize-lyris-update" hidden><?php echo $lyrisSwitching ? _AM_FORMULIZE_LYRIS_SWITCH_BUTTON : _AM_FORMULIZE_JS_LYRIS_UPDATE; ?></button>
         </div>
     </form>
     </dialog>
@@ -312,14 +388,21 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
     var text = <?php echo json_encode(formulize_scriptText('_AM_FORMULIZE_JS_LYRIS_'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     var previewUrl = <?php echo json_encode($lyrisPreviewUrl); ?>;
     var previewScreen = <?php echo json_encode($lyrisPreviewScreen); ?>;
-    // the previews of Lyris show the site's own logo while it's being brought along
-    var logoTheme = <?php echo json_encode(isset($lyrisImageUrls['appearance_logo']) ? FORMULIZE_LYRIS_UPDATE_FROM : ''); ?>;
+    // the previews of Lyris show the site's own logo while it's being brought along, from a theme with Appearance
+    // settings, since the previews read it from those (and reading them would give another theme an appearance folder)
+    var logoTheme = <?php echo json_encode((isset($lyrisImageUrls['appearance_logo']) AND formulize_themeSupportsAppearance($lyrisFromTheme)) ? $lyrisFromTheme : ''); ?>;
     var hasImages = <?php echo $lyrisImageUrls ? 'true' : 'false'; ?>;
     var imagesSummary =<?php echo json_encode(isset($lyrisImageUrls['appearance_logo']) ? (isset($lyrisImageUrls['appearance_favicon']) ? 'SUMMARY_LOGO_AND_ICON' : 'SUMMARY_LOGO') : 'SUMMARY_ICON'); ?>;
     var templateScreenCount = <?php echo intval(count($lyrisTemplateScreens)); ?>;
+    // the theme the site is moving from, which some of the words name
+    var fromName = <?php echo json_encode($lyrisFromName); ?>;
+    // switching on Appearance > Settings, where Lyris was chosen already, or else the update
+    var switching = <?php echo $lyrisSwitching ? 'true' : 'false'; ?>;
+    var firstStep = <?php echo json_encode($lyrisFirstStep); ?>;
     var wizard = document.getElementById('formulize-lyris-wizard');
+    var form = document.getElementById('formulize-lyris-form');
     var stepOrder = ['theme', 'look', 'settings', 'templates', 'summary'];
-    var current = 'theme';
+    var current = firstStep;
 
     function all(selector) {
         return Array.prototype.slice.call(wizard.querySelectorAll(selector));
@@ -333,7 +416,7 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
         return input ? input.value : '';
     }
     function choice() {
-        return checkedValue('lyris_theme_choice');
+        return switching ? 'switch' : checkedValue('lyris_theme_choice');
     }
     function usingLyris() {
         return choice() !== '' && choice() !== 'keep';
@@ -426,7 +509,7 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
         if (!usingLyris()) {
             return;
         }
-        summaryItem(list, text['SUMMARY_' + choice().toUpperCase()]);
+        summaryItem(list, fill(text['SUMMARY_' + choice().toUpperCase()], fromName));
         if (usingLyris()) {
             var look = wizard.querySelector('input[name="lyris_look"]:checked');
             if (look && all('input[name="lyris_look"]').length > 1) {
@@ -474,12 +557,14 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
         drawPreviews();
     }
 
-    // the button opens the dialog by itself (commandfor), so the questions start again from the first one
-    document.getElementById('formulize-lyris-open').addEventListener('click', function() {
-        setTimeout(function() {
-            show('theme');
-        }, 0);
-    });
+    // the update's button opens the dialog by itself (commandfor), so the questions start again from the first one
+    if (document.getElementById('formulize-lyris-open')) {
+        document.getElementById('formulize-lyris-open').addEventListener('click', function() {
+            setTimeout(function() {
+                show(firstStep);
+            }, 0);
+        });
+    }
     document.getElementById('formulize-lyris-next').addEventListener('click', function() {
         if (current == 'theme' && choice() === '') {
             wizard.querySelector('.formulize-lyris-pick-one').hidden = false;
@@ -492,17 +577,85 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
     });
     // once the update is on its way, there's no going back: every button is off, and Esc doesn't close the dialog
     var updating = false;
-    document.getElementById('formulize-lyris-form').addEventListener('submit', function() {
-        updating = true;
+    function working(on) {
+        updating = on;
         all('.fz-dialog__footer button').forEach(function(button) {
-            button.disabled = true;
+            button.disabled = on;
         });
+    }
+    form.addEventListener('submit', function(event) {
+        working(true);
+        if (switching) {
+            event.preventDefault();
+            sendSwitch();
+        }
     });
     wizard.addEventListener('cancel', function(event) {
         if (updating) {
             event.preventDefault();
         }
     });
+
+    // Switching on Appearance > Settings: saving the settings with Lyris as the site's theme opens the questions
+    // instead. The answers go to the switch's save handler, which switches the theme when it has done the rest, and
+    // says nothing when it all worked. Then the settings are saved as they would have been, with the theme already
+    // changed. Switching without the changes saves the settings as they are, which switches the theme the plain way.
+    var settingsForm = document.getElementById('formulize-config-settings-form');
+    var siteTheme = settingsForm ? settingsForm.querySelector('[name="theme_set"]') : null;
+    var lyris = <?php echo json_encode(FORMULIZE_LYRIS_UPDATE_TO); ?>;
+    var settingsConfirmed = false;
+    function saveSettings() {
+        settingsConfirmed = true;
+        if (settingsForm.requestSubmit) {
+            settingsForm.requestSubmit();
+        } else {
+            settingsForm.submit();
+        }
+    }
+    function showProblems(said) {
+        var problems = wizard.querySelector('.formulize-lyris-problems');
+        problems.querySelector('.formulize-lyris-problems__list').innerHTML = said;
+        problems.hidden = false;
+        problems.scrollIntoView({ block: 'nearest' });
+        working(false);
+    }
+    function sendSwitch() {
+        wizard.querySelector('.formulize-lyris-problems').hidden = true;
+        // sent as the admin's other saves are, so the form's token is still good if something has to be tried again
+        fetch(form.getAttribute('action'), {
+            method: 'POST',
+            body: new FormData(form),
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function(response) {
+            if (!response.ok) {
+                throw new Error(response.status);
+            }
+            return response.text();
+        }).then(function(said) {
+            if (said.replace(/^\s+|\s+$/g, '') === '') {
+                saveSettings();
+            } else {
+                showProblems(said);
+            }
+        }).catch(function() {
+            showProblems('<p>' + text.SWITCH_UNREACHABLE + '</p>');
+        });
+    }
+    if (switching && siteTheme) {
+        settingsForm.addEventListener('submit', function(event) {
+            if (settingsConfirmed || siteTheme.value !== lyris) {
+                return;
+            }
+            event.preventDefault();
+            wizard.showModal();
+            show(firstStep);
+        });
+        document.getElementById('formulize-lyris-plain').addEventListener('click', function() {
+            working(true);
+            saveSettings();
+        });
+    }
 
     // Lyris's settings start checked for screens when the whole site switches, and unchecked otherwise
     all('input[name="lyris_theme_choice"]').forEach(function(radio) {

@@ -1595,17 +1595,15 @@ function formulize_getAppearancePreviewScreens($theme = null) {
  * The markup of one of a theme's sample screens, ready to put in a page's body.
  * A sample can include a piece shared with other samples by naming it in double
  * braces: {{list}} is the contents of _list.html in the same folder. {{logo_url}}
- * and {{site_name}} are the theme's logo (the uploaded one, or the theme's own
- * images/logo.png) and the site's name. Pieces can include other pieces, a few
- * levels deep.
+ * and {{site_name}} are the logo (see formulize_getAppearancePreviewLogoUrl) and
+ * the site's name. Pieces can include other pieces, a few levels deep.
  *
  * @param string $screen a screen key, eg: 'form'
  * @param string|null $theme theme folder name, defaults to the active theme
- * @param string|null $logoTheme the theme whose logo to show, to see the sample
- *                               with another theme's logo; defaults to the theme's own
+ * @param string $logoUrl the logo to show
  * @return string the markup, or '' if the theme has no such sample
  */
-function formulize_renderAppearancePreview($screen, $theme = null, $logoTheme = null) {
+function formulize_renderAppearancePreview($screen, $theme, $logoUrl) {
     global $xoopsConfig;
     $theme = formulize_resolveAppearanceTheme($theme);
     $screens = formulize_getAppearancePreviewScreens($theme);
@@ -1614,10 +1612,8 @@ function formulize_renderAppearancePreview($screen, $theme = null, $logoTheme = 
     }
     $dir = formulize_getAppearancePreviewDir($theme);
     $html = (string) file_get_contents($dir . '/' . $screen . '.html');
-    $logoTheme = $logoTheme ? formulize_resolveAppearanceTheme($logoTheme) : $theme;
-    $logo = formulize_getAppearanceLogoUrl($logoTheme);
     $values = array(
-        'logo_url' => htmlspecialchars($logo ? $logo : XOOPS_URL . '/themes/' . $logoTheme . '/images/logo.png', ENT_QUOTES),
+        'logo_url' => htmlspecialchars($logoUrl, ENT_QUOTES),
         'site_name' => htmlspecialchars(isset($xoopsConfig['sitename']) ? $xoopsConfig['sitename'] : '', ENT_QUOTES),
     );
     for ($depth = 0; $depth < 4; $depth++) {
@@ -1630,6 +1626,84 @@ function formulize_renderAppearancePreview($screen, $theme = null, $logoTheme = 
         }, $html);
     }
     return $html;
+}
+
+/**
+ * The logo a sample screen shows: a look's own (the one it uploaded, or one it
+ * gets from the looks it is based on), or another theme's, to see the sample
+ * with that theme's logo, as the 8.30 update does with the site's logo. With
+ * none uploaded, the theme's own images/logo.png.
+ *
+ * @param string $theme theme folder name
+ * @param string|null $look the look; defaults to the site look
+ * @param string|null $logoTheme another theme, whose site look's logo to show instead
+ * @return string the logo's URL
+ */
+function formulize_getAppearancePreviewLogoUrl($theme, $look = null, $logoTheme = null) {
+    $logoTheme = $logoTheme ? formulize_resolveAppearanceTheme($logoTheme) : '';
+    $theme = formulize_resolveAppearanceTheme($theme);
+    $logo = $logoTheme !== '' ? formulize_getAppearanceLogoUrl($logoTheme, '') : formulize_getAppearanceLogoUrl($theme, (string) $look);
+    return $logo ? $logo : XOOPS_URL . '/themes/' . rawurlencode($logoTheme !== '' ? $logoTheme : $theme) . '/images/logo.png';
+}
+
+/**
+ * The stylesheet of a look, for a sample screen: the look's generated stylesheet,
+ * as saved, or with no such look, the site look's.
+ *
+ * @param string $theme theme folder name
+ * @param string|null $look the look
+ * @return string the stylesheet's URL, or '' if it hasn't been written
+ */
+function formulize_getAppearancePreviewLookCssUrl($theme, $look = null) {
+    $theme = formulize_resolveAppearanceTheme($theme);
+    $looks = formulize_getAppearanceLooks($theme);
+    $path = isset($looks[(string) $look]) ? formulize_getAppearanceLooksDir($theme) . '/' . $look . '.css' : formulize_getAppearanceCssPath($theme);
+    if (!$path OR !is_file($path)) {
+        return '';
+    }
+    $path = substr($path, strlen(XOOPS_ROOT_PATH));
+    return XOOPS_URL . $path . '?v=' . formulize_get_file_version($path);
+}
+
+/**
+ * One of a theme's sample screens as a whole page, drawn with the stylesheets a
+ * real page of the theme loads, in the same order: Formulize UI, Formulize's own
+ * stylesheet, the theme's reset and main stylesheets, and a look's stylesheet,
+ * so its colours, fonts and sizes show. No scripts.
+ *
+ * appearance_preview.php serves it for the editor and the 8.30 update. The Looks
+ * tab puts it in the page, once for every look, with stand-ins for the look's
+ * stylesheet and logo that it fills in for the look it shows.
+ *
+ * @param string $screen a screen key, eg: 'form'
+ * @param string $theme theme folder name
+ * @param string $lookCssUrl the look's stylesheet (formulize_getAppearancePreviewLookCssUrl), or '' for none
+ * @param string $logoUrl the logo (formulize_getAppearancePreviewLogoUrl)
+ * @return string the page, or '' if the theme has no such sample
+ */
+function formulize_appearancePreviewDocument($screen, $theme, $lookCssUrl, $logoUrl) {
+    $theme = formulize_resolveAppearanceTheme($theme);
+    $markup = formulize_renderAppearancePreview($screen, $theme, $logoUrl);
+    if ($markup === '') {
+        return '';
+    }
+    $screens = formulize_getAppearancePreviewScreens($theme);
+    $stylesheets = array();
+    foreach (array('/modules/formulize/templates/css/formulize-ui.css', '/modules/formulize/templates/css/formulize.css', '/themes/' . $theme . '/css/reset.css', '/themes/' . $theme . '/css/style.css') as $path) {
+        if (is_file(XOOPS_ROOT_PATH . $path)) {
+            $stylesheets[] = XOOPS_URL . $path . '?v=' . formulize_get_file_version($path);
+        }
+    }
+    if ($lookCssUrl !== '') {
+        $stylesheets[] = $lookCssUrl;
+    }
+    $head = '';
+    foreach ($stylesheets as $url) {
+        $head .= '<link rel="stylesheet" type="text/css" media="all" href="' . htmlspecialchars($url, ENT_QUOTES) . '">' . "\n";
+    }
+    return "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"robots\" content=\"noindex\">\n"
+        . '<title>' . htmlspecialchars($screens[$screen], ENT_QUOTES) . "</title>\n" . $head . "</head>\n"
+        . '<body id="formulize" class="en formulize-screen formulize-appearance-preview">' . "\n" . $markup . "\n</body>\n</html>";
 }
 
 /**
@@ -2427,11 +2501,12 @@ function formulize_locateAppearanceFile($file, $theme = null) {
  * The filesystem path of the uploaded custom logo, if any
  *
  * @param string|null $theme theme folder name, defaults to the active theme
+ * @param string|null $lookKey the look whose logo it is; defaults to the page's look
  * @return string path of the logo file, or '' when no custom logo is set
  */
-function formulize_getAppearanceLogoPath($theme = null) {
+function formulize_getAppearanceLogoPath($theme = null, $lookKey = null) {
     // the page's screen may have a look of its own, with a logo of its own
-    $settings = formulize_getAppearanceEffectiveSettings($theme, formulize_appearancePageLook($theme));
+    $settings = formulize_getAppearanceEffectiveSettings($theme, $lookKey !== null ? $lookKey : formulize_appearancePageLook($theme));
     // stored as a bare filename in the theme's appearance folder
     return formulize_locateAppearanceFile($settings['appearance_logo'], $theme);
 }
@@ -2441,10 +2516,11 @@ function formulize_getAppearanceLogoPath($theme = null) {
  * file's modification time included for cache busting.
  *
  * @param string|null $theme theme folder name, defaults to the active theme
+ * @param string|null $lookKey the look whose logo it is; defaults to the page's look
  * @return string URL of the logo, or '' when no custom logo is set
  */
-function formulize_getAppearanceLogoUrl($theme = null) {
-    return formulize_getAppearanceFileUrl(formulize_getAppearanceLogoPath($theme), $theme);
+function formulize_getAppearanceLogoUrl($theme = null, $lookKey = null) {
+    return formulize_getAppearanceFileUrl(formulize_getAppearanceLogoPath($theme, $lookKey), $theme);
 }
 
 /**
@@ -2530,6 +2606,49 @@ function formulize_prepareAppearanceDir($theme = null) {
         @chmod($dir, 0755);
     }
     return is_writable($dir) ? $dir : false;
+}
+
+/**
+ * The file that records that a theme has been the site's theme: activated.lock, in its appearance folder. Switching
+ * the site to Lyris for the first time asks about Lyris's looks, screen settings and templates (see
+ * include/lyris_update.php), and this file is how Formulize knows a switch isn't the first. It is the site's own,
+ * like the rest of the folder, and deleting it has the questions asked again.
+ *
+ * @param string $theme theme folder name
+ * @return string the file's path, or '' for a theme that doesn't have appearance settings
+ */
+function formulize_getThemeActivatedPath($theme) {
+    $themes = formulize_getAppearanceThemes();
+    return (is_string($theme) AND isset($themes[$theme]) AND formulize_themeSupportsAppearance($theme)) ? formulize_getAppearanceDir($theme) . '/activated.lock' : '';
+}
+
+/**
+ * Whether a theme has been the site's theme, since activated.lock was first written.
+ *
+ * @param string $theme theme folder name
+ * @return boolean
+ */
+function formulize_themeHasBeenActivated($theme) {
+    $path = formulize_getThemeActivatedPath($theme);
+    return $path !== '' AND is_file($path);
+}
+
+/**
+ * Record that a theme has been the site's theme. Nothing is recorded for a theme without appearance settings, or
+ * when its appearance folder can't be written.
+ *
+ * @param string $theme theme folder name
+ * @return boolean whether it is recorded now
+ */
+function formulize_markThemeActivated($theme) {
+    if (formulize_themeHasBeenActivated($theme)) {
+        return true;
+    }
+    $path = formulize_getThemeActivatedPath($theme);
+    if ($path === '' OR formulize_prepareAppearanceDir($theme) === false) {
+        return false;
+    }
+    return file_put_contents($path, '') !== false;
 }
 
 /**

@@ -9,13 +9,23 @@
 ##  (at your option) any later version.                                      ##
 ###############################################################################
 
-// The 8.30 update's questions about Lyris, for a site that uses Anari. Before the update runs, a webmaster is asked
-// whether to switch to Lyris, and which screens should take their custom templates along and start using Lyris's
-// screen settings (admin/lyris_update_wizard.php draws the questions). Nothing changes until the update runs, and
-// then patch 021 applies the answers, which admin/op.php hands it through formulize_lyrisUpdateChoices().
+// The questions about Lyris: which look it starts with, and which screens should take their custom templates along
+// and start using Lyris's screen settings (admin/lyris_update_wizard.php draws them). They're asked in two places:
 //
-// Included where it's needed: admin/op.php, admin/lyris_update_wizard.php, patch 021, and the System > Modules
-// update, which sends Formulize's update to Formulize's own update page when there are questions to ask.
+// - The 8.30 update, for a site that uses any theme but Lyris, which is also asked whether to switch. Nothing changes
+//   until the update runs, and then patch 021 applies the answers, which admin/op.php hands it through
+//   formulize_lyrisUpdateChoices().
+// - Appearance > Settings, the first time the site's theme is changed to Lyris from any other theme. The answers are
+//   applied by admin/save/lyris_switch_save.php, which switches the theme too, before the rest of the settings are
+//   saved. Whether Lyris has been the site's theme is recorded by a file in its appearance folder (see
+//   formulize_markThemeActivated), so this happens once.
+//
+// Either way, the theme changes last, since every screen's theme follows the site's, and what's offered depends on
+// the theme each screen has before that.
+//
+// Included where it's needed: admin/op.php, admin/lyris_update_wizard.php, admin/lyris_switch_wizard.php, patch 021,
+// the switch's save handler, and the System > Modules update, which sends Formulize's update to Formulize's own
+// update page when there are questions to ask.
 
 if (!defined('XOOPS_ROOT_PATH')) {
     exit();
@@ -26,14 +36,23 @@ include_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
 // the dbversion that brings in Lyris as the standard theme, which patch 021 is gated on
 define('FORMULIZE_LYRIS_UPDATE_DBVERSION', 36);
 
-// the theme being offered, and the theme sites are moving from
+// the theme being offered
 define('FORMULIZE_LYRIS_UPDATE_TO', 'Lyris');
-define('FORMULIZE_LYRIS_UPDATE_FROM', 'Anari');
+
+/**
+ * The theme the site is moving from: the site's theme, when it isn't Lyris. Most sites that update to 8.30 use Anari,
+ * but it can be any theme.
+ *
+ * @return string the theme's folder name, or '' when the site uses Lyris already
+ */
+function formulize_lyrisUpdateFromTheme() {
+    $theme = formulize_storedSiteTheme('theme_set');
+    return $theme !== FORMULIZE_LYRIS_UPDATE_TO ? $theme : '';
+}
 
 /**
  * Whether the update should ask the person running it about Lyris: the update that brings Lyris in hasn't run yet,
- * the person is a webmaster, who is the only one who can change the site's theme, and the site or its webmasters are
- * using Anari.
+ * the person is a webmaster, who is the only one who can change the site's theme, and the site uses another theme.
  *
  * @return boolean
  */
@@ -51,43 +70,49 @@ function formulize_lyrisUpdateWizardApplies() {
     if (!$formulizeModule OR $formulizeModule->getDBVersion() >= FORMULIZE_LYRIS_UPDATE_DBVERSION) {
         return false;
     }
-    return formulize_lyrisUpdateScenario() !== '';
+    return formulize_lyrisUpdateFromTheme() !== '';
 }
 
 /**
- * Which questions there are about the theme: 'site' when the site uses Anari, so the site can switch, and 'admin'
- * when the site uses a theme of its own and only webmasters see Anari, so only they can switch.
+ * Whether changing the site's theme to Lyris on Appearance > Settings should ask about Lyris first: the person is a
+ * webmaster, Lyris is installed, the 8.30 update has run (until it does, it asks the questions itself), the site uses
+ * another theme, and Lyris has never been the site's theme.
  *
- * @return string 'site', 'admin', or '' when neither uses Anari
+ * @return boolean
  */
-function formulize_lyrisUpdateScenario() {
-    if (formulize_storedSiteTheme('theme_set') === FORMULIZE_LYRIS_UPDATE_FROM) {
-        return 'site';
+function formulize_lyrisSwitchWizardApplies() {
+    global $xoopsUser;
+    if (!$xoopsUser OR !in_array(XOOPS_GROUP_ADMIN, $xoopsUser->getGroups())) {
+        return false;
     }
-    if (formulize_storedSiteTheme('theme_admin_set') === FORMULIZE_LYRIS_UPDATE_FROM) {
-        return 'admin';
+    $themes = formulize_selectableThemesList();
+    if (!isset($themes[FORMULIZE_LYRIS_UPDATE_TO])) {
+        return false;
     }
-    return '';
+    $module_handler = xoops_gethandler('module');
+    $formulizeModule = $module_handler->getByDirname('formulize');
+    if (!$formulizeModule OR $formulizeModule->getDBVersion() < FORMULIZE_LYRIS_UPDATE_DBVERSION) {
+        return false;
+    }
+    return formulize_lyrisUpdateFromTheme() !== '' AND !formulize_themeHasBeenActivated(FORMULIZE_LYRIS_UPDATE_TO);
 }
 
 /**
- * The theme choices the person can make, for the scenario the site is in.
+ * The theme choices the person can make in the update.
  *
- * @return array choice => its label. 'switch' (the site and webmasters), 'try' and 'admin' (webmasters only, for an
- *               Anari site and for a site with its own theme), and 'keep'.
+ * @return array choice => its label, escaped for HTML. 'switch' (the site and webmasters), 'try' (webmasters only,
+ *               when they don't see Lyris already), and 'keep'. None when the site uses Lyris already.
  */
 function formulize_lyrisUpdateThemeChoices() {
-    $choices = array();
-    if (formulize_lyrisUpdateScenario() == 'site') {
-        $choices['switch'] = _AM_FORMULIZE_LYRIS_CHOICE_SWITCH;
-        if (formulize_storedSiteTheme('theme_admin_set') !== FORMULIZE_LYRIS_UPDATE_TO) {
-            $choices['try'] = _AM_FORMULIZE_LYRIS_CHOICE_TRY;
-        }
-        $choices['keep'] = _AM_FORMULIZE_LYRIS_CHOICE_KEEP;
-    } elseif (formulize_lyrisUpdateScenario() == 'admin') {
-        $choices['admin'] = _AM_FORMULIZE_LYRIS_CHOICE_ADMIN;
-        $choices['keep'] = _AM_FORMULIZE_LYRIS_CHOICE_KEEP_ADMIN;
+    $fromTheme = formulize_lyrisUpdateFromTheme();
+    if ($fromTheme === '') {
+        return array();
     }
+    $choices = array('switch' => _AM_FORMULIZE_LYRIS_CHOICE_SWITCH);
+    if (formulize_storedSiteTheme('theme_admin_set') !== FORMULIZE_LYRIS_UPDATE_TO) {
+        $choices['try'] = _AM_FORMULIZE_LYRIS_CHOICE_TRY;
+    }
+    $choices['keep'] = sprintf(_AM_FORMULIZE_LYRIS_CHOICE_KEEP, htmlspecialchars($fromTheme));
     return $choices;
 }
 
@@ -105,25 +130,37 @@ function formulize_lyrisUpdateLooks() {
 }
 
 /**
- * The logo and browser icon the site shows in Anari, when they're the site's own, so Lyris can show them too: the
- * ones uploaded in Anari's Appearance settings, or else the files in the theme's own folder, if they're not ones
- * Formulize has shipped. For the icon, that's icons/icon.png, which browsers use, or icons/favicon.ico. An image Lyris
- * already has one of its own of is left out.
+ * The logo and browser icon the site shows in the theme it's moving from, when they're the site's own, so Lyris can
+ * show them too: the ones uploaded in that theme's Appearance settings, or else the files in the theme's own folder,
+ * if they're not ones Formulize has shipped with Anari. For the icon, that's icons/icon.png, which browsers use, or
+ * icons/favicon.ico. An image Lyris already has one of its own of is left out.
  *
+ * @param string $fromTheme the theme the site is moving from
  * @return array the Appearance setting ('appearance_logo', 'appearance_favicon') => the path of its file, for each
  *               image to bring along
  */
-function formulize_lyrisUpdateImagesToCarry() {
-    static $images = null;
-    if ($images !== null) {
-        return $images;
+function formulize_lyrisUpdateImagesToCarry($fromTheme) {
+    static $cache = array();
+    if (!isset($cache[$fromTheme])) {
+        $cache[$fromTheme] = formulize_lyrisFindImagesToCarry($fromTheme);
     }
+    return $cache[$fromTheme];
+}
+
+/**
+ * Find the images for formulize_lyrisUpdateImagesToCarry.
+ *
+ * @param string $fromTheme the theme the site is moving from
+ * @return array the Appearance setting => the path of its file
+ */
+function formulize_lyrisFindImagesToCarry($fromTheme) {
     $images = array();
     $themes = formulize_getAppearanceThemes();
-    if (!isset($themes[FORMULIZE_LYRIS_UPDATE_FROM]) OR !isset($themes[FORMULIZE_LYRIS_UPDATE_TO])) {
+    if (!isset($themes[$fromTheme]) OR !isset($themes[FORMULIZE_LYRIS_UPDATE_TO]) OR $fromTheme === FORMULIZE_LYRIS_UPDATE_TO) {
         return $images;
     }
-    // every logo and icon Anari has shipped with, so a file that is one of them isn't taken for the site's own
+    // every logo and icon Anari has shipped with, so a file that is one of them isn't taken for the site's own, in
+    // Anari or in a theme copied from it
     $shipped = array(
         'appearance_logo' => array(
             '2ed8fd6dc4210048219f2376d6e6abfe1a7e3739',
@@ -143,17 +180,18 @@ function formulize_lyrisUpdateImagesToCarry() {
         'appearance_favicon' => array('icons/icon.png', 'icons/favicon.ico'),
     );
     $lyrisSettings = formulize_getAppearanceLookSettings(FORMULIZE_LYRIS_UPDATE_TO, formulize_getAppearanceSiteLook(FORMULIZE_LYRIS_UPDATE_TO));
-    $anariSettings = formulize_getAppearanceLookSettings(FORMULIZE_LYRIS_UPDATE_FROM, formulize_getAppearanceSiteLook(FORMULIZE_LYRIS_UPDATE_FROM));
+    // a theme without Appearance settings has none to read, and reading them would give it an appearance folder
+    $fromSettings = formulize_themeSupportsAppearance($fromTheme) ? formulize_getAppearanceLookSettings($fromTheme, formulize_getAppearanceSiteLook($fromTheme)) : array();
     foreach ($themeFiles as $setting => $files) {
         if (!empty($lyrisSettings[$setting])) {
             continue;
         }
-        if (!empty($anariSettings[$setting]) AND $path = formulize_locateAppearanceFile($anariSettings[$setting], FORMULIZE_LYRIS_UPDATE_FROM)) {
+        if (!empty($fromSettings[$setting]) AND $path = formulize_locateAppearanceFile($fromSettings[$setting], $fromTheme)) {
             $images[$setting] = $path;
             continue;
         }
         foreach ($files as $file) {
-            $path = ICMS_THEME_PATH . '/' . FORMULIZE_LYRIS_UPDATE_FROM . '/' . $file;
+            $path = ICMS_THEME_PATH . '/' . $fromTheme . '/' . $file;
             if (is_file($path) AND !in_array(sha1_file($path), $shipped[$setting])) {
                 $images[$setting] = $path;
                 break;
@@ -347,12 +385,13 @@ function formulize_lyrisUpdateTemplateScreensToCopy() {
  * wasn't offered is left out.
  *
  * @param array $submitted the submitted form, ie: $_POST
- * @return array with 'theme' (a key of formulize_lyrisUpdateThemeChoices), 'look' (a look key or ''), 'images' (the
+ * @return array with 'theme' (a key of formulize_lyrisUpdateThemeChoices), 'from' (the theme the site is moving
+ *               from, as it was when the questions were answered), 'look' (a look key or ''), 'images' (the
  *               logo and icon to bring along, from formulize_lyrisUpdateImagesToCarry), 'templates' (sid => theme to
  *               copy from) and 'settings' (sid => settings)
  */
 function formulize_lyrisUpdateReadChoices($submitted) {
-    $choices = array('theme' => 'keep', 'look' => '', 'images' => array(), 'templates' => array(), 'settings' => array());
+    $choices = array('theme' => 'keep', 'from' => formulize_lyrisUpdateFromTheme(), 'look' => '', 'images' => array(), 'templates' => array(), 'settings' => array());
     $themeChoices = formulize_lyrisUpdateThemeChoices();
     if (isset($submitted['lyris_theme_choice']) AND is_string($submitted['lyris_theme_choice']) AND isset($themeChoices[$submitted['lyris_theme_choice']])) {
         $choices['theme'] = $submitted['lyris_theme_choice'];
@@ -362,12 +401,38 @@ function formulize_lyrisUpdateReadChoices($submitted) {
     if ($choices['theme'] == 'keep') {
         return $choices;
     }
+    return formulize_lyrisReadLyrisChoices($submitted, $choices, $choices['from']);
+}
+
+/**
+ * The answers to the questions asked when the site's theme is changed to Lyris on Appearance > Settings, from the
+ * submitted questions, checked against what was offered. The theme isn't asked about, since Lyris was chosen
+ * already, so the answer about it is always 'site': the site's theme changes, and the admin theme is saved with the
+ * rest of the settings.
+ *
+ * @param array $submitted the submitted questions, ie: $_POST
+ * @return array as formulize_lyrisUpdateReadChoices gives
+ */
+function formulize_lyrisSwitchReadChoices($submitted) {
+    $choices = array('theme' => 'site', 'from' => formulize_lyrisUpdateFromTheme(), 'look' => '', 'images' => array(), 'templates' => array(), 'settings' => array());
+    return formulize_lyrisReadLyrisChoices($submitted, $choices, $choices['from']);
+}
+
+/**
+ * The answers about Lyris itself, its look and what screens take along to it, which both sets of questions ask.
+ *
+ * @param array $submitted the submitted questions, ie: $_POST
+ * @param array $choices the answers so far, with the answer about the theme
+ * @param string $fromTheme the theme the site is moving from
+ * @return array the answers, with the look, images, templates and settings filled in
+ */
+function formulize_lyrisReadLyrisChoices($submitted, $choices, $fromTheme) {
     $looks = formulize_lyrisUpdateLooks();
     if (isset($submitted['lyris_look']) AND is_string($submitted['lyris_look']) AND isset($looks[$submitted['lyris_look']])) {
         $choices['look'] = $submitted['lyris_look'];
     }
     // the site's own logo and icon always come along, since a site that has its own wouldn't want to lose them
-    $choices['images'] = formulize_lyrisUpdateImagesToCarry();
+    $choices['images'] = formulize_lyrisUpdateImagesToCarry($fromTheme);
     $templatesOffered = formulize_lyrisUpdateTemplatesOffered();
     foreach (isset($submitted['lyris_copy_templates']) ? (array) $submitted['lyris_copy_templates'] : array() as $sid) {
         if (isset($templatesOffered[intval($sid)])) {
@@ -411,11 +476,16 @@ function formulize_lyrisUpdateChoices($choices = null) {
  * was asked. Everything here is safe to run again: a copy is only made where there's none, and a setting is only
  * changed to the value it is being changed to.
  *
- * @param array|null $choices the answers, from formulize_lyrisUpdateChoices
- * @return boolean whether it all worked. Anything that didn't is echoed, for the update's results.
+ * For the update, what was done is echoed for its results, along with anything that didn't work. For a switch on
+ * Appearance > Settings (the theme answer is 'site'), only what didn't work is echoed, and then the theme isn't
+ * changed, so the site stays as it was where it can, and the switch can be tried again.
+ *
+ * @param array|null $choices the answers, from formulize_lyrisUpdateChoices or formulize_lyrisSwitchReadChoices
+ * @return boolean whether it all worked
  */
 function formulize_lyrisUpdateApply($choices) {
     $ok = true;
+    $report = !($choices AND $choices['theme'] == 'site');
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
     $themes = formulize_selectableThemesList();
     if (!isset($themes[FORMULIZE_LYRIS_UPDATE_TO])) {
@@ -442,11 +512,11 @@ function formulize_lyrisUpdateApply($choices) {
         if ($screen_handler->copyTemplateFilesToTheme($screen, $fromTheme, FORMULIZE_LYRIS_UPDATE_TO)) {
             $copied++;
         } else {
-            echo '<p>' . sprintf(_AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_FAILED, $screen->getVar('title'), htmlspecialchars($fromTheme)) . '</p>';
+            echo '<p>' . sprintf($report ? _AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_FAILED : _AM_FORMULIZE_LYRIS_SWITCH_TEMPLATES_FAILED, $screen->getVar('title'), htmlspecialchars($fromTheme)) . '</p>';
             $ok = false;
         }
     }
-    if ($copied) {
+    if ($copied AND $report) {
         echo '<p>' . ($copied == 1 ? _AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_DONE_ONE : sprintf(_AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_DONE, $copied)) . '</p>';
     }
 
@@ -477,11 +547,11 @@ function formulize_lyrisUpdateApply($choices) {
         if ($typeHandler->insert($screen)) {
             $changed++;
         } else {
-            echo '<p>' . sprintf(_AM_FORMULIZE_LYRIS_APPLY_SETTINGS_FAILED, $screen->getVar('title')) . '</p>';
+            echo '<p>' . sprintf($report ? _AM_FORMULIZE_LYRIS_APPLY_SETTINGS_FAILED : _AM_FORMULIZE_LYRIS_SWITCH_SETTINGS_FAILED, $screen->getVar('title')) . '</p>';
             $ok = false;
         }
     }
-    if ($changed) {
+    if ($changed AND $report) {
         echo '<p>' . ($changed == 1 ? _AM_FORMULIZE_LYRIS_APPLY_SETTINGS_DONE_ONE : sprintf(_AM_FORMULIZE_LYRIS_APPLY_SETTINGS_DONE, $changed)) . '</p>';
     }
 
@@ -509,26 +579,42 @@ function formulize_lyrisUpdateApply($choices) {
                 $ok = false;
             }
         }
-        if ($ok) {
+        if ($ok AND $report) {
             echo '<p>' . _AM_FORMULIZE_LYRIS_APPLY_IMAGES_DONE . '</p>';
         }
     }
 
-    // the themes, last, since the site's theme changing moves every screen to it
+    // a switch that didn't all work leaves the site on its theme, where everything that worked is ready for Lyris
+    // and changes nothing else, so it can be tried again: what is offered then is only what's left to do
+    if ($choices['theme'] == 'site' AND !$ok) {
+        echo '<p>' . sprintf(_AM_FORMULIZE_LYRIS_SWITCH_NOT_SWITCHED, htmlspecialchars(formulize_storedSiteTheme('theme_set'))) . '</p>';
+        return false;
+    }
+
+    // the themes, last, since the site's theme changing moves every screen to it, and records that Lyris has been the
+    // site's theme (see formulize_siteThemeChanged)
     if ($choices['theme'] == 'switch') {
         $error = formulize_setSiteThemes(FORMULIZE_LYRIS_UPDATE_TO, FORMULIZE_LYRIS_UPDATE_TO);
+    } elseif ($choices['theme'] == 'site') {
+        $error = formulize_setSiteThemes(FORMULIZE_LYRIS_UPDATE_TO, null);
     } else {
         $error = formulize_setSiteThemes(null, FORMULIZE_LYRIS_UPDATE_TO);
-        // webmasters are the ones using the Templates tab, and they see Lyris now
+        // trying it: webmasters are the ones using the Templates tab, and they see Lyris now
         if (!$error AND !$screen_handler->setThemeForAllScreens(FORMULIZE_LYRIS_UPDATE_TO)) {
             $error = _AM_FORMULIZE_LYRIS_APPLY_SCREENS_FAILED;
+        }
+        // the screens have Lyris's settings and templates now, so switching the site later has nothing to ask
+        if (!$error) {
+            formulize_markThemeActivated(FORMULIZE_LYRIS_UPDATE_TO);
         }
     }
     if ($error) {
         echo '<p>' . $error . '</p>';
         return false;
     }
-    echo '<p>' . ($choices['theme'] == 'switch' ? _AM_FORMULIZE_LYRIS_APPLY_SWITCHED : _AM_FORMULIZE_LYRIS_APPLY_ADMIN_SWITCHED) . '</p>';
+    if ($report) {
+        echo '<p>' . ($choices['theme'] == 'switch' ? _AM_FORMULIZE_LYRIS_APPLY_SWITCHED : _AM_FORMULIZE_LYRIS_APPLY_ADMIN_SWITCHED) . '</p>';
+    }
     return $ok;
 }
 
@@ -556,11 +642,11 @@ function formulize_lyrisUpdateNextSteps($choices) {
             $html .= '<li>' . _AM_FORMULIZE_LYRIS_NEXT_SWITCHED_TEMPLATES . ' ' . implode(', ', $leftBehind) . '</li>';
         }
         $html .= '<li>' . sprintf(_AM_FORMULIZE_LYRIS_NEXT_LOOKS, $looksUrl) . '</li>';
-        $html .= '<li>' . sprintf(_AM_FORMULIZE_LYRIS_NEXT_SWITCHED_BACK, $settingsUrl) . '</li>';
-    } elseif ($choices['theme'] == 'try' OR $choices['theme'] == 'admin') {
-        $html .= '<li>' . ($choices['theme'] == 'try' ? _AM_FORMULIZE_LYRIS_NEXT_TRY : _AM_FORMULIZE_LYRIS_NEXT_ADMIN) . '</li>';
+        $html .= '<li>' . sprintf(_AM_FORMULIZE_LYRIS_NEXT_SWITCHED_BACK, htmlspecialchars($choices['from']), $settingsUrl) . '</li>';
+    } elseif ($choices['theme'] == 'try') {
+        $html .= '<li>' . sprintf(_AM_FORMULIZE_LYRIS_NEXT_TRY, htmlspecialchars($choices['from'])) . '</li>';
         $html .= '<li>' . sprintf(_AM_FORMULIZE_LYRIS_NEXT_LOOKS, $looksUrl) . '</li>';
-        $html .= '<li>' . sprintf($choices['theme'] == 'try' ? _AM_FORMULIZE_LYRIS_NEXT_TRY_READY : _AM_FORMULIZE_LYRIS_NEXT_ADMIN_BACK, $settingsUrl) . '</li>';
+        $html .= '<li>' . sprintf(_AM_FORMULIZE_LYRIS_NEXT_TRY_READY, $settingsUrl) . '</li>';
     } else {
         $html .= '<li>' . sprintf(_AM_FORMULIZE_LYRIS_NEXT_KEEP, $settingsUrl) . '</li>';
         $html .= '<li>' . _AM_FORMULIZE_LYRIS_NEXT_KEEP_TEMPLATES . '</li>';

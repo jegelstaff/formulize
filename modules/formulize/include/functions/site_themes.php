@@ -91,7 +91,8 @@ function formulize_setSiteThemes($siteTheme, $adminTheme) {
  * to it, as the core has always done, and every screen's theme changes to it, so the Templates tab
  * opens on the templates the site is using, and "Customize the Templates" starts from that theme's
  * defaults. The admin theme alone changes neither, since webmasters often change it just to preview
- * a theme.
+ * a theme. It's also recorded that the theme has been the site's theme, so switching to it again
+ * doesn't ask the questions a first switch to Lyris does (see formulize_markThemeActivated).
  *
  * Called by the system preferences save (modules/system/admin/preferences/main.php), which Admin >
  * Appearance > Settings saves through, and by formulize_setSiteThemes.
@@ -104,5 +105,7 @@ function formulize_siteThemeChanged($theme) {
     $usersChanged = $member_handler->updateUsersByField('theme', $theme);
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
     $screensChanged = $screen_handler->setThemeForAllScreens($theme);
+    include_once XOOPS_ROOT_PATH . '/modules/formulize/include/appearance.php';
+    formulize_markThemeActivated($theme);
     return ($usersChanged AND $screensChanged);
 }

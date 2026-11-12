@@ -16,14 +16,12 @@
 // advanced editor (appearance_editor.php), which shows it in an iframe and
 // sets the settings being edited on it as they are changed: over the saved
 // ones, or back to the theme's own, which the editor also sets explicitly since
-// the saved stylesheet is loaded here.
+// the saved stylesheet is loaded here. The 8.30 update shows it too.
 //
-// The sample is the theme's own markup (themes/<theme>/appearance_preview/,
-// see formulize_renderAppearancePreview), drawn with the stylesheets a real
-// page of the theme loads, in the same order: Formulize UI, Formulize's own
-// stylesheet, the theme's reset and main stylesheets, and the theme's generated
-// appearance stylesheet, so its colours, fonts and saved sizes show. No
-// scripts: the editor handles every click in the preview itself.
+// The page is formulize_appearancePreviewDocument's: the theme's own markup,
+// with a look's stylesheet and logo. No scripts: the editor handles every click
+// in the preview itself. The Looks tab draws the same page without asking for
+// it here, which is quicker.
 //
 // Formulize module admins only, like the editor.
 
@@ -49,42 +47,16 @@ if (!$xoopsUser OR !$gperm_handler->checkRight('module_admin', getFormulizeModId
 
 $theme = formulize_resolveAppearanceTheme(isset($_GET['theme']) ? (string) $_GET['theme'] : '');
 $screen = isset($_GET['screen']) ? (string) $_GET['screen'] : '';
+// the look being edited, as saved, which the editor shows its changes on; or the site look
+$look = isset($_GET['look']) ? strtolower((string) $_GET['look']) : '';
 // another theme's logo, to see this theme the way it would look with it, as the 8.30 update does with the site's logo
 $logoTheme = (isset($_GET['logofrom']) AND isset(formulize_getAppearanceThemes()[(string) $_GET['logofrom']])) ? (string) $_GET['logofrom'] : null;
-$markup = formulize_renderAppearancePreview($screen, $theme, $logoTheme);
-if ($markup === '') {
+$page = formulize_appearancePreviewDocument($screen, $theme, formulize_getAppearancePreviewLookCssUrl($theme, $look), formulize_getAppearancePreviewLogoUrl($theme, $look, $logoTheme));
+if ($page === '') {
 	header('HTTP/1.1 404 Not Found');
 	exit();
 }
 
-$stylesheets = array('/modules/formulize/templates/css/formulize-ui.css', '/modules/formulize/templates/css/formulize.css');
-foreach (array('reset.css', 'style.css') as $file) {
-	if (is_file(ICMS_THEME_PATH . '/' . $theme . '/css/' . $file)) {
-		$stylesheets[] = '/themes/' . $theme . '/css/' . $file;
-	}
-}
-// the look being edited, as saved, which the editor shows its changes on; or the site look
-$looks = formulize_getAppearanceLooks($theme);
-$look = isset($_GET['look']) ? strtolower((string) $_GET['look']) : '';
-$lookCss = isset($looks[$look]) ? formulize_getAppearanceLooksDir($theme) . '/' . $look . '.css' : formulize_getAppearanceCssPath($theme);
-if ($lookCss AND is_file($lookCss)) {
-	$stylesheets[] = substr($lookCss, strlen(XOOPS_ROOT_PATH));
-}
-
 header('Content-Type: text/html; charset=utf-8');
 header('X-Frame-Options: SAMEORIGIN');
-?><!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex">
-<title><?php echo htmlspecialchars(formulize_getAppearancePreviewScreens($theme)[$screen], ENT_QUOTES); ?></title>
-<?php foreach ($stylesheets as $path) {
-	echo '<link rel="stylesheet" type="text/css" media="all" href="' . XOOPS_URL . htmlspecialchars($path, ENT_QUOTES) . '?v=' . formulize_get_file_version($path) . '">' . "\n";
-} ?>
-</head>
-<body id="formulize" class="en formulize-screen formulize-appearance-preview">
-<?php echo $markup; ?>
-</body>
-</html>
+echo $page;

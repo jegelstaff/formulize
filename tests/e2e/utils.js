@@ -1602,6 +1602,32 @@ export async function chooseSiteThemes(page, site, admin) {
 }
 
 /**
+ * Whether Formulize has recorded that a theme has been the site's theme: activated.lock, in the theme's appearance
+ * folder. The first switch to Lyris on Appearance > Settings asks about Lyris when it hasn't.
+ * @param {string} theme a theme's folder name, e.g. 'Lyris'
+ * @returns {boolean}
+ */
+export function themeHasBeenActivated(theme) {
+	if (!SAFE_THEME.test(theme)) throw new Error(`Not a theme name: ${theme}`);
+	try {
+		execFileSync('docker', ['exec', webContainer(), 'test', '-e', `/var/www/html/themes/${theme}/appearance/activated.lock`], { stdio: 'ignore' });
+		return true;
+	} catch (e) {
+		return false;
+	}
+}
+
+/**
+ * Forget that a theme has been the site's theme, the way a webmaster does, by deleting activated.lock from the
+ * server, so the next switch to it on Appearance > Settings asks about it again. The application has no way to do it.
+ * @param {string} theme a theme's folder name, e.g. 'Lyris'
+ */
+export function forgetThemeActivated(theme) {
+	if (!SAFE_THEME.test(theme)) throw new Error(`Not a theme name: ${theme}`);
+	execFileSync('docker', ['exec', webContainer(), 'rm', '-f', `/var/www/html/themes/${theme}/appearance/activated.lock`]);
+}
+
+/**
  * Check which theme the page is shown in: Lyris's pages are a .lyris-app, Anari's a .site-layout, and each links
  * its own stylesheets.
  * @param {import('@playwright/test').Page} page

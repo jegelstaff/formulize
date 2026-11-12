@@ -225,6 +225,15 @@ if ($result) {
 	list($onSiteLook) = $xoopsDB->fetchRow($result);
 }
 
+// the samples a look's preview shows, the Form and List ones, as whole pages, the same
+// for every look but for the stand-ins for its stylesheet and logo, which the script
+// fills in for the look it shows (see formulize_appearancePreviewDocument)
+$previewScreens = $theme !== '' ? formulize_getAppearancePreviewScreens($theme) : array();
+$previewPages = array();
+foreach (array_keys(array_intersect_key($previewScreens, array('form' => 1, 'list' => 1)) ?: array_slice($previewScreens, 0, 1, true)) as $screenKey) {
+	$previewPages[$screenKey] = formulize_appearancePreviewDocument($screenKey, $theme, '__FORMULIZE_LOOK_CSS__', '__FORMULIZE_LOOK_LOGO__');
+}
+
 // what was just done, or why it couldn't be, said once the tab is back
 $message = '';
 $problem = isset($_GET['problem']) ? (string) $_GET['problem'] : '';
@@ -285,7 +294,7 @@ ob_start();
 .formulize-looks__category svg { flex: none; width: calc(var(--fz-spacing) * 3.5); height: calc(var(--fz-spacing) * 3.5); color: var(--fz-color-text-muted); }
 .formulize-looks__dot { color: var(--fz-color-text-subtle); }
 .formulize-looks__col-used { width: 13rem; }
-.formulize-looks__col-actions { width: 8.5rem; }
+.formulize-looks__col-actions { width: 13rem; }
 .formulize-looks__actions { display: inline-flex; justify-content: flex-end; gap: calc(var(--fz-spacing) * 1.5); width: 100%; }
 /* the Based on popover: the looks it is based on, and what it changes, a row for each kind */
 .formulize-looks__about { min-width: 17rem; }
@@ -301,9 +310,28 @@ ob_start();
 /* a screen's name in a popover, in the text's colour (the admin pages' links are blue) */
 .formulize-looks a.formulize-looks__link { color: var(--fz-color-text); text-decoration: none; }
 .formulize-looks a.formulize-looks__link:hover { text-decoration: underline; }
+/* a link that is a button, in the button's colour and weight */
+.formulize-looks a.fz-btn, .formulize-looks a.fz-btn:hover { color: var(--fz-button-text); font-weight: var(--fz-font-weight-medium); text-decoration: none; }
 .formulize-looks__foot { padding-top: calc(var(--fz-spacing) * 2.5); border-top: 1px solid var(--fz-color-border); color: var(--fz-color-text-subtle); font-size: var(--fz-text-xs); }
 .formulize-looks__choices { max-height: 18rem; overflow: auto; padding: calc(var(--fz-spacing) * 2); border: 1px solid var(--fz-color-border); border-radius: var(--fz-radius-md); }
 .formulize-looks__choices .fz-choice { padding-inline-start: calc(var(--d, 0) * var(--fz-spacing) * 5); }
+/* a look's preview: a sample screen drawn at a desktop width, 1200px by 900, and shrunk to fit by the script.
+   It's only to look at, so nothing in it can be pointed at or reached with the keyboard. */
+.formulize-looks__peek { width: min(30rem, calc(100vw - var(--fz-spacing) * 4)); max-width: none; max-height: none; overflow: hidden; }
+/* its head: the Form and List switch, the title in the middle, and the X */
+.formulize-looks__peek-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: calc(var(--fz-spacing) * 2); }
+.formulize-looks__peek-head > :last-child { justify-self: end; }
+.formulize-looks__peek-frame { position: relative; overflow: hidden; aspect-ratio: 4 / 3; border: 1px solid var(--fz-color-border); border-radius: var(--fz-radius-md); background: var(--fz-color-surface-3); }
+.formulize-looks__peek-frame iframe { position: absolute; top: 0; left: 0; width: 1200px; height: 900px; border: 0; transform-origin: 0 0; pointer-events: none; }
+.formulize-looks__peek-frame iframe[hidden] { display: none; }
+/* over the sample, the button that shows it larger: clear, with the magnifying glass for a pointer */
+.formulize-looks__peek-zoom { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
+.formulize-looks__peek-zoom:focus-visible { outline: none; box-shadow: var(--fz-focus-ring); }
+/* the sample larger: as big as the window allows, shrunk or grown to fit by the script, and closed by a click on it */
+.formulize-looks__zoom { width: calc(100vw - var(--fz-spacing) * 8); height: calc(100vh - var(--fz-spacing) * 8); height: calc(100dvh - var(--fz-spacing) * 8); max-height: none; overflow: hidden; background: var(--fz-color-surface-3); }
+.formulize-looks__zoom-stage { position: absolute; inset: 0; overflow: hidden; cursor: zoom-out; }
+.formulize-looks__zoom-stage iframe { position: absolute; top: 0; left: 0; width: 1200px; height: 900px; border: 0; transform-origin: 0 0; pointer-events: none; }
+.formulize-looks__zoom-close { position: absolute; top: calc(var(--fz-spacing) * 3); right: calc(var(--fz-spacing) * 3); background: var(--fz-color-surface); box-shadow: var(--fz-shadow-md); }
 </style>
 
 <div class="formulize-looks formulize-admin-ui fz-stack fz-gap-5">
@@ -490,6 +518,30 @@ ob_start();
 					</td>
 					<td>
 						<span class="formulize-looks__actions">
+							<?php if ($previewPages) { ?>
+							<button type="button" class="fz-btn fz-btn--sm" popovertarget="<?php echo $id; ?>-preview" style="anchor-name: --<?php echo $id; ?>-preview" aria-label="<?php echo formulize_looksH(sprintf(_AM_APPEARANCE_LOOKS_PREVIEW_LABEL, $look['name'])); ?>"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_PREVIEW); ?></button>
+							<div class="fz-popover formulize-looks__peek" id="<?php echo $id; ?>-preview" popover style="position-anchor: --<?php echo $id; ?>-preview" data-looks-css="<?php echo formulize_looksH(formulize_getAppearancePreviewLookCssUrl($theme, $key)); ?>" data-looks-logo="<?php echo formulize_looksH(formulize_getAppearancePreviewLogoUrl($theme, $key)); ?>">
+								<div class="formulize-looks__peek-head">
+									<?php if (count($previewPages) > 1) { ?>
+									<div class="fz-cluster fz-gap-1" role="group" aria-label="<?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_PREVIEW_SCREENS); ?>">
+										<?php foreach (array_keys($previewPages) as $screenKey) { ?>
+										<button type="button" class="fz-btn fz-btn--sm" aria-pressed="false" data-looks-screen="<?php echo formulize_looksH($screenKey); ?>"><?php echo formulize_looksH($previewScreens[$screenKey]); ?></button>
+										<?php } ?>
+									</div>
+									<?php } else { ?>
+									<span></span>
+									<?php } ?>
+									<p class="fz-popover__title"><?php echo formulize_looksH(sprintf(_AM_APPEARANCE_LOOKS_PREVIEW_TITLE, $look['name'])); ?></p>
+									<button type="button" class="fz-btn fz-btn--sm fz-btn--icon fz-btn--ghost" popovertarget="<?php echo $id; ?>-preview" popovertargetaction="hide" aria-label="<?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CLOSE); ?>"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+								</div>
+								<div class="formulize-looks__peek-frame">
+									<?php foreach (array_keys($previewPages) as $screenKey) { ?>
+									<iframe tabindex="-1" title="<?php echo formulize_looksH(sprintf(_AM_APPEARANCE_LOOKS_PREVIEW_FRAME, $previewScreens[$screenKey])); ?>" data-looks-screen="<?php echo formulize_looksH($screenKey); ?>" hidden></iframe>
+									<?php } ?>
+									<button type="button" class="formulize-looks__peek-zoom" aria-label="<?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_PREVIEW_ENLARGE); ?>" title="<?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_PREVIEW_ENLARGE); ?>"></button>
+								</div>
+							</div>
+							<?php } ?>
 							<button type="button" class="fz-btn fz-btn--sm" popovertarget="<?php echo $id; ?>-edit" style="anchor-name: --<?php echo $id; ?>-edit"><?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_EDIT); ?></button>
 							<div class="fz-popover fz-menu" id="<?php echo $id; ?>-edit" popover style="position-anchor: --<?php echo $id; ?>-edit">
 								<a class="fz-menu__item" href="<?php echo formulize_looksH($editorUrl . '&look=' . urlencode($key) . '&mode=simple'); ?>"><?php echo formulize_looksMenuIcon('simple') . formulize_looksH(_AM_APPEARANCE_LOOKS_SIMPLE); ?><span class="fz-menu__note"><?php echo formulize_looksH($sizes ? _AM_APPEARANCE_LOOKS_SIMPLE_NOTE_SIZE : _AM_APPEARANCE_LOOKS_SIMPLE_NOTE); ?></span></a>
@@ -524,7 +576,14 @@ ob_start();
 // ---- The dialogs ------------------------------------------------------------
 // One for making a look, and one for the site look; for each look, one for each
 // thing that can be done to it, so each says exactly what will happen to that look.
-?>
+// And one for a look's preview, larger, which the script fills in from the preview.
+if ($previewPages) { ?>
+<dialog class="fz-dialog formulize-looks__zoom" id="looks-zoom" closedby="any">
+	<?php // the keyboard goes to the X, not into the sample, where Esc wouldn't reach the dialog ?>
+	<div class="formulize-looks__zoom-stage"><iframe tabindex="-1" inert></iframe></div>
+	<button type="button" class="fz-btn fz-btn--icon formulize-looks__zoom-close" autofocus commandfor="looks-zoom" command="close" aria-label="<?php echo formulize_looksH(_AM_APPEARANCE_LOOKS_CLOSE); ?>"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+</dialog>
+<?php } ?>
 <dialog class="fz-dialog" id="looks-create" aria-labelledby="looks-create-title">
 	<form method="post" action="<?php echo formulize_looksH($postUrl); ?>">
 		<?php echo formulize_looksFormFields('create', $theme); ?>
@@ -703,7 +762,7 @@ ob_start();
 
 <script>
 // "Create look based on this" opens the same dialog as Create new look, with that
-// look chosen as the base. The rest of the tab needs no script of its own.
+// look chosen as the base.
 document.addEventListener('click', function (event) {
 	var button = event.target.closest ? event.target.closest('[data-looks-base]') : null;
 	var base = document.getElementById('looks-create-base');
@@ -713,6 +772,96 @@ document.addEventListener('click', function (event) {
 		if (name) { name.value = ''; }
 	}
 });
+
+// A look's preview (the button opens its popover itself, with popovertarget): the
+// samples, drawn from the pages below with the look's stylesheet and logo, so
+// nothing is asked of the server but files the browser keeps. Each is drawn at a
+// desktop width and shrunk to fit. It opens on the sample shown last, so looks can
+// be compared one after another.
+(function () {
+	var pages = <?php echo json_encode($previewPages, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+	var screen = Object.keys(pages)[0];
+	function attribute(text) {
+		return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+	}
+	function page(popover, which) {
+		var css = popover.getAttribute('data-looks-css');
+		var html = css ? pages[which].split('__FORMULIZE_LOOK_CSS__').join(attribute(css)) : pages[which].replace(/<link[^>]*__FORMULIZE_LOOK_CSS__[^>]*>/, '');
+		return html.split('__FORMULIZE_LOOK_LOGO__').join(attribute(popover.getAttribute('data-looks-logo')));
+	}
+	function show(popover) {
+		var scale = popover.querySelector('.formulize-looks__peek-frame').clientWidth / 1200;
+		Array.prototype.forEach.call(popover.querySelectorAll('iframe'), function (frame) {
+			var which = frame.getAttribute('data-looks-screen');
+			if (!frame.hasAttribute('srcdoc')) {
+				frame.setAttribute('srcdoc', page(popover, which));
+			}
+			frame.hidden = (which !== screen);
+			frame.style.transform = 'scale(' + scale + ')';
+		});
+		Array.prototype.forEach.call(popover.querySelectorAll('button[data-looks-screen]'), function (button) {
+			var on = (button.getAttribute('data-looks-screen') === screen);
+			button.setAttribute('aria-pressed', on ? 'true' : 'false');
+			button.classList.toggle('fz-btn--primary', on);
+		});
+	}
+	Array.prototype.forEach.call(document.querySelectorAll('.formulize-looks__peek'), function (popover) {
+		popover.addEventListener('toggle', function (event) {
+			if (event.newState === 'open') { show(popover); }
+		});
+	});
+	document.addEventListener('click', function (event) {
+		var button = event.target.closest ? event.target.closest('.formulize-looks__peek button[data-looks-screen]') : null;
+		if (button) {
+			screen = button.getAttribute('data-looks-screen');
+			show(button.closest('.formulize-looks__peek'));
+		}
+		var enlarge = event.target.closest ? event.target.closest('.formulize-looks__peek-zoom') : null;
+		if (enlarge && zoom) {
+			enlarged(enlarge.closest('.formulize-looks__peek'));
+		}
+	});
+
+	// The sample larger, as large as the window allows: a click on it, Esc or the X
+	// closes it, and the preview it came from is open again
+	var zoom = document.getElementById('looks-zoom');
+	var zoomedFrom = null;
+	function fitZoom() {
+		var stage = zoom.querySelector('.formulize-looks__zoom-stage');
+		var frame = stage.querySelector('iframe');
+		var scale = Math.min(stage.clientWidth / 1200, stage.clientHeight / 900);
+		frame.style.transform = 'scale(' + scale + ')';
+		frame.style.left = Math.max(0, Math.round((stage.clientWidth - 1200 * scale) / 2)) + 'px';
+		frame.style.top = Math.max(0, Math.round((stage.clientHeight - 900 * scale) / 2)) + 'px';
+	}
+	function enlarged(popover) {
+		var frame = zoom.querySelector('iframe');
+		var source = page(popover, screen);
+		if (frame.getAttribute('srcdoc') !== source) {
+			frame.setAttribute('srcdoc', source);
+		}
+		frame.setAttribute('title', popover.querySelector('iframe:not([hidden])').getAttribute('title'));
+		zoom.setAttribute('aria-label', popover.querySelector('.fz-popover__title').textContent);
+		zoomedFrom = popover;
+		zoom.showModal();
+		fitZoom();
+	}
+	if (zoom) {
+		zoom.querySelector('.formulize-looks__zoom-stage').addEventListener('click', function () {
+			zoom.close();
+		});
+		zoom.addEventListener('close', function () {
+			if (zoomedFrom) {
+				zoomedFrom.showPopover();
+				zoomedFrom.querySelector('.formulize-looks__peek-zoom').focus();
+				zoomedFrom = null;
+			}
+		});
+		window.addEventListener('resize', function () {
+			if (zoom.open) { fitZoom(); }
+		});
+	}
+})();
 </script>
 <?php
 $adminPage['looks_html'] = ob_get_clean();

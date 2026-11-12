@@ -6,23 +6,21 @@ title: Switching Your Site to Lyris
 
 # Switching your site to Lyris
 
-Lyris is Formulize's standard theme from version 8.30. It works well on phones, opens entries in a drawer beside the list, and its colours, fonts, logo and icon can all be set in [Appearance](../appearance_editor/). New sites start on Lyris. A site that uses Anari keeps it until you switch, and Anari still works.
+Lyris is Formulize's standard theme from version 8.30. It works well on phones, opens entries in a drawer beside the list, and its colours, fonts, logo and icon can all be set in [Appearance](../appearance_editor/). New sites start on Lyris. A site that uses Anari, or a theme of its own, keeps it until you switch, and Anari still works.
 
 ## When you update to 8.30
 
-If your site uses Anari, the update asks you a few questions before it runs. Log in as a webmaster, and click **Update Formulize** on the update page. Nothing changes until you click **Update Formulize now** at the end. If you click **Cancel**, nothing changes, and you can open the questions again.
+If your site uses a theme other than Lyris, such as Anari, the update asks you a few questions before it runs. Log in as a webmaster, and click **Update Formulize** on the update page. Nothing changes until you click **Update Formulize now** at the end. If you click **Cancel**, nothing changes, and you can open the questions again.
 
-If someone who isn't a webmaster runs the update, they aren't asked anything. The update runs, and your site stays on Anari until a webmaster switches it.
+If someone who isn't a webmaster runs the update, they aren't asked anything. The update runs, and your site stays on its theme until a webmaster switches it.
 
 ### Choose what to do with the theme
 
-You'll see your site in Anari and in Lyris, side by side. Then choose one of these:
+You'll see sample screens in your site's theme and in Lyris, side by side. If your theme has no sample screens, you'll see Lyris on its own. Then choose one of these:
 
 - **Switch my site to Lyris.** Everyone sees the site in Lyris.
-- **Try Lyris myself first.** Webmasters see the site in Lyris, and everyone else still sees Anari. Switch the whole site later, when you're ready.
-- **Keep Anari for now.** Nothing about the theme changes, and the update doesn't ask about looks, screen settings or templates.
-
-If your site uses a theme of its own, and only webmasters see Anari, you can choose **Use Lyris for webmasters** instead. Your own theme stays the one everyone else sees.
+- **Try Lyris myself first.** Webmasters see the site in Lyris, and everyone else still sees your current theme. Switch the whole site later, when you're ready. If webmasters see Lyris already, this isn't offered.
+- **Keep** your current theme **for now**, such as **Keep Anari for now**. Nothing about the theme changes, and the update doesn't ask about looks, screen settings or templates.
 
 ### Choose a look
 
@@ -30,7 +28,7 @@ Lyris comes with several looks, each with its own colours, fonts, corners and sp
 
 ### Your logo and icon come along
 
-If your site shows its own logo or browser icon in Anari, Lyris shows them too. You can change them any time in **Appearance > Looks**.
+If your site shows its own logo or browser icon in its current theme, Lyris shows them too. You can change them any time in **Appearance > Looks**.
 
 ### Give your screens Lyris's settings
 
@@ -40,9 +38,9 @@ The update lists the screens that still have the settings they started with, and
 
 ### Bring custom templates along
 
-Each theme has its own set of a screen's templates. If a screen has custom templates in Anari, it uses Lyris's standard templates in Lyris, unless it has templates there too.
+Each theme has its own set of a screen's templates. If a screen has custom templates in your current theme, it uses Lyris's standard templates in Lyris, unless it has templates there too.
 
-The update lists the screens with custom templates. Checked screens get a copy of their templates for Lyris. The copies keep Anari's markup, so look at those screens in Lyris afterwards, because Lyris may not style them completely. Unchecked screens use Lyris's standard templates.
+The update lists the screens with custom templates. Checked screens get a copy of their templates for Lyris. The copies keep your current theme's markup, so look at those screens in Lyris afterwards, because Lyris may not style them completely. Unchecked screens use Lyris's standard templates.
 
 Template screens always get a copy of their code and template for Lyris, because they have nothing else to use there.
 
@@ -62,6 +60,18 @@ When you change the default theme:
 - every user's own theme changes to it
 - every screen's Templates tab moves to it, so you edit the templates the site uses
 - template screens take their code and template along to it, if they have none there yet
+
+### The first time you switch to Lyris
+
+If Lyris has never been your site's default theme, clicking **Save your changes** with Lyris chosen as the **Default theme** opens a few questions first. They're the same ones the 8.30 update asks once you've chosen Lyris: [the look your site starts with](#choose-a-look), [Lyris's settings for your screens](#give-your-screens-lyriss-settings), and [which screens bring their custom templates along](#bring-custom-templates-along). Your logo and icon come along too. A step is left out when it has nothing to ask. Every screen's settings box starts checked.
+
+- Click **Switch to Lyris** at the end to make those changes, switch the theme, and save your other settings.
+- Click **Switch without these changes** to switch the theme and save your settings, with no change to your look or your screens.
+- Click **Cancel** to go back to the settings without saving anything.
+
+If something can't be done, such as copying a screen's templates, the questions say what went wrong, and your site stays on its current theme. Fix the problem and click **Switch to Lyris** again. What was done already isn't offered again.
+
+You're asked only once. After that, Lyris switches like any other theme. To be asked again, delete `themes/Lyris/appearance/activated.lock` on your server.
 
 ## Custom templates in Lyris
 

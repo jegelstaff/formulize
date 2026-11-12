@@ -128,7 +128,7 @@ if (!$opResults AND isset($_GET['op'])) {
             break;
         case "patch40":
         case "patchDB":
-            // the questions about Lyris, for a webmaster on a site that uses Anari, are asked before the update runs
+            // the questions about Lyris, for a webmaster on a site that uses another theme, are asked before the update runs
             include_once XOOPS_ROOT_PATH . '/modules/formulize/include/lyris_update.php';
             $lyrisWizardApplies = formulize_lyrisUpdateWizardApplies();
             if (isset($_POST['patch40'])) {

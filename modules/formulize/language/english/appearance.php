@@ -198,6 +198,14 @@ define('_AM_APPEARANCE_LOOKS_SET_SITE', 'Set as site look');
 define('_AM_APPEARANCE_LOOKS_SET_SITE_THEME', 'Set as site look for %s');
 define('_AM_APPEARANCE_LOOKS_DELETE', 'Delete');
 
+// a look's preview: the theme's sample screens, drawn with the look
+define('_AM_APPEARANCE_LOOKS_PREVIEW', 'Preview');
+define('_AM_APPEARANCE_LOOKS_PREVIEW_LABEL', 'Preview %s');
+define('_AM_APPEARANCE_LOOKS_PREVIEW_TITLE', 'Preview of %s');
+define('_AM_APPEARANCE_LOOKS_PREVIEW_SCREENS', 'Sample screens');
+define('_AM_APPEARANCE_LOOKS_PREVIEW_FRAME', 'Sample screen: %s');
+define('_AM_APPEARANCE_LOOKS_PREVIEW_ENLARGE', 'Show it larger');
+
 // the dialogs
 define('_AM_APPEARANCE_LOOKS_NAME', 'Name');
 define('_AM_APPEARANCE_LOOKS_CANCEL', 'Cancel');
