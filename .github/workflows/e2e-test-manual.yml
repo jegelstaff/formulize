@@ -296,6 +296,10 @@ jobs:
           cp -r logs/* tests/e2e/final-state/logs/ || echo "logs folder empty or not accessible"
         fi
 
+        # The web server's own output: Apache's access log, with every request it answered, and its error log. The
+        # activity log doesn't record requests for formulize_deleteEntryLock.php, so this is where to see whether a release arrived
+        docker logs formulize-web-1 > tests/e2e/final-state/logs/web-server.log 2>&1 || echo "web server log not available"
+
         # Copy code folder contents
         if [ -d "modules/formulize/code" ]; then
           cp -r modules/formulize/code/* tests/e2e/final-state/modules/formulize/code/ || echo "code folder empty or not accessible"

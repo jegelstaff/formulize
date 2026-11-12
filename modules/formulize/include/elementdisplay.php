@@ -148,11 +148,11 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 		// Do this last, since locking overrides other permissions!
 
 		// if we haven't found a lock for this entry, check if there is one...(as long as it's not an entry that we locked ourselves on this page load)
-    // only care about the existence of a lock if there's an editable element in play
+    // only care about the existence of a lock if there's an editable element in play. A read only element, like the Masquerade button, is never editable, the renderer disables it.
 		if(!$isDisabled AND $entry != "new" AND $entry > 0
            AND !isset($lockedEntries[$form_id][$entry])
            AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
-           AND ($element->hasData OR $element->isUserAccountElement) AND $element->getVar('ele_type') != 'derived'
+           AND ($element->hasData OR $element->isUserAccountElement) AND empty($element->readOnly) AND $element->getVar('ele_type') != 'derived'
            AND !strstr(getCurrentURL(),"printview.php")
            AND file_exists(formulize_entryLockFileName($entry, $form_id))
            AND !$userHasPermissionToIgnoreEntryLock) {
@@ -227,11 +227,12 @@ EOF;
 		// This page load takes the lock over, even from an earlier page of the same person's, whose release can still be on its way.
 		// But an element redrawn on its own is part of a page that's showing, and that page's release has to still match the lock.
 		// So a redraw leaves a lock the person already has, and a lock it writes has no token, which any of their page loads that drew the entry can release.
+		// A read only element locks nothing, since nothing in it can be saved.
 		$redrawnOnItsOwn = isset($GLOBALS['formulize_asynchronousElementRendering']);
 		if (!$isDisabled AND !$noSave AND $entry != "new" AND $entry > 0
             AND !isset($lockedEntries[$form_id][$entry])
             AND !isset($entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry])
-            AND ($element->hasData OR $element->isUserAccountElement) AND $element->getVar('ele_type') != 'derived'
+            AND ($element->hasData OR $element->isUserAccountElement) AND empty($element->readOnly) AND $element->getVar('ele_type') != 'derived'
             AND !strstr(getCurrentURL(),"printview.php")
             AND !($redrawnOnItsOwn AND ($lock = formulize_readEntryLock($entry, $form_id)) AND $lock['uid'] == $user_id)) {
 

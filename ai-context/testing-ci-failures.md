@@ -7,7 +7,7 @@ For how CI runs the suite, see [Concurrency](testing-robust-specs.md#concurrency
 - **Failure annotations are public.** `GET /repos/jegelstaff/formulize/commits/{sha}/check-runs` lists the checks. The annotations URL of the failed one has the Playwright error and call log for the test that failed. The same API walks back through runs, to find the last good one and where each one stopped.
 - **Job logs and artifacts need admin rights.** Ask a maintainer to download them.
 - **`playwright-report`** has the HTML report and the traces.
-- **`final-state`** has the database dump, `logs/`, the `code/` folder and the screen templates, as they were at the end of the run. `logs/formulize_log_active.log` gives a timeline of every request, and it can show that a click never produced a request.
+- **`final-state`** has the database dump, `logs/`, the `code/` folder and the screen templates, as they were at the end of the run. `logs/formulize_log_active.log` gives a timeline of every request, and it can show that a click never produced a request. `logs/web-server.log` is Apache's access and error log, and the only record of requests that don't load Formulize, such as the release of entry locks.
 
 ## Reading the evidence
 
