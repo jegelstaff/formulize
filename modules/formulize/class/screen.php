@@ -380,6 +380,106 @@ class formulizeScreenHandler {
 		return new formulizeScreen();
 	}
 
+	// The properties a theme's screen-defaults.json cannot set: what the screen is, which form it belongs to, and how
+	// it is wired to other screens. These come from where the screen is made, never from the theme.
+	const THEME_DEFAULTS_EXCLUDED = array('sid', 'fid', 'frid', 'type', 'theme', 'title', 'screen_handle', 'viewentryscreen');
+
+	/**
+	 * The settings a new screen of one type starts with in a theme, from the screen-defaults.json file in the theme's
+	 * folder, ie: themes/Lyris/screen-defaults.json. The file is keyed by screen type, then by property name:
+	 * {"listOfEntries": {"editdestination": "drawer", ...}}, and lists every setting with a fixed value, so the file
+	 * shows the whole picture. Formulize's own file, include/screen_defaults.json, has the same settings with
+	 * Formulize's standard values, and fills in anything the theme's file leaves out: everything, for a theme with no
+	 * file, or with a file that cannot be read as JSON.
+	 *
+	 * The words a screen starts with (button labels and the like, which are in the site's language) and what comes
+	 * from the form (the title, the handle, the Add/Update button's text) are not in the files. They're set in code by
+	 * each type's setDefault...ScreenVars method. The 8.30 update compares existing screens with what this returns.
+	 *
+	 * Properties the screen type doesn't have are left in, and are ignored when the defaults are applied
+	 * (see applyDefaultScreenVars).
+	 *
+	 * @param string $screenType the internal screen type, ie: listOfEntries, multiPage, template, calendar, map
+	 * @param string|null $theme the theme folder name. Defaults to the site's theme, as it is set on
+	 * Admin > Appearance > Settings
+	 * @return array property name => value
+	 */
+	public function getThemeScreenDefaults($screenType, $theme = null) {
+		$core = self::readScreenDefaultsFile(XOOPS_ROOT_PATH . '/modules/formulize/include/screen_defaults.json');
+		$coreDefaults = (isset($core[$screenType]) AND is_array($core[$screenType])) ? $core[$screenType] : array();
+		if($theme === null) {
+			// The stored setting, not $xoopsConfig['theme_set']: include/common.php swaps that for the admin theme
+			// when a webmaster is signed in, and for a theme chosen in the session, but the defaults are the
+			// defaults of the theme everyone sees. The config handler's cached copy is untouched by those swaps.
+			$config_handler = xoops_gethandler('config');
+			$systemConfig = $config_handler->getConfigsByCat(ICMS_CONF);
+			$theme = isset($systemConfig['theme_set']) ? $systemConfig['theme_set'] : '';
+		}
+		$theme = (string) $theme;
+		// a theme is a folder directly in themes/, so the name can never reach anywhere else
+		if($theme === '' OR !preg_match('/^[A-Za-z0-9_\-]+$/', $theme) OR !is_dir(ICMS_THEME_PATH . '/' . $theme)) {
+			return $coreDefaults;
+		}
+		$themeFile = self::readScreenDefaultsFile(ICMS_THEME_PATH . '/' . $theme . '/screen-defaults.json');
+		$themeDefaults = (isset($themeFile[$screenType]) AND is_array($themeFile[$screenType])) ? $themeFile[$screenType] : array();
+		return array_merge($coreDefaults, $themeDefaults);
+	}
+
+	/**
+	 * A screen defaults file, decoded, or an empty array when there's no file or it can't be read as JSON. Each file
+	 * is read once per request.
+	 *
+	 * @param string $file the full path of the file
+	 * @return array screen type => property name => value
+	 */
+	private static function readScreenDefaultsFile($file) {
+		static $files = array();
+		if(!isset($files[$file])) {
+			$files[$file] = array();
+			if(is_file($file)) {
+				$decoded = json_decode((string) file_get_contents($file), true);
+				if(is_array($decoded)) {
+					$files[$file] = $decoded;
+				} else {
+					error_log('Formulize: the screen defaults in '.$file.' could not be read as JSON, so they are not used. '.json_last_error_msg());
+				}
+			}
+		}
+		return $files[$file];
+	}
+
+	/**
+	 * Set the default values on a new screen: the settings with fixed values from the site's theme (see
+	 * getThemeScreenDefaults), and the rest from the type handler's setDefault...ScreenVars method, which works out the
+	 * words, what comes from the form, and the screen's empty content (pages, columns, buttons, filters) and hands
+	 * them here. A theme's file can override those too, except what THEME_DEFAULTS_EXCLUDED lists, so a theme can set
+	 * a button's text to "" to start screens without that button.
+	 *
+	 * @param object $screen the new screen object
+	 * @param array $defaults property name => value, the values worked out in code. Must include 'type', which says
+	 * which of the theme's defaults apply.
+	 * @return void
+	 */
+	protected function applyDefaultScreenVars($screen, $defaults) {
+		foreach($this->getThemeScreenDefaults($defaults['type']) as $property => $value) {
+			if(!isset($screen->vars[$property]) OR in_array($property, self::THEME_DEFAULTS_EXCLUDED, true) OR $value === null) {
+				continue;
+			}
+			$isArrayProperty = ($screen->vars[$property]['data_type'] == XOBJ_DTYPE_ARRAY);
+			if(is_array($value) !== $isArrayProperty) {
+				continue; // a list where a single value belongs, or the other way round
+			}
+			$defaults[$property] = $value;
+		}
+		foreach($defaults as $property => $value) {
+			// array properties are stored serialized, as they always have been in the defaults
+			if(is_array($value) AND isset($screen->vars[$property]) AND $screen->vars[$property]['data_type'] == XOBJ_DTYPE_ARRAY) {
+				$value = serialize($value);
+			}
+			$screen->setVar($property, $value);
+		}
+	}
+
 
 	// check to see if a handle is unique within a form
 	function isScreenHandleUnique($handle, $screen_id = 0) {

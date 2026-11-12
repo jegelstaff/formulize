@@ -1,0 +1,52 @@
+{
+  "listOfEntries": {
+    "limitviews": ["allviews"],
+    "useworkingmsg": 1,
+    "usescrollbox": 1,
+    "entriesperpage": 10,
+    "editdestination": "screen",
+    "useheadings": 1,
+    "usenumberofentries": 1,
+    "usetogglerepeatdata": 1,
+    "repeatheaders": 0,
+    "usesearchcalcmsgs": 1,
+    "usesearch": 1,
+    "columnwidth": 0,
+    "columnwidthmode": "natural",
+    "textwidth": 255,
+    "usecheckboxes": 0,
+    "useToken": 1,
+    "anonNeedsPasscode": 1
+  },
+  "multiPage": {
+    "displayheading": 0,
+    "reloadblank": 0,
+    "finishisdone": 1,
+    "showtabs": 1,
+    "showprevbutton": 0,
+    "showsavebutton": 1,
+    "showclosebutton": 1,
+    "shownextbutton": 0,
+    "printall": 2,
+    "paraentryform": 0,
+    "paraentryrelationship": 0,
+    "showpagetitles": 0,
+    "showpageindicator": 0,
+    "showpageselector": 0,
+    "displaycolumns": 1,
+    "column1width": "auto",
+    "column2width": "auto",
+    "useToken": 1,
+    "anonNeedsPasscode": 1
+  },
+  "template": {
+    "donedest": ""
+  },
+  "calendar": {
+    "caltype": "month"
+  },
+  "map": {
+    "tileset": "osm",
+    "show_view_entry_link": 1
+  }
+}

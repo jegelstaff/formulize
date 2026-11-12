@@ -434,6 +434,73 @@ back button at the left, where people look for it, the logo in the middle, and t
 the right, at the other end from back, with the menu sliding in from that side. See "The header on
 phones" in each theme's `css/style.css`.
 
+## 9. Choose the settings new screens start with (optional)
+
+When someone makes a new screen, or a new form with its default screens, the screen starts with a
+set of settings. Your theme can choose them, so that new screens suit its layout. For example, Lyris
+opens entries from a list in the drawer, and Anari opens them full screen.
+
+Put a file named `screen-defaults.json` in your theme's folder, next to `theme.html`. It lists every
+setting, under the type of screen it belongs to, so it shows how every type of screen starts in your
+theme. The easiest way to make one is to copy Lyris's or Anari's file and change the values. Part of
+Lyris's file:
+
+```json
+{
+  "listOfEntries": {
+    "entriesperpage": 20,
+    "editdestination": "drawer",
+    "usesearch": 2,
+    ...
+  },
+  "multiPage": {
+    "displaycolumns": 1,
+    "column1width": "auto",
+    "column2width": "auto",
+    ...
+  },
+  ...
+}
+```
+
+- Your file only decides how new screens start. Screens that already exist keep their settings, and
+  a new screen's settings can be changed afterwards on its admin page, as usual.
+- The settings come from the theme the site uses (**Admin > Appearance > Settings**, the default
+  theme) at the time the screen is made.
+- List every setting, even where you're happy with Formulize's standard value, so that anyone reading
+  your file sees the whole picture. Formulize's standard values are in
+  `modules/formulize/include/screen_defaults.json`. A setting your file leaves out gets the standard
+  value, and a theme with no file gets the standard values for everything. When a new version of
+  Formulize adds a setting, add it to your file.
+- Don't put the file in your theme's `appearance` folder. Formulize writes the looks there, and
+  that folder isn't meant to be kept with your theme's files.
+- If the file isn't valid JSON, Formulize ignores all of it and logs an error saying which file it
+  was. Check it with a JSON validator if your settings don't show up.
+
+The types of screen are `listOfEntries` (a list of entries), `multiPage` (a form), `template`,
+`calendar` and `map`. The settings are the names Formulize stores them under. These are the ones themes most often change:
+
+| Type | Setting | What it does | Values |
+|---|---|---|---|
+| `listOfEntries` | `editdestination` | Where entries open from the list | `"screen"` (full screen, the standard), `"drawer"` |
+| `listOfEntries` | `usesearch` | The row of search boxes under the column headings | `1` shown (the standard), `2` hidden until the user opens it, `0` none |
+| `listOfEntries` | `entriesperpage` | How many entries each page of the list shows | A number. The standard is `10` |
+| `listOfEntries` | `useheadings` | The column headings | `1` shown (the standard), `0` hidden |
+| `multiPage` | `displaycolumns` | Whether a form's captions are above its questions or beside them | `1` one column (the standard), `2` two columns |
+| `multiPage` | `column1width`, `column2width` | The width of each column. With one column, only `column1width` is used | Any CSS width, such as `"20%"`, or `"auto"` (the standard) |
+| `multiPage` | `showtabs` | The tabs for a form's pages | `1` shown (the standard), `0` hidden |
+
+Some things a new screen starts with aren't in the file, because they don't have one fixed value:
+
+- **The words on its buttons.** They're in the site's language. To start screens without one of a
+  list's buttons, set its text to `""` in your file, as in `"useexport": ""`. Don't write other text
+  for a button there, because it wouldn't be translated.
+- **What comes from the form,** such as the screen's title, and the text of a list's Add button.
+- **What's on the screen,** such as a list's columns, or a form's pages.
+
+A setting a screen type doesn't have is ignored. So are a screen's title, its handle, its form, its
+relationship and the screen its entries open in, because those come from where the screen is made.
+
 ## Checking your theme
 
 Open a long form in your theme, scroll down, and save it. You should be returned to where you were

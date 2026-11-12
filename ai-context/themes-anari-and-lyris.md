@@ -21,6 +21,11 @@ For what a theme has to supply, read [What Formulize expects from a theme](../do
 | **AI assistant link** | In the top bar | In the menu block, from `drawAIAssistantMenuSection()` |
 | **Sidebar** | Only drawn when the left column has blocks (`<{if $xoBlocks.canvas_left}>`) | Always drawn, even when it has nothing in it |
 | **No header or menus** | `?fz_inline=1` leaves them out, and adds the `formulize-inline` body class | No equivalent |
+| **New screens** (`screen-defaults.json`) | Lists open entries in the drawer, hide the search row and show 20 entries. Forms have one column | Lists open entries full screen, show the search row and show 10 entries. Forms have two columns, with captions at 20% |
+
+A theme's `screen-defaults.json`, in its folder, holds every setting with a fixed value that new screens start with. Each theme's file lists all of them, even where its value is the standard one, and `tests/screen_defaults_test.php` fails if a theme's file leaves one out. When you add a setting to `modules/formulize/include/screen_defaults.json`, which has Formulize's standard values and fills in for a theme without a file, add it to every theme's file too. Words, which are in the site's language, and values from the form stay in each type's `setDefault…ScreenVars()`.
+
+The 8.30 update wizard reads Lyris's file through `getThemeScreenDefaults()` on the screen handler, so don't rename either one without changing the wizard. It offers only the settings it has a label for, so a setting that matters there needs a label in the wizard. See [Choose the settings new screens start with](../docs/themes.md) for the format, and `applyDefaultScreenVars()` in `class/screen.php` for how they're applied.
 
 Screen templates are the difference that catches people out. A change to the default markup of a screen may have to be made in the Lyris, Anari and global `default/` folders, because each has its own copy. See [Screen Templates](architecture-overview.md#screen-templates).
 

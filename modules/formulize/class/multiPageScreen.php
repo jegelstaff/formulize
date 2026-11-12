@@ -773,51 +773,39 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
         }
     }
 
+    /**
+     * Set the default values on a new form screen. The settings with fixed values come from the site's theme's
+     * screen-defaults.json (see formulizeScreenHandler::getThemeScreenDefaults). The ones here are the words, which
+     * are in the site's language, what comes from the form, and the screen's one empty page.
+     *
+     * @param object $defaultFormScreen the new form screen
+     * @param object $formObject the form the screen is for
+     * @return void
+     */
     public function setDefaultFormScreenVars($defaultFormScreen, $formObject)
 	{
         global $xoopsConfig;
-        $defaultFormScreen->setVar('theme', $xoopsConfig['theme_set']);
-        $defaultFormScreen->setVar('title', $formObject->getSingular());
-				$defaultFormScreen->setVar('screen_handle', $this->makeHandleUnique($formObject->getSingular()));
-        $defaultFormScreen->setVar('displayheading', 0);
-		$defaultFormScreen->setVar('reloadblank', 0);
-        $defaultFormScreen->setVar('finishisdone', 1);
-		$defaultFormScreen->setVar('fid', $formObject->getVar('fid'));
-		$defaultFormScreen->setVar('frid', -1);
-		$defaultFormScreen->setVar('type', 'multiPage');
-		$defaultFormScreen->setVar('useToken', 1);
-        $defaultFormScreen->setVar('pagetitles',serialize(array(0=>$formObject->getSingular())));
-        $defaultFormScreen->setVar('pages', serialize(array(0=>array())));
-        $defaultFormScreen->setVar('disabledpages', serialize(array(0=>0)));
-        // tabs across the top, and Save and Close at the bottom. No Thank You page, so no Save and Continue.
-        $defaultFormScreen->setVar('showtabs', 1);
-        $defaultFormScreen->setVar('showprevbutton', 0);
-        $defaultFormScreen->setVar('showsavebutton', 1);
-        $defaultFormScreen->setVar('showclosebutton', 1);
-        $defaultFormScreen->setVar('shownextbutton', 0);
-        $defaultFormScreen->setVar('buttontext', serialize(array(
-            'thankyoulinktext'=>trans(_formulize_DMULTI_CONTINUE),
-            'leaveButtonText'=>trans(_formulize_SAVE_AND_LEAVE),
-            'prevButtonText'=>trans(_formulize_DMULTI_PREV),
-            'saveButtonText'=>trans(_formulize_SAVE),
-            'nextButtonText'=>trans(_formulize_DMULTI_NEXT),
-            'finishButtonText'=>trans(_formulize_DMULTI_SAVE),
-            'printableViewButtonText'=>trans(_formulize_PRINTVIEW),
-						'closeButtonText'=>trans(_formulize_DONE)
-        )));
-        $defaultFormScreen->setVar('printall', 2);
-        $defaultFormScreen->setVar('paraentryform', 0);
-        $defaultFormScreen->setVar('paraentryrelationship', 0);
-        $defaultFormScreen->setVar('showpagetitles', 0);
-        $defaultFormScreen->setVar('showpageindicator', 0);
-        $defaultFormScreen->setVar('showpageselector', 0);
-				// WE NEED TO ADD IN PER-SCREEN DEFAULTS AND THINGS LIKE THE COLUMNS NEED TO RESPECT THE DEFAULT PROVIDED BY THE SCREEN
-				// WE CAN PROBABLY JUST REUSE THE SETTINGS SYSTEM, STORE THE SETTINGS ASSOCIATED WITH EACH THEM, AND LOAD THE VALUES
-				// BASED ON THE THEME THAT IS ACTIVE
-        $defaultFormScreen->setVar('displaycolumns', 1);
-        $defaultFormScreen->setVar('column1width', 'auto');
-        $defaultFormScreen->setVar('column2width', 'auto');
-				$defaultFormScreen->setVar('anonNeedsPasscode', 1);
+        $this->applyDefaultScreenVars($defaultFormScreen, array(
+            'theme' => $xoopsConfig['theme_set'],
+            'title' => $formObject->getSingular(),
+            'screen_handle' => $this->makeHandleUnique($formObject->getSingular()),
+            'fid' => $formObject->getVar('fid'),
+            'frid' => -1,
+            'type' => 'multiPage',
+            'pagetitles' => serialize(array(0=>$formObject->getSingular())),
+            'pages' => serialize(array(0=>array())),
+            'disabledpages' => serialize(array(0=>0)),
+            'buttontext' => serialize(array(
+                'thankyoulinktext'=>trans(_formulize_DMULTI_CONTINUE),
+                'leaveButtonText'=>trans(_formulize_SAVE_AND_LEAVE),
+                'prevButtonText'=>trans(_formulize_DMULTI_PREV),
+                'saveButtonText'=>trans(_formulize_SAVE),
+                'nextButtonText'=>trans(_formulize_DMULTI_NEXT),
+                'finishButtonText'=>trans(_formulize_DMULTI_SAVE),
+                'printableViewButtonText'=>trans(_formulize_PRINTVIEW),
+                'closeButtonText'=>trans(_formulize_DONE)
+            )),
+        ));
     }
 
 }

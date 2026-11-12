@@ -119,6 +119,26 @@ class formulizeCalendarScreenHandler extends formulizeScreenHandler {
 		return new formulizeCalendarScreen();
 	}
 
+	/**
+	 * Set the default values on a new calendar screen. The settings with fixed values come from the site's theme's
+	 * screen-defaults.json (see formulizeScreenHandler::getThemeScreenDefaults). The ones here are what comes from the
+	 * form, and the calendar's empty content.
+	 *
+	 * @param object $screen the new screen
+	 * @param object $formObject the form the screen is for
+	 * @return void
+	 */
+	public function setDefaultScreenVars($screen, $formObject) {
+		global $xoopsConfig;
+		$this->applyDefaultScreenVars($screen, array(
+			'fid' => $formObject->getVar('fid'),
+			'frid' => -1,
+			'type' => 'calendar',
+			'theme' => $xoopsConfig['theme_set'],
+			'datasets' => serialize(array()),
+		));
+	}
+
 
 	function insert($screen, $force=false) {
 		$update = !$screen->getVar('sid') ? false : true;

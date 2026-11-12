@@ -92,6 +92,28 @@ class formulizeMapScreenHandler extends formulizeScreenHandler {
         return new formulizeMapScreen();
     }
 
+    /**
+     * Set the default values on a new map screen. The settings with fixed values come from the site's theme's
+     * screen-defaults.json (see formulizeScreenHandler::getThemeScreenDefaults). The ones here are the words, which
+     * are in the site's language, what comes from the form, and the map's empty content.
+     *
+     * @param object $screen the new screen
+     * @param object $formObject the form the screen is for
+     * @return void
+     */
+    public function setDefaultScreenVars($screen, $formObject) {
+        global $xoopsConfig;
+        $this->applyDefaultScreenVars($screen, array(
+            'fid' => $formObject->getVar('fid'),
+            'frid' => -1,
+            'type' => 'map',
+            'theme' => $xoopsConfig['theme_set'],
+            'columns' => serialize(array()),
+            'fundamental_filters' => serialize(array()),
+            'filter_button_text' => _AM_MAP_FILTER_BUTTON_DEFAULT,
+        ));
+    }
+
     function insert($screen, $force=false) {
         $update = !$screen->getVar('sid') ? false : true;
         if (!$sid = parent::insert($screen, $force)) {

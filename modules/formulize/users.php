@@ -104,6 +104,9 @@ $screen_handler->setDefaultListScreenVars($pseudoScreen, $eauViewEntryScreenId, 
 $pseudoScreen->setVar('title', 'All Users');
 $pseudoScreen->setVar('frid', 0);
 $pseudoScreen->setVar('textwidth', 0);
+// Users open full screen whatever the theme's default is, because the drawer loads entries through a page
+// that doesn't set up the composite data mode this list depends on
+$pseudoScreen->setVar('editdestination', 'screen');
 // Suppress buttons not appropriate for user management
 $pseudoScreen->setVar('useclone', '');
 $pseudoScreen->setVar('usedelete', _formulize_DE_DELETE_USER_BUTTON);

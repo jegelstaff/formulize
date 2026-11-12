@@ -464,32 +464,20 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         $GLOBALS['formulize_screenCurrentlyRendering'] = $previouslyRenderingScreen;
     }
 
+    /**
+     * Set the default values on a new list screen. The settings with fixed values come from the site's theme's
+     * screen-defaults.json (see formulizeScreenHandler::getThemeScreenDefaults). The ones here are the words, which
+     * are in the site's language, what comes from the form and the site, and the list's empty content.
+     *
+     * @param object $defaultListScreen the new list screen
+     * @param int|string $defaultFormScreenId the screen entries open in, or 'none'
+     * @param object $formObject the form the screen is for
+     * @return void
+     */
     public function setDefaultListScreenVars($defaultListScreen, $defaultFormScreenId, $formObject) {
 			global $xoopsConfig;
-			// View
-			$defaultListScreen->setVar('defaultview', serialize(array(XOOPS_GROUP_USERS => FORMULIZE_QUERY_SCOPE_GLOBAL)));
-			$defaultListScreen->setVar('usecurrentviewlist', _formulize_DE_CURRENT_VIEW);
-			$defaultListScreen->setVar('limitviews', serialize(array(0 => 'allviews')));
-			$defaultListScreen->setVar('useworkingmsg', 1);
-			$defaultListScreen->setVar('usescrollbox', 1);
-			$defaultListScreen->setVar('entriesperpage', 10);
-			$defaultListScreen->setVar('viewentryscreen', $defaultFormScreenId);
-			// Headings
-			$defaultListScreen->setVar('useheadings', 1);
-			$defaultListScreen->setVar('usenumberofentries', 1);
-			$defaultListScreen->setVar('usetogglerepeatdata', 1);
-			$defaultListScreen->setVar('repeatheaders', 0);
-			$defaultListScreen->setVar('usesearchcalcmsgs', 1);
-			$defaultListScreen->setVar('usesearch', 1);
-			$defaultListScreen->setVar('columnwidth', 0);
-			$defaultListScreen->setVar('columnwidthmode', 'natural');
-			$defaultListScreen->setVar('textwidth', 255);
-			$defaultListScreen->setVar('usecheckboxes', 0);
 			$config_handler = xoops_gethandler('config');
 			$formulizeConfig = $config_handler->getConfigsByCat(0, getFormulizeModId());
-			$defaultListScreen->setVar('useviewentrylinks', isset($formulizeConfig['formulizeDefaultEditIconStyle']) ? $formulizeConfig['formulizeDefaultEditIconStyle'] : FORMULIZE_EDIT_ICON_STYLE_PEN);
-			$defaultListScreen->setVar('desavetext', _formulize_SAVE);
-			// Buttons
 			// 'single' is a per-group array, so it has to be resolved before it can be compared. This is a
 			// default screen being set up rather than something being rendered for a particular user, so it
 			// is resolved from the point of view of the Registered Users group, which gives the base value
@@ -500,39 +488,47 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 			} else {
 				$addUpdateText = ($formObject->getVar('singular') ? sprintf(_formulize_DE_UPDATESINGULAR, $formObject->getVar('singular')) : _formulize_DE_UPDATEENTRY);
 			}
-			$defaultListScreen->setVar('useaddupdate', $addUpdateText);
-			$defaultListScreen->setVar('useaddmultiple', ''); // to set default text: ($formObject->getVar('plural') ? sprintf(_formulize_DE_ADD_PLURAL_ENTRY, $formObject->getVar('plural')) : _formulize_DE_ADD_MULTIPLE_ENTRY));
-			$defaultListScreen->setVar('useaddproxy', _formulize_DE_PROXYENTRY);
-			$defaultListScreen->setVar('useexport', _formulize_DE_EXPORT);
-			$defaultListScreen->setVar('useimport', _formulize_DE_IMPORT);
-			$defaultListScreen->setVar('usenotifications', _formulize_DE_NOTBUTTON);
-			$defaultListScreen->setVar('usechangecols', _formulize_DE_CHANGECOLS);
-			$defaultListScreen->setVar('usecalcs', _formulize_DE_CALCS);
-			$defaultListScreen->setVar('useadvcalcs', _formulize_DE_ADVCALCS);
-			$defaultListScreen->setVar('useexportcalcs', _formulize_DE_EXPORT_CALCS);
-			$defaultListScreen->setVar('useadvsearch', '');
-			$defaultListScreen->setVar('useclone', _formulize_DE_CLONESEL);
-			$defaultListScreen->setVar('usedelete', _formulize_DE_DELETESEL);
-			$defaultListScreen->setVar('useselectall', _formulize_DE_SELALL);
-			$defaultListScreen->setVar('useclearall', _formulize_DE_CLEARALL);
-			$defaultListScreen->setVar('usereset', _formulize_DE_RESETVIEW);
-			$defaultListScreen->setVar('usesave', _formulize_DE_SAVE);
-			$defaultListScreen->setVar('usedeleteview', _formulize_DE_DELETE);
-			$defaultListScreen->setVar('usechangeowner', _formulize_DE_CHANGEOWNER);
-			$defaultListScreen->setVar('title', $formObject->getPlural());
-			$defaultListScreen->setVar('screen_handle', $this->makeHandleUnique($formObject->getPlural()));
-			$defaultListScreen->setVar('fid', $formObject->getVar('fid'));
-			$defaultListScreen->setVar('frid', -1);
-			$defaultListScreen->setVar('type', 'listOfEntries');
-			$defaultListScreen->setVar('useToken', 1);
-			$defaultListScreen->setVar('theme', $xoopsConfig['theme_set']);
-			$defaultListScreen->setVar('anonNeedsPasscode', 1);
-			// ARRAY-typed vars with no non-null initVar default
-			$defaultListScreen->setVar('advanceview', serialize(array()));
-			$defaultListScreen->setVar('hiddencolumns', serialize(array()));
-			$defaultListScreen->setVar('decolumns', serialize(array()));
-			$defaultListScreen->setVar('customactions', serialize(array()));
-			$defaultListScreen->setVar('fundamental_filters', serialize(array()));
+			$this->applyDefaultScreenVars($defaultListScreen, array(
+				// View
+				'defaultview' => serialize(array(XOOPS_GROUP_USERS => FORMULIZE_QUERY_SCOPE_GLOBAL)),
+				'usecurrentviewlist' => _formulize_DE_CURRENT_VIEW,
+				'viewentryscreen' => $defaultFormScreenId,
+				// Headings
+				'useviewentrylinks' => isset($formulizeConfig['formulizeDefaultEditIconStyle']) ? $formulizeConfig['formulizeDefaultEditIconStyle'] : FORMULIZE_EDIT_ICON_STYLE_PEN,
+				'desavetext' => _formulize_SAVE,
+				// Buttons
+				'useaddupdate' => $addUpdateText,
+				'useaddmultiple' => '', // to set default text: ($formObject->getVar('plural') ? sprintf(_formulize_DE_ADD_PLURAL_ENTRY, $formObject->getVar('plural')) : _formulize_DE_ADD_MULTIPLE_ENTRY));
+				'useaddproxy' => _formulize_DE_PROXYENTRY,
+				'useexport' => _formulize_DE_EXPORT,
+				'useimport' => _formulize_DE_IMPORT,
+				'usenotifications' => _formulize_DE_NOTBUTTON,
+				'usechangecols' => _formulize_DE_CHANGECOLS,
+				'usecalcs' => _formulize_DE_CALCS,
+				'useadvcalcs' => _formulize_DE_ADVCALCS,
+				'useexportcalcs' => _formulize_DE_EXPORT_CALCS,
+				'useadvsearch' => '',
+				'useclone' => _formulize_DE_CLONESEL,
+				'usedelete' => _formulize_DE_DELETESEL,
+				'useselectall' => _formulize_DE_SELALL,
+				'useclearall' => _formulize_DE_CLEARALL,
+				'usereset' => _formulize_DE_RESETVIEW,
+				'usesave' => _formulize_DE_SAVE,
+				'usedeleteview' => _formulize_DE_DELETE,
+				'usechangeowner' => _formulize_DE_CHANGEOWNER,
+				'title' => $formObject->getPlural(),
+				'screen_handle' => $this->makeHandleUnique($formObject->getPlural()),
+				'fid' => $formObject->getVar('fid'),
+				'frid' => -1,
+				'type' => 'listOfEntries',
+				'theme' => $xoopsConfig['theme_set'],
+				// the list's content: columns, custom buttons and filters. ARRAY-typed vars with no non-null initVar default
+				'advanceview' => serialize(array()),
+				'hiddencolumns' => serialize(array()),
+				'decolumns' => serialize(array()),
+				'customactions' => serialize(array()),
+				'fundamental_filters' => serialize(array()),
+			));
     }
 
 }

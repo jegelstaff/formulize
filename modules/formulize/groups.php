@@ -69,6 +69,9 @@ $screen_handler->setDefaultListScreenVars($pseudoScreen, 0, $formObject);
 $pseudoScreen->setVar('title', 'All Groups');
 $pseudoScreen->setVar('frid', 0);
 $pseudoScreen->setVar('textwidth', 0);
+// Groups open full screen whatever the theme's default is, because the drawer loads entries through a page
+// that doesn't set up the composite data mode this list depends on
+$pseudoScreen->setVar('editdestination', 'screen');
 // Suppress buttons not appropriate for group management
 $pseudoScreen->setVar('useaddupdate', _AM_FORMULIZE_ADD_GROUP);
 $pseudoScreen->setVar('usechangecols', '');

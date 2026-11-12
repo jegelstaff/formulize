@@ -66,38 +66,20 @@ if($screens['type'] == 'multiPage') {
     $screen_handler = xoops_getmodulehandler('mapScreen', 'formulize');
 }
 
-global $xoopsConfig;
+// New forms are multi-page screens, so no new legacy form screens are made (the new screen page doesn't offer the type)
+if($isNew AND ($screens['type'] == 'form' OR !isset($screen_handler))) {
+  return;
+}
 
 if($isNew) {
+  // each type's defaults include what the site's theme declares for that type, in its screen-defaults.json
   $screen = $screen_handler->create();
-  $screen->setVar('theme', $xoopsConfig['theme_set']);
   if($screens['type'] == 'multiPage') {
     $screen_handler->setDefaultFormScreenVars($screen, $formObject);
   } else if($screens['type'] == 'listOfEntries') {
     $screen_handler->setDefaultListScreenVars($screen, 'none', $formObject);
-  } else if($screens['type'] == 'form') {
-      $screen->setVar('frid', -1);
-      $screen->setVar('displayheading', 1);
-      $screen->setVar('reloadblank', 0);
-      $screen->setVar('savebuttontext', _formulize_SAVE);
-      $screen->setVar('saveandleavebuttontext', _formulize_SAVE_AND_LEAVE);
-      $screen->setVar('printableviewbuttontext', _formulize_PRINTVIEW);
-      $screen->setVar('savebuttontext', _formulize_SAVE);
-      $screen->setVar('alldonebuttontext', _formulize_DONE);
-  } else if ($screens['type'] == 'template') {
-      $screen->setVar('frid', -1);
-      $screen->setVar('savebuttontext', _formulize_SAVE);
-      $screen->setVar('donebuttontext', _formulize_SAVE_AND_LEAVE);
-      $screen->setVar('donedest', "");
-  } else if($screens['type'] == 'calendar') {
-      $screen->setVar('frid', -1);
-      $screen->setVar('caltype', 'month');
-      $screen->setVar('datasets', serialize(array()));  // need to serialize things that have the array datatype, when they are manually generated here by us!
-  } else if($screens['type'] == 'map') {
-      $screen->setVar('frid', -1);
-      $screen->setVar('columns', serialize(array()));
-      $screen->setVar('fundamental_filters', serialize(array()));
-      $screen->setVar('filter_button_text', _AM_MAP_FILTER_BUTTON_DEFAULT);
+  } else {
+    $screen_handler->setDefaultScreenVars($screen, $formObject);
   }
 } else {
   $screen = $screen_handler->get($sid);
