@@ -155,6 +155,10 @@ $pseudoScreen->setVar('hiddencolumns', array(
 $pseudoScreen->setVar('decolumns', array(
 	'formulize_user_account_status_'     . $fidInt,
 ));
+// Status is opened for editing from a pen beside it, one user at a time. Drawn as a form element in every row, it would
+// lock every user in the list for as long as the list was open, and anyone opening their own account then would find it
+// read only. Opened from the pen, only that user is locked, until the value is saved or closed.
+$pseudoScreen->setVar('dedisplay', FORMULIZE_EDIT_ICON_STYLE_PEN);
 
 // Handle user deletion before readelements.php and render, so Stage 2 never fires.
 if (!empty($_POST['delconfirmed'])) {

@@ -2024,10 +2024,11 @@ a.main-menu__item-link--active::before {
 }
 
 /* Active child. By default it has the same accent-tinted background as an
-   active link at the top level (--fz-sidemenu-sub-active-bg follows
-   --fz-sidemenu-active-bg, and both come from --fz-color-accent-soft, which
-   follows the accent set on the Appearance page), so the page you're on is
-   highlighted the same at either level. A look can still set it apart. */
+   active link at the top level (--fz-sidemenu-sub-active-bg and
+   --fz-sidemenu-active-bg both start as --fz-color-accent-soft, which follows
+   the accent set on the Appearance page), so the page you're on is highlighted
+   the same at either level. Each is its own setting on the Appearance page, so
+   a look can set either one apart. */
 .main-menu__subitem a.main-menu__item-link--active {
   background: var(--fz-sidemenu-sub-active-bg);
 }

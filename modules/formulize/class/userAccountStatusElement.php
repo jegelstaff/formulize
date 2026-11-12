@@ -34,6 +34,36 @@ class formulizeUserAccountStatusElementHandler extends formulizeUserAccountEleme
 	}
 
 	/**
+	 * The statuses an account can have, by the users table's level, with the words for each. Pending (0) is a
+	 * self-registered account that hasn't confirmed its email or phone yet (see signup.php). Like Disabled (-1), it
+	 * can't log in, since checklogin.php refuses a level of 0 or less, but it's waiting on the person, not blocked by
+	 * an admin.
+	 *
+	 * @return array Level => words
+	 */
+	private function statusLabels() {
+		return array(
+			1  => _formulize_UA_STATUS_ACTIVE,
+			0  => _formulize_UA_STATUS_PENDING,
+			-1 => _formulize_UA_STATUS_DISABLED,
+		);
+	}
+
+	/**
+	 * The status in words, for a list and anything else that reads the dataset, the way an option's words replace
+	 * its stored value. The stored value is the users table's level. A level that isn't a status is left as it is.
+	 *
+	 * @param mixed  $value    The level
+	 * @param string $handle   Element handle
+	 * @param int    $entry_id Entry ID
+	 * @return mixed The status's words, or the value as it was
+	 */
+	function prepareDataForDataset($value, $handle, $entry_id) {
+		$labels = $this->statusLabels();
+		return (is_numeric($value) AND isset($labels[intval($value)])) ? $labels[intval($value)] : $value;
+	}
+
+	/**
 	 * Build a WHERE clause fragment to search by account status label or numeric level.
 	 *
 	 * Matches "Active" (level=1) and "Disabled" (level=-1) by label substring or numeric key.
@@ -48,7 +78,7 @@ class formulizeUserAccountStatusElementHandler extends formulizeUserAccountEleme
 	 */
 	function buildSearchWhereClause($term, $operator, $quotes, $likebits, $fid, $tableAlias = 'main') {
 		$isNegative = (trim($operator) === 'NOT LIKE' || trim($operator) === '!=');
-		$options = array(1 => _formulize_UA_STATUS_ACTIVE, 0 => _formulize_UA_STATUS_PENDING, -1 => _formulize_UA_STATUS_DISABLED);
+		$options = $this->statusLabels();
 		$terms = is_array($term) ? $term : array($term);
 		$matchingKeys = array();
 		foreach ($terms as $t) {
@@ -88,14 +118,7 @@ class formulizeUserAccountStatusElementHandler extends formulizeUserAccountEleme
 	 * @return XoopsFormElement
 	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
-		// Pending (0) is the status of a self-registered account that has not yet confirmed its
-		// email/phone (see signup.php). Like Disabled (-1) it cannot log in (checklogin.php refuses
-		// level <= 0), but it is semantically distinct: awaiting the user, not blocked by an admin.
-		$options = array(
-			1  => _formulize_UA_STATUS_ACTIVE,
-			0  => _formulize_UA_STATUS_PENDING,
-			-1 => _formulize_UA_STATUS_DISABLED,
-		);
+		$options = $this->statusLabels();
 		// Distinguish a genuinely unset value (new account, nothing loaded yet → default Active) from
 		// an explicit 0 (a real Pending account), which must keep showing Pending.
 		if ($ele_value === null || $ele_value === '') {

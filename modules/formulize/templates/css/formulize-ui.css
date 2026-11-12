@@ -346,7 +346,7 @@
   --fz-sidemenu-active-color:  var(--fz-color-text);
   --fz-sidemenu-active-marker: var(--fz-color-accent);
   --fz-sidemenu-sub-color:     var(--fz-color-text-muted);
-  --fz-sidemenu-sub-active-bg: var(--fz-sidemenu-active-bg);
+  --fz-sidemenu-sub-active-bg: var(--fz-color-accent-soft);
   --fz-sidemenu-guide:         var(--fz-color-border);
 
   /* Written content */

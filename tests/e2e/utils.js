@@ -1255,7 +1255,8 @@ const UNRELEASED_LOCKS_NOTE = 'entry locks not released';
 function entriesInLockList(file) {
 	let list = '';
 	try {
-		list = execFileSync('docker', ['exec', webContainer(), 'cat', `/var/www/html/modules/formulize/temp/${file}`], { encoding: 'utf8' });
+		// cat's complaint about a file that isn't there stays out of the log, since that's an answer here, not a problem
+		list = execFileSync('docker', ['exec', webContainer(), 'cat', `/var/www/html/modules/formulize/temp/${file}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
 	} catch (e) {
 		return [];
 	}
