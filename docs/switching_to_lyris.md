@@ -20,9 +20,13 @@ You'll see your site in Anari and in Lyris, side by side. Then choose one of the
 
 - **Switch my site to Lyris.** Everyone sees the site in Lyris.
 - **Try Lyris myself first.** Webmasters see the site in Lyris, and everyone else still sees Anari. Switch the whole site later, when you're ready.
-- **Keep Anari for now.** Nothing about the theme changes.
+- **Keep Anari for now.** Nothing about the theme changes, and the update doesn't ask about looks, screen settings or templates.
 
 If your site uses a theme of its own, and only webmasters see Anari, you can choose **Use Lyris for webmasters** instead. Your own theme stays the one everyone else sees.
+
+### Choose a look
+
+Lyris comes with several looks, each with its own colours, fonts, corners and spacing, such as Altan, Varetta and Lorestone. If you choose Lyris, the next step shows them, and the one you pick is the look your site starts with. All of them are on **Appearance > Looks** afterwards, where you can change any of them or switch to another.
 
 ### Bring your logo and icon along
 

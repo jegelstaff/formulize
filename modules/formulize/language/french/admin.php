@@ -888,7 +888,7 @@ define("_AM_FORMULIZE_UPDATE_TOKEN_RETRY", "Revenir à la page de mise à jour")
 
 // Les questions de la mise à jour 8.30 sur Lyris
 define("_AM_FORMULIZE_LYRIS_TITLE", "Mettre à jour Formulize");
-define("_AM_FORMULIZE_LYRIS_UPDATE_BUTTON", "Mettre à jour Formulize");
+define("_AM_FORMULIZE_LYRIS_UPDATE_BUTTON", "Commencer la mise à jour du thème");
 define("_AM_FORMULIZE_LYRIS_INTRO", "Formulize a maintenant un nouveau thème, Lyris. Avant la mise à jour, vous pouvez choisir si votre site passe à ce thème. Rien ne change tant que vous n'avez pas cliqué sur <b>Mettre à jour Formulize maintenant</b> à la fin.");
 define("_AM_FORMULIZE_LYRIS_INTRO_ADMIN", "Formulize a maintenant un nouveau thème, Lyris. Avant la mise à jour, vous pouvez choisir si les webmestres voient le site dans ce thème. Rien ne change tant que vous n'avez pas cliqué sur <b>Mettre à jour Formulize maintenant</b> à la fin.");
 define("_AM_FORMULIZE_LYRIS_STEP_THEME", "Formulize a un nouveau thème");
@@ -912,6 +912,8 @@ define("_AM_FORMULIZE_LYRIS_CHOICE_REQUIRED", "Choisissez l'une de ces options p
 define("_AM_FORMULIZE_LYRIS_STEP_LOOK", "L'allure de Lyris");
 define("_AM_FORMULIZE_LYRIS_STEP_LOOK_INTRO", "Choisissez le style avec lequel Lyris commence : ses couleurs et ses polices.");
 define("_AM_FORMULIZE_LYRIS_LOOK_LEGEND", "Styles");
+define("_AM_FORMULIZE_LYRIS_LOOK_PREVIOUS", "Style précédent");
+define("_AM_FORMULIZE_LYRIS_LOOK_NEXT", "Style suivant");
 define("_AM_FORMULIZE_LYRIS_USE_LOGO", "Utiliser votre logo actuel dans Lyris");
 define("_AM_FORMULIZE_LYRIS_USE_ICON", "Utiliser votre icône de navigateur actuelle dans Lyris");
 define("_AM_FORMULIZE_LYRIS_USE_LOGO_AND_ICON", "Utiliser votre logo et votre icône de navigateur actuels dans Lyris");
@@ -927,7 +929,8 @@ define("_AM_FORMULIZE_LYRIS_SELECT_ALL", "Tout sélectionner");
 define("_AM_FORMULIZE_LYRIS_SELECT_NONE", "Ne rien sélectionner");
 define("_AM_FORMULIZE_LYRIS_STEP_TEMPLATES_LATER", "Les templates de n'importe quel écran peuvent être copiés plus tard, dans son onglet Templates.");
 define("_AM_FORMULIZE_LYRIS_STEP_SUMMARY", "Prêt pour la mise à jour");
-define("_AM_FORMULIZE_LYRIS_STEP_SUMMARY_INTRO", "La mise à jour fera ces changements, en plus de tout ce qu'elle fait d'habitude :");
+define("_AM_FORMULIZE_LYRIS_STEP_SUMMARY_INTRO", "La mise à jour fera ces changements :");
+define("_AM_FORMULIZE_LYRIS_STEP_SUMMARY_KEEP", "Le thème reste tel quel : la mise à jour ne change rien à l'apparence ni au fonctionnement de votre site.");
 define("_AM_FORMULIZE_LYRIS_STEP_SUMMARY_BACKUP", "La mise à jour modifie votre base de données et vos fichiers. Faites une sauvegarde de votre site avant de continuer.");
 define("_AM_FORMULIZE_LYRIS_AFTER_TITLE", "Après la mise à jour");
 define("_AM_FORMULIZE_LYRIS_AFTER_SWITCH", "Parcourez votre site dans Lyris. Vérifiez les écrans qui ont des templates personnalisés, et changez de style dans Appearance > Looks si vous le souhaitez. Pour revenir en arrière, allez dans Appearance > Settings.");
@@ -975,6 +978,7 @@ define("_AM_FORMULIZE_JS_LYRIS_CANCEL", "Annuler");
 define("_AM_FORMULIZE_JS_LYRIS_BACK", "Retour");
 define("_AM_FORMULIZE_JS_LYRIS_NEXT", "Suivant");
 define("_AM_FORMULIZE_JS_LYRIS_UPDATE", "Mettre à jour Formulize maintenant");
+define("_AM_FORMULIZE_JS_LYRIS_STEP", "Étape %s sur %s");
 define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_SWITCH", "Votre site passe à Lyris.");
 define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_TRY", "Les webmestres voient le site dans Lyris. Tous les autres voient encore Anari.");
 define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_ADMIN", "Les webmestres voient le site dans Lyris. Tous les autres voient encore le thème propre à votre site.");

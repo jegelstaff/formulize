@@ -439,6 +439,12 @@ function formulize_getAppearanceLooks($theme = null, $reload = false) {
         $cache[$theme] = formulize_appearanceCreateDefaultLook($theme);
         return $cache[$theme];
     }
+    // the looks that come with a theme, and none of the site's own yet: the theme hasn't been set up on this site,
+    // since it has no appearance.css, so it's given Default too, which the site starts on. A site that has
+    // deleted Default has an appearance.css, and keeps the looks it has.
+    if (!isset($looks['default']) AND !is_file(formulize_getAppearanceCssPath($theme))) {
+        $looks = formulize_appearanceCreateDefaultLook($theme) + $looks;
+    }
     // a base that is gone, or that would go round in a circle, is no base
     foreach (array_keys($looks) as $key) {
         if ($looks[$key]['base'] !== '' AND !isset($looks[$looks[$key]['base']])) {

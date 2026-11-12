@@ -94,12 +94,12 @@ function formulize_lyrisUpdateThemeChoices() {
 /**
  * The looks Lyris has, which one can start as the site look.
  *
- * @return array look key => its name, escaped for HTML
+ * @return array look key => array with 'name' and 'description', escaped for HTML
  */
 function formulize_lyrisUpdateLooks() {
     $looks = array();
     foreach (formulize_getAppearanceLooks(FORMULIZE_LYRIS_UPDATE_TO) as $key => $look) {
-        $looks[$key] = htmlspecialchars($look['name']);
+        $looks[$key] = array('name' => htmlspecialchars($look['name']), 'description' => htmlspecialchars($look['description']));
     }
     return $looks;
 }
@@ -357,15 +357,17 @@ function formulize_lyrisUpdateReadChoices($submitted) {
     if (isset($submitted['lyris_theme_choice']) AND is_string($submitted['lyris_theme_choice']) AND isset($themeChoices[$submitted['lyris_theme_choice']])) {
         $choices['theme'] = $submitted['lyris_theme_choice'];
     }
-    $usingLyris = ($choices['theme'] != 'keep');
-    if ($usingLyris) {
-        $looks = formulize_lyrisUpdateLooks();
-        if (isset($submitted['lyris_look']) AND is_string($submitted['lyris_look']) AND isset($looks[$submitted['lyris_look']])) {
-            $choices['look'] = $submitted['lyris_look'];
-        }
-        if (!empty($submitted['lyris_use_images'])) {
-            $choices['images'] = formulize_lyrisUpdateImagesToCarry();
-        }
+    // keeping the theme as it is changes nothing else: the look, the screen settings and the templates aren't asked
+    // about, so whatever the form sends for them is left out
+    if ($choices['theme'] == 'keep') {
+        return $choices;
+    }
+    $looks = formulize_lyrisUpdateLooks();
+    if (isset($submitted['lyris_look']) AND is_string($submitted['lyris_look']) AND isset($looks[$submitted['lyris_look']])) {
+        $choices['look'] = $submitted['lyris_look'];
+    }
+    if (!empty($submitted['lyris_use_images'])) {
+        $choices['images'] = formulize_lyrisUpdateImagesToCarry();
     }
     $templatesOffered = formulize_lyrisUpdateTemplatesOffered();
     foreach (isset($submitted['lyris_copy_templates']) ? (array) $submitted['lyris_copy_templates'] : array() as $sid) {
@@ -420,6 +422,12 @@ function formulize_lyrisUpdateApply($choices) {
     if (!isset($themes[FORMULIZE_LYRIS_UPDATE_TO])) {
         echo '<p>' . _AM_FORMULIZE_LYRIS_APPLY_NO_LYRIS . '</p>';
         return true;
+    }
+
+    // the looks that come with Lyris are based on Default, and their stylesheets were written with Default as it
+    // comes, so they're written again with Default as this site has it
+    if (!formulize_regenerateAppearanceCss(FORMULIZE_LYRIS_UPDATE_TO)) {
+        echo '<p>' . sprintf(_AM_APPEARANCE_ERR_NOT_SAVED, FORMULIZE_LYRIS_UPDATE_TO, formulize_getAppearanceDir(FORMULIZE_LYRIS_UPDATE_TO)) . '</p>';
     }
 
     // templates, first, while each screen still has the theme its templates are in
@@ -489,9 +497,13 @@ function formulize_lyrisUpdateApply($choices) {
             $ok = false;
         }
     }
-    // the site's logo and icon, on the default look, where the site starts, and on the chosen look
+    // the site's logo and icon, on Default, which the looks that come with Lyris are based on, and on the chosen
+    // look too when it isn't based on Default
     if ($choices['images']) {
-        $lookKeys = array_unique(array_filter(array('default', $choices['look'])));
+        $lookKeys = array('default');
+        if ($choices['look'] AND !in_array('default', formulize_appearanceLookChain(formulize_getAppearanceLooks(FORMULIZE_LYRIS_UPDATE_TO), $choices['look']), true)) {
+            $lookKeys[] = $choices['look'];
+        }
         foreach ($choices['images'] as $setting => $path) {
             if ($error = formulize_adoptAppearanceImage($setting, $path, FORMULIZE_LYRIS_UPDATE_TO, $lookKeys)) {
                 echo '<p>' . htmlspecialchars($error) . '</p>';

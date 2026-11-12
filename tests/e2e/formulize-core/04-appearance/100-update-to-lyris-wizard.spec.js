@@ -122,7 +122,7 @@ async function emptyTemplates(page, screen) {
 async function openWizard(page, choice) {
 	await page.goto(UPDATE_PAGE);
 	await page.locator('#formulize-lyris-open').click();
-	const dialog = page.locator('.ui-dialog:has(#formulize-lyris-wizard)');
+	const dialog = page.locator('#formulize-lyris-wizard');
 	await expect(dialog.getByRole('heading', { name: 'Formulize has a new theme' })).toBeVisible();
 	await dialog.locator(`input[name="lyris_theme_choice"][value="${choice}"]`).check();
 	return dialog;
@@ -194,17 +194,21 @@ test('The update asks about Lyris first, and cancelling changes nothing', async 
 	await expect(dialog.locator('iframe[data-theme="Anari"]')).toHaveAttribute('src', /appearance_preview\.php\?theme=Anari/);
 	await expect(dialog.locator('iframe[data-theme="Lyris"]')).toHaveAttribute('src', /appearance_preview\.php\?theme=Lyris/);
 	await next(dialog);
+	// the looks Lyris comes with, to start with one
+	await expect(dialog.getByRole('heading', { name: 'How Lyris looks' })).toBeVisible();
+	await expect(dialog.locator('label', { hasText: 'Altan' })).toBeVisible();
+	await next(dialog);
 	// Lyris's settings, checked for every screen when the whole site switches
 	await expect(dialog.getByRole('heading', { name: "Lyris's screen settings" })).toBeVisible();
 	await expect(dialog.locator(`input[name="lyris_screen_settings[${collections.sid}][]"][value="editdestination"]`)).toBeChecked();
 	await next(dialog);
 	// Collections has templates of its own in Anari, and none in Lyris
 	await expect(dialog.getByRole('heading', { name: 'Screens with their own templates' })).toBeVisible();
-	await expect(dialog.locator(`input.lyris-template-screen[value="${collections.sid}"]`)).toBeChecked();
-	await expect(dialog.locator(`input.lyris-template-screen[value="${exhibits.sid}"]`)).toHaveCount(0);
+	await expect(dialog.locator(`input.formulize-lyris-template-screen[value="${collections.sid}"]`)).toBeChecked();
+	await expect(dialog.locator(`input.formulize-lyris-template-screen[value="${exhibits.sid}"]`)).toHaveCount(0);
 	await next(dialog);
 	await expect(dialog.getByRole('heading', { name: 'Ready to update' })).toBeVisible();
-	await expect(dialog.locator('.lyris-summary')).toContainText('Your site switches to Lyris.');
+	await expect(dialog.locator('.formulize-lyris-summary')).toContainText('Your site switches to Lyris.');
 	await dialog.getByRole('button', { name: 'Cancel' }).click();
 	await expect(dialog).toBeHidden();
 
@@ -222,17 +226,20 @@ test('The update switches the site, copies the chosen templates, and changes onl
 	const page = await adminPage(browser);
 	const dialog = await openWizard(page, 'switch');
 	await next(dialog);
+	// the look Lyris starts with stays as it is
+	await expect(dialog.getByRole('heading', { name: 'How Lyris looks' })).toBeVisible();
+	await next(dialog);
 	// only Collections, and only the drawer
-	for (const all of await dialog.locator('.lyris-setting-all').all()) {
+	for (const all of await dialog.locator('.formulize-lyris-setting-all').all()) {
 		await all.uncheck();
 	}
 	await dialog.locator(`input[name="lyris_screen_settings[${collections.sid}][]"][value="editdestination"]`).check();
 	await next(dialog);
-	await dialog.getByRole('link', { name: 'Select none' }).click();
-	await dialog.locator(`input.lyris-template-screen[value="${collections.sid}"]`).check();
+	await dialog.getByRole('button', { name: 'Select none' }).click();
+	await dialog.locator(`input.formulize-lyris-template-screen[value="${collections.sid}"]`).check();
 	await next(dialog);
-	await expect(dialog.locator('.lyris-summary')).toContainText('1 screen gets Lyris\'s screen settings.');
-	await expect(dialog.locator('.lyris-summary')).toContainText('1 screen gets a copy of its templates for Lyris.');
+	await expect(dialog.locator('.formulize-lyris-summary')).toContainText('1 screen gets Lyris\'s screen settings.');
+	await expect(dialog.locator('.formulize-lyris-summary')).toContainText('1 screen gets a copy of its templates for Lyris.');
 	// the update runs for a while, so the click doesn't wait for the page it brings
 	await dialog.getByRole('button', { name: 'Update Formulize now' }).click({ noWaitAfter: true });
 	const nextSteps = page.locator('.formulize-lyris-next-steps');
