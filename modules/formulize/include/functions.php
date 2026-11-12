@@ -61,10 +61,6 @@ if (typeof jQuery.ui == 'undefined') {
 }
 ";
 
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
-include_once XOOPS_ROOT_PATH . "/modules/formulize/include/primary_relationship_functions.php";
-include_once XOOPS_ROOT_PATH.'/modules/formulize/include/writeToFormulizeLog.php';
-
 /**
  * Deduce form and form relationship from legacy formframe/mainform params.
  *
@@ -15670,3 +15666,10 @@ require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/alternate_u
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/functions/site_themes.php';
 // not in include/functions, because formulize_deleteEntryLock.php requires it too, without the rest of Formulize
 require_once XOOPS_ROOT_PATH . '/modules/formulize/include/entryLocks.php';
+// other necessary files with functions
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/primary_relationship_functions.php";
+include_once XOOPS_ROOT_PATH.'/modules/formulize/include/writeToFormulizeLog.php';
+
+// after all the rest of the functions have been included... safety net to include common just in case it wasn't already.
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
+
