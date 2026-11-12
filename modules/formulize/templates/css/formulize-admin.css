@@ -1641,6 +1641,14 @@ input[name=delete-link-button] {
   padding: 10px 5px 10px 40px;
   border: solid 1px #9F6000; }
 
+/* The toolbar keeps room for the unsaved-changes warning, which is taller than the Save button beside it, so the
+   page doesn't move down when the warning appears. It appears when a changed field loses the focus, which happens as
+   the mouse goes down on whatever is clicked next, so a page that moved would take a checkbox or radio below the field
+   out from under the mouse before it came back up, and the click would be lost. (When the page is scrolled, the
+   toolbar floats over it, toolbar_fixed, and takes no room.) */
+#admin_toolbar:not(.toolbar_fixed) {
+  min-height: 3em; }
+
 #popupsavewarning,
 #relationship-options-popupsavewarning,
 #relationship-create-connection-popupsavewarning {
@@ -2543,6 +2551,11 @@ form[name=relationship-options-popupform] label[for^=relationships-] {
    and its body keeps the admin's 10pt for everything else on the page. */
 html:has(.formulize-admin-ui) {
   font-size: 100%; }
+
+/* the Save button is the one thing in the admin's own rules sized in rem, so on such a page it keeps the size it has
+   with the root at 10pt */
+html:has(.formulize-admin-ui) #savebutton input {
+  font-size: calc(10pt * 1.1); }
 .admin-ui .fz-table thead {
   border: 0; }
 
@@ -2589,6 +2602,12 @@ html:has(.formulize-admin-ui) {
 #xo-canvas-content .fz-list-none > li {
   margin-left: 0;
   list-style: none; }
+
+/* and their background is inherited, which is none, so an accordion item being dragged would show the items under it
+   through it */
+#xo-canvas-content .fz-accordion__item {
+  background-color: var(--fz-card-bg);
+  color: var(--fz-color-text); }
 
 /* the components that space what is in them with a gap */
 .admin-ui .fz-stack > p,

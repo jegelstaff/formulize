@@ -1053,7 +1053,7 @@ HTML
                 'name' => 'Disclosure',
                 'summary' => 'Something that opens in place to show more: the detail behind a summary, a list that is usually not needed.',
                 'classes' => array(
-                    'fz-disclosure' => 'On a `<details>`. Its `<summary>` is what is clicked, and the rest is what opens.',
+                    'fz-disclosure' => 'On a `<details>`. Its `<summary>` is what is clicked, with a chevron at the end, the same as an accordion\'s, and the rest is what opens.',
                     'fz-disclosure--plain' => 'No box of its own: for one that is inside a card.',
                 ),
                 'notes' => array(
@@ -1075,6 +1075,69 @@ HTML
     <p class="fz-text-muted">Reviewed on September 12, 2026. No changes needed.</p>
   </details>
 </div>
+HTML
+            ),
+            array(
+                'id' => 'accordion',
+                'name' => 'Accordion',
+                'summary' => 'A list of things, each a box that opens in place to show more, and that can be put in order by dragging: the sections of a page, the items of a menu.',
+                'classes' => array(
+                    'fz-accordion' => 'On an `<ol>` or `<ul>`: the list.',
+                    'fz-accordion__item' => 'On each `<li>`: one box.',
+                    'fz-accordion__details' => 'On the `<details>` in each item. Give every one in the list the same `name` to have only one open at a time.',
+                    'fz-accordion__summary' => 'On its `<summary>`: what is clicked to open and close it, with a chevron at the end.',
+                    'fz-accordion__title' => 'A `<span>` in the summary: what the item is.',
+                    'fz-accordion__meta' => 'A `<span>` in the summary, after the title: a little more about it, such as a count.',
+                    'fz-accordion__body' => 'A `<div>` after the summary: what opens. Its children are stacked.',
+                    'fz-accordion__handle' => 'A `<button type="button">` in the item, before its `<details>`, with an icon in it and an `aria-label` that names the item: "Move Museum". An item with a handle can be put somewhere else in the list.',
+                    'fz-accordion__item--dragging' => 'The item being dragged. Added and taken away by Formulize\'s script, `formulize-ui.js`; don\'t add it yourself.',
+                ),
+                'notes' => array(
+                    'An item is dragged by its handle, with a mouse or a finger. The page scrolls when it is dragged near the top or bottom of the window, and Esc while dragging puts it back where it was.',
+                    'With the keyboard, the arrow keys move the item with the focused handle up or down one place, and Home and End move it to the top or the bottom.',
+                    'An item can only move within its own list, so a list in an item\'s body can be put in order separately. An item without a handle stays where it is, but the others can move past it.',
+                    'The list fires an `fz-accordion-reorder` event, which bubbles, each time an item moves: `event.detail` has the `item` that moved, and its place in the list before (`from`) and after (`to`), counting from 0. Give each item an attribute such as `data-id` to read the new order from.',
+                    'To have screen readers say where an item has moved to, put the words on the list in `data-fz-moved`, with `%1$s` for the item\'s name, `%2$s` for its place and `%3$s` for how many there are: `data-fz-moved="Moved %1$s to position %2$s of %3$s"`. The name is the item\'s `fz-accordion__title`. Take the words from a language file, so they are in the site\'s language.',
+                    'Moving the items needs Formulize\'s script, `formulize-ui.js`. Without it, the items open and close, and stay in order.',
+                    'It grows and shrinks as it opens and closes, unless the person has asked their computer for less motion. Some browsers open and close it at once.',
+                ),
+                'example' => <<<'HTML'
+<ol class="fz-accordion" data-fz-moved="Moved %1$s to position %2$s of %3$s">
+  <li class="fz-accordion__item" data-id="programs">
+    <button type="button" class="fz-accordion__handle" aria-label="Move Programs"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="6" cy="4" r="1.2"/><circle cx="10" cy="4" r="1.2"/><circle cx="6" cy="8" r="1.2"/><circle cx="10" cy="8" r="1.2"/><circle cx="6" cy="12" r="1.2"/><circle cx="10" cy="12" r="1.2"/></svg></button>
+    <details class="fz-accordion__details" name="example-accordion">
+      <summary class="fz-accordion__summary"><span class="fz-accordion__title">Programs</span><span class="fz-accordion__meta">3 links</span></summary>
+      <div class="fz-accordion__body">
+        <ul class="fz-link-list">
+          <li><a href="#">Applications</a></li>
+          <li><a href="#">Interview schedule</a></li>
+          <li><a href="#">Offers</a></li>
+        </ul>
+      </div>
+    </details>
+  </li>
+  <li class="fz-accordion__item" data-id="reports">
+    <button type="button" class="fz-accordion__handle" aria-label="Move Reports"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="6" cy="4" r="1.2"/><circle cx="10" cy="4" r="1.2"/><circle cx="6" cy="8" r="1.2"/><circle cx="10" cy="8" r="1.2"/><circle cx="6" cy="12" r="1.2"/><circle cx="10" cy="12" r="1.2"/></svg></button>
+    <details class="fz-accordion__details" name="example-accordion">
+      <summary class="fz-accordion__summary"><span class="fz-accordion__title">Reports</span><span class="fz-accordion__meta">2 links</span></summary>
+      <div class="fz-accordion__body">
+        <ul class="fz-link-list">
+          <li><a href="#">Enrolment by program</a></li>
+          <li><a href="#">Attendance summary</a></li>
+        </ul>
+      </div>
+    </details>
+  </li>
+  <li class="fz-accordion__item" data-id="help">
+    <button type="button" class="fz-accordion__handle" aria-label="Move Help"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="6" cy="4" r="1.2"/><circle cx="10" cy="4" r="1.2"/><circle cx="6" cy="8" r="1.2"/><circle cx="10" cy="8" r="1.2"/><circle cx="6" cy="12" r="1.2"/><circle cx="10" cy="12" r="1.2"/></svg></button>
+    <details class="fz-accordion__details" name="example-accordion">
+      <summary class="fz-accordion__summary"><span class="fz-accordion__title">Help</span><span class="fz-accordion__meta">Link</span></summary>
+      <div class="fz-accordion__body">
+        <p class="fz-text-muted">Goes to the help centre, in a new tab.</p>
+      </div>
+    </details>
+  </li>
+</ol>
 HTML
             ),
             array(

@@ -300,7 +300,7 @@ function formulizeAI_toolSets() {
         // form/screen/group/user structure rather than entry data, because Manage forms
         // is meant to be additive to Read/Write, not a grab-bag of "everything else".
         'formMgmt' => array(
-            'change_form_screen_page_order', 'change_menu_item_order',
+            'change_form_screen_page_order', 'change_menu_item_order', 'change_menu_order',
             'create_derived_value_element', 'create_form', 'create_form_screen',
             'create_groups', 'create_linked_list_element', 'create_list_element',
             'create_list_screen', 'create_menu_item', 'create_selector_element',

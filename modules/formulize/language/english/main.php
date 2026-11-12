@@ -3,6 +3,8 @@
 define("_formulize_ENTRY_ID", "Entry ID");
 define("_formulize_FORM_TITLE", "Contact us by filling out this form.");
 define("_AM_CATGENERAL", "General Forms");
+// the links at the top level of the menu, beside the applications, as a section of application.php?id=all
+define("_AM_MENU_TOP_LEVEL_LINKS", "Links");
 define("_AM_NOFORMS_AVAIL", "");
 //define("_formulize_MSG_SUBJECT", $xoopsConfig['sitename'].' - Contact Us Form');
 define("_formulize_MSG_SUBJECT", (isset($xoopsConfig['sitename']) ? '['.$xoopsConfig['sitename'].'] -' : ''));

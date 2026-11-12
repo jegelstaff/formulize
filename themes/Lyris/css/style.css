@@ -1945,11 +1945,10 @@ a.de-edit-icon:hover::before {
    also adds --active to a group's <summary> header when that group contains the
    active item; a group header must stay a plain bold label (like an inactive
    header), not a boxed pill with a rail, so the box/shadow/pipe are scoped to
-   <a> links only. This restores the original pre-upstream Lyris presentation:
-   the active item gets a clean rounded highlight with a flush vertical pipe on
-   its left edge. The pipe is flush (not a detached gutter bar) because the
-   nested <ul class="main-menu__subitems"> below is reset to no padding, so the
-   sub-item's left edge lines up with its .main-menu__item positioning origin. */
+   <a> links only. The active item gets a highlight with a vertical pipe
+   against its left edge, the full height of the highlight, and that edge is
+   square where the pipe meets it. The pipe is positioned against the
+   .main-menu__item around the link, which is the link's own size. */
 a.main-menu__item-link--active {
   background: var(--fz-sidemenu-active-bg);
   box-shadow: var(--fz-shadow-xs);
@@ -1959,11 +1958,18 @@ a.main-menu__item-link--active::before {
   content: '';
   position: absolute;
   left: -2px;
-  top: 0.375rem;
-  bottom: 0.375rem;
+  top: 0;
+  bottom: 0;
   width: 2px;
-  border-radius: var(--fz-radius-full);
+  border-radius: 0;
   background: var(--fz-sidemenu-active-marker);
+}
+
+/* at the top level the pipe is against the highlight, so its left corners are
+   square (a sub-item's pipe is out on the guide line, so its corners stay round) */
+.main-menu__item:not(.main-menu__subitem) > a.main-menu__item-link--active {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 /* Active state applied to any item (leaf link or group header) just gets the
@@ -2017,12 +2023,11 @@ a.main-menu__item-link--active::before {
   color: var(--fz-sidemenu-active-color);
 }
 
-/* Active child. The generic active rule above gives every active leaf link a
-   plain --fz-color-surface (white) pill, which on the off-white sidebar is a very
-   faint distinction for the one item telling you where you are. A child gets
-   an accent-tinted background instead, so it reads at a glance without adding
-   a second competing colour — --fz-color-accent-soft is derived from the deployment's
-   configured accent on the Appearance admin page, so this follows branding. */
+/* Active child. By default it has the same accent-tinted background as an
+   active link at the top level (--fz-sidemenu-sub-active-bg follows
+   --fz-sidemenu-active-bg, and both come from --fz-color-accent-soft, which
+   follows the accent set on the Appearance page), so the page you're on is
+   highlighted the same at either level. A look can still set it apart. */
 .main-menu__subitem a.main-menu__item-link--active {
   background: var(--fz-sidemenu-sub-active-bg);
 }

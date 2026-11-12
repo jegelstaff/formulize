@@ -1330,3 +1330,48 @@ define("_AM_ORIGINS_UNUSABLE_HELP", "A single <code>*</code> means every website
 define("_AM_ORIGINS_KEPT", "Everything has been kept exactly as you wrote it, so you can correct it. Everything else in the list is in use.");
 
 define("_AM_EMBED_CODE_DEFAULT_TITLE", "Form");
+
+// The Menu tab: the order of the top level of the menu, and the links beside the applications
+// (admin/site_menu.php, templates/admin/site_menu.html and admin/save/site_menu_save.php)
+define("_AM_SITEMENU_TAB", "Menu");
+define("_AM_SITEMENU_TITLE", "The menu");
+define("_AM_SITEMENU_INTRO", "Put the applications in the order you want them in the menu, and add links of their own beside them. Drag an item by its handle, or press Tab to reach the handle and use the arrow keys. Then save your changes.");
+define("_AM_SITEMENU_ADD_TITLE", "Add a link to the menu");
+define("_AM_SITEMENU_ADD_HELP", "The link goes at the end of the menu. Once it's added, drag it to where you want it.");
+define("_AM_SITEMENU_ADD_BUTTON", "Add the link");
+define("_AM_SITEMENU_FIELD_TEXT", "Text for this link");
+define("_AM_SITEMENU_FIELD_TEXT_HELP", "Leave it blank to use the name of the form or screen.");
+define("_AM_SITEMENU_FIELD_TARGET", "This link goes to");
+define("_AM_SITEMENU_TARGET_CHOOSE", "Choose a form or screen");
+define("_AM_SITEMENU_KIND_SCREEN", "A form or screen");
+define("_AM_SITEMENU_KIND_URL", "A URL");
+define("_AM_SITEMENU_FIELD_SCREEN", "Form or screen");
+define("_AM_SITEMENU_FIELD_URL", "URL");
+define("_AM_SITEMENU_FIELD_URL_HELP", "A full address, such as https://www.example.com. For a screen or form on this site, you can write sid= or fid= and its number.");
+define("_AM_SITEMENU_FIELD_NOTE", "A note for this link");
+define("_AM_SITEMENU_FIELD_NOTE_HELP", "For admins. It isn't shown in the menu.");
+define("_AM_SITEMENU_FIELD_GROUPS", "Show this link to these groups");
+define("_AM_SITEMENU_FIELD_LANDING", "Send these groups to this link right after they log in");
+define("_AM_SITEMENU_FIELD_LANDING_HELP", "Only groups that can see the link are sent to it, and only if Formulize is their start page, under <a href='%s' target='_blank'>General Settings</a>. When a group is sent to more than one link, it goes to the first one in the menu.");
+define("_AM_SITEMENU_FORM_BASED", "Form-based group");
+define("_AM_SITEMENU_LIST_TITLE", "What's in the menu");
+define("_AM_SITEMENU_MOVE", "Move %s"); // %s is the name of an application or link
+define("_AM_SITEMENU_MOVED", "Moved %1\$s to position %2\$s of %3\$s"); // %1$s is its name, %2$s its new position, %3$s how many items there are
+define("_AM_SITEMENU_KIND_APP", "Application");
+define("_AM_SITEMENU_KIND_LINK", "Link");
+define("_AM_SITEMENU_LINK_COUNT_ONE", "1 link");
+define("_AM_SITEMENU_LINK_COUNT", "%s links");
+define("_AM_SITEMENU_NO_LINKS", "No links, so it isn't in the menu");
+define("_AM_SITEMENU_GOES_TO", "Goes to %s");
+define("_AM_SITEMENU_SEEN_BY", "Shown to %s"); // %s is a list of group names
+define("_AM_SITEMENU_SEEN_BY_NOBODY", "Not shown to any group");
+define("_AM_SITEMENU_APP_LINKS_ELSEWHERE", "The links in it are added, changed and put in order on its Menu Entries tab.");
+define("_AM_SITEMENU_MANAGE", "Manage this application's menu entries");
+define("_AM_SITEMENU_MANAGE_NOAPP", "Manage these menu entries");
+define("_AM_SITEMENU_DELETE", "Delete this link");
+define("_AM_SITEMENU_EMPTY", "There are no applications or links yet.");
+define("_AM_SITEMENU_ORDER_NOT_SAVED", "The menu changed since this page was loaded, so the new order wasn't saved. The page will show the menu as it is now. Put it in order again, and save your changes.");
+define("_AM_SITEMENU_JS_NEEDS_TARGET", "Choose the form or screen that %s goes to, then save your changes."); // %s is the link's name
+define("_AM_SITEMENU_JS_NEEDS_URL", "Type the URL that %s goes to, then save your changes."); // %s is the link's name
+define("_AM_SITEMENU_JS_NEW_LINK", "the new link");
+define("_AM_SITEMENU_JS_DELETE_CONFIRM", "Delete the link \"%s\" from the menu?");

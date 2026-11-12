@@ -208,10 +208,10 @@ if (!$aiDrawerMode) {
     <input type="file" id="file-attach-input" accept=".pdf,image/*" multiple hidden>
 
     <details id="activity-panel" class="formulize-ai__band fz-disclosure fz-disclosure--plain fz-border-t fz-bg-surface-2 fz-text-xs-plus">
-        <summary title="<?php echo htmlspecialchars(_MD_FORMULIZE_AI_ACTIVITY_TOGGLE_TITLE); ?>">
+        <summary class="fz-flex fz-items-center fz-gap-2" title="<?php echo htmlspecialchars(_MD_FORMULIZE_AI_ACTIVITY_TOGGLE_TITLE); ?>">
             <span class="fz-text-muted"><?php echo _MD_FORMULIZE_AI_ACTIVITY_LABEL; ?></span>
             <span id="activity-count" class="fz-badge fz-badge--plain fz-tabular-nums">0</span>
-            <span id="activity-arrow" class="fz-text-subtle fz-font-normal"><?php echo _MD_FORMULIZE_AI_ACTIVITY_SHOW; ?></span>
+            <span id="activity-arrow" class="fz-ms-auto fz-text-subtle fz-font-normal"><?php echo _MD_FORMULIZE_AI_ACTIVITY_SHOW; ?></span>
         </summary>
         <div class="fz-stack fz-gap-2">
             <div id="activity-list" class="fz-stack fz-gap-1 fz-font-mono fz-text-xs fz-overflow-y-auto" style="max-height: 12rem"></div>

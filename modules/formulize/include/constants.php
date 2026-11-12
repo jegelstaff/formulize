@@ -31,6 +31,10 @@ define('FORMULIZE_QUERY_SCOPE_GROUP', 'group');
 define('FORMULIZE_QUERY_SCOPE_MINE', 'mine');
 define('FORMULIZE_QUERY_SCOPE_GLOBAL', 'all');
 
+// The application id that menu links at the top level of the menu have, beside the applications rather than in one.
+// Application id 0 is "Forms with no app". See ai-context/menus.md.
+define('FORMULIZE_MENU_TOP_LEVEL', -1);
+
 // values for useviewentrylinks/dedisplay (list of entries screens) and ele_value['edit_icon_style']
 // (subform elements): which icon, if any, is used for the link/button that lets a user click
 // through to view/edit an entry or activate an inline-editable element.

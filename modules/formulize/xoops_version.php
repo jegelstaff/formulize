@@ -55,6 +55,7 @@ $modversion['tables'] = array(
 	"formulize_menu", // LEGACY
 	"formulize_menu_links",
 	"formulize_menu_permissions",
+	"formulize_menu_order",
 	"formulize_resource_mapping",
 	"formulize_frameworks",
 	"formulize_framework_forms", // LEGACY
@@ -96,6 +97,7 @@ $modversion['formulize_exportable_tables'] = array(
 	"formulize_menu",
 	"formulize_menu_links",
 	"formulize_menu_permissions",
+	"formulize_menu_order",
 	"formulize_frameworks",
 	"formulize_framework_forms",
 	"formulize_framework_elements",
@@ -602,6 +604,12 @@ $modversion['table_metadata'] = array(
         "fields" => array("name"),
         "joins" => array()
     ),
+    // the order of the top level of the menu: item_id is an appid when item_type is "application" (0 for "Forms with
+    // no app"), and a menu_id when it is "link". See ai-context/menus.md.
+    "formulize_menu_order" => array(
+        "fields" => array("item_type", "item_id", "position"),
+        "joins" => array()
+    ),
     "formulize_screen_form" => array(
         "fields" => array(),
         "joins" => array(
@@ -771,6 +779,12 @@ $modversion['templates'][] = array(
     'description' => '');
 $modversion['templates'][] = array(
     'file' => 'admin/application_menu_entries_sections.html',
+    'description' => '');
+$modversion['templates'][] = array(
+    'file' => 'admin/site_menu.html',
+    'description' => '');
+$modversion['templates'][] = array(
+    'file' => 'admin/site_menu_link.html',
     'description' => '');
 $modversion['templates'][] = array(
 	'file' => 'admin/application_screens.html',

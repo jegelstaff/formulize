@@ -81,7 +81,7 @@ block's own settings, not the theme. Check them before reasoning about where the
     so the core permission handler's lookups don't cover them.
   - That is deliberate. Each row also carries `default_screen`, which marks the item as the
     group's start page. It is not a yes/no permission: `getDefaultScreenForUser()` picks the
-    first flagged item by menu order across all of a user's groups, and the flag only means
+    first flagged item by menu order across all of a user's groups (see [menus](menus.md)), and the flag only means
     something alongside the visibility grant on the same row. As core permissions it would pick
     up `checkRight()`'s webmaster shortcut, lose the menu-order resolution, and split into rows
     that could disagree. Site sync's `group_permission` metadata in `xoops_version.php` also

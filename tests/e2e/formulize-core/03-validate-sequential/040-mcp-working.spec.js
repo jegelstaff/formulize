@@ -64,6 +64,7 @@ const EXPECTED_TOOLS = [
 	'create_menu_item',
 	'update_menu_item',
 	'change_menu_item_order',
+	'change_menu_order',
 	'update_application_forms',
 	'create_users',
 	'update_users',

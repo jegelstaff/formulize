@@ -1,6 +1,8 @@
 <?php
 
 define("_AM_CATGENERAL", "Formulaires principaux");
+// les liens au premier niveau du menu, à côté des applications, en tant que section de application.php?id=all
+define("_AM_MENU_TOP_LEVEL_LINKS", "Liens");
 define("_AM_CONFIRM_DEL", "Etes vous certain de désirer effacer ce formulaire !  Veuillez confirmer.");
 define("_AM_CONFIRM_DEL_FF_FORM", "Etes vous certain de désirer effacer ce set de formulaire dans le framework!  Veuillez confirmer.");
 define("_AM_CONFIRM_DEL_FF_FRAME", "Etes vous certain de désirer effacer ce framework! Veuillez confirmer.");

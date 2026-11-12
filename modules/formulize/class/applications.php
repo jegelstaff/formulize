@@ -128,7 +128,7 @@ global $xoopsDB;
                 if($menutext == ""){
                     $id = explode("=",$menulink->getVar('screen'));
 
-                    if($menulink->getVar('screen')=="") {   //handle external url
+                    if($menulink->getVar('screen')=="" OR $menulink->getVar('screen')=="url") {   //handle external url, which has 'url' as its screen when it was made in the admin UI or by MCP
             			$menutext = $menulink->getExpandedUrl();
 
             		} elseif(strpos($menulink->getVar('screen'),"fid=") !== false ){
@@ -213,16 +213,32 @@ global $xoopsDB;
 					}
 				}
 				$groupSQL .= ")";
-				$sql = 'SELECT links.screen, links.url FROM '.$xoopsDB->prefix("formulize_menu_links").' AS links ';
+				$sql = 'SELECT DISTINCT links.menu_id, links.appid, links.rank, links.screen, links.url FROM '.$xoopsDB->prefix("formulize_menu_links").' AS links ';
 				$sql .= ' LEFT JOIN '.$xoopsDB->prefix("formulize_menu_permissions").' AS perm ON links.menu_id = perm.menu_id ';
-				$sql .= ' WHERE  default_screen = 1'. $groupSQL . 'ORDER BY links.rank LIMIT 0,1';
+				$sql .= ' WHERE  default_screen = 1'. $groupSQL;
 				if(!$res = $xoopsDB->query($sql)) {
 					throw new Exception("Could not determine the default screen for the user. SQL dump:\n" . $sql . "\n".$xoopsDB->error());
+				}
+				// the first one in the menu: by the place of its application, or its own place for a link at the top
+				// level, then by its place in its application. See ai-context/menus.md.
+				$candidates = array();
+				while($candidate = $xoopsDB->fetchArray($res)) {
+					$candidates[] = $candidate;
+				}
+				if(count($candidates) > 1) {
+					$positions = xoops_getmodulehandler('applications', 'formulize')->getTopLevelMenuPositions();
+					$placeOf = function($candidate) use ($positions) {
+						$key = intval($candidate['appid']) == FORMULIZE_MENU_TOP_LEVEL ? 'link:'.intval($candidate['menu_id']) : 'application:'.intval($candidate['appid']);
+						return isset($positions[$key]) ? $positions[$key] : PHP_INT_MAX;
+					};
+					usort($candidates, function($a, $b) use ($placeOf) {
+						return array($placeOf($a), intval($a['rank']), intval($a['menu_id'])) <=> array($placeOf($b), intval($b['rank']), intval($b['menu_id']));
+					});
 				}
 				$url = '';
 				$fid = 0;
 				$sid = 0;
-				if($row = $xoopsDB->fetchArray ( $res )) {
+				if($row = reset($candidates)) {
 					if($row['url']) {
 						if(substr($row['url'],0,1)=='/') {
 								$url = XOOPS_URL . $row['url'];
@@ -307,6 +323,7 @@ class formulizeApplicationsHandler {
    */
   public static function clearApplicationCache() {
     self::$cachedApps = array();
+    self::$cachedTopLevelPositions = null;
   }
 
   function get($ids, $fid=0) { // takes a single ID or an array of ids, or the keyword 'all', Plus, if $fid is greater than 0, limit applications retrieved to ones where that form is involved
@@ -534,6 +551,10 @@ class formulizeApplicationsHandler {
         throw new Exception("Could not delete application. SQL dump:\n" . $thisSql . "\n".$this->db->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
       }
     }
+    if($appid > 0) {
+      $this->deleteFromTopLevelMenuOrder('application', $appid);
+    }
+    self::clearApplicationCache();
     return true;
   }
     function getMenuLinksForApp($appid,$all=false){
@@ -864,6 +885,7 @@ class formulizeApplicationsHandler {
 				throw new Exception("Error deleting menu link. SQL dump:\n" . $query . "\n".$this->db->error());
 			}
 		}
+		$this->deleteFromTopLevelMenuOrder('link', $menuId);
 
 		$this->syncAnonymousAccessToFormMenuBlock();
 	}
@@ -925,6 +947,198 @@ class formulizeApplicationsHandler {
             throw new Exception("Error checking default screen. SQL dump:\n" . $sql . "\n".$this->db->error()."\nPlease contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
         }
     }
+
+	// The places of the items at the top level of the menu, worked out once per request; see getTopLevelMenuPositions()
+	private static $cachedTopLevelPositions = null;
+
+	/**
+	 * Where each item at the top level of the menu is: the applications, "Forms with no app" and the links that are
+	 * beside the applications rather than in one. formulize_menu_order has the order that was saved. Anything it doesn't
+	 * list comes after what it does: the applications by name, then the top-level links in the order they were made,
+	 * then "Forms with no app". So with nothing saved, the order is the applications by name and then "Forms with no
+	 * app", as it always was. See ai-context/menus.md.
+	 * "Forms with no app" is always given a place, whether or not it has any links.
+	 * @return array Keys 'application:<appid>' (0 for "Forms with no app") and 'link:<menu_id>', in order, each with its place, counting from 1
+	 * @throws Exception if the order could not be read
+	 */
+	function getTopLevelMenuPositions() {
+		if (self::$cachedTopLevelPositions !== null) {
+			return self::$cachedTopLevelPositions;
+		}
+		// everything that can be at the top level, in the order it has when it isn't listed
+		$unlisted = array();
+		foreach ($this->getAllApplications() as $application) {
+			$unlisted['application:' . intval($application->getVar('appid'))] = true;
+		}
+		$sql = "SELECT menu_id FROM " . $this->db->prefix("formulize_menu_links") . " WHERE appid = " . FORMULIZE_MENU_TOP_LEVEL . " ORDER BY menu_id";
+		if (!$result = $this->db->query($sql)) {
+			throw new Exception("Could not read the links at the top level of the menu. SQL dump:\n" . $sql . "\n" . $this->db->error());
+		}
+		while ($row = $this->db->fetchArray($result)) {
+			$unlisted['link:' . intval($row['menu_id'])] = true;
+		}
+		$unlisted['application:0'] = true;
+
+		$positions = array();
+		$sql = "SELECT item_type, item_id FROM " . $this->db->prefix("formulize_menu_order") . " ORDER BY position, order_id";
+		// A site that has this code but hasn't been updated yet has no formulize_menu_order table. It has no saved order
+		// either, so it gets the order it has always had, rather than an error on every page with the menu on it,
+		// including the admin page that runs the update.
+		$result = $this->db->query($sql);
+		while ($result AND $row = $this->db->fetchArray($result)) {
+			$key = $row['item_type'] . ':' . intval($row['item_id']);
+			if (isset($unlisted[$key])) { // a row for something that has gone is left out
+				$positions[$key] = count($positions) + 1;
+				unset($unlisted[$key]);
+			}
+		}
+		foreach (array_keys($unlisted) as $key) {
+			$positions[$key] = count($positions) + 1;
+		}
+		self::$cachedTopLevelPositions = $positions;
+		return $positions;
+	}
+
+	/**
+	 * The top level of the menu, in order: the applications, the links beside them, and "Forms with no app". This is the
+	 * one place that works out the order of the menu, so the menu block, the Menu tab in the admin UI and the MCP tools
+	 * all show the same thing. See ai-context/menus.md.
+	 * @param bool $all True for every link, false for only the links the current user's groups can see
+	 * @return array Each item is an array with 'type' ('application', 'link' or 'noapp'), 'id' (the appid, or the menu_id
+	 * of a link) and 'position'. An application also has 'application', its object, and 'links', its menu links. "Forms
+	 * with no app" has 'links', and is only included when it has links. A link has 'link', its menu link object, and is
+	 * only included when it can be seen (or $all is true). Applications are included whether they have links or not.
+	 * @throws Exception if the menu could not be read
+	 */
+	function getTopLevelMenu($all = false) {
+		$linksHandler = xoops_getmodulehandler('applicationMenuLinks', 'formulize');
+		$applications = array();
+		foreach ($this->getAllApplications() as $application) {
+			$applications[intval($application->getVar('appid'))] = $application;
+		}
+		$topLevelLinks = $linksHandler->get(FORMULIZE_MENU_TOP_LEVEL, $all);
+		$noAppLinks = $linksHandler->get(0, $all);
+		$items = array();
+		foreach ($this->getTopLevelMenuPositions() as $key => $position) {
+			list($type, $id) = explode(':', $key);
+			$id = intval($id);
+			if ($type == 'application' AND $id == 0) {
+				if (count($noAppLinks) > 0) {
+					$items[] = array('type' => 'noapp', 'id' => 0, 'position' => $position, 'links' => $noAppLinks);
+				}
+			} elseif ($type == 'application' AND isset($applications[$id])) {
+				$links = $applications[$id]->getVar($all ? 'all_links' : 'links');
+				$items[] = array('type' => 'application', 'id' => $id, 'position' => $position, 'application' => $applications[$id], 'links' => is_array($links) ? $links : array());
+			} elseif ($type == 'link' AND isset($topLevelLinks[$id])) {
+				$items[] = array('type' => 'link', 'id' => $id, 'position' => $position, 'link' => $topLevelLinks[$id]);
+			}
+		}
+		return $items;
+	}
+
+	/**
+	 * Save the order of the top level of the menu. The list has to name every application and every top-level link,
+	 * once each, and "Forms with no app" (application 0) when it has any links. "Forms with no app" may be named when it
+	 * has none, so that a list read before its last link was deleted still saves.
+	 * @param array $items In order, each an array of a type ('application' or 'link') and an id: array(array('application', 3), array('link', 41), array('application', 0))
+	 * @return bool True if the order was saved, false if the list didn't name everything once (nothing is saved then)
+	 * @throws Exception if the order could not be written
+	 */
+	function saveTopLevelMenuOrder($items) {
+		if (!is_array($items)) {
+			return false;
+		}
+		$keys = array();
+		foreach ($items as $item) {
+			if (!is_array($item) OR count($item) != 2 OR !in_array($item[0], array('application', 'link'), true) OR !is_numeric($item[1])) {
+				return false;
+			}
+			$keys[] = $item[0] . ':' . intval($item[1]);
+		}
+		if (count($keys) != count(array_unique($keys))) {
+			return false;
+		}
+		$required = array_keys($this->getTopLevelMenuPositions());
+		$linksHandler = xoops_getmodulehandler('applicationMenuLinks', 'formulize');
+		if (count($linksHandler->get(0, true)) == 0) {
+			$required = array_values(array_diff($required, array('application:0')));
+			$optional = array('application:0');
+		} else {
+			$optional = array();
+		}
+		if (array_diff($required, $keys) OR array_diff($keys, $required, $optional)) {
+			return false;
+		}
+		$table = $this->db->prefix("formulize_menu_order");
+		$sql = array("DELETE FROM $table");
+		foreach ($keys as $index => $key) {
+			list($type, $id) = explode(':', $key);
+			$sql[] = "INSERT INTO $table (item_type, item_id, position) VALUES ('" . formulize_db_escape($type) . "', " . intval($id) . ", " . ($index + 1) . ")";
+		}
+		foreach ($sql as $thisSql) {
+			if (!$this->db->query($thisSql)) {
+				self::$cachedTopLevelPositions = null;
+				throw new Exception("Could not save the order of the menu. SQL dump:\n" . $thisSql . "\n" . $this->db->error());
+			}
+		}
+		self::$cachedTopLevelPositions = null;
+		return true;
+	}
+
+	/**
+	 * Remove an item from the saved order of the top level of the menu, when it is deleted.
+	 * @param string $type 'application' or 'link'
+	 * @param int $id The appid or menu_id
+	 * @return void
+	 * @throws Exception if the order could not be written
+	 */
+	function deleteFromTopLevelMenuOrder($type, $id) {
+		$sql = "DELETE FROM " . $this->db->prefix("formulize_menu_order") . " WHERE item_type = '" . formulize_db_escape($type) . "' AND item_id = " . intval($id);
+		if (!$this->db->query($sql)) {
+			throw new Exception("Could not update the order of the menu. SQL dump:\n" . $sql . "\n" . $this->db->error());
+		}
+		self::$cachedTopLevelPositions = null;
+	}
+
+	/**
+	 * The forms and screens a menu link can go to, for the dropdown in the admin UI. A link to a URL is chosen
+	 * separately, beside the dropdown.
+	 * @return array Keys 'fid=N' and 'sid=N', each with its label, escaped for HTML; screens are under their form
+	 */
+	function getMenuLinkTargetOptions() {
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+		$options = array();
+		foreach ($form_handler->getAllForms() as $formObject) {
+			$fid = intval($formObject->getVar('id_form'));
+			$options['fid=' . $fid] = $formObject->getVar('title');
+			foreach ($screen_handler->getObjects(null, $fid) as $screen) {
+				$options['sid=' . intval($screen->getVar('sid'))] = "&nbsp;&nbsp;&nbsp;" . $screen->getVar('title');
+			}
+		}
+		return $options;
+	}
+
+	/**
+	 * The groups that can be given menu links, for the admin UI: every group except the groups made for entries, which
+	 * take their menu links from their template group (see formulizeHandler::propagateTemplateGroupPermissions).
+	 * @return array Each an array with 'id', 'name' (escaped for HTML) and 'isFormBased' (whether it is a template group), in the order the groups were made
+	 */
+	function getMenuLinkGroupOptions() {
+		$member_handler = xoops_gethandler('member');
+		$groups = array();
+		foreach ($member_handler->getGroups() as $group) {
+			if ($group->getVar('entry_id') > 0) {
+				continue;
+			}
+			$groups[] = array(
+				'id' => intval($group->getVar('groupid')),
+				'name' => $group->getVar('name'),
+				'isFormBased' => ($group->getVar('is_group_template') == 1),
+			);
+		}
+		return $groups;
+	}
 
 	/**
 	 * Get the admin UI metadata necessary to display the form listings for the application

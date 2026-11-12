@@ -830,4 +830,49 @@ define("_AM_formulize_TIME_DISPLAY_FORMAT", "Format d'affichage");
 define("_AM_formulize_TIME_FORMAT_12", "Sur 12 heures (par ex. %s)"); // %s est une heure d'exemple au format 12 heures du site, par ex. 1:30pm
 define("_AM_formulize_TIME_FORMAT_24", "Sur 24 heures (par ex. %s)"); // %s est une heure d'exemple au format 24 heures du site, par ex. 13:30
 
+// L'onglet Menu : l'ordre du premier niveau du menu, et les liens à côté des applications
+// (admin/site_menu.php, templates/admin/site_menu.html et admin/save/site_menu_save.php)
+define("_AM_SITEMENU_TAB", "Menu");
+define("_AM_SITEMENU_TITLE", "Le menu");
+define("_AM_SITEMENU_INTRO", "Placez les applications dans l'ordre où vous les voulez dans le menu, et ajoutez des liens à côté d'elles. Faites glisser un élément par sa poignée, ou atteignez la poignée avec la touche Tab et utilisez les flèches. Enregistrez ensuite vos modifications.");
+define("_AM_SITEMENU_ADD_TITLE", "Ajouter un lien au menu");
+define("_AM_SITEMENU_ADD_HELP", "Le lien est ajouté à la fin du menu. Une fois ajouté, faites-le glisser là où vous le voulez.");
+define("_AM_SITEMENU_ADD_BUTTON", "Ajouter le lien");
+define("_AM_SITEMENU_FIELD_TEXT", "Texte du lien");
+define("_AM_SITEMENU_FIELD_TEXT_HELP", "Laissez vide pour utiliser le nom du formulaire ou de l'écran.");
+define("_AM_SITEMENU_FIELD_TARGET", "Ce lien mène à");
+define("_AM_SITEMENU_TARGET_CHOOSE", "Choisissez un formulaire ou un écran");
+define("_AM_SITEMENU_KIND_SCREEN", "Un formulaire ou un écran");
+define("_AM_SITEMENU_KIND_URL", "Une URL");
+define("_AM_SITEMENU_FIELD_SCREEN", "Formulaire ou écran");
+define("_AM_SITEMENU_FIELD_URL", "URL");
+define("_AM_SITEMENU_FIELD_URL_HELP", "Une adresse complète, comme https://www.exemple.com. Pour un écran ou un formulaire de ce site, vous pouvez écrire sid= ou fid= suivi de son numéro.");
+define("_AM_SITEMENU_FIELD_NOTE", "Une note pour ce lien");
+define("_AM_SITEMENU_FIELD_NOTE_HELP", "Pour les administrateurs. Elle n'apparaît pas dans le menu.");
+define("_AM_SITEMENU_FIELD_GROUPS", "Afficher ce lien à ces groupes");
+define("_AM_SITEMENU_FIELD_LANDING", "Envoyer ces groupes vers ce lien dès leur connexion");
+define("_AM_SITEMENU_FIELD_LANDING_HELP", "Seuls les groupes qui voient le lien y sont envoyés, et seulement si Formulize est leur page de démarrage, dans les <a href='%s' target='_blank'>Préférences générales</a>. Un groupe envoyé vers plusieurs liens va au premier d'entre eux dans le menu.");
+define("_AM_SITEMENU_FORM_BASED", "Groupe basé sur un formulaire");
+define("_AM_SITEMENU_LIST_TITLE", "Le contenu du menu");
+define("_AM_SITEMENU_MOVE", "Déplacer %s"); // %s est le nom d'une application ou d'un lien
+define("_AM_SITEMENU_MOVED", "%1\$s déplacé en position %2\$s sur %3\$s"); // %1$s est son nom, %2$s sa nouvelle position, %3$s le nombre d'éléments
+define("_AM_SITEMENU_KIND_APP", "Application");
+define("_AM_SITEMENU_KIND_LINK", "Lien");
+define("_AM_SITEMENU_LINK_COUNT_ONE", "1 lien");
+define("_AM_SITEMENU_LINK_COUNT", "%s liens");
+define("_AM_SITEMENU_NO_LINKS", "Aucun lien, elle n'apparaît donc pas dans le menu");
+define("_AM_SITEMENU_GOES_TO", "Mène à %s");
+define("_AM_SITEMENU_SEEN_BY", "Affiché à %s"); // %s est une liste de noms de groupes
+define("_AM_SITEMENU_SEEN_BY_NOBODY", "Affiché à aucun groupe");
+define("_AM_SITEMENU_APP_LINKS_ELSEWHERE", "Ses liens s'ajoutent, se modifient et se classent dans son onglet Entrées de menu.");
+define("_AM_SITEMENU_MANAGE", "Gérer les entrées de menu de cette application");
+define("_AM_SITEMENU_MANAGE_NOAPP", "Gérer ces entrées de menu");
+define("_AM_SITEMENU_DELETE", "Supprimer ce lien");
+define("_AM_SITEMENU_EMPTY", "Il n'y a encore aucune application ni aucun lien.");
+define("_AM_SITEMENU_ORDER_NOT_SAVED", "Le menu a changé depuis le chargement de cette page, le nouvel ordre n'a donc pas été enregistré. La page va afficher le menu tel qu'il est maintenant. Remettez-le en ordre, puis enregistrez vos modifications.");
+define("_AM_SITEMENU_JS_NEEDS_TARGET", "Choisissez le formulaire ou l'écran vers lequel mène %s, puis enregistrez vos modifications."); // %s est le nom du lien
+define("_AM_SITEMENU_JS_NEEDS_URL", "Saisissez l'URL vers laquelle mène %s, puis enregistrez vos modifications."); // %s est le nom du lien
+define("_AM_SITEMENU_JS_NEW_LINK", "le nouveau lien");
+define("_AM_SITEMENU_JS_DELETE_CONFIRM", "Supprimer le lien « %s » du menu ?");
+
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/admin.php'; // just to catch whatever constants might be missing

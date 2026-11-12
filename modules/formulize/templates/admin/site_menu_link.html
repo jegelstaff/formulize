@@ -1,0 +1,66 @@
+<{* The fields of a link at the top level of the menu, on the Menu tab (site_menu.html): for adding a link
+    ($prefix "new") and for each link already there ($prefix its menu id). The fields have no names, apart from
+    the radios, which need one to work together, so what is posted is what the page's script reads into
+    menu_items[] when the changes are saved. *}>
+<div class="fz-stack" data-sitemenu-editor="<{$prefix}>">
+	<div class="fz-field">
+		<label class="fz-field__label" for="sitemenu-<{$prefix}>-text"><{$smarty.const._AM_SITEMENU_FIELD_TEXT}></label>
+		<div class="fz-field__body">
+			<input class="fz-input" id="sitemenu-<{$prefix}>-text" data-sitemenu-text value="<{$link.link_text}>" aria-describedby="sitemenu-<{$prefix}>-text-help">
+			<p class="fz-field__help" id="sitemenu-<{$prefix}>-text-help"><{$smarty.const._AM_SITEMENU_FIELD_TEXT_HELP}></p>
+		</div>
+	</div>
+	<{* where the link goes: a form or screen, chosen from the list, or a URL, typed in. The radios' name has no
+	    hyphen, so save.php doesn't take it for a setting. *}>
+	<fieldset class="fz-field">
+		<legend class="fz-field__label"><{$smarty.const._AM_SITEMENU_FIELD_TARGET}></legend>
+		<div class="fz-field__body">
+			<div class="fz-cluster fz-gap-5">
+				<label class="fz-choice"><input type="radio" class="fz-radio" name="sitemenukind<{$prefix}>" value="screen" data-sitemenu-kind<{if $link.target != 'url'}> checked<{/if}>> <{$smarty.const._AM_SITEMENU_KIND_SCREEN}></label>
+				<label class="fz-choice"><input type="radio" class="fz-radio" name="sitemenukind<{$prefix}>" value="url" data-sitemenu-kind<{if $link.target == 'url'}> checked<{/if}>> <{$smarty.const._AM_SITEMENU_KIND_URL}></label>
+			</div>
+			<div class="fz-stack fz-gap-2" data-sitemenu-screen-field<{if $link.target == 'url'}> hidden<{/if}>>
+				<label class="fz-sr-only" for="sitemenu-<{$prefix}>-target"><{$smarty.const._AM_SITEMENU_FIELD_SCREEN}></label>
+				<select class="fz-select" id="sitemenu-<{$prefix}>-target" data-sitemenu-target>
+					<option value=""><{$smarty.const._AM_SITEMENU_TARGET_CHOOSE}></option>
+					<{foreach from=$targets key=value item=label}>
+					<option value="<{$value}>"<{if $value == $link.target}> selected<{/if}>><{$label}></option>
+					<{/foreach}>
+				</select>
+			</div>
+			<div class="fz-stack fz-gap-2" data-sitemenu-url-field<{if $link.target != 'url'}> hidden<{/if}>>
+				<label class="fz-sr-only" for="sitemenu-<{$prefix}>-url"><{$smarty.const._AM_SITEMENU_FIELD_URL}></label>
+				<input class="fz-input" id="sitemenu-<{$prefix}>-url" data-sitemenu-url value="<{$link.url}>" aria-describedby="sitemenu-<{$prefix}>-url-help">
+				<p class="fz-field__help" id="sitemenu-<{$prefix}>-url-help"><{$smarty.const._AM_SITEMENU_FIELD_URL_HELP}></p>
+			</div>
+		</div>
+	</fieldset>
+	<div class="fz-field">
+		<label class="fz-field__label" for="sitemenu-<{$prefix}>-note"><{$smarty.const._AM_SITEMENU_FIELD_NOTE}></label>
+		<div class="fz-field__body">
+			<input class="fz-input" id="sitemenu-<{$prefix}>-note" data-sitemenu-note value="<{$link.note}>" aria-describedby="sitemenu-<{$prefix}>-note-help">
+			<p class="fz-field__help" id="sitemenu-<{$prefix}>-note-help"><{$smarty.const._AM_SITEMENU_FIELD_NOTE_HELP}></p>
+		</div>
+	</div>
+	<div class="fz-auto-grid fz-auto-grid--max-2 fz-auto-grid--wide">
+		<fieldset class="fz-field">
+			<legend class="fz-field__label"><{$smarty.const._AM_SITEMENU_FIELD_GROUPS}></legend>
+			<div class="fz-choice-group formulize-sitemenu__choices">
+				<{foreach from=$groups item=group}>
+				<label class="fz-choice"><input type="checkbox" class="fz-checkbox" data-sitemenu-sees value="<{$group.id}>"<{if $group.canSee}> checked<{/if}>> <{$group.name}><{if $group.isFormBased}> <span class="fz-badge fz-badge--plain"><{$smarty.const._AM_SITEMENU_FORM_BASED}></span><{/if}></label>
+				<{/foreach}>
+			</div>
+		</fieldset>
+		<fieldset class="fz-field">
+			<legend class="fz-field__label"><{$smarty.const._AM_SITEMENU_FIELD_LANDING}></legend>
+			<div class="fz-field__body">
+				<div class="fz-choice-group formulize-sitemenu__choices">
+					<{foreach from=$groups item=group}>
+					<label class="fz-choice"><input type="checkbox" class="fz-checkbox" data-sitemenu-lands value="<{$group.id}>"<{if $group.landsOn}> checked<{/if}>> <{$group.name}><{if $group.isFormBased}> <span class="fz-badge fz-badge--plain"><{$smarty.const._AM_SITEMENU_FORM_BASED}></span><{/if}></label>
+					<{/foreach}>
+				</div>
+				<p class="fz-field__help"><{$landingHelp}></p>
+			</div>
+		</fieldset>
+	</div>
+</div>

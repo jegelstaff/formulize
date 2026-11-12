@@ -141,6 +141,15 @@ function getHomeTabs($activePage = 'home') {
         'active' => ($activePage == 'home')
     );
 
+    // Menu: the order of the top level of the menu, and the links beside the applications (admin/site_menu.php).
+    // Not page=menu, since admin/menu.php is the admin flyout menu.
+    $tabs[] = array(
+        'name' => _AM_SITEMENU_TAB,
+        'url' => 'ui.php?page=site-menu',
+        'template' => 'db:admin/site_menu.html',
+        'active' => ($activePage == 'site-menu')
+    );
+
     // Subject tabs (Users / Settings) are declared as data in
     // include/configsettings_registry.php. Each is rendered by the generic handler
     // admin/configsubject.php into the shared wrapper admin/configsubject.html,
