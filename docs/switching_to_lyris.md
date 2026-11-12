@@ -28,9 +28,9 @@ If your site uses a theme of its own, and only webmasters see Anari, you can cho
 
 Lyris comes with several looks, each with its own colours, fonts, corners and spacing, such as Altan, Varetta and Lorestone. If you choose Lyris, the next step shows them, and the one you pick is the look your site starts with. All of them are on **Appearance > Looks** afterwards, where you can change any of them or switch to another.
 
-### Bring your logo and icon along
+### Your logo and icon come along
 
-If your site shows its own logo or browser icon in Anari, you can use them in Lyris too. Leave **Use your current logo** checked, and Lyris starts with them. You can change them any time in **Appearance > Looks**.
+If your site shows its own logo or browser icon in Anari, Lyris shows them too. You can change them any time in **Appearance > Looks**.
 
 ### Give your screens Lyris's settings
 

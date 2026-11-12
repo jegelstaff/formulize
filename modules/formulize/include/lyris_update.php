@@ -366,9 +366,8 @@ function formulize_lyrisUpdateReadChoices($submitted) {
     if (isset($submitted['lyris_look']) AND is_string($submitted['lyris_look']) AND isset($looks[$submitted['lyris_look']])) {
         $choices['look'] = $submitted['lyris_look'];
     }
-    if (!empty($submitted['lyris_use_images'])) {
-        $choices['images'] = formulize_lyrisUpdateImagesToCarry();
-    }
+    // the site's own logo and icon always come along, since a site that has its own wouldn't want to lose them
+    $choices['images'] = formulize_lyrisUpdateImagesToCarry();
     $templatesOffered = formulize_lyrisUpdateTemplatesOffered();
     foreach (isset($submitted['lyris_copy_templates']) ? (array) $submitted['lyris_copy_templates'] : array() as $sid) {
         if (isset($templatesOffered[intval($sid)])) {

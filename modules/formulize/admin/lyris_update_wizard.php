@@ -129,9 +129,12 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
 .formulize-lyris__frame iframe[hidden] { display: none; }
 /* the look carousel: its arrows are in the preview, at either side, over the page drawn there */
 .formulize-lyris__carousel { position: relative; }
-.formulize-lyris__arrow { position: absolute; top: 50%; z-index: 1; width: 3.5rem; height: 3.5rem; transform: translateY(-50%); border-radius: var(--fz-radius-full); background: var(--fz-color-surface); font-size: var(--fz-text-3xl); line-height: 1; }
+.formulize-lyris__arrow { position: absolute; top: 50%; z-index: 1; width: 3.5rem; height: 3.5rem; padding: 0; transform: translateY(-50%); border-radius: var(--fz-radius-full); background: var(--fz-color-surface); }
 .formulize-lyris__arrow--previous { left: calc(var(--fz-spacing) * 3); }
 .formulize-lyris__arrow--next { right: calc(var(--fz-spacing) * 3); }
+/* a chevron looks off centre in its circle when it's centred there, so each is moved towards the way it points */
+.formulize-lyris__arrow--previous svg { transform: translateX(-2px); }
+.formulize-lyris__arrow--next svg { transform: translateX(2px); }
 /* a look's name, in the row under the carousel, is a button with its radio inside, hidden but still focusable */
 .formulize-lyris__look-name { cursor: pointer; }
 .formulize-lyris__look-name:focus-within { box-shadow: var(--fz-focus-ring); }
@@ -156,14 +159,12 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
         </div>
 
         <div class="fz-dialog__body formulize-lyris-step" data-step="theme">
-            <div class="fz-cluster fz-gap-4">
-                <div class="fz-grow fz-min-w-0 fz-stack fz-gap-1">
-                    <h3 class="fz-text-lg fz-font-semibold"><?php echo _AM_FORMULIZE_LYRIS_STEP_THEME; ?></h3>
-                    <p class="fz-text-muted"><?php echo _AM_FORMULIZE_LYRIS_STEP_THEME_INTRO; ?></p>
-                </div>
-                <?php echo $lyrisPreviewSwitch(); ?>
+            <div class="fz-stack fz-gap-1">
+                <h3 class="fz-text-lg fz-font-semibold"><?php echo _AM_FORMULIZE_LYRIS_STEP_THEME; ?></h3>
+                <p class="fz-text-muted"><?php echo _AM_FORMULIZE_LYRIS_STEP_THEME_INTRO; ?></p>
             </div>
             <?php if ($lyrisPreviewScreens) { ?>
+            <?php echo $lyrisPreviewSwitch(); ?>
             <div class="fz-switcher">
                 <?php foreach ($lyrisPreviewCaptions as $previewTheme => $caption) { ?>
                 <figure class="fz-stack fz-gap-2 fz-m-0">
@@ -187,20 +188,17 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
             <div class="fz-callout fz-callout--warning formulize-lyris-pick-one" role="status" hidden><p><?php echo _AM_FORMULIZE_LYRIS_CHOICE_REQUIRED; ?></p></div>
         </div>
 
-        <?php if (count($lyrisLooks) > 1 OR $lyrisImageUrls) { ?>
+        <?php if (count($lyrisLooks) > 1) { ?>
         <div class="fz-dialog__body formulize-lyris-step" data-step="look" hidden>
-            <div class="fz-cluster fz-gap-4">
-                <div class="fz-grow fz-min-w-0 fz-stack fz-gap-1">
-                    <h3 class="fz-text-lg fz-font-semibold"><?php echo _AM_FORMULIZE_LYRIS_STEP_LOOK; ?></h3>
-                    <?php if (count($lyrisLooks) > 1) { ?><p class="fz-text-muted"><?php echo _AM_FORMULIZE_LYRIS_STEP_LOOK_INTRO; ?></p><?php } ?>
-                </div>
-                <?php if (count($lyrisLooks) > 1) { echo $lyrisPreviewSwitch(); } ?>
+            <div class="fz-stack fz-gap-1">
+                <h3 class="fz-text-lg fz-font-semibold"><?php echo _AM_FORMULIZE_LYRIS_STEP_LOOK; ?></h3>
+                <p class="fz-text-muted"><?php echo _AM_FORMULIZE_LYRIS_STEP_LOOK_INTRO; ?></p>
             </div>
-            <?php if (count($lyrisLooks) > 1) { ?>
+            <?php echo $lyrisPreviewSwitch(); ?>
             <div class="formulize-lyris__carousel">
                 <?php echo $lyrisPreviewFrame(FORMULIZE_LYRIS_UPDATE_TO, _AM_FORMULIZE_LYRIS_PREVIEW_LYRIS, true); ?>
-                <button type="button" class="fz-btn fz-btn--icon fz-btn--lg fz-shadow-md formulize-lyris__arrow formulize-lyris__arrow--previous formulize-lyris-look-move" data-move="-1" aria-label="<?php echo htmlspecialchars(_AM_FORMULIZE_LYRIS_LOOK_PREVIOUS); ?>"><span aria-hidden="true">&#8249;</span></button>
-                <button type="button" class="fz-btn fz-btn--icon fz-btn--lg fz-shadow-md formulize-lyris__arrow formulize-lyris__arrow--next formulize-lyris-look-move" data-move="1" aria-label="<?php echo htmlspecialchars(_AM_FORMULIZE_LYRIS_LOOK_NEXT); ?>"><span aria-hidden="true">&#8250;</span></button>
+                <button type="button" class="fz-btn fz-btn--icon fz-btn--lg fz-shadow-md formulize-lyris__arrow formulize-lyris__arrow--previous formulize-lyris-look-move" data-move="-1" aria-label="<?php echo htmlspecialchars(_AM_FORMULIZE_LYRIS_LOOK_PREVIOUS); ?>"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+                <button type="button" class="fz-btn fz-btn--icon fz-btn--lg fz-shadow-md formulize-lyris__arrow formulize-lyris__arrow--next formulize-lyris-look-move" data-move="1" aria-label="<?php echo htmlspecialchars(_AM_FORMULIZE_LYRIS_LOOK_NEXT); ?>"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
             </div>
             <fieldset class="fz-field">
                 <legend class="fz-sr-only"><?php echo _AM_FORMULIZE_LYRIS_LOOK_LEGEND; ?></legend>
@@ -211,10 +209,9 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
                 </div>
             </fieldset>
             <p class="fz-text-muted fz-text-center formulize-lyris-look-description" aria-live="polite"><?php echo isset($lyrisLooks[$lyrisSiteLook]) ? $lyrisLooks[$lyrisSiteLook]['description'] : ''; ?></p>
-            <?php } ?>
             <?php if ($lyrisImageUrls) { ?>
-            <div class="fz-stack fz-gap-3">
-                <label class="fz-choice"><input type="checkbox" class="fz-checkbox" name="lyris_use_images" value="1" checked> <?php echo $lyrisImagesLabel; ?></label>
+            <div class="fz-cluster fz-gap-4">
+                <p><?php echo $lyrisImagesLabel; ?></p>
                 <div class="fz-cluster fz-gap-6">
                     <?php if (isset($lyrisImageUrls['appearance_logo'])) { ?><img class="formulize-lyris__logo" src="<?php echo htmlspecialchars($lyrisImageUrls['appearance_logo']); ?>" alt="<?php echo htmlspecialchars(_AM_FORMULIZE_LYRIS_USE_LOGO_ALT); ?>"><?php } ?>
                     <?php if (isset($lyrisImageUrls['appearance_favicon'])) { ?><img class="formulize-lyris__icon" src="<?php echo htmlspecialchars($lyrisImageUrls['appearance_favicon']); ?>" alt="<?php echo htmlspecialchars(_AM_FORMULIZE_LYRIS_USE_ICON_ALT); ?>"><?php } ?>
@@ -317,7 +314,8 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
     var previewScreen = <?php echo json_encode($lyrisPreviewScreen); ?>;
     // the previews of Lyris show the site's own logo while it's being brought along
     var logoTheme = <?php echo json_encode(isset($lyrisImageUrls['appearance_logo']) ? FORMULIZE_LYRIS_UPDATE_FROM : ''); ?>;
-    var imagesSummary = <?php echo json_encode(isset($lyrisImageUrls['appearance_logo']) ? (isset($lyrisImageUrls['appearance_favicon']) ? 'SUMMARY_LOGO_AND_ICON' : 'SUMMARY_LOGO') : 'SUMMARY_ICON'); ?>;
+    var hasImages = <?php echo $lyrisImageUrls ? 'true' : 'false'; ?>;
+    var imagesSummary =<?php echo json_encode(isset($lyrisImageUrls['appearance_logo']) ? (isset($lyrisImageUrls['appearance_favicon']) ? 'SUMMARY_LOGO_AND_ICON' : 'SUMMARY_LOGO') : 'SUMMARY_ICON'); ?>;
     var templateScreenCount = <?php echo intval(count($lyrisTemplateScreens)); ?>;
     var wizard = document.getElementById('formulize-lyris-wizard');
     var stepOrder = ['theme', 'look', 'settings', 'templates', 'summary'];
@@ -340,9 +338,9 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
     function usingLyris() {
         return choice() !== '' && choice() !== 'keep';
     }
+    // the site's own logo and icon come along whenever Lyris is chosen
     function useImages() {
-        var box = wizard.querySelector('input[name="lyris_use_images"]');
-        return !!(box && box.checked);
+        return hasImages && usingLyris();
     }
     function stepElement(step) {
         return wizard.querySelector('.formulize-lyris-step[data-step="' + step + '"]');
@@ -492,8 +490,18 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
     document.getElementById('formulize-lyris-back').addEventListener('click', function() {
         show(steps()[steps().indexOf(current) - 1]);
     });
+    // once the update is on its way, there's no going back: every button is off, and Esc doesn't close the dialog
+    var updating = false;
     document.getElementById('formulize-lyris-form').addEventListener('submit', function() {
-        document.getElementById('formulize-lyris-update').disabled = true;
+        updating = true;
+        all('.fz-dialog__footer button').forEach(function(button) {
+            button.disabled = true;
+        });
+    });
+    wizard.addEventListener('cancel', function(event) {
+        if (updating) {
+            event.preventDefault();
+        }
     });
 
     // Lyris's settings start checked for screens when the whole site switches, and unchecked otherwise
@@ -533,9 +541,6 @@ $lyrisPreviewSwitch = function () use ($lyrisPreviewScreens, $lyrisPreviewScreen
     });
     all('input[name="lyris_look"]').forEach(function(input) {
         input.addEventListener('change', showLook);
-    });
-    all('input[name="lyris_use_images"]').forEach(function(input) {
-        input.addEventListener('change', drawPreviews);
     });
     window.addEventListener('resize', function() {
         if (wizard.open) {

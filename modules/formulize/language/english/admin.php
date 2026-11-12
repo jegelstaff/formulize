@@ -1415,9 +1415,9 @@ define("_AM_FORMULIZE_LYRIS_STEP_LOOK_INTRO", "Choose the look Lyris starts with
 define("_AM_FORMULIZE_LYRIS_LOOK_LEGEND", "Looks");
 define("_AM_FORMULIZE_LYRIS_LOOK_PREVIOUS", "Previous look");
 define("_AM_FORMULIZE_LYRIS_LOOK_NEXT", "Next look");
-define("_AM_FORMULIZE_LYRIS_USE_LOGO", "Use your current logo in Lyris");
-define("_AM_FORMULIZE_LYRIS_USE_ICON", "Use your current browser icon in Lyris");
-define("_AM_FORMULIZE_LYRIS_USE_LOGO_AND_ICON", "Use your current logo and browser icon in Lyris");
+define("_AM_FORMULIZE_LYRIS_USE_LOGO", "Lyris will show your current logo:");
+define("_AM_FORMULIZE_LYRIS_USE_ICON", "Lyris will show your current browser icon:");
+define("_AM_FORMULIZE_LYRIS_USE_LOGO_AND_ICON", "Lyris will show your current logo and browser icon:");
 define("_AM_FORMULIZE_LYRIS_USE_ICON_ALT", "Your current browser icon");
 define("_AM_FORMULIZE_LYRIS_USE_LOGO_ALT", "Your current logo");
 define("_AM_FORMULIZE_LYRIS_STEP_LOOK_LATER", "You can change the look and the logo any time, in Appearance.");

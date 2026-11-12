@@ -914,9 +914,9 @@ define("_AM_FORMULIZE_LYRIS_STEP_LOOK_INTRO", "Choisissez le style avec lequel L
 define("_AM_FORMULIZE_LYRIS_LOOK_LEGEND", "Styles");
 define("_AM_FORMULIZE_LYRIS_LOOK_PREVIOUS", "Style précédent");
 define("_AM_FORMULIZE_LYRIS_LOOK_NEXT", "Style suivant");
-define("_AM_FORMULIZE_LYRIS_USE_LOGO", "Utiliser votre logo actuel dans Lyris");
-define("_AM_FORMULIZE_LYRIS_USE_ICON", "Utiliser votre icône de navigateur actuelle dans Lyris");
-define("_AM_FORMULIZE_LYRIS_USE_LOGO_AND_ICON", "Utiliser votre logo et votre icône de navigateur actuels dans Lyris");
+define("_AM_FORMULIZE_LYRIS_USE_LOGO", "Lyris affichera votre logo actuel :");
+define("_AM_FORMULIZE_LYRIS_USE_ICON", "Lyris affichera votre icône de navigateur actuelle :");
+define("_AM_FORMULIZE_LYRIS_USE_LOGO_AND_ICON", "Lyris affichera votre logo et votre icône de navigateur actuels :");
 define("_AM_FORMULIZE_LYRIS_USE_ICON_ALT", "Votre icône de navigateur actuelle");
 define("_AM_FORMULIZE_LYRIS_USE_LOGO_ALT", "Votre logo actuel");
 define("_AM_FORMULIZE_LYRIS_STEP_LOOK_LATER", "Vous pouvez changer le style et le logo à tout moment, dans Appearance.");
