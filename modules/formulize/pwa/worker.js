@@ -19,6 +19,8 @@
  * The one exception is a request sent as the page is closing (keepalive, which sendBeacon uses too),
  * such as the one that releases the entries a form locked. The worker sends those itself. Left alone,
  * Chrome hands them back to the page to send, and the page is already gone, so they are never sent.
+ * Where the browser can route requests past the worker, every POST goes straight to the network
+ * instead, so the worker never sees those. See routePastTheWorker below.
  */
 (function () {
 	'use strict';
@@ -31,8 +33,23 @@
 	// offline page in the old look until then. Taking over at once is not worth that: a page being loaded
 	// through the old worker at that moment can be left hanging, and a change to the Appearance page
 	// makes a new worker. remove-worker.js is the exception, since it has nothing to wait for.
+	// Requests the worker has no part in go straight to the network, where the browser can do that without running
+	// the worker at all: every POST, since the worker only looks at page loads and its own stylesheets. That matters
+	// most for the requests a page sends as it closes, like the release of the entries a form locked. Chromium
+	// hands those to the worker, and some of them never get there, so they're never sent. This is Chromium's
+	// static routing, which other browsers don't have yet, so they go through the keepalive branch below.
+	function routePastTheWorker(event) {
+		if (!event.addRoutes) {
+			return Promise.resolve();
+		}
+		// a rule the browser doesn't take mustn't stop the worker installing, since then nothing works offline
+		return Promise.resolve(event.addRoutes([
+			{ condition: { requestMethod: 'POST' }, source: 'network' }
+		])).catch(function () {});
+	}
+
 	self.addEventListener('install', function (event) {
-		event.waitUntil(caches.open(cacheName).then(function (cache) {
+		event.waitUntil(Promise.all([routePastTheWorker(event), caches.open(cacheName).then(function (cache) {
 			var offlinePage = new Response(config.offlineHtml, {
 				headers: { 'Content-Type': 'text/html; charset=utf-8' }
 			});
@@ -40,7 +57,7 @@
 				cache.put(config.offlineUrl, offlinePage),
 				cache.addAll(config.stylesheets)
 			]);
-		}));
+		})]));
 	});
 
 	self.addEventListener('activate', function (event) {

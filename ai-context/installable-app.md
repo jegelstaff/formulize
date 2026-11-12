@@ -17,7 +17,9 @@ if (request.keepalive) {
 }
 ```
 
-When a request doesn't show up in the Apache log (`docker logs formulize-web-1`), suspect the worker. Playwright reports keepalive requests as `net::ERR_ABORTED` even when they succeed, so check the server log.
+**In Chromium, POSTs skip the worker altogether.** Even with that branch, Chromium lost about one release in fifteen in CI. Run 43147963759 shows those were never sent: nothing more arrived on the browser's connection after the page that should have sent one. So the worker's `install` handler uses Chromium's static routing, `event.addRoutes()`, to send every POST straight to the network. The browser applies the rule without running the worker. The worker only handles page loads and its own stylesheets, so it loses nothing by not seeing POSTs. Other browsers don't have `addRoutes()` yet, so keep the keepalive branch for them, and keep the `catch` that stops a rule the browser refuses from failing the install.
+
+When a request doesn't show up in the Apache log (`docker logs formulize-web-1`, kept in CI as `final-state/logs/web-server.log`), suspect the worker. Playwright reports keepalive requests as `net::ERR_ABORTED` even when they succeed, so check the server log.
 
 **Browsers check for a new worker at most once a day.** `sw.php` is sent with `Cache-Control: private, max-age=86400`, and pages register with `updateViaCache: 'all'`, so the check comes from the browser's own cache. Without that, the browser asks the server for the worker alongside every page, and each request loads the site and the person's session, and lands at the same moment as the page's own requests. So a changed worker, a new look or the one that removes itself, reaches a device within a day. In a spec, `aDayPassesForTheWorker()` in `utils.js` clears the browser's cache to stand in for the day.
 
