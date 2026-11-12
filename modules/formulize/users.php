@@ -143,14 +143,14 @@ $pseudoScreen->setVar('advanceview', $advanceViewArray);
 
 // Inject fullname and username as hidden values on each row so confirmDel() can
 // display the user's name without a separate lookup.
-// Also mark status as an editable inline column (decolumns).
+// Also mark status as an editable inline column (decolumns). Masquerade isn't one: its list value is its button,
+// so it needs no editing, and it locks nothing.
 $pseudoScreen->setVar('hiddencolumns', array(
 	'formulize_user_account_fullname_'  . $fidInt,
 	'formulize_user_account_username_'  . $fidInt,
 ));
 $pseudoScreen->setVar('decolumns', array(
 	'formulize_user_account_status_'     . $fidInt,
-	'formulize_user_account_masquerade_' . $fidInt,
 ));
 
 // Handle user deletion before readelements.php and render, so Stage 2 never fires.

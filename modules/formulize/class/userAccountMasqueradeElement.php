@@ -79,14 +79,27 @@ class formulizeUserAccountMasqueradeElementHandler extends formulizeUserAccountE
 	 * @return XoopsFormLabel
 	 */
 	function render($ele_value, $caption, $markupName, $isDisabled, $element, $entry_id, $screen, $owner) {
+		return new XoopsFormLabel($caption, $this->masqueradeButton(intval($ele_value)), $markupName);
+	}
+
+	/**
+	 * The Masquerade button, which a form and a list both show
+	 *
+	 * Empty when already masquerading, when there is no target user, or when the current user would be masquerading
+	 * as themselves. masquerade.php decides whether the person may masquerade as the target.
+	 *
+	 * @param int $targetUid The user to masquerade as
+	 * @return string The button's markup, or an empty string
+	 */
+	private function masqueradeButton($targetUid) {
 		global $xoopsUser;
 		if (isset($_SESSION['masquerade_xoopsUserId'])) {
-			return new XoopsFormLabel($caption, '', $markupName);
+			return '';
 		}
 		$currentUid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
-		$targetUid = intval($ele_value);
+		$targetUid = intval($targetUid);
 		if (!$targetUid || $targetUid === $currentUid) {
-			return new XoopsFormLabel($caption, '', $markupName);
+			return '';
 		}
 		static $masqueradeToken = null;
 		if ($masqueradeToken === null) {
@@ -94,8 +107,46 @@ class formulizeUserAccountMasqueradeElementHandler extends formulizeUserAccountE
 		}
 		$url = htmlspecialchars(XOOPS_URL . '/modules/formulize/masquerade.php?uid=' . $targetUid . '&' . _CORE_TOKEN . '_REQUEST=' . urlencode($masqueradeToken), ENT_QUOTES);
 		$label = htmlspecialchars(_formulize_UA_MASQUERADE_BUTTON, ENT_QUOTES);
-		$button = '<a href="' . $url . '" class="btn btn--primary">' . $label . '</a>';
-		return new XoopsFormLabel($caption, $button, $markupName);
+		return '<a href="' . $url . '" class="btn btn--primary">' . $label . '</a>';
+	}
+
+	/**
+	 * In a list, the element shows the same button it shows in a form, so the column needs no editing to be useful.
+	 * Its value in a dataset is empty, for exports and searches, so the button is made here.
+	 *
+	 * Goes to formulizeElementsHandler::formatDataForList directly, rather than through the user account handler,
+	 * which doesn't pass the entry on.
+	 *
+	 * @param mixed  $value     The value from the dataset, which is empty
+	 * @param string $handle    Element handle
+	 * @param int    $entry_id  Entry ID
+	 * @param int    $textWidth Column display width hint
+	 * @return string The button's markup, or an empty string
+	 */
+	function formatDataForList($value, $handle="", $entry_id=0, $textWidth=100) {
+		$this->clickable = false;
+		$this->striphtml = true;
+		$this->length = 0; // the button is markup, which mustn't be cut
+		return formulizeElementsHandler::formatDataForList($value, $handle, $entry_id, $textWidth);
+	}
+
+	/**
+	 * The button, for the user in this entry. A list only has the column for people the element is shown to, which
+	 * is webmasters, and masquerade.php checks who may masquerade as whom.
+	 *
+	 * @param string      $value     The escaped value, which is empty
+	 * @param string      $handle    Element handle
+	 * @param int         $entry_id  Entry ID
+	 * @param string|null $rawValue  The value before escaping
+	 * @param int         $textWidth Column display width hint
+	 * @return string The button's markup, or an empty string
+	 */
+	function composeMarkupForList($value, $handle="", $entry_id=0, $rawValue=null, $textWidth=100) {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		if (!$entry_id OR !$handle OR !($element = $element_handler->get($handle))) {
+			return '';
+		}
+		return $this->masqueradeButton($this->loadValue($element, null, $entry_id));
 	}
 
 	function prepareDataForDataset($value, $handle, $entry_id) {
