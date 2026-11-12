@@ -120,7 +120,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 	if($allowed) {
 
 		// clear prior entry locks for this user - will be based on the token used to lock the prior page load, which is passed through POST key 'formulize_entry_lock_token'
-		include_once XOOPS_ROOT_PATH.'/modules/formulize/formulize_deleteEntryLock.php';
+		formulize_releaseRequestedEntryLocks();
 
 		// Another check to see if this element is disabled, for the case where the user can view the form, but not edit it.
 		if (!$isDisabled AND !$noSave) {

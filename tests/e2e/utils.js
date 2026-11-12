@@ -1250,23 +1250,47 @@ async function leaveWith(page, navigation) {
 // The annotation entry-lock-reporter.js looks for
 const UNRELEASED_LOCKS_NOTE = 'entry locks not released';
 
-// Note on the test what the page that was left still has locked, which is in its list files
-function noteUnreleasedLocks(leftUrl, lockLists) {
+// What a list file on the server says a page locked, as [fid, entry] pairs of numbers. Empty if there's no such file,
+// which is the case once the page's release has been handled, or if the page locked nothing.
+function entriesInLockList(file) {
+	let list = '';
+	try {
+		list = execFileSync('docker', ['exec', webContainer(), 'cat', `/var/www/html/modules/formulize/temp/${file}`], { encoding: 'utf8' });
+	} catch (e) {
+		return [];
+	}
 	const entries = [];
-	for (const file of lockLists) {
-		let list = '';
-		try {
-			list = execFileSync('docker', ['exec', webContainer(), 'cat', `/var/www/html/modules/formulize/temp/${file}`], { encoding: 'utf8' });
-		} catch (e) {
-			continue; // released after all, just now
-		}
-		// a serialized PHP array of form ids, each with an array of entry ids
-		for (const [, fid, entryList] of list.matchAll(/i:(\d+);a:\d+:\{([^}]*)\}/g)) {
-			for (const [, entry] of entryList.matchAll(/i:(\d+);b:1;/g)) {
-				entries.push(`entry ${entry} in form ${fid}`);
-			}
+	// a serialized PHP array of form ids, each with an array of entry ids
+	for (const [, fid, entryList] of list.matchAll(/i:(\d+);a:\d+:\{([^}]*)\}/g)) {
+		for (const [, entry] of entryList.matchAll(/i:(\d+);b:1;/g)) {
+			entries.push([parseInt(fid, 10), parseInt(entry, 10)]);
 		}
 	}
+	return entries;
+}
+
+/**
+ * The entries the page's release will unlock when it goes away, as [fid, entry] pairs of numbers. Read from the
+ * files on the server that list what the page locked, which is checking what the application did.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function entriesThePageWillRelease(page) {
+	return (await entryLockListFiles(page)).flatMap(entriesInLockList);
+}
+
+/**
+ * Whether an entry is locked for editing, by anyone. Read from its lock file on the server, which is checking what
+ * the application did.
+ * @param {number} fid - The form
+ * @param {number} entry - The entry
+ */
+export function entryIsLocked(fid, entry) {
+	return serverTempFiles().includes(`entry_${entry}_in_form_${fid}_is_locked_for_editing`);
+}
+
+// Note on the test what the page that was left still has locked, which is in its list files
+function noteUnreleasedLocks(leftUrl, lockLists) {
+	const entries = lockLists.flatMap(entriesInLockList).map(([fid, entry]) => `entry ${entry} in form ${fid}`);
 	const left = leftUrl.replace(/^https?:\/\/[^/]+/, '');
 	test.info().annotations.push({
 		type: UNRELEASED_LOCKS_NOTE,

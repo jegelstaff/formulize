@@ -1,42 +1,22 @@
 <?php
 
-// TRIGGERED WHEN A FORMULIZE FORM OR LIST UNLOADS via beacon,
-// ALSO WHEN THE USER SWITCHES TABS, WHICH MAY BE UNNECESSARY BECAUSE SWITCHING TABS NOW CAUSES AN ENTIRE REQUEST AND RELOAD OF PAGE, WHICH WILL TRIGGER BEACONS
-// AND WHEN BUILDING ELEMENTS FOR DISPLAYING ON SCREEN (because of the potential race condition with the beacon and we don't want the beacon to be late to the party and erase the locks the new page just put in place, so delete the locks first, and then make the new ones. By the time the beacon catches up, if it's slow, the deletion will have happened, and the token file will be gone, so no subsequent deletion will take place)
+// Where a page sends the release of the entries it locked, as it goes away. A list also sends one here when an
+// element opened from its icon is saved or closed, for just that entry. See formulize_releaseRequestedEntryLocks()
+// in include/entryLocks.php, which does the releasing, and which a page that submits to itself runs as well.
 
 // IF THE WEBMASTER IS BUILDING A CUSTOM INTERFACE RELYING ON RENDERING ELEMENTS ON THEIR OWN, LOCKS WILL NOT WORK RIGHT
-// Custom screens (and template screens?) won't have the beacon in place for handling unload events in the window and they don't pass the token through POST like a standard screen does
+// Custom screens (and template screens?) won't have the release in place for when the window goes away, and they don't pass the token through POST like a standard screen does
 
-// when requested directly, the rest of Formulize isn't loaded
+// requested on its own, the rest of Formulize isn't loaded
 require_once __DIR__.'/include/entryLocks.php';
 
-$userPassedUid = false;
-if(!defined('XOOPS_MAINFILE_INCLUDED')) { // if we're requested directly, setup stuff...
-    ignore_user_abort(true);
-    header("Access-Control-Allow-Origin: *");
-    // if no user passed uid when we're requested directly, then do nothing because the request is invalid
-    if(isset($_POST['formulize_entry_lock_uid'])) {
-        $userPassedUid = $_POST['formulize_entry_lock_uid'];
-    } else {
-        exit();
-    }
+if(!defined('XOOPS_MAINFILE_INCLUDED')) {
+	ignore_user_abort(true);
+	header("Access-Control-Allow-Origin: *");
+	// a request on its own must say whose page load it was, or it's not valid
+	if(!isset($_POST['formulize_entry_lock_uid'])) {
+		exit();
+	}
 }
 
-if(isset($_POST['formulize_entry_lock_token'])) {
-    $token = $_POST['formulize_entry_lock_token'];
-    global $xoopsUser;
-    $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-    $userPassedUid = $userPassedUid === false ? $uid : $userPassedUid; // if the deletion is happening as part of a normal page load, not ajax, then we'll just use the active uid from the logged in user
-    $tokenFileName = __DIR__."/temp/".str_replace(array('/','\\','.'),'',$token).$userPassedUid.'.token'; // must use the passed uid (if any) to check for the token+uid filename, because if the user logs out, the $uid will be 0 but the stuff we need to delete was catalogued with the old uid!
-    if(file_exists($tokenFileName) AND ($uid == 0 OR $uid == $userPassedUid)) { // if $uid is zero, can't validate against the uid from the prior pageload, because the user may have just logged out! But we are validating somewhat by checking for the file name based on the token and prior uid.
-        $entriesThatWereLockedThatPageLoad = unserialize(file_get_contents($tokenFileName));
-        unlink($tokenFileName);
-        unset($_POST['formulize_entry_lock_token']);
-        foreach($entriesThatWereLockedThatPageLoad as $thisForm=>$theseEntries) {
-            foreach(array_keys($theseEntries) as $entry_id) {
-                // Only if this page load still holds the lock. A later page load can have taken it over: the same person's, if they reloaded the entry or followed a link to it, since this release is sent after that page was drawn, or a webmaster's, who overrode the lock.
-                formulize_releaseEntryLock($entry_id, $thisForm, $userPassedUid, $token);
-            }
-        }
-    }
-}
+formulize_releaseRequestedEntryLocks();

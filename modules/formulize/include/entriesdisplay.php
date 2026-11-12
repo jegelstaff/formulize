@@ -69,6 +69,11 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
 	global $xoopsDB, $xoopsUser;
 
+	// A list that submits to itself, for a search, a sort or another page of entries, posts its page load's token. Release
+	// what that page load locked before anything is drawn: elements it opened from their icons, which nothing else on
+	// this page would release, and elements it showed in its columns.
+	formulize_releaseRequestedEntryLocks();
+
 	// Set some required variables
 	$mid = getFormulizeModId();
 	list($fid, $frid) = getFormFramework($formframe, $mainform);
@@ -2391,8 +2396,11 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 
 	formulize_screenLOETemplate($screen, 'closelist', $templateVariables, $settings);
 
+	// Release what the list locked when it goes away. That's elements it showed in its columns, and elements opened
+	// from their icons after the list was drawn, which is why a list with icons always has the release
 	global $entriesThatHaveBeenLockedThisPageLoad;
-	if(is_array($entriesThatHaveBeenLockedThisPageLoad) AND count((array) $entriesThatHaveBeenLockedThisPageLoad) > 0) {
+	if((is_array($entriesThatHaveBeenLockedThisPageLoad) AND count((array) $entriesThatHaveBeenLockedThisPageLoad) > 0)
+		OR (!empty($displayIconsToActivateElements) AND !empty($deColumns))) {
 		?>
 		<script type='text/javascript'>
 			window.addEventListener('pagehide', function() {
@@ -4149,7 +4157,29 @@ if($useXhr) {
 	print "var elementStates = new Array();";
 	print "var savingNow = \"\";";
 	print "var elementActive = \"\";";
+	global $xoopsUser;
 ?>
+// The token of the list's page load. An element opened from its icon is locked for it, so the list's release covers the
+// lock. See get_element_html in formulize_xhr_responder.php
+function formulizeListEntryLockToken() {
+	return jQuery("#controls input[name='formulize_entry_lock_token']").val();
+}
+
+// Release the lock on the entry whose element was open, once it's saved or closed. Synchronous, so that opening an
+// element again straight away can't be overtaken by the release, which would take away its new lock.
+function formulizeReleaseElementLock(entryId) {
+	jQuery.ajax({
+		type: 'POST',
+		url: '<?php print XOOPS_URL; ?>/modules/formulize/formulize_deleteEntryLock.php',
+		data: {
+			formulize_entry_lock_token: formulizeListEntryLockToken(),
+			formulize_entry_lock_uid: '<?php print $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0; ?>',
+			formulize_entry_lock_entry: entryId
+		},
+		async: false
+	});
+}
+
 function renderElement(handle,element_id,entryId,fid,check,deInstanceCounter) {
 	if(elementStates[handle] == undefined) {
 		elementStates[handle] = new Array();
@@ -4169,7 +4199,7 @@ function renderElement(handle,element_id,entryId,fid,check,deInstanceCounter) {
 		formulize_xhr_params[5] = deInstanceCounter;
 		// the element comes back with a token for saving it, which is only given to a page that
 		// already holds one of its own, so send the list's token, from the list's own form
-		formulize_xhr_send('get_element_html',formulize_xhr_params,jQuery("#controls input[name='<?php print _CORE_TOKEN; ?>_REQUEST']").val());
+		formulize_xhr_send('get_element_html',formulize_xhr_params,jQuery("#controls input[name='<?php print _CORE_TOKEN; ?>_REQUEST']").val(),formulizeListEntryLockToken());
 	} else {
 		if(check && savingNow == "") {
 			savingNow = true;
@@ -4185,6 +4215,8 @@ function renderElement(handle,element_id,entryId,fid,check,deInstanceCounter) {
 				if(data) {
 				   alert(data);
 				} else {
+					// saved, so the element is closing. A save doesn't release every lock, such as on the System Users form, which isn't saved through writeEntry()
+					formulizeReleaseElementLock(entryId);
 					// Record the save for the AI chat's activity log. readelements.php cannot say
 					// anything itself, because this very handler treats any non-empty response as
 					// an error, so the side that asked for the save reports it instead.
@@ -4216,6 +4248,8 @@ function renderElement(handle,element_id,entryId,fid,check,deInstanceCounter) {
 		} else if(check) {
 			// do nothing...only allow one saving operation at a time
 		} else {
+			// closed without saving
+			formulizeReleaseElementLock(entryId);
 			jQuery("#deDiv_"+handle+"_"+entryId+"_"+deInstanceCounter).removeClass("formulize-de-editing").html(elementStates[handle][entryId]);
 			elementStates[handle].splice(entryId, 1);
 			elementActive = "";

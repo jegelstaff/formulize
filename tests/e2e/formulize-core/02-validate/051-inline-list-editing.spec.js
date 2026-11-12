@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, addElementForm, ElementType, applyColumnChanges,
-	createMuseumForm, deleteMuseumFormsTitled, leavePage, dbQuery, dbPrefix } from '../../utils';
+	createMuseumForm, deleteMuseumFormsTitled, leavePage, dbQuery, dbPrefix, waitForWorkingMessage, entryIsLocked,
+	entriesThePageWillRelease } from '../../utils';
 
 // A list screen can show a column as a form element, so a person edits a value right in the list: they click the
 // pen beside the value, change it, and click the tick. Clicking the pen asks formulize_xhr_responder.php for the
@@ -13,6 +14,11 @@ import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, addElem
 // numbers in its column, which are all drawn in boxes of the same width so their right edges meet, including when the
 // new number is wider than the rest. Everything is made through the admin UI on a form of its own, which is deleted
 // at the end. The database is only read, to find the form's list screen.
+//
+// An element opened from its pen locks its entry, like any editable element, so no one else edits it at the same
+// time. The lock is for the list's page load, so it goes when the element is saved or closed, when the list submits
+// to itself, as for a sort, and when the list goes away. Whether an entry is locked is read from the files on the
+// server that hold the locks.
 
 test.describe.configure({ mode: 'serial' });
 
@@ -208,6 +214,66 @@ test('a number edited in the list lines up with the rest of its column', async (
 
 	expect(dialogs, 'no save was refused').toEqual([]);
 	await leavePage(page);
+});
+
+test('an element opened from its pen locks its entry until it is saved or closed, or the list moves on', async ({ page }) => {
+	const dialogs = [];
+	page.on('dialog', async dialog => {
+		dialogs.push(dialog.message());
+		await dialog.dismiss();
+	});
+
+	await login(page, 'admin');
+	await openListWithColumns(page, ['Note']);
+	const found = cellsOf(page, NOTE).filter({ hasText: AFTER });
+	await expect(found).toHaveCount(1);
+	const entry = parseInt(new RegExp(`^deDiv_${NOTE}_(\\d+)_\\d+$`).exec(await found.getAttribute('id'))[1], 10);
+	// by its entry, since the number at the end of its id counts the cells as they're drawn, which a sort changes
+	const cell = () => page.locator(`[id^="deDiv_${NOTE}_${entry}_"]`);
+	const locked = () => expect.poll(() => entryIsLocked(fid, entry), { message: `entry ${entry} is locked` });
+
+	// open it from its pen, and the entry is locked, for the list: the list's release will unlock it
+	const open = async () => {
+		await cell().locator('a.de-edit-icon').click();
+		await expect(cell().locator(`input[name^="de_${fid}_"]`)).toBeVisible();
+		await locked().toBe(true);
+		expect(await entriesThePageWillRelease(page)).toContainEqual([fid, entry]);
+	};
+
+	await expect(cell()).toBeVisible();
+	expect(entryIsLocked(fid, entry), 'not locked before the pen is clicked').toBe(false);
+
+	// 1. closed with the X
+	await open();
+	await cell().locator('a.formulize-de-cancel').click();
+	await expect(cell()).not.toHaveClass(/formulize-de-editing/);
+	await locked().toBe(false);
+	expect(await entriesThePageWillRelease(page)).not.toContainEqual([fid, entry]);
+
+	// 2. saved with the tick
+	await open();
+	await cell().locator(`input[name^="de_${fid}_"]`).fill(AFTER);
+	await cell().locator('a.formulize-de-save').click();
+	await expect(cell()).not.toHaveClass(/formulize-de-editing/);
+	await expect(cell()).toContainText(AFTER);
+	await locked().toBe(false);
+
+	// 3. the list submits to itself, for a sort
+	await open();
+	await page.getByRole('columnheader', { name: /Note/ }).getByRole('link').first().click();
+	await waitForWorkingMessage(page);
+	await locked().toBe(false);
+
+	// 4. the list goes away. Its release can be lost on the way, in CI, and leavePage notes that on the test, so the
+	// lock is only checked when the release arrived
+	await expect(cell()).toBeVisible();
+	await open();
+	await leavePage(page, '/modules/formulize/index.php');
+	if (!test.info().annotations.some(note => note.type === 'entry locks not released')) {
+		expect(entryIsLocked(fid, entry), 'the release unlocked it').toBe(false);
+	}
+
+	expect(dialogs, 'no save was refused').toEqual([]);
 });
 
 test('delete the form', async ({ page }) => {

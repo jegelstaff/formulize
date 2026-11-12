@@ -383,7 +383,19 @@ switch($op) {
     $gehEntryId = intval($_GET['param3']);
     $gehElement = xoops_getmodulehandler('elements','formulize')->get($gehElementId);
     if (!is_object($gehElement) OR !security_check(intval($gehElement->getVar('id_form')), $gehEntryId)) { break; }
+    // The list sends its own page load's token in another header, and the element is locked for that page load and
+    // added to what it locked. So the lock is released when the list submits to itself, and when the list goes away,
+    // and the list releases it when the element is saved or closed. See formulize_releaseRequestedEntryLocks().
+    $gehListLockToken = isset($_SERVER['HTTP_X_FORMULIZE_ENTRY_LOCK_TOKEN']) ? (string) $_SERVER['HTTP_X_FORMULIZE_ENTRY_LOCK_TOKEN'] : '';
+    $gehLocksForTheList = formulize_isEntryLockToken($gehListLockToken);
+    if ($gehLocksForTheList) {
+      getEntryLockSecurityToken($gehListLockToken);
+    }
     displayElement("", $gehElementId, $gehEntryId);
+    if ($gehLocksForTheList) {
+      global $entriesThatHaveBeenLockedThisPageLoad;
+      formulize_recordEntryLocksForPageLoad($gehListLockToken, ($xoopsUser ? $xoopsUser->getVar('uid') : 0), (array) $entriesThatHaveBeenLockedThisPageLoad);
+    }
 		print "<input type='hidden' name='detoken_".intval($_GET['param4']).'_'.intval($_GET['param3']).'_'.intval($_GET['param2'])."' value=".$GLOBALS['xoopsSecurity']->createToken(0, 'formulize_display_element_token').">";
     break;
 

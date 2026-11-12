@@ -9776,8 +9776,9 @@ function formulize_xhr_return(op,params,response) {
 }
 
 // token is optional: a security token the page holds, for an operation that needs one. It goes in a
-// header, so it stays out of the address and the server's logs.
-function formulize_xhr_send(op,params,token) {
+// header, so it stays out of the address and the server's logs. lockToken is optional too: the token of the
+// page load, for an element that is locked as part of the page, so the page's release covers it. Also a header.
+function formulize_xhr_send(op,params,token,lockToken) {
     // check that this is a valid operation we know how to handle
     if (op != 'check_for_unique_value' && op != 'get_element_html' && op != 'get_element_value' && op != 'delete_uploaded_file') {
         return true;
@@ -9799,6 +9800,9 @@ function formulize_xhr_send(op,params,token) {
     if (token) {
         formulize_xhr.setRequestHeader("X-Formulize-Token", token);
     }
+    if (lockToken) {
+        formulize_xhr.setRequestHeader("X-Formulize-Entry-Lock-Token", lockToken);
+    }
     formulize_xhr.onreadystatechange = function() {
     //alert(formulize_xhr.readyState);
     if (formulize_xhr.readyState == 4) {
@@ -9814,10 +9818,14 @@ function formulize_xhr_send(op,params,token) {
 /**
  * This function retrieves a security token for locking form entries. We need to refer to the same random token in a few places, so we store it as a static in this function.
  *
+ * @param string $pageLoadToken The token of a page that is showing, for a request that draws an element as part of that page, like an element a list opens from its icon. Its locks are then the page's, and the page's release covers them. Only taken if this request hasn't a token yet.
  * @return string Security token
  */
-function getEntryLockSecurityToken() {
+function getEntryLockSecurityToken($pageLoadToken = '') {
     static $token;
+    if(!$token AND formulize_isEntryLockToken($pageLoadToken)) {
+        $token = $pageLoadToken;
+    }
     $token = $token ? $token : hash('sha256',(uniqid(rand(), true).$_SERVER['HTTP_USER_AGENT'].XOOPS_DB_PREFIX.$_SERVER['REMOTE_ADDR']));
     return $token;
 }
@@ -9835,9 +9843,7 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
         $token = getEntryLockSecurityToken();
         $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
         formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", ".token");
-        if(count((array)$entriesThatHaveBeenLockedThisPageLoad)>0) {
-            file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/temp/'.$token.$uid.'.token', serialize($entriesThatHaveBeenLockedThisPageLoad));
-        }
+        formulize_recordEntryLocksForPageLoad($token, $uid, (array) $entriesThatHaveBeenLockedThisPageLoad);
         // write a value that we can check later as an antiCSRF token. Cannot validate through the built in token system since it relies on session which will be borked if the user logs out. So we write a file instead.
         // must be raw js since this is sent through the beacon after page is torn down
         $cachedJS['unload'] = "var fd = new FormData();\n";
