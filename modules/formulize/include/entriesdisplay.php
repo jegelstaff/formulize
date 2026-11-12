@@ -1435,7 +1435,7 @@ function drawInterface($settings, $fid, $frid, $groups, $mid, $gperm_handler, $l
 	// run any Procedures the user might have requested
     global $procedureResults;
     $procedureResults = "";
-	if( @$_POST['advcalc_acid'] AND $_POST['acid'] > 0 ) {
+	if( !empty($_POST['advcalc_acid']) AND isset($_POST['acid']) AND $_POST['acid'] > 0 ) {
 	  $procedureResults = formulize_runAdvancedCalculation( intval($_POST['acid'] )); // result will be an array with two or three keys: 'text' and 'output', and possibly 'groupingMap'.  Text is for display on screen "raw" and Output is a variable that can be used by a dev.  The output variable will be an array if groupings are in effect.  The keys of the array will be the various grouping values in effect.  The groupingMap will be present if there's a set of groupings in effect.  It is an array that contains all the grouping choices, their text equivalents and their data values (which are the keys in the output array) -- groupingMap is still to be developed/added to the mix....will be necessary when we are integrating with Drupal or other API uses.
       $procedureResults = $procedureResults['text'];
 	}

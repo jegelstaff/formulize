@@ -889,7 +889,7 @@ class icms_core_Session {
 		writeToFormulizeLog(array(
 			'formulize_event'=>'session-being-destroyed',
 			'destroyed_session_id'=>$sess_id,
-			'user_id'=>intval($_SESSION['xoopsUserId'])
+			'user_id'=>intval($_SESSION['xoopsUserId'] ?? 0)
 		));
 		if (!$result = icms::$xoopsDB->queryF($sql)) {
 			return false;
@@ -909,7 +909,7 @@ class icms_core_Session {
 		include_once XOOPS_ROOT_PATH.'/modules/formulize/include/writeToFormulizeLog.php';
 		writeToFormulizeLog(array(
 			'formulize_event'=>'session-garbage-collection',
-			'user_id'=>intval($_SESSION['xoopsUserId'])
+			'user_id'=>intval($_SESSION['xoopsUserId'] ?? 0)
 		));
 		$mintime = time() - (int) $expire;
 		// Never collect a session a request is currently working on. sess_updated is not a safe

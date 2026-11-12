@@ -5,7 +5,7 @@
  * Manage 2FA codes and infrastructure processes
  */
 
-include_once "../../mainfile.php";
+include_once __DIR__."/../../mainfile.php";
 include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 global $xoopsConfig;
 if (file_exists(XOOPS_ROOT_PATH . "/language/".$xoopsConfig['language']."/user.php") ) {

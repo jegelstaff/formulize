@@ -4907,7 +4907,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
             $data_handler_start = new formulizeDataHandler($startForm);
             $foundValue = $data_handler_start->getElementValueInEntry($startEntry, $targetForm['keyother'], $all_users, $all_groups);
             if ($foundValue) {
-                if($startEleValue['snapshot']) {
+                if(!empty($startEleValue['snapshot'])) {
                     $valuesToLookFor = explode("*=+*:",trim($foundValue, "*=+*:"));
                     return _findLinkedEntries($targetForm['keyself'], $targetForm['fid'], $valuesToLookFor, $all_users, $all_groups);
                 } else {
@@ -4921,7 +4921,7 @@ function findLinkedEntries($startForm, $targetForm, $startEntry) {
             // so look for all the entry ids in the target form, where the linked field has the startEntry in it
             // if the targetFormKeySelf is a snapshot field, then we don't want to look up the entry id, convert to the value of the keyother field in the startform
             $targetEleValue = $targetElement->getVar('ele_value');
-            if($targetEleValue['snapshot']) {
+            if(!empty($targetEleValue['snapshot'])) {
                 $data_handler_start = new formulizeDataHandler($startForm);
                 // if the targetElement has an alternate element choice for the list box display, use that field instead of the keyother
                 if((is_array($targetEleValue[17]) AND count((array) $targetEleValue[17]) > 0) OR $targetEleValue[17]) {
@@ -4967,7 +4967,7 @@ function _findLinkedEntries($targetFormKeySelf, $targetFormFid, $valuesToLookFor
             $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));
         }
         if($selfEleValue[1] OR anyCheckboxElementType($selfElement->getVar('ele_type'))) {
-            if($selfElement->isLinked AND $selfEleValue['snapshot'] == false) {
+            if($selfElement->isLinked AND empty($selfEleValue['snapshot'])) {
                 $entries_to_return = $data_handler_target->findAllEntriesWithValue($targetFormKeySelf, '%,'.$valueToLookFor.',%', $all_users, $all_groups, 'LIKE');
                 if($entries_to_return !== false) {
                     $totalEntriesToReturn = array_unique(array_merge($entries_to_return, $totalEntriesToReturn));

@@ -379,7 +379,7 @@ if ($screen_id != "new" && $settings['type'] == 'multiPage') {
 
     // get details of each page
     $pages = array();
-    for($i=0;$i<(count((array) $pageTitles)+$pageCounterOffset);$i++) {
+    for($i=0;$i<count((array) $pageTitles);$i++) {
         $pages[$i]['name'] = $pageTitles[$i];
         $pages[$i]['content']['index'] = $i;
         $pages[$i]['content']['number'] = $i+1;

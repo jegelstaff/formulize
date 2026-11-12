@@ -38,12 +38,10 @@ if(!isset($processedValues)) {
 //print_r($processedValues);
 
 
-$aid = intval($_POST['aid']);
 $sid = $_POST['formulize_admin_key'];
 $op = $_POST['formulize_admin_op'];
 $index = $_POST['formulize_admin_index'];
 
-$screens = $processedValues['screens'];
 
 $screen_handler = xoops_getmodulehandler('multiPageScreen', 'formulize');
 $screen = $screen_handler->get($sid);

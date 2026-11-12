@@ -2359,18 +2359,18 @@ function compileElements($fid, $form, $prevEntry, $entry_id, $groups, $elements_
 	// Add a hidden element to carry all the validation javascript that might be associated with elements rendered with elementdisplay.php, but not added to the main form themselves for whatever reason
 	// This is a very complex, but necessary part of the form setup, because of the multiple times that displayForm might be called, multiple parts of forms that are rendered, as inline subforms, as all kinds of things, and we need to capture all the validation JS from everywhere, and ensure it is executed at the right level, as part of the normal page submission
 	// Related, see the 'formuilze_elementsOnlyForm' check below, where we add things to the catalogue to retrieve later
-	if(isset($GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])])) {
+	if(isset($GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'] ?? '')])) {
 		$formulizeHiddenValidation = new XoopsFormHidden('validation', 1);
 		// There is a catalogue of all the JS we've encountered. We keep track of this so that we only output each snippet of JS once.
 		// The catalogue is made of the hashes of the JS
     global $fullJsCatalogue;
-		foreach($GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])] as $thisValidation) { // grab all the validation code we have stored and attach it to this element
+		foreach($GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'] ?? '')] as $thisValidation) { // grab all the validation code we have stored and attach it to this element
 			if(trim($thisValidation) != "") {
 				$catalogueKey = md5(trim($thisValidation));
 				if(!isset($fullJsCatalogue[$catalogueKey])) {
 					// add this key to the catalogue (the hash of the js), but only if there is more than one snippet that we're working with.
 					// If there is only one snippet that we're working with, then this hidden validation element, and that element will have exactly the same hash, and that will interfere with the rendering of the validation JS when we're consulting the catalogue later. See the rendering of JS in the formulize form class.
-					if(count((array) $GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])]) > 1) {
+					if(count((array) $GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'] ?? '')]) > 1) {
 						$fullJsCatalogue[$catalogueKey] = true;
 					}
 					foreach(explode("\n", $thisValidation) as $thisValidationLine) {
@@ -2433,10 +2433,10 @@ function makePlaceholderForConditionalElement($elementObject, $entry_id, $prevEn
 	if(isset($GLOBALS['formulize_renderedElementHasConditions'][$renderedElementMarkupName])) {
 		$placeholder = "{STARTHIDDEN}<<||>>".$renderedElementMarkupName."<<||>>".$elementObject->getVar('ele_handle');
 		catalogCKEditorForConditionalElement($elementObject, $entry_id, $prevEntry, $renderedElementMarkupName);
-		if(!isset($GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$renderedElementMarkupName])) {
+		if(!isset($GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'] ?? '')][$renderedElementMarkupName])) {
 			list($js, $markupName) = validationJSFromDisembodiedElementRender($elementObject, $entry_id, $prevEntry, $screen);
 			if($js) {
-				$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$renderedElementMarkupName] = wrapValidationJSInPresenceCheck($js, $markupName, $elementObject->getVar('ele_id'));
+				$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'] ?? '')][$renderedElementMarkupName] = wrapValidationJSInPresenceCheck($js, $markupName, $elementObject->getVar('ele_id'));
 			}
 		}
 	}
@@ -2661,7 +2661,7 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 		foreach($settings['calhidden'] as $chname=>$chvalue) {
 			$newHiddenElements[] = new XoopsFormHidden ($chname, $chvalue);
 		}
-		$newHiddenElements[] = new XoopsFormHidden ('formulize_LOEPageStart', $_POST['formulize_LOEPageStart']);
+		$newHiddenElements[] = new XoopsFormHidden ('formulize_LOEPageStart', intval($_POST['formulize_LOEPageStart'] ?? 0));
 		if(isset($settings['formulize_currentPage'])) { // drawing a multipage form...
 			$currentPageToSend = $screen ? $settings['formulize_currentPage'].'-'.$screen->getVar('sid') : $settings['formulize_currentPage'];
 			$prevPageToSend = $screen ? $settings['formulize_prevPage'].'-'.$settings['formulize_prevScreen'] : $settings['formulize_prevPage'];
@@ -2670,10 +2670,10 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 			$newHiddenElements[] = new XoopsFormHidden ('formulize_doneDest', $settings['formulize_doneDest']);
 			$newHiddenElements[] = new XoopsFormHidden ('formulize_buttonText', (isset($settings['formulize_buttonText']) ? $settings['formulize_buttonText'] : ""));
 		}
-		if($_POST['overridescreen']) {
+		if(!empty($_POST['overridescreen'])) {
 			$newHiddenElements[] = new XoopsFormHidden ('overridescreen', intval($_POST['overridescreen']));
 		}
-		if(strlen($_POST['formulize_lockedColumns'])>0) {
+		if(strlen($_POST['formulize_lockedColumns'] ?? '')>0) {
 			$newHiddenElements[] = new XoopsFormHidden ('formulize_lockedColumns', $_POST['formulize_lockedColumns']);
 		}
 		$newHiddenElements[] = new XoopsFormHidden ('formulize_originalVentry', $settings['formulize_originalVentry']);
@@ -2689,10 +2689,10 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 				$newHiddenElements[] = new XoopsFormHidden ('originalReloadBlank', $screen->getVar('reloadblank'));
 		}
 		$newHiddenElements[] = new XoopsFormHidden ('formulize_entry_lock_token', getEntryLockSecurityToken());
-		$newHiddenElements[] = new XoopsFormHidden ('formulize_entriesPerPage', intval($_POST['formulize_entriesPerPage']));
+		$newHiddenElements[] = new XoopsFormHidden ('formulize_entriesPerPage', intval($_POST['formulize_entriesPerPage'] ?? 0));
 		$newHiddenElements[] = new XoopsFormHidden ('formulize_scrollx', $formulize_scrollx);
 		$newHiddenElements[] = new XoopsFormHidden ('formulize_scrolly', $formulize_scrolly);
-		$newHiddenElements[] = new XoopsFormHidden ('formulize_scrollPageStart', $_POST['formulize_LOEPageStart']); // the list page this entry was opened from, so the scroll position is restored to the correct page on return
+		$newHiddenElements[] = new XoopsFormHidden ('formulize_scrollPageStart', intval($_POST['formulize_LOEPageStart'] ?? 0)); // the list page this entry was opened from, so the scroll position is restored to the correct page on return
 		foreach($newHiddenElements as $nhe) {
 			$form->addElement($nhe);
 			unset($nhe); // still unpleasant pass by reference stuff going on in addElement, that we don't want to mess with at the moment, so unset and play nice
@@ -2731,20 +2731,20 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 		foreach($settings['calhidden'] as $chname=>$chvalue) {
 			print "<input type=hidden name=$chname value='" . $chvalue . "'>";
 		}
-		print "<input type=hidden name=formulize_LOEPageStart value='" . $_POST['formulize_LOEPageStart'] . "'>";
+		print "<input type=hidden name=formulize_LOEPageStart value='" . intval($_POST['formulize_LOEPageStart'] ?? 0) . "'>";
 		if(isset($settings['formulize_currentPage'])) { // drawing a multipage form...
 			$currentPageToSend = $screen ? $settings['formulize_currentPage'].'-'.$screen->getVar('sid') : $settings['formulize_currentPage'];
 			$prevPageToSend = $screen ? $settings['formulize_prevPage'].'-'.$settings['formulize_prevScreen'] : $settings['formulize_prevPage'];
 			print "<input type=hidden name=formulize_currentPage value='".$currentPageToSend."'>";
 			print "<input type=hidden name=formulize_prevPage value='".$prevPageToSend."'>";
-			print "<input type=hidden name=formulize_doneDest value='".$settings['formulize_doneDest']."'>";
-			print "<input type=hidden name=formulize_buttonText value='".(isset($settings['formulize_buttonText']) ? $settings['formulize_buttonText'] : "")."'>";
+			print "<input type=hidden name=formulize_doneDest value='".htmlspecialchars((string) $settings['formulize_doneDest'])."'>";
+			print "<input type=hidden name=formulize_buttonText value='".(isset($settings['formulize_buttonText']) ? htmlspecialchars((string) $settings['formulize_buttonText']) : "")."'>";
 		}
-		if($_POST['overridescreen']) {
+		if(!empty($_POST['overridescreen'])) {
 			print "<input type=hidden name=overridescreen value='".intval($_POST['overridescreen'])."'>";
 		}
-		if(strlen($_POST['formulize_lockedColumns'])>0) {
-			print "<input type=hidden name=formulize_lockedColumns value='".$_POST['formulize_lockedColumns']."'>";
+		if(strlen($_POST['formulize_lockedColumns'] ?? '')>0) {
+			print "<input type=hidden name=formulize_lockedColumns value='".htmlspecialchars($_POST['formulize_lockedColumns'])."'>";
 		}
         print "<input type=hidden name=formulize_originalVentry value='".$settings['formulize_originalVentry']."'>";
         foreach($allEntries as $fid=>$fidEntries) {
@@ -2759,10 +2759,10 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
             print "<input type=hidden name=originalReloadBlank value='" . $screen->getVar('reloadblank') . "'>";
         }
         print "<input type='hidden' name='formulize_entry_lock_token' value='".getEntryLockSecurityToken()."'>";
-				print "<input type='hidden' name='formulize_entriesPerPage' value='".intval($_POST['formulize_entriesPerPage'])."'>";
+				print "<input type='hidden' name='formulize_entriesPerPage' value='".intval($_POST['formulize_entriesPerPage'] ?? 0)."'>";
 		print "<input type='hidden' name='formulize_scrollx' value='" . $formulize_scrollx . "'>";
 		print "<input type='hidden' name='formulize_scrolly' value='" . $formulize_scrolly . "'>";
-		print "<input type='hidden' name='formulize_scrollPageStart' value='" . $_POST['formulize_LOEPageStart'] . "'>"; // the list page this entry was opened from, so the scroll position is restored to the correct page on return
+		print "<input type='hidden' name='formulize_scrollPageStart' value='" . intval($_POST['formulize_LOEPageStart'] ?? 0) . "'>"; // the list page this entry was opened from, so the scroll position is restored to the correct page on return
 	}
 }
 

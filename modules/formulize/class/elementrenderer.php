@@ -67,15 +67,6 @@ class formulizeElementRenderer{
 		}
 
 
-		// added July 6 2005.
-		if(!$xoopsModuleConfig['delimeter']) {
-			// assume that we're accessing a form from outside the Formulize module, therefore the Formulize delimiter setting is not available, so we have to query for it directly.
-			$delimq = q("SELECT conf_value FROM " . $xoopsDB->prefix("config") . ", " . $xoopsDB->prefix("modules") . " WHERE " . $xoopsDB->prefix("modules") . ".mid=" . $xoopsDB->prefix("config") . ".conf_modid AND " . $xoopsDB->prefix("modules") . ".dirname=\"formulize\" AND " . $xoopsDB->prefix("config") . ".conf_name=\"delimeter\"");
-			$delimSetting = $delimq[0]['conf_value'];
-		} else {
-			$delimSetting = $xoopsModuleConfig['delimeter'];
-		}
-
 		$customElementHasData = false;
 		$id_form = $this->_ele->getVar('id_form');
 		$ele_caption = $this->_ele->getVar('ele_caption', 'e');
@@ -716,7 +707,7 @@ function optOther($s, $id, $entry_id, $counter, $checkbox=false, $isDisabled=fal
     $other_text = "";
     if(is_numeric($entry_id)) {
         $otherq = q("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other") . " WHERE id_req='$entry_id' AND ele_id='$ele_id' LIMIT 0,1");
-        $other_text = $otherq[0]['other_text'];
+        $other_text = isset($otherq[0]['other_text']) ? $otherq[0]['other_text'] : "";
     }
     if(strstr($_SERVER['PHP_SELF'], "formulize/printview.php") OR $isDisabled) {
         // Read-only: this value is free text the user typed, and it is headed for a xoopsFormLabel (via

@@ -13,6 +13,11 @@ $xoopsOption['pagetype'] = 'user';
 include 'mainfile.php';
 include_once ICMS_ROOT_PATH . '/include/functions.php';
 
+// set up by the bootstrap in mainfile.php
+/** @var array $icmsConfig */
+/** @var array $icmsConfigAuth */
+/** @var array $icmsConfigUser */
+
 $op = (isset($_GET['op']))
 	? htmlspecialchars(trim($_GET['op']))
 	: ((isset($_POST['op'])) ? htmlspecialchars(trim($_POST['op'])) : 'main');
@@ -23,7 +28,7 @@ switch ($op) {
 
 		if (!icms::$user) {
 
-            if($icmsConfigAuth['auth_googleonly']) {
+            if(!empty($icmsConfigAuth['auth_googleonly'])) {
                 header('Location: ' . authenticationURL($icmsConfigAuth['auth_openid']));
                 exit();
             }

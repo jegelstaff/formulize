@@ -65,6 +65,8 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
 	}
 
 	$subformCreateEntry = strstr($entry, "subformCreateEntry") ? true : false; // check for this special flag, which is mostly like a "new" situation, except for the deh hidden flag that gets passed back, since we don't want the standard readelements logic to pickup these elements!
+	$subformEntryIndex = "";
+	$subformElementId = "";
 	if($subformCreateEntry) {
 		$subformMetaData = explode("_", $entry);
 		$subformEntryIndex = $subformMetaData[1];
@@ -204,7 +206,7 @@ EOF;
 		$ele_value = $element->getVar('ele_value');
 		$ele_type = $element->getVar('ele_type');
 		static $typesWithData = array();
-		if(($prevEntry OR $profileForm === "new" OR $element->isUserAccountElement OR $element->isGroupTableElement) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
+		if(($prevEntry OR $element->isUserAccountElement OR $element->isGroupTableElement) AND file_exists(XOOPS_ROOT_PATH."/modules/formulize/class/".$ele_type."Element.php")) {
 			if(!isset($typesWithData[$ele_type])) {
 				$customTypeHandler = xoops_getmodulehandler($ele_type."Element", 'formulize');
 				$customTypeObject = $customTypeHandler->create();
@@ -267,14 +269,14 @@ EOF;
 				// Subform rows could be refactored along the line of grid elements, to more rigorously handle the generation of elements and their validation js
 				          if(!empty($form_ele->customValidationCode) AND !$isDisabled) {
 										if($js = $form_ele->renderValidationJS()) {
-											$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$renderedElementMarkupName] = $js;
+											$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'] ?? '')][$renderedElementMarkupName] = $js;
 										}
 				          } elseif($element->getVar('ele_required') AND elementTypeIsOrExtends($element, "text") AND !$isDisabled) { // text elements and everything based on them (textarea, number, and any custom subclass) get the generic non-empty check
 				            $eltname    = $form_ele->getName();
 				            $eltcaption = $form_ele->getCaption();
 				            $eltmsg = empty($eltcaption) ? sprintf( _FORM_ENTER, $eltname ) : sprintf( _FORM_ENTER, $eltcaption );
 				            $eltmsg = str_replace('"', '\"', stripslashes( $eltmsg ) );
-										$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'])][$renderedElementMarkupName] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
+										$GLOBALS['formulize_renderedElementsValidationJS'][strval($GLOBALS['formulize_thisRendering'] ?? '')][$renderedElementMarkupName] = "if ( myform.".$eltname.".value == \"\" ) { window.alert(\"".$eltmsg."\"); myform.".$eltname.".focus(); return false; }";
 				          }
 					if($isDisabled) {
 						return "rendered-disabled";
@@ -430,7 +432,7 @@ function elementIsDisabledForUserInEntry($elementObject, $entry_id, $renderedEle
 	$isDisabled = $element_handler->isElementDisabledForUser($elementObject, $xoopsUser) ? true : false;
 	if($isDisabled) {
 		$disabledConditions = $elementObject->getVar('ele_disabledconditions');
-		if(is_array($disabledConditions[0]) AND count((array) $disabledConditions[0]) > 0) {
+		if(isset($disabledConditions[0]) AND is_array($disabledConditions[0]) AND count((array) $disabledConditions[0]) > 0) {
 			$isDisabled = checkConditionsAgainstAnEntry($disabledConditions, $elementObject->getVar('id_form'), $entry_id, $elementObject);
 			// Also, catalogue the governing elements so that dynamic conditional behaviour will work.
 			// Only if it's not a new entry, because there's no point in having elements in a new entry, with no values yet, and then be disabling them. Need to enter some information first??? This is especially necessary if elements should disable after they're NOT blank, because dynamic re-rendering would then disable them before you had saved the value you entered! The NOT Blank condition will kick in on next page load when the entry is no longer 'new'.

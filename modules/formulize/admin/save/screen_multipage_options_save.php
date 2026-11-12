@@ -35,7 +35,6 @@ if(!isset($processedValues)) {
 }
 
 
-$aid = intval($_POST['aid']);
 $sid = $_POST['formulize_admin_key'];
 
 $screens = $processedValues['screens'];

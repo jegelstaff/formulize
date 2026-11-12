@@ -702,7 +702,7 @@ class formulizeSubformListingsElementHandler extends formulizeElementsHandler {
 			$sub_entries = $newLinkResults['sub_entries'];
 		}
 
-		$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry_id, $caption, ($ele_value[1] ? explode(",", $ele_value[1]) : ""), $ele_value[2], $ele_value[3], $ele_value[4], $ele_value[5], getEntryOwner($entry_id, $fid), $ele_value[6], $ele_value[7], $element->getVar('ele_id'), $ele_value[8], $ele_value[9], $element); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
+		$subUICols = drawSubLinks($thissfid, $sub_entries, $uid, $groups, $frid, $mid, $fid, $entry_id, $caption, ($ele_value[1] ? explode(",", $ele_value[1]) : ""), $ele_value[2], $ele_value[3], ($ele_value[4] ?? 0), $ele_value[5], getEntryOwner($entry_id, $fid), $ele_value[6], $ele_value[7], $element->getVar('ele_id'), $ele_value[8], $ele_value[9], $element); // 2 is the number of default blanks, 3 is whether to show the view button or not, 4 is whether to use captions as headings or not, 5 is override owner of entry, $owner is mainform entry owner, 6 is hide the add button, 7 is the conditions settings for the subform element, 8 is the setting for showing just a row or the full form, 9 is text for the add entries button
 		if(!isset($subUICols['single'])) {
 			return new XoopsFormLabel($subUICols['c1'], $subUICols['c2'], $markupName);
 		} else {
@@ -823,9 +823,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 	// if no sub entries, then go figure out sub entries again based on the correct main form id
 	// This will return different sub entries when the mainform has a one to one form in the relationship, and then the subform is connected to the one to one. Sub is more than one hop away from main, so primary determination of entries does not pick up the sub entries
-	if($subform_element_object AND (!is_array($sub_entries) OR (is_array($sub_entries[$subform_id]) AND count((array) $sub_entries[$subform_id]) == 0))) {
+	if($subform_element_object AND (!is_array($sub_entries) OR (isset($sub_entries[$subform_id]) AND is_array($sub_entries[$subform_id]) AND count((array) $sub_entries[$subform_id]) == 0))) {
 		$secondLinkResults = checkForLinks($frid, array($subform_element_object->getVar('id_form')), $subform_element_object->getVar('id_form'), array($subform_element_object->getVar('id_form') => array($entry)), true); // final true means only include entries from unified display linkages
-		$sub_entries = $secondLinkResults['sub_entries'];
+		$sub_entries = $secondLinkResults['sub_entries'] ?? null;
 	}
 
 	// limit the sub_entries array to just the entries that match the conditions, if any
@@ -1566,9 +1566,9 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                     autoHeight: false, // legacy
                     collapsible: true, // sections can be collapsed
                     active: ";
-                    if($_POST['target_sub_instance'] == $subformElementId.$subformInstance AND $_POST['target_sub'] == $subform_id) {
+                    if(isset($_POST['target_sub_instance']) AND $_POST['target_sub_instance'] == $subformElementId.$subformInstance AND isset($_POST['target_sub']) AND $_POST['target_sub'] == $subform_id) {
                         $subformJS .= count((array) $sub_entries[$subform_id])-$_POST['numsubents'];
-                    } elseif(is_numeric($_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'])) {
+                    } elseif(isset($_POST['subform_entry_'.$subformElementId.$subformInstance.'_active']) AND is_numeric($_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'])) {
                         $subformJS .= $_POST['subform_entry_'.$subformElementId.$subformInstance.'_active'];
                     } else {
                         $subformJS .= 'false';

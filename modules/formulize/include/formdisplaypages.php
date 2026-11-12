@@ -358,6 +358,7 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
   $settings['formulize_prevScreen'] = $prevScreen;
 
   $titleOverride = $elements_only ? 'formElementsOnly' : 'all';
+  $buttonArray = ""; // the buttons are set below for full screen; in elements-only mode the host draws its own, from the button metadata
 
 	formulize_benchmark("Before drawing nav.");
 
@@ -366,8 +367,8 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			global $formulize_displayingMultipageScreen;
 			$formulize_displayingMultipageScreen = $screen ? array('sid'=>$screen->getVar('sid')) : array('sid'=>false);
 
-			$showPageTitles = ($screen AND $screen->getUIOption('showpagetitles')) ? true : false;
-			$titleOverride = (isset($pageTitles[$currentPage]) AND $showPageTitles) ? trans($pageTitles[$currentPage]) : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
+			$shownPageTitle = formulize_multipageShownPageTitle($screen, $pageTitles, $currentPage);
+			$titleOverride = $shownPageTitle !== null ? $shownPageTitle : "all"; // we can pass in any text value as the titleOverride, and it will have the same effect as "all", but the alternate text will be used as the title for the form
 
 			$saveAndContinueButtonText = formulizeMultipageButtonText($saveAndContinueButtonText);
 
@@ -506,6 +507,8 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			'screenId'     => (is_object($screen) ? intval($screen->getVar('sid')) : 0),
 			'entryId'      => (is_numeric($entry_id) ? intval($entry_id) : 0),
 			'pageTitle'    => (isset($pageTitles[$currentPage]) ? trans($pageTitles[$currentPage]) : ''),
+			// the title full screen shows at the top of this page, or null for none
+			'shownPageTitle' => formulize_multipageShownPageTitle($screen, $pageTitles, $currentPage),
 			'buttons'            => $navButtons,
 			'buttonsWithPaging'  => $navPagingButtons,
 			'previousButtonText' => $navPreviousButtonText,
@@ -702,6 +705,22 @@ function formulize_multipageShownButtons($screen) {
         'close' => $screen->getVar('showclosebutton') == 1,
         'next'  => $screen->getVar('shownextbutton') == 1,
     );
+}
+
+/**
+ * The title shown at the top of a page of a multipage screen: the page's own title, when the
+ * screen is set to show page titles. Full screen passes it to displayForm() as the form's
+ * title, and the drawer puts it in its header, so the two show the same title.
+ * @param object|null $screen The multipage screen
+ * @param array $pageTitles page number => page title, as the screen has them
+ * @param int $currentPage The page being shown
+ * @return string|null The title, or null when the page shows none
+ */
+function formulize_multipageShownPageTitle($screen, $pageTitles, $currentPage) {
+    if(is_object($screen) AND $screen->getUIOption('showpagetitles') AND isset($pageTitles[$currentPage])) {
+        return trans($pageTitles[$currentPage]);
+    }
+    return null;
 }
 
 // The text for the "previous" control on a multipage screen. On the first page the

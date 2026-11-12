@@ -12,7 +12,7 @@ If nothing in the table matches, or the question spans several topics, or you do
 
 **Every plan and every final report lists the `ai-context/` files you read in that session.** That shows the person which notes the work was based on, and which were missed.
 
-The files in `ai-context/` are a general guide and may not match every case. Check them against the code when implementing features. When you change them, keep each topic in one file and link to it from the others, so copies can't drift apart. When you change a topic file, check that its line in the table below still says what the file says.
+The files in `ai-context/` are a general guide and may not match every case. Check them against the code when implementing features. They're a guide to the code: write in them how the parts fit together, why things are the way they are, and the traps, not what reading the code shows at a glance. When you change them, keep each topic in one file and link to it from the others, so copies can't drift apart. When you change a topic file, check that its line in the table below still says what the file says.
 
 ## Rules that apply everywhere
 
