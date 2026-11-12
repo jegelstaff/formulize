@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, addElementForm, ElementType, openApplicationAccordion } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, addElementForm, ElementType, openApplicationAccordion, conditionalElementReady } from '../../utils';
 
 // Rich text (CKEditor) textareas mixed with ordinary textareas, with conditions on them.
 //
@@ -201,7 +201,13 @@ test.describe('CKEditor is only applied to rich text textareas', () => {
 		await expect(bio.locator('.ck-editor')).toHaveCount(0);
 		await expect.poll(() => page.evaluate(() => Object.keys(CKEditors).length)).toBe(0);
 
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+		// Put the answer back, since later specs expect this donor not to be anonymous, then save and wait for the list.
+		// A save clicked while a conditional element is being redrawn waits for the redraw, so a test that ended on the click
+		// could close the page before the save went out, or after it, and the donor was left either way.
+		await conditionalElementReady(page, 'donors_bio', () => page.getByText('No', { exact: true }).click());
+		await expect(bio.locator('.ck-editor')).toBeVisible();
+		await page.getByRole('link', { name: 'Save and Close' }).click(); // saves, and clears the entry lock
+		await expect(page.locator('tr', { hasText: 'L. Warner Foundation' })).toBeVisible();
 	});
 
 });

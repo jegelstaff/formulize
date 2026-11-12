@@ -1,4 +1,4 @@
-const { expect } = require('@playwright/test');
+const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
@@ -333,6 +333,9 @@ export function phpErrorsSince(since) {
  * Each disagreement is printed as soon as it's found, so the log shows how far a run has got, and a run that's stopped partway
  * still shows what it found. For a row that can't be checked, the whole error is printed too, while its disagreement keeps only
  * the start of it, so the summary stays short. Nothing prints for a row that agrees.
+ *
+ * A row that can't be checked also attaches the page as it was, its HTML and a screenshot, to the test in the report. The test
+ * carries on and passes, so Playwright keeps no trace of it, and without these there's nothing to show what the page held.
  * @param {import('@playwright/test').Page} page
  * @param {string} rowId - The row, ie: S12
  * @param {string[]} disagreements - Where the row's disagreements go
@@ -349,6 +352,7 @@ export async function checkRow(page, rowId, disagreements, check) {
 		const lines = fullMessage.split('\n').map(line => line.trim()).filter(line => line !== '');
 		// three lines, since the third says what was waited for, ie: "- waiting for getByRole('button', ...)" after "Call log:"
 		disagreements.push(`${rowId}: could not be checked. ${lines.slice(0, 3).join(' ')}`);
+		await attachThePage(page, rowId);
 		await page.goto('/modules/formulize/index.php').catch(() => {});
 	}
 	if (disagreements.length > before) {
@@ -362,5 +366,16 @@ export async function checkRow(page, rowId, disagreements, check) {
 	// the whole error goes in the log, call log and all, since the disagreement keeps only its start
 	if (fullMessage) {
 		console.log(`${rowId}: the whole error:\n${fullMessage}`);
+	}
+}
+
+// Attach the page's HTML and a screenshot to the running test, named for the row. A page that has gone, or is part way
+// through loading, may not give them, and the row's disagreement already says what went wrong, so a failure here is left.
+async function attachThePage(page, rowId) {
+	try {
+		await test.info().attach(`${rowId} page.html`, { body: await page.content(), contentType: 'text/html' });
+		await test.info().attach(`${rowId} screenshot.png`, { body: await page.screenshot({ fullPage: true, timeout: 10000 }), contentType: 'image/png' });
+	} catch (error) {
+		console.log(`${rowId}: the page could not be attached. ${String(error && error.message ? error.message : error).split('\n')[0]}`);
 	}
 }

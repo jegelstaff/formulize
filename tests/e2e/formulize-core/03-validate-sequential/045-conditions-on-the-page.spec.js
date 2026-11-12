@@ -785,7 +785,9 @@ test('Section 8: a disabled condition, made in the admin UI', async ({ page }) =
 	const { selector } = howToCheck('A');
 	const openRequest = async borrower => {
 		await openEntry(page, formId('Loan Requests'), entryId('loan_requests', 'loans_borrower', borrower));
-		await expect(page.locator('.form-row:has(.formulize-label-loans_borrower)')).toBeVisible();
+		// the field, not its row: in a two-column form, a row in Anari holds only floated columns, so the row itself has no
+		// height, and Playwright counts that as not visible
+		await expect(page.locator('.form-row:has(.formulize-label-loans_borrower) input[type="text"]')).toBeVisible();
 	};
 
 	// End date is disabled for every group when its conditions are met. The rows give the conditions.
