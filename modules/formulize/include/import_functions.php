@@ -696,6 +696,7 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
             $lockSQL = "LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[8]) . " WRITE, ".
             $xoopsDB->prefix("users") . " WRITE, ".
             $xoopsDB->prefix("formulize_entry_owner_groups")." WRITE, ".
+            $xoopsDB->prefix("formulize_other")." WRITE, ". // writing an entry saves the text in its Other boxes
             $xoopsDB->prefix("reg_codes") . " WRITE, ".
             $xoopsDB->prefix("groups_users_link") . " WRITE, ".
             $xoopsDB->prefix("modules") . " READ, ".
@@ -713,6 +714,7 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
             $lockSQL = "LOCK TABLES " . $xoopsDB->prefix("formulize_".$importSet[8]) . " WRITE, ".
             $xoopsDB->prefix("users") . " READ, ".
             $xoopsDB->prefix("formulize_entry_owner_groups") . " WRITE, ".
+            $xoopsDB->prefix("formulize_other")." WRITE, ". // writing an entry saves the text in its Other boxes
             $xoopsDB->prefix("groups_users_link") . " READ, ".
             $xoopsDB->prefix("formulize") . " READ, ".
             $xoopsDB->prefix("formulize_id")." READ, ".
@@ -727,7 +729,6 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
     $xoopsDB->query($lockSQL);
 
     $rowCount = 1;
-    $other_values = array();
     $usersMap = array();
     $entriesMap = array();
 		$newEntriesMap = array();
@@ -758,13 +759,8 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
                 }
             }
 
-            // get the current max id_req
-            if (!$this_id_req) {
-                $max_id_reqq = q("SELECT MAX(entry_id) FROM " . $xoopsDB->prefix("formulize_".$importSet[8]));
-                $max_id_req = $max_id_reqq[0]["MAX(entry_id)"] + 1;
-            } else {
-                $max_id_req = $this_id_req;
-                // get the uid and creation date too
+            if ($this_id_req) {
+                // get the uid and creation date
                 $member_handler = xoops_gethandler('member');
                 $this_metadata = getMetaData($this_id_req, $member_handler, $importSet[4]); // importSet[4] is id_form (fid)
                 $this_uid = $this_metadata['created_by_uid'];
@@ -1018,6 +1014,8 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
 																	} else {
 																			$items = explode(",", $row_value);
 																	}
+																	$otherItems = array(); // what matches no option goes in the Other box, if there is one
+																	$otherOption = false;
 																	foreach ($items as $item) {
 																			$item_value = trim($item);
 																			if (!in_array($item_value, (array)$options, true)) {
@@ -1039,8 +1037,8 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
 																					} elseif(in_array($item_value, (array)$uiTexts, true)) {
 																							$element_value .= "*=+*:" . array_search($item_value, $uiTexts, true);
 																					} elseif ($hasother) {
-																							$other_values[] = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$max_id_req\", \"" . $element["ele_id"] . "\", \"" . $myts->htmlSpecialChars(trim($item_value)) . "\")";
-																							$element_value .= "*=+*:" . $hasother;
+																							$otherItems[] = $item_value;
+																							$otherOption = $hasother;
 																					} elseif (!$validateOverride) {
 																							print "ERROR: INVALID TEXT FOUND FOR A CHECKBOX ITEM -- $item_value -- IN ROW:<BR>";
 																							print_r($row);
@@ -1049,6 +1047,10 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
 																			} else {
 																					$element_value .= "*=+*:" . $item_value;
 																			}
+																	}
+																	if ($otherItems) {
+																		// the Other option, with the text after it, which writeEntry saves
+																		$element_value .= "*=+*:" . formulize_attachOtherText($otherOption, $myts->htmlSpecialChars(implode(", ", $otherItems)));
 																	}
 																	$row_value = $element_value;
 																}
@@ -1074,8 +1076,8 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
 																if(!$foundit AND in_array(trim($row_value), (array)$uiTexts, true)) {
 																	$row_value = array_search(trim($row_value), $uiTexts, true);
 																} elseif (!$foundit AND $hasother) {
-                                    $other_values[] = "INSERT INTO " . $xoopsDB->prefix("formulize_other") . " (id_req, ele_id, other_text) VALUES (\"$max_id_req\", \"" . $element["ele_id"] . "\", \"" . $myts->htmlSpecialChars(trim($row_value)) . "\")";
-                                    $row_value = $hasother;
+                                    // the Other option, with the text after it, which writeEntry saves
+                                    $row_value = formulize_attachOtherText($hasother, $myts->htmlSpecialChars(trim($row_value)));
                                 } elseif (!$foundit AND !$validateOverride) {
                                     print "ERROR: INVALID TEXT FOUND FOR A RADIO BUTTON ITEM -- $row_value -- IN ROW:<BR>";
                                     print_r($row);
@@ -1187,13 +1189,6 @@ function importCsvProcess(& $importSet, $regfid, $validateOverride, $pkColumn=fa
 
     // unlock tables
     $xoopsDB->query("UNLOCK TABLES");
-
-    // insert all the other values that were recorded
-    foreach ($other_values as $other) {
-        if (!$result = $xoopsDB->query($other)) {
-            print "ERROR: could not insert 'other' value: $other<br>";
-        }
-    }
     // fid is $importSet[4] ?!!
     $GLOBALS['formulize_snapshotRevisions'][$importSet[4]] = formulize_getCurrentRevisions($importSet[4], $entriesMap);
 

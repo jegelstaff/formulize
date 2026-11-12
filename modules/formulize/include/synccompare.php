@@ -320,6 +320,34 @@ class SyncCompareCatalog {
         return array("success"=>$numSuccess, "fail"=>$numFail);
     }
 
+    /*
+     * removeOrphanedOtherTexts removes text in the formulize_other table that no longer goes with an entry, in each form
+     * whose data table this import changed. The import writes the data tables directly, and doesn't delete anything, so
+     * an entry that stopped using its Other option in the other system would otherwise keep its old text here.
+     * Call it after commitChanges().
+     *
+     * return       true, or false if the text of one of the forms could not be removed
+     */
+    public function removeOrphanedOtherTexts() {
+        include_once XOOPS_ROOT_PATH.'/modules/formulize/class/data.php';
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $success = true;
+        foreach (array_keys($this->changes) as $tableName) {
+            // a form's data table is the one kind of table not in the table_metadata list, as getRecMetadata() relies on too
+            $tableName = trim($tableName, "_");
+            if (array_key_exists($tableName, $this->metadata["table_metadata"]) OR strpos($tableName, "formulize_") !== 0) {
+                continue;
+            }
+            if ($formObject = $form_handler->get(substr($tableName, strlen("formulize_")))) {
+                $dataHandler = new formulizeDataHandler($formObject->getVar('id_form'));
+                if ($dataHandler->removeOrphanedOtherTexts() === false) {
+                    $success = false;
+                }
+            }
+        }
+        return $success;
+    }
+
     // === PRIVATE FUNCTIONS ===
 
     private function addTableChange($tableName, $fields, $record) {

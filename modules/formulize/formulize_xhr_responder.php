@@ -466,8 +466,10 @@ switch($op) {
         $databaseReadyValue = prepDataForWrite($passedElementObject, $v, $entryId);
         $databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? null : $databaseReadyValue;
       }
-      $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseReadyValue;
-      $apiFormatValue = prepvalues($databaseReadyValue, $handle, $passedEntryId); // will be an array
+      // the value as the database will hold it, without any text typed into an Other box, which is kept apart from the entry
+      list($databaseColumnValue) = formulize_splitOtherText($databaseReadyValue);
+      $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$passedEntryId][$handle] = $databaseColumnValue;
+      $apiFormatValue = prepvalues($databaseReadyValue, $handle, $passedEntryId); // will be an array, with any Other text that was just typed in place of the Other option
       if(is_array($apiFormatValue) AND count((array) $apiFormatValue)==1) {
         $apiFormatValue = $apiFormatValue[0]; // take the single value if there's only one, same as display function does
       }

@@ -546,6 +546,15 @@ class formulizeElementsHandler {
 	 */
 	function deleteAssociatedDataAndResources($element, $entryScope = null) {
 		$deletedFilePaths = array();
+		// what people typed into the element's Other box goes with the entry, or with every entry when the element or its form goes
+		if($entryScope === 'all' OR intval($entryScope) > 0) {
+			global $xoopsDB;
+			$sql = "DELETE FROM ".$xoopsDB->prefix("formulize_other")." WHERE ele_id = ".intval($element->getVar('ele_id'))
+				.($entryScope === 'all' ? "" : " AND id_req = ".intval($entryScope));
+			if(!$xoopsDB->queryF($sql)) {
+				return false;
+			}
+		}
 		if($entryScope !== 'null' AND $entryScope === 'all') { // only remove code files if the element is being deleted, or the form is being deleted. When an entry is being deleted, entryScope will be the entry ID.
 			// we need to delete saved code files if any for this element
 			$ele_type = $element->getVar('ele_type');

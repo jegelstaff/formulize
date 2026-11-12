@@ -387,6 +387,8 @@ define("_AM_PERMISSIONS_GROUPLIST_CONFIRM_PREFIX","Are you sure you want to dele
 
 /*mod Language for procedures*/
 define("_AM_CALC_EXPLAIN","let you create a series of queries and logical steps, that get carried out on the data that users have submitted in the form.  You can use Procedures for advanced, multi-step calculations, or any other situation where a single query or single operation is not enough to get to the outcome you want.");
+define("_AM_FORM_ON_BEFORE_SAVE_OTHER_VALUES", 'For radio buttons and checkboxes with an Other option, the element\'s variable holds the Other option, such as {OTHER|30}, and what was typed in its box is in $otherValues[\'handle_name\']. What was saved before is in $currentValues[\'otherValues\'][\'handle_name\']. Set $otherValues[\'handle_name\'] to change or clear the text that gets saved.');
+define("_AM_FORM_ON_AFTER_SAVE_OTHER_VALUES", 'For radio buttons and checkboxes with an Other option, what was typed in its box is in $otherValues[\'handle_name\'], and what was saved before is in $currentValues[\'otherValues\'][\'handle_name\'].');
 define("_AM_CALC_CLONE"," Clone");
 define("_AM_CALC_DELETE"," Delete");
 define("_AM_CALC_REMOVE"," Remove");

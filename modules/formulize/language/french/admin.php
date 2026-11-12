@@ -196,6 +196,8 @@ define("_AM_PERMISSIONS_ADVANCED_DELETEFORM","Effacer ce formulaire");
 /*mod Language for procedures*/
 define("_AM_CALC_EXPLAIN","vous permet de créer une série de requêtes ou des suites logiques, qui seront effectuées sur les données que les utilisateurs ont soumis dans le formulaire. Vous pouvez utiliser des procédures pour de complexes, calculs en plusieurs étapes, ou toute autre situation où une seule requête ou seule opération ne suffit pas pour le résultat que vous voulez.");
 define("_AM_CALC_CREATE_NEW"," Créer une nouvelle procédure");
+define("_AM_FORM_ON_BEFORE_SAVE_OTHER_VALUES", 'Pour les boutons radio et les cases à cocher qui ont une option Autre, la variable de l\'élément contient l\'option Autre, par exemple {OTHER|30}, et le texte saisi dans sa case se trouve dans $otherValues[\'handle_name\']. Le texte enregistré auparavant se trouve dans $currentValues[\'otherValues\'][\'handle_name\']. Modifiez $otherValues[\'handle_name\'] pour changer ou effacer le texte qui sera enregistré.');
+define("_AM_FORM_ON_AFTER_SAVE_OTHER_VALUES", 'Pour les boutons radio et les cases à cocher qui ont une option Autre, le texte saisi dans sa case se trouve dans $otherValues[\'handle_name\'], et le texte enregistré auparavant dans $currentValues[\'otherValues\'][\'handle_name\'].');
 define("_AM_CALC_CLONE"," Cloner");
 define("_AM_CALC_DELETE"," Effacer");
 define("_AM_CALC_REMOVE"," Remove");

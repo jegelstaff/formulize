@@ -93,10 +93,16 @@ function applyReadableValueTransformations($value, $handle, $entry_id) {
 		// if there's OTHER text in the original passed in element value
 		// then replace whichever items in the array have the {OTHER|XX} pattern
 		if (is_string($value) AND preg_match('/\{OTHER\|+[0-9]+\}/', $value)) {
-			global $xoopsDB;
-			$newValueq = go("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other")." as o, " . $xoopsDB->prefix("formulize")." as f WHERE o.ele_id = f.ele_id AND f.ele_handle='" . formulize_db_escape($handle) . "' AND o.id_req='".intval($entry_id)."' LIMIT 0,1");
-			if (!empty($newValueq)) {
-				$value_other = $newValueq[0]['other_text'];
+			// a value that hasn't been saved yet can carry its text, as {OTHER|30}:text, otherwise the text is the one stored for the entry
+			list($valueWithoutText, $value_other) = formulize_splitOtherText($value);
+			if($value_other !== null) {
+				$values = explode('*=+*:', $valueWithoutText);
+			} else {
+				global $xoopsDB;
+				$newValueq = go("SELECT other_text FROM " . $xoopsDB->prefix("formulize_other")." as o, " . $xoopsDB->prefix("formulize")." as f WHERE o.ele_id = f.ele_id AND f.ele_handle='" . formulize_db_escape($handle) . "' AND o.id_req='".intval($entry_id)."' LIMIT 0,1");
+				$value_other = !empty($newValueq) ? $newValueq[0]['other_text'] : null;
+			}
+			if ($value_other !== null) {
 				foreach($values as $i=>$value) {
 					$values[$i] = preg_replace('/\{OTHER\|+[0-9]+\}/', $value_other, $value);
 				}

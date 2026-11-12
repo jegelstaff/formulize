@@ -23,6 +23,8 @@ Note that the form id does not need to be specified, since element ids and handl
 
 This function calls the [writeEntry](../../classes/data_handler/writeEntry/) method and the [setEntryOwnerGroups](../../classes/data_handler/setEntryOwnerGroups/) methods of the [data handler](../../classes/data_handler/) class.
 
+For radio buttons and checkboxes with an Other option, the text people type in its box goes after the Other option and a colon, as part of the element's value, such as ```{OTHER|30}:Pending review```. See [Other options](../../classes/data_handler/writeEntry/#other-options) on the writeEntry page.
+
 ## Parameters
 
 __$values__ - An array of the values to write to the database. The keys must be the element ids or element handles. "{WRITEASNULL}" indicates to write null as the value of the element. Setting actual NULL will work as well.<br>
@@ -36,7 +38,7 @@ __$writeOwnerInfo__ - Optional. A boolean to indicate whether the ownership info
 
 Returns the __entry id of the entry that was written__ to the database.
 
-Returns __nothing__ if no data was written to the database. Nothing will be written if all the values in the $values array match the existing values in the database. In this case, a notice is written to the error log.
+Returns __nothing__ if no data was written to the database. Nothing will be written if all the values in the $values array match the existing values in the database, including the text of any Other options. In this case, a notice is written to the error log.
 
 If the first key of the $values array is invalid, then page execution terminates and backtrace information is displayed.
 

@@ -204,6 +204,13 @@ class formulizeDataHandler {
 		}
 		$data = $xoopsDB->fetchArray($res);
 
+		// the copy keeps what was typed into the Other boxes, which writeEntry saves from the values
+		if($otherElements = $this->getOtherElements()) {
+			foreach($this->getOtherTexts($entry_id, $otherElements) as $handle=>$text) {
+				$data[$handle] = formulize_attachOtherText($data[$handle], $text);
+			}
+		}
+
 		if($formObject->getVar('pi')
 		AND $piElementObject = _getElementObject($formObject->getVar('pi'))
 		AND $piElementObject->getVar('ele_type') == 'text') {
@@ -221,6 +228,195 @@ class formulizeDataHandler {
 		unset($data['mod_uid']);
 		return $this->writeEntry($targetEntry, $data, false, true); // no proxy user (use current xoopsuser, the default behaviour), do force the creation of the entry if we're on a GET request
   }
+
+	/**
+	 * The elements in this form that have an Other option, which people can type their own text for
+	 *
+	 * @return array The element ids, keyed by element handle
+	 */
+	private function getOtherElements() {
+		static $otherElements = array();
+		if(!isset($otherElements[$this->fid])) {
+			global $xoopsDB;
+			$otherElements[$this->fid] = array();
+			$sql = "SELECT ele_handle, ele_id FROM ".$xoopsDB->prefix("formulize")." WHERE id_form = ".intval($this->fid)." AND ele_value LIKE '%{OTHER|%'";
+			if($res = $xoopsDB->query($sql)) {
+				while($row = $xoopsDB->fetchArray($res)) {
+					if(formulize_otherOptionToken($row['ele_id'])) { // the setting could mention {OTHER| some other way
+						$otherElements[$this->fid][$row['ele_handle']] = intval($row['ele_id']);
+					}
+				}
+			}
+		}
+		return $otherElements[$this->fid];
+	}
+
+	/**
+	 * The text typed into the Other boxes of an entry, as it is stored
+	 *
+	 * @param int|string $entry_id The entry, or 'new', which has no text yet
+	 * @param array $otherElements The elements with an Other option, as getOtherElements() gives them
+	 * @return array The text, keyed by element handle, for the elements that have some
+	 */
+	private function getOtherTexts($entry_id, $otherElements) {
+		$texts = array();
+		if(!is_numeric($entry_id) OR !$otherElements) {
+			return $texts;
+		}
+		global $xoopsDB;
+		$handlesById = array_flip($otherElements);
+		$sql = "SELECT ele_id, other_text FROM ".$xoopsDB->prefix("formulize_other")." WHERE id_req = ".intval($entry_id)." AND ele_id IN (".implode(",", array_map('intval', $otherElements)).") ORDER BY other_id";
+		if($res = $xoopsDB->query($sql)) {
+			while($row = $xoopsDB->fetchArray($res)) {
+				$handle = $handlesById[$row['ele_id']];
+				if(!isset($texts[$handle])) { // if an entry has more than one, which older versions could leave, the first is the one that's shown
+					$texts[$handle] = strval($row['other_text']);
+				}
+			}
+		}
+		return $texts;
+	}
+
+	/**
+	 * Take the Other text out of the values being written, before the before-save procedure runs, so the procedure gets the Other
+	 * option on its own, as it always has. See formulize_splitOtherText() for the format.
+	 *
+	 * @param array $element_values The values being written, keyed by element handle
+	 * @param array $otherElements The elements with an Other option, as getOtherElements() gives them
+	 * @return array The values without the Other text, and the text given for each element: the text after its Other option, or
+	 * an empty string if the value doesn't include the Other option. There's nothing for an element whose value has the Other option
+	 * with no text, since its text stays as it is.
+	 */
+	private function separateOtherTexts($element_values, $otherElements) {
+		$givenTexts = array();
+		foreach(array_keys($otherElements) as $handle) {
+			if(!array_key_exists($handle, $element_values)) {
+				continue;
+			}
+			list($element_values[$handle], $text, $hasOtherOption) = formulize_splitOtherText($element_values[$handle]);
+			if(!$hasOtherOption) {
+				$givenTexts[$handle] = '';
+			} elseif($text !== null) {
+				$givenTexts[$handle] = $text;
+			}
+		}
+		return array($element_values, $givenTexts);
+	}
+
+	/**
+	 * Work out the Other text to save, once the before-save procedure has run. A value with its Other option and some text, which
+	 * the procedure may have set, gets that text. A value with its Other option alone gets what's in $otherValues, which the
+	 * procedure may have changed. A value without its Other option has no text, so anything stored for it is removed.
+	 *
+	 * @param array $element_values The values being written, keyed by element handle
+	 * @param array $otherElements The elements with an Other option, as getOtherElements() gives them
+	 * @param array $procedureOtherValues $otherValues as the before-save procedure left it
+	 * @param array $storedOtherTexts The text stored for the entry, as getOtherTexts() gives it
+	 * @return array The values without the Other text; the text for every element with an Other option; and the text for each
+	 * element where it's different from what is stored, which is an empty string where the stored text is to be removed
+	 */
+	private function resolveOtherTexts($element_values, $otherElements, $procedureOtherValues, $storedOtherTexts) {
+		$otherValues = array();
+		$changes = array();
+		foreach(array_keys($otherElements) as $handle) {
+			$storedText = isset($storedOtherTexts[$handle]) ? $storedOtherTexts[$handle] : '';
+			if(array_key_exists($handle, $element_values)) {
+				list($element_values[$handle], $text, $hasOtherOption) = formulize_splitOtherText($element_values[$handle]);
+				if(!$hasOtherOption) {
+					$text = '';
+				} elseif($text === null) {
+					$text = (isset($procedureOtherValues[$handle]) AND is_scalar($procedureOtherValues[$handle])) ? strval($procedureOtherValues[$handle]) : $storedText;
+				}
+			} else {
+				$text = $storedText; // not being written, so it stays as it is
+			}
+			$otherValues[$handle] = $text;
+			if($text !== $storedText) {
+				$changes[$handle] = $text;
+			}
+		}
+		return array($element_values, $otherValues, $changes);
+	}
+
+	/**
+	 * Remove text in the formulize_other table that no longer goes with an entry in this form: text for an entry that no
+	 * longer exists, text for an entry whose value for the element doesn't have the Other option chosen, and any second
+	 * copy of an entry's text for the same element, keeping the first, which is the one that is shown. Saving an entry,
+	 * and deleting entries and elements, leave nothing like this behind, but writing the form's table directly can, as
+	 * the synchronization import does, and as older versions did.
+	 *
+	 * An element whose form has no table of its own to compare with, or that has no field in it, keeps its text.
+	 *
+	 * @return array|bool How many were removed, under 'removed', and how many elements were left alone because there was
+	 * nothing to compare with, under 'leftAlone'. Or false if the text could not be removed.
+	 */
+	function removeOrphanedOtherTexts() {
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(!$formObject = $form_handler->get($this->fid)) {
+			return false;
+		}
+		$otherTable = $xoopsDB->prefix("formulize_other");
+		$elementsTable = $xoopsDB->prefix("formulize");
+		$dataTable = str_replace('`', '', $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')));
+		$removed = 0;
+		$leftAlone = 0;
+		// every element in this form with Other text, whether or not it still has an Other option
+		if(!$elementsWithText = $xoopsDB->queryF("SELECT DISTINCT e.ele_id, e.ele_handle FROM $otherTable AS o INNER JOIN $elementsTable AS e ON e.ele_id = o.ele_id WHERE e.id_form = ".intval($this->fid))) {
+			return false;
+		}
+		while($row = $xoopsDB->fetchArray($elementsWithText)) {
+			$handle = str_replace('`', '', (string) $row['ele_handle']);
+			$column = $xoopsDB->queryF("SHOW COLUMNS FROM `$dataTable` LIKE '".formulize_db_escape(addcslashes($handle, '%_\\'))."'");
+			if(!$column OR $xoopsDB->getRowsNum($column) == 0) {
+				$leftAlone++;
+				continue;
+			}
+			if(!$xoopsDB->queryF("DELETE o FROM $otherTable AS o LEFT JOIN `$dataTable` AS d ON d.entry_id = o.id_req
+				WHERE o.ele_id = ".intval($row['ele_id'])." AND (d.entry_id IS NULL OR d.`$handle` IS NULL OR d.`$handle` NOT LIKE '%{OTHER|%')")) {
+				return false;
+			}
+			$removed += $xoopsDB->getAffectedRows();
+		}
+		if(!$xoopsDB->queryF("DELETE o1 FROM $otherTable AS o1
+			INNER JOIN $otherTable AS o2 ON o2.id_req = o1.id_req AND o2.ele_id = o1.ele_id AND o2.other_id < o1.other_id
+			INNER JOIN $elementsTable AS e ON e.ele_id = o1.ele_id
+			WHERE e.id_form = ".intval($this->fid))) {
+			return false;
+		}
+		$removed += $xoopsDB->getAffectedRows();
+		return array('removed' => $removed, 'leftAlone' => $leftAlone);
+	}
+
+	/**
+	 * Save the text typed into the Other boxes of an entry
+	 *
+	 * @param int $entry_id The entry
+	 * @param array $otherTexts The text to save, keyed by element handle. An empty string removes the text.
+	 * @param array $otherElements The elements with an Other option, as getOtherElements() gives them
+	 * @param boolean $forceUpdate True to write even on a GET request
+	 * @return void
+	 */
+	private function writeOtherTexts($entry_id, $otherTexts, $otherElements, $forceUpdate) {
+		global $xoopsDB;
+		$table = $xoopsDB->prefix("formulize_other");
+		$entry_id = intval($entry_id);
+		foreach($otherTexts as $handle=>$text) {
+			$elementId = intval($otherElements[$handle]);
+			// removing what's there first also tidies up any extra copies that older versions could leave
+			$queries = array("DELETE FROM $table WHERE id_req = $entry_id AND ele_id = $elementId");
+			if($text !== '') {
+				$text = mb_substr($text, 0, 255); // the most the table holds, and what the box allows
+				$queries[] = "INSERT INTO $table (id_req, ele_id, other_text) VALUES ($entry_id, $elementId, '".formulize_db_escape($text)."')";
+			}
+			foreach($queries as $sql) {
+				$res = $forceUpdate ? $xoopsDB->queryF($sql) : $xoopsDB->query($sql);
+				if(!$res) {
+					throw new Exception("The text typed into an Other box could not be saved in the database. This was the query that failed:<br>$sql<br>".$xoopsDB->error());
+				}
+			}
+		}
+	}
 
 
 	/**
@@ -1061,8 +1257,53 @@ class formulizeDataHandler {
 	}
 
 	/**
+	 * The distinct text people typed into an element's Other box, in the entries a scope allows, and only where the entry
+	 * still has the Other option chosen. Filters offer these alongside the element's own options.
+	 * @param string $handle The element handle
+	 * @param string $term Optional. Only text containing this. Blank for any text.
+	 * @param int $maxValues Optional. At most this many. 0 for no limit.
+	 * @param array $scope_group_ids As in findAllValuesForField()
+	 * @param array $scope_uids As in findAllValuesForField()
+	 * @param bool $usePerGroupFilters As in findAllValuesForField()
+	 * @return array|bool The text, as it is stored, sorted, or false if it could not be read
+	 * @formulizeElement $handle one
+	 */
+	function findDistinctOtherTextsForElement($handle, $term="", $maxValues=0, $scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false) {
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(!$formObject = $form_handler->get($this->fid)) {
+			return false;
+		}
+		if(!($elementObject = _getElementObject($handle)) OR $elementObject->getVar('id_form') != $this->fid) {
+			return false;
+		}
+		$handle = str_replace('`', '', (string) $elementObject->getVar('ele_handle'));
+		$where = $this->_valuesForFieldWhere($scope_group_ids, $scope_uids, $usePerGroupFilters);
+		$where = $where ? $where." AND " : "WHERE ";
+		// an entry that no longer has the Other option chosen can still have text left from before, which isn't its value
+		$where .= "o.ele_id = ".intval($elementObject->getVar('ele_id'))." AND o.other_text != '' AND f.`$handle` LIKE '%{OTHER|%'";
+		if((string) $term !== '') {
+			// the term is matched as it is, so its own % and _ are not wildcards
+			$likeTerm = str_replace(array("\\", "%", "_"), array("\\\\", "\\%", "\\_"), (string) $term);
+			$where .= " AND o.other_text LIKE '%".formulize_db_escape($likeTerm)."%'";
+		}
+		$limit = intval($maxValues) > 0 ? " LIMIT ".intval($maxValues) : "";
+		$sql = "SELECT DISTINCT o.other_text FROM ".$xoopsDB->prefix("formulize_other")." AS o
+			INNER JOIN ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS f ON f.entry_id = o.id_req
+			$where ORDER BY o.other_text ASC$limit";
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$texts = array();
+		while($row = $xoopsDB->fetchRow($res)) {
+			$texts[] = $row[0];
+		}
+		return $texts;
+	}
+
+	/**
 	 * The WHERE clause that limits a read of a field's values to the entries a scope allows, shared by
-	 * findAllValuesForField() and findDistinctValuesForField(). The form's table is aliased f.
+	 * findAllValuesForField(), findDistinctValuesForField() and findDistinctOtherTextsForElement(). The form's table is aliased f.
 	 * @return string The clause, starting with WHERE, or empty if nothing limits the entries
 	 */
 	function _valuesForFieldWhere($scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false) {
@@ -1351,9 +1592,29 @@ class formulizeDataHandler {
 			}
 		}
 
+		// Other options: what people type into an Other box is kept in the formulize_other table, not the data table. A value can carry
+		// it after its Other option, as {OTHER|30}:text, so separate it out here, and save it once the entry is written. The data table
+		// and procedures get the Other option on its own, as they always have, and procedures get the text in $otherValues.
+		$otherElements = $this->getOtherElements(); // handle => element id, for the elements with an Other option
+		$storedOtherTexts = array();
+		$otherValues = null;
+		if($otherElements) {
+			$storedOtherTexts = $this->getOtherTexts($entry_id, $otherElements);
+			list($element_values, $givenOtherTexts) = $this->separateOtherTexts($element_values, $otherElements);
+			$otherValues = $givenOtherTexts + $storedOtherTexts;
+		}
+
 		// call a hook which can modify the values before saving. If it returns false, then return null up the chain.
-		list($element_values, $existing_values) = $formObject->onBeforeSave($entry_id, $element_values);
+		list($element_values, $existing_values) = $formObject->onBeforeSave($entry_id, $element_values, $otherValues, $storedOtherTexts);
 		if ($element_values === false) { return null; }
+
+		// work out the Other text to save, from the values and from $otherValues as the procedure left it
+		$otherTextChanges = array();
+		if($otherElements) {
+			$procedureOtherValues = (isset($element_values['otherValues']) AND is_array($element_values['otherValues'])) ? $element_values['otherValues'] : array();
+			unset($element_values['otherValues']);
+			list($element_values, $otherValues, $otherTextChanges) = $this->resolveOtherTexts($element_values, $otherElements, $procedureOtherValues, $storedOtherTexts);
+		}
 
 		// ensure the hook has not created any invalid element handles because that would cause the sql query to fail
 		// note that array_flip means the map will be using the handles as keys, and so the intersect will exclude any values that are not valid handles for the form.
@@ -1372,7 +1633,8 @@ class formulizeDataHandler {
 		}
 
 		// no values to save, which may be caused by the onBeforeSave() handler deleting all of the values, or nothing has changed from the state in the database, so return null up the chain.
-    if (0 == count((array) $element_values)) {
+		// A change to the text in an Other box is a change to the entry, even when nothing in the data table changed.
+    if (0 == count((array) $element_values) AND !$otherTextChanges) {
       return null;
     }
 
@@ -1434,14 +1696,17 @@ class formulizeDataHandler {
 			$entry_to_return = intval($entry_id);
 		}
 
-    formulize_updateRevisionData($formObject, $entry_to_return, $forceUpdate);
+		// there's nothing for the data table when only the text in an Other box changed and the metadata isn't being updated
+		if(count($element_values) > 0) {
+			formulize_updateRevisionData($formObject, $entry_to_return, $forceUpdate);
 
-		if($forceUpdate) {
-			if(!$res = $xoopsDB->queryF($sql)) {
-				throw new Exception("Your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.<br>".$xoopsDB->error());
+			if($forceUpdate) {
+				if(!$res = $xoopsDB->queryF($sql)) {
+					throw new Exception("Your data could not be saved in the database.  This was the query that failed:<br>$sql<br>Query was forced and still failed so the SQL is probably bad.<br>".$xoopsDB->error());
+				}
+			} elseif(!$res = $xoopsDB->query($sql)) {
+				throw new Exception("Your data could not be saved in the database.  This was the query that failed:<br>$sql<br>".$xoopsDB->error());
 			}
-		} elseif(!$res = $xoopsDB->query($sql)) {
-			throw new Exception("Your data could not be saved in the database.  This was the query that failed:<br>$sql<br>".$xoopsDB->error());
 		}
 		self::recordDataChange($this->fid);
 
@@ -1449,6 +1714,11 @@ class formulizeDataHandler {
       $this->updateCaches($entry_to_return);
     } else {
 			$entry_to_return = $xoopsDB->getInsertId();
+		}
+
+		// now that the entry has its id, save the text typed into its Other boxes
+		if($otherTextChanges) {
+			$this->writeOtherTexts($entry_to_return, $otherTextChanges, $otherElements, $forceUpdate);
 		}
 
 		writeToFormulizeLog(array(
@@ -1489,7 +1759,7 @@ class formulizeDataHandler {
 			$formulize_existingValues[$this->fid][$entry_id]['after_save'] = $clean_element_values;
 		}
 
-		$formObject->onAfterSave($entry_to_return, $clean_element_values, $existing_values, $entry_id); // last param, original entry id, will be 'new' if new save
+		$formObject->onAfterSave($entry_to_return, $clean_element_values, $existing_values, $entry_id, $otherValues, $storedOtherTexts); // the original entry id will be 'new' if new save
 
 		return $entry_to_return;
 	}

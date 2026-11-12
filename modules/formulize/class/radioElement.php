@@ -436,16 +436,12 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 		global $myts;
 		foreach($element->getVar('ele_value') as $ele_value_key=>$ele_value_value) {
 			if ($opt_count == $value ) {
-				$otherValue = checkOther($ele_value_key, $ele_id, $entry_id, $subformBlankCounter);
-				if($otherValue !== false) {
-					if($subformBlankCounter !== null) {
-						$GLOBALS['formulize_other'][$ele_id]['blanks'][$subformBlankCounter] = $otherValue;
-					} else {
-						$GLOBALS['formulize_other'][$ele_id][$entry_id] = $otherValue;
-					}
+				$value = $myts->htmlSpecialChars($ele_value_key);
+				// what was typed into the Other box goes after the Other option, as {OTHER|30}:text, and writeEntry saves it
+				$otherText = checkOther($ele_value_key, $ele_id, $entry_id, $subformBlankCounter);
+				if(is_string($otherText)) {
+					$value = formulize_attachOtherText($value, $myts->htmlSpecialChars($otherText));
 				}
-				$ele_value_key = $myts->htmlSpecialChars($ele_value_key);
-				$value = $ele_value_key;
 				$valueFound = true;
 				break;
 			}

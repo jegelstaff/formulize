@@ -27,6 +27,9 @@ if (isset($_POST['syncimport'])) {
         $syncimport['content']['result'] = $catalog->commitChanges("formulize_id"); // make tables first
         $syncimport['content']['result'] = $catalog->commitChanges("formulize"); // then make elements
         $syncimport['content']['result'] = $catalog->commitChanges(); // do the rest of the tables
+        if(!$catalog->removeOrphanedOtherTexts()) { // then tidy up Other text the entries no longer use
+            $syncimport['content']['result']['fail']++;
+        }
 
         // export archive files
         $csvFilepath = getCachedExportFilepath();

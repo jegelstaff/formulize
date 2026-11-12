@@ -1394,7 +1394,7 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 		$text .= $operation == "update" ? " and must include 'entry_id'. " : ". ";
 		$text .= "Use get_form_details to find valid handles. ";
 		$text .= $operation == "update" ? "Only specified elements will be updated; others remain unchanged. " : "This tool will automatically create default values for any elements that are not specified, if they have default values defined in the Formulize configuration. ";
-		$text .= "Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes. Elements that allow multiple selections, such as checkboxes and autocomplete lists configured to allow more than one value, store data as an array of values. For linked elements and user list elements, this tool will convert readable values to their internal ids; you DO NOT need to figure out the internal ids yourself.";
+		$text .= "Date elements store data in YYYY-MM-DD format. Time elements store data in 24 hour format (hh:mm). Duration elements store data in minutes. Elements that allow multiple selections, such as checkboxes and autocomplete lists configured to allow more than one value, store data as an array of values. For linked elements and user list elements, this tool will convert readable values to their internal ids; you DO NOT need to figure out the internal ids yourself. Radio buttons and checkboxes can have an Other option, shown and stored as {OTHER|n} among the element's options. If an element has an Other option, a value that isn't one of its options is saved as the text of the Other option; give at most one such value per element.";
 		$text .= " File upload elements take a file in one of these forms: a URL, as a string; an object with a url and optionally a filename, eg: {\"url\": \"https://example.com/download/123\", \"filename\": \"report.pdf\"} (include the filename when the URL does not end in the file's name); or an object with content_base64 and a filename, eg: {\"content_base64\": \"JVBERi0x...\", \"filename\": \"report.pdf\"}. A URL must be publicly available to anyone, without signing in, and must lead directly to the file, not to a page that shows it. Prefer a URL for files larger than a few megabytes, because base64 content makes the request about a third larger than the file. The file must be one of the types the element allows, and no larger than its maximum size (see get_element_details). At most ".formulize_fileIntakeMaxFilesPerRequest()." files can be sent in one request.";
 		$text .= $operation == "update" ? " Replacing a file deletes the one the entry had before. Use null to remove a file." : "";
 		return $text;
@@ -6745,12 +6745,27 @@ Do not use foreign key values with linked elements; use the readable value inste
 					$values = array($value);
 				}
 				$preparedValues = array();
+				$otherOption = formulize_otherOptionToken($elementObject);
+				$otherText = null;
 				foreach($values as $thisValue) {
 					$preparedValue = prepareLiteralTextForDB($elementHandle, $thisValue);
 					if($preparedValue AND $preparedValue !== $thisValue) {
 						$thisValue = $preparedValue;
 					}
+					// for an element with an Other option, a value that isn't one of its options is the text of the Other option
+					if($otherOption AND is_string($thisValue) AND $thisValue !== ''
+						AND !optionIsValidForElement($thisValue, $elementObject)
+						AND !preg_match('/\{OTHER\|+[0-9]+\}/', $thisValue)) {
+						if($otherText !== null) {
+							throw new FormulizeMCPException('Element '.$elementHandle.' has one Other option, so only one value that is not one of its options can be given: '.$otherText.', and '.$thisValue, 'invalid_data');
+						}
+						$otherText = $thisValue;
+						continue;
+					}
 					$preparedValues[] = $thisValue;
+				}
+				if($otherText !== null) {
+					$preparedValues[] = formulize_attachOtherText($otherOption, MyTextSanitizer::getInstance()->htmlSpecialChars($otherText)); // escaped as it is when typed into the form
 				}
 
 				// If value wasn't array in the first place, just grab the one and only thing that was prepared
