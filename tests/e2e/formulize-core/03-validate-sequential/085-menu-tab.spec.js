@@ -151,28 +151,32 @@ test.describe('The Menu tab', () => {
 		const museumId = await museum.getAttribute('data-id');
 		const staffId = await staff.getAttribute('data-id');
 
-		// Museum to the top with the keyboard. The focus stays on its handle, and a screen reader is told where it went.
-		const museumHandle = museum.locator('.fz-accordion__handle');
-		await museumHandle.focus();
+		// Staff Management to the top with the keyboard. The focus stays on its handle, and a screen reader is told
+		// where it went. A key that doesn't move the item announces nothing, and in the suite's own system Museum
+		// and Staff Management may be the only two items, in that order, so End goes first. Then Home is a move
+		// wherever Staff Management started.
+		const staffHandle = staff.locator('.fz-accordion__handle');
+		await staffHandle.focus();
+		await page.keyboard.press('End');
 		await page.keyboard.press('Home');
-		await expect(museumHandle).toBeFocused();
-		await expect(page.locator('#formulize-sitemenu-list + [role="status"]')).toHaveText(new RegExp(`^Moved Museum to position 1 of ${startingOrder.length}$`));
-		expect((await menuTabOrder(page))[0]).toBe(museumId);
+		await expect(staffHandle).toBeFocused();
+		await expect(page.locator('#formulize-sitemenu-list + [role="status"]')).toHaveText(new RegExp(`^Moved Staff Management to position 1 of ${startingOrder.length}$`));
+		expect((await menuTabOrder(page))[0]).toBe(staffId);
 		await expect(page.locator('#savewarning')).toBeVisible();
 
-		// Staff Management dragged by its handle to the bottom. The mouse moves in steps, as a person's does.
-		const handle = await staff.locator('.fz-accordion__handle').boundingBox();
+		// Museum dragged by its handle above Staff Management, to the top. The mouse moves in steps, as a person's does.
+		const handle = await museum.locator('.fz-accordion__handle').boundingBox();
 		const list = await page.locator('#formulize-sitemenu-list').boundingBox();
 		await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
 		await page.mouse.down();
 		const steps = 20;
 		for (let step = 1; step <= steps; step++) {
-			await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2 + (list.y + list.height + 20 - handle.y) * step / steps);
+			await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2 + (list.y - 20 - handle.y - handle.height / 2) * step / steps);
 		}
 		await page.mouse.up();
 		const arranged = await menuTabOrder(page);
 		expect(arranged[0]).toBe(museumId);
-		expect(arranged[arranged.length - 1]).toBe(staffId);
+		expect(arranged[1]).toBe(staffId);
 
 		await saveAdminForm(page);
 		await openMenuTab(page);

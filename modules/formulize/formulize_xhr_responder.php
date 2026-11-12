@@ -416,9 +416,17 @@ switch($op) {
     $element_handler = xoops_getmodulehandler('elements','formulize');
     $elementObject = $element_handler->get(formulize_db_escape($handle));
     if (!is_object($elementObject) OR !security_check(intval($elementObject->getVar('id_form')), $entryId)) { break; }
-    $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
-    $dbValue = $data_handler->getElementValueInEntry($entryId,$handle);
-    $preppedValue = prepvalues($dbValue,$handle,$entryId);
+    if ($elementObject->hasData) {
+      $data_handler = new formulizeDataHandler($elementObject->getVar('id_form'));
+      $dbValue = $data_handler->getElementValueInEntry($entryId,$handle);
+      $preppedValue = prepvalues($dbValue,$handle,$entryId);
+    } else {
+      // the value isn't in a column of the form's table, such as a user account element's, which is in the users
+      // table, so only the dataset can say what it is
+      $entryData = gatherDataset(intval($elementObject->getVar('id_form')), filter: $entryId, frid: 0, bypassCache: true);
+      $entryRecord = is_array($entryData) ? reset($entryData) : false;
+      $preppedValue = $entryRecord ? getValue($entryRecord, $handle) : '';
+    }
     // the number boxes in the column are as wide as its widest number, which may now be this one
     $numericWidth = $columnNumericWidth;
     foreach ((array) $preppedValue as $preppedOne) {

@@ -2655,6 +2655,9 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 		return array(array(), "", "", array(), "", "", array(), array());
 	}
 
+	// an entry's id is in the uid column of the System Users form, which is over the users table
+	$mainIdColumn = $isUserTableForm ? "uid" : "entry_id";
+
 	$formFieldFilterMap = array();
 	$whereClause = "";
 	$orderByClause = "";
@@ -2833,7 +2836,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 			// FIRST: NUMERIC FILTERS ARE INTERPRETTED AS ENTRY IDS IN THE MAIN FORM
 			if (is_numeric($ifParts[0]) and $ifParts[0] == $indivFilter) {
 				// if this is a numeric value, then we must treat it specially
-				$newWhereClause = "main.entry_id=" . intval($ifParts[0]);
+				$newWhereClause = "main.$mainIdColumn=" . intval($ifParts[0]);
 				$mappedForm = $fid;
 
 				// A COLUMN REFERENCE COMPARED AGAINST A METADATA COLUMN. Handled ahead of the metadata branches below so the reference never reaches
@@ -2911,7 +2914,7 @@ function formulize_parseFilter($filtertemp, $andor, $linkfids, $fid, $frid, $sco
 				$mappedForm = $fid;
 			} elseif ($ifParts[0] == "entry_id") {
 				$formFieldFilterMap['entry_id'] = true;
-				$newWhereClause = " main.entry_id $operator $quotes$likebits" . formulize_db_escape($ifParts[1]) . "$likebits$quotes ";
+				$newWhereClause = " main.$mainIdColumn $operator $quotes$likebits" . formulize_db_escape($ifParts[1]) . "$likebits$quotes ";
 				$mappedForm = $fid;
 			} elseif ($ifParts[0] == "revision_id" and is_numeric($ifParts[1])) {
 				$formFieldFilterMap['revision_id'] = true;

@@ -1077,7 +1077,15 @@ export async function deleteMuseumForm(page, fid, opts = {}) {
 	// it, which would navigate away instead of opening the panel.
 	const formBox = page.locator(`div.form-listing-box[formid="${fid}"]`);
 	await expect(formBox).toBeVisible();
-	await formBox.locator('.form-name-text').click();
+	// The click handler marks the box selected-form as it opens the panel, so the class shows whether the click
+	// was handled. In CI a click has gone unhandled, and the panel never opened. So click again, but only while
+	// the box isn't selected, because a click on a selected box closes its panel.
+	await expect(async () => {
+		if (!(await formBox.evaluate(box => box.classList.contains('selected-form')))) {
+			await formBox.locator('.form-name-text').click();
+		}
+		await expect(formBox).toHaveClass(/\bselected-form\b/, { timeout: 2000 });
+	}).toPass({ timeout: 20000 });
 
 	// Each form's Delete link carries its fid in the target attribute, so this addresses exactly the
 	// form we made and not any other form in the Museum application.
