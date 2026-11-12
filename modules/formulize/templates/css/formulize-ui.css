@@ -342,11 +342,11 @@
   --fz-sidemenu-color:         var(--fz-color-text);
   --fz-sidemenu-hover-bg:      var(--fz-color-surface-3);
   --fz-sidemenu-item-radius:   var(--fz-radius-md);
-  --fz-sidemenu-active-bg:     var(--fz-color-surface);
+  --fz-sidemenu-active-bg:     var(--fz-color-accent-soft);
   --fz-sidemenu-active-color:  var(--fz-color-text);
   --fz-sidemenu-active-marker: var(--fz-color-accent);
   --fz-sidemenu-sub-color:     var(--fz-color-text-muted);
-  --fz-sidemenu-sub-active-bg: var(--fz-color-accent-soft);
+  --fz-sidemenu-sub-active-bg: var(--fz-sidemenu-active-bg);
   --fz-sidemenu-guide:         var(--fz-color-border);
 
   /* Written content */
@@ -1645,7 +1645,9 @@
 /* ---- Disclosure ---------------------------------------------------------------
    Something that opens in place to show more. On a <details>: its <summary> is
    what is clicked, and the rest is what opens. fz-disclosure--plain has no box
-   of its own, for one that is inside a card. */
+   of its own, for one that is inside a card. The summary has the accordion's
+   chevron at its end, in place of the browser's triangle, so everything that
+   opens in place looks the same. */
 .fz-disclosure {
   box-sizing: border-box;
   padding: calc(var(--fz-spacing) * 2) calc(var(--fz-spacing) * 3);
@@ -1655,8 +1657,35 @@
   line-height: var(--fz-leading-normal);
 }
 .fz-disclosure > :where(summary) {
+  position: relative;
+  padding-inline-end: calc(var(--fz-spacing) * 5);
   cursor: pointer;
+  list-style: none;
   font-weight: var(--fz-font-weight-medium);
+}
+.fz-disclosure > :where(summary)::-webkit-details-marker {
+  display: none;
+}
+/* The chevron, on a disclosure and an accordion: pointing down when closed and
+   up when open. A disclosure's summary stays a block, so what is in it flows
+   as text, and its chevron is put at the end; an accordion's summary is a row,
+   with the chevron as its last item. */
+.fz-disclosure > :where(summary)::after,
+.fz-accordion__summary::after {
+  content: "";
+  inline-size: 0.4rem;
+  block-size: 0.4rem;
+  border-inline-end: 2px solid var(--fz-color-text-muted);
+  border-block-end: 2px solid var(--fz-color-text-muted);
+}
+.fz-disclosure > :where(summary)::after {
+  position: absolute;
+  inset-inline-end: calc(var(--fz-spacing) * 1);
+  inset-block-start: 50%;
+  transform: translateY(-75%) rotate(45deg);
+}
+.fz-disclosure[open] > :where(summary)::after {
+  transform: translateY(-25%) rotate(225deg);
 }
 .fz-disclosure > :where(:not(summary)) {
   margin-block: calc(var(--fz-spacing) * 2) 0;
@@ -1686,6 +1715,9 @@
   .fz-disclosure::details-content {
     transition: block-size var(--fz-duration) var(--fz-ease-out),
                 content-visibility var(--fz-duration) allow-discrete;
+  }
+  .fz-disclosure > :where(summary)::after {
+    transition: transform var(--fz-duration-fast) var(--fz-ease-out);
   }
 }
 
@@ -1767,15 +1799,10 @@
 .fz-accordion__summary::-webkit-details-marker {
   display: none;
 }
-/* the chevron at the end, pointing down when closed and up when open */
+/* the chevron at the end (drawn with the disclosure's) */
 .fz-accordion__summary::after {
-  content: "";
   flex: none;
-  inline-size: 0.4rem;
-  block-size: 0.4rem;
   margin-inline-end: calc(var(--fz-spacing) * 1);
-  border-inline-end: 2px solid var(--fz-color-text-muted);
-  border-block-end: 2px solid var(--fz-color-text-muted);
   transform: translateY(-25%) rotate(45deg);
 }
 .fz-accordion__details[open] > :where(summary)::after {

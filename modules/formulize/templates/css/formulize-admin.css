@@ -2603,6 +2603,12 @@ html:has(.formulize-admin-ui) #savebutton input {
   margin-left: 0;
   list-style: none; }
 
+/* and their background is inherited, which is none, so an accordion item being dragged would show the items under it
+   through it */
+#xo-canvas-content .fz-accordion__item {
+  background-color: var(--fz-card-bg);
+  color: var(--fz-color-text); }
+
 /* the components that space what is in them with a gap */
 .admin-ui .fz-stack > p,
 .admin-ui .fz-cluster > p,

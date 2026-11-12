@@ -1053,7 +1053,7 @@ HTML
                 'name' => 'Disclosure',
                 'summary' => 'Something that opens in place to show more: the detail behind a summary, a list that is usually not needed.',
                 'classes' => array(
-                    'fz-disclosure' => 'On a `<details>`. Its `<summary>` is what is clicked, and the rest is what opens.',
+                    'fz-disclosure' => 'On a `<details>`. Its `<summary>` is what is clicked, with a chevron at the end, the same as an accordion\'s, and the rest is what opens.',
                     'fz-disclosure--plain' => 'No box of its own: for one that is inside a card.',
                 ),
                 'notes' => array(
