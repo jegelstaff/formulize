@@ -2730,7 +2730,9 @@ function formulize_renderAppearanceHead() {
 /**
  * The screen that a page is, if it is one: the one Formulize rendered as the page, whose id it gives
  * the theme as formulize_screen_id (see initialize.php). Not a screen inside another, such as a form
- * a template screen's code displays: the page's appearance is the outer screen's.
+ * a template screen's code displays: the page's appearance is the outer screen's. A page that draws
+ * a screen built in code, which has no id, can say it's the page's screen with
+ * formulize_setUnsavedPageScreen(), and it's used when there's no saved one.
  *
  * @return object|null the screen, or null when the page is not a screen
  */
@@ -2739,7 +2741,7 @@ function formulize_appearancePageScreen() {
     static $screens = array();
     $sid = is_object($xoopsTpl) ? intval($xoopsTpl->get_template_vars('formulize_screen_id')) : 0;
     if (!$sid) {
-        return null;
+        return formulize_setUnsavedPageScreen();
     }
     if (!array_key_exists($sid, $screens)) {
         $screen_handler = xoops_getmodulehandler('screen', 'formulize');
@@ -2747,6 +2749,22 @@ function formulize_appearancePageScreen() {
         $screens[$sid] = $screen ? $screen : null;
     }
     return $screens[$sid];
+}
+
+/**
+ * Say which screen a page is, when it's a screen built in code and never saved, such as the lists
+ * users.php and groups.php draw. Its look and page width then apply to the page, as a saved screen's
+ * do. Called with no screen, it returns the one given, if any.
+ *
+ * @param object|null $screen the screen the page draws
+ * @return object|null the screen the page is, or null if none was given
+ */
+function formulize_setUnsavedPageScreen($screen = null) {
+    static $unsavedPageScreen = null;
+    if (is_object($screen)) {
+        $unsavedPageScreen = $screen;
+    }
+    return $unsavedPageScreen;
 }
 
 /**

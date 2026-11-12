@@ -133,6 +133,9 @@ if (!empty($_POST['delconfirmed'])) {
 $GLOBALS['formulize_deletableGroupIds'] = array_flip($deletableGroupIds);
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
+// the list is the page, so its width and look apply to the page, as a saved list screen's would
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/appearance.php";
+formulize_setUnsavedPageScreen($pseudoScreen);
 $screen_handler->render($pseudoScreen, '', '');
 
 // Override confirmDel() to show the group name in the confirmation prompt.

@@ -202,6 +202,9 @@ if (!empty($_POST['delconfirmed'])) {
 }
 
 include_once XOOPS_ROOT_PATH . "/modules/formulize/include/readelements.php";
+// the list is the page, so its width and look apply to the page, as a saved list screen's would
+include_once XOOPS_ROOT_PATH . "/modules/formulize/include/appearance.php";
+formulize_setUnsavedPageScreen($pseudoScreen);
 $screen_handler->render($pseudoScreen, '', '');
 
 // Override confirmDel() to show user-specific warning with full name.

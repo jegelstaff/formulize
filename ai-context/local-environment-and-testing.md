@@ -113,7 +113,7 @@ Key settings in `tests/e2e/playwright.config.js`:
 - `timeout: 120000` per test, or `E2E_TEST_TIMEOUT` from the root `.env`
 - `navigationTimeout: 60000`, or `E2E_NAVIGATION_TIMEOUT` from the root `.env`
 - `expect.timeout: 20000` for assertions
-- `baseURL` from `FORMULIZE_WEB_PORT` in the root `.env`, or `http://localhost:8080`
+- `baseURL` from `FORMULIZE_WEB_PORT` in the root `.env`, or `http://127.0.0.1:8080`. It's `127.0.0.1`, not `localhost`, because Docker publishes the site on IPv4 only, and on Windows `localhost` tries IPv6 first, which adds about a third of a second to every new connection. Docker Desktop on Windows doesn't publish the port on `[::1]` when asked, so that's no way round it. Use `127.0.0.1` with `curl` and in a browser for the same reason. The site builds its links from the address it's visited at.
 - `outputDir: ./test-results`, with the report in `./test-report`
 
 ## Debugging Failures
@@ -127,8 +127,8 @@ On failure, Playwright writes these to `test-results/<test-name-hash>/`:
 To look at a live page, log in with the suite's admin account. Its password is `password` unless `E2E_TEST_ADMIN_PASSWORD` says otherwise. The `monastery` branch's admin password is `admin`.
 
 ```bash
-curl -s -c cookies.txt -d "uname=admin&pass=password&op=login" "http://localhost:8080/user.php" -L > /dev/null
-curl -s -b cookies.txt "http://localhost:8080/modules/formulize/groups.php" | grep -i "template-group"
+curl -s -c cookies.txt -d "uname=admin&pass=password&op=login" "http://127.0.0.1:8080/user.php" -L > /dev/null
+curl -s -b cookies.txt "http://127.0.0.1:8080/modules/formulize/groups.php" | grep -i "template-group"
 ```
 
 For a quick DOM check, write a small Playwright script and run it from `tests/e2e`, where Playwright is installed. From a script elsewhere, `require()` it by its full path. Check browser features in Firefox as well as Chromium.

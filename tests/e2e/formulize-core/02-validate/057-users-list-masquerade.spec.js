@@ -10,8 +10,29 @@ import { login, leavePage, dbQuery, dbPrefix, entryIsLocked, entriesThePageWillR
 // A user's Status is opened for editing from a pen beside it. So looking at the list locks no one, and anyone can open
 // their own account meanwhile. Opening one user's Status locks only that user, until it's closed. Whether a user is
 // locked is read from the files on the server that hold the locks. Nothing is saved.
+//
+// The list of users is drawn the way a list screen is, so it has the page width the site gives list screens, the same
+// as the Artifacts list, whatever the theme and the site's settings are.
 
 const uidOf = loginName => dbQuery(`SELECT uid FROM ${dbPrefix()}_users WHERE login_name = '${loginName}'`)[0][0];
+
+// The width the theme keeps the page's content to, which a screen's page width sets
+const contentMaxWidth = page => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--formulize-content-max-width').trim());
+
+test('the list of users is as wide as a list screen', async ({ page }) => {
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	const artifacts = dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_handle = 'artifacts'`)[0][0];
+	await page.goto(`/modules/formulize/index.php?fid=${artifacts}`);
+	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
+	const listWidth = await contentMaxWidth(page);
+
+	await page.goto('/modules/formulize/users.php');
+	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
+	expect(await contentMaxWidth(page), 'the same page width as the Artifacts list').toBe(listWidth);
+
+	await leavePage(page, '/modules/formulize/application.php?id=all');
+	await expect(page).toHaveURL(/\/application\.php\?id=all$/);
+});
 
 test('each user in the list of users has a Masquerade button, except yourself', async ({ page }) => {
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);

@@ -20,9 +20,13 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 const DEFAULT_WEB_PORT = 8080;
 
+// 127.0.0.1 rather than localhost. Docker publishes the site on 127.0.0.1 only, and on Windows localhost is
+// tried as IPv6 (::1) first, so every new connection to localhost waits about a third of a second for that to
+// fail. The site builds its links from the address it's visited at, and 127.0.0.1 is a secure context, like
+// localhost, so the installable app still works over plain http.
 function resolveBaseUrl() {
 	const port = process.env.FORMULIZE_WEB_PORT || DEFAULT_WEB_PORT;
-	return `http://localhost:${port}`;
+	return `http://127.0.0.1:${port}`;
 }
 
 module.exports = { resolveBaseUrl, DEFAULT_WEB_PORT };

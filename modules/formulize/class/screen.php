@@ -461,6 +461,11 @@ class formulizeScreenHandler {
 	 * @return void
 	 */
 	protected function applyDefaultScreenVars($screen, $defaults) {
+		// the width the site wants this type of screen at, which a saved screen would also be given when it's first saved,
+		// so a screen built in code and never saved has it too
+		if(!isset($defaults['pagewidth'])) {
+			$defaults['pagewidth'] = formulize_defaultPageWidthForScreenType($defaults['type']);
+		}
 		foreach($this->getThemeScreenDefaults($defaults['type']) as $property => $value) {
 			if(!isset($screen->vars[$property]) OR in_array($property, self::THEME_DEFAULTS_EXCLUDED, true) OR $value === null) {
 				continue;
