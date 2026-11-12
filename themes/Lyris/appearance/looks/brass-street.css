@@ -1,0 +1,78 @@
+/* Formulize appearance look for the Lyris theme.
+ *
+ * Written by Formulize whenever the theme's looks change (Admin > Appearance >
+ * Looks). The block below is the record of the look: its name, the look it is
+ * based on, if any, and what it changes itself. The CSS after it is the look
+ * as pages are shown with it.
+ *
+ * BEGIN FORMULIZE APPEARANCE LOOK v2
+ * name: Brass Street
+ * description: A register, not an app. Values and list rows are set in a text serif on paper-toned cards, with square corners, ruled lines and a tight rhythm.
+ * base: default
+ * appearance_font: custom
+ * appearance_customfont: Libre Franklin
+ * appearance_headingfont: custom
+ * appearance_headingcustomfont: Source Serif 4
+ * appearance_overrides: {"--fz-title-text-narrow":"lg","--fz-label-text":"xs-plus","--fz-field-text":"sm-plus","--fz-table-text":"sm","--fz-field-height":9,"--fz-field-padding-x":2.5,"--fz-field-gap":4.5,"--fz-label-gap":1,"--fz-help-gap":1,"--fz-option-gap":0,"--fz-control-height":7.5,"--fz-menu-item-height":7,"--fz-row-height":9,"--fz-table-header-height":8,"--fz-toolbar-height":12,"--fz-toolbar-padding-x":4,"--fz-label-font":"main","--fz-field-font":"secondary","--fz-table-font":"secondary","--fz-title-color":"primary","--fz-label-color":"text-muted","--fz-header-text":"text","--fz-header-bg":"surface","--fz-header-border":"text","--fz-field-radius":0,"--fz-button-radius":0,"--fz-tab-radius":0,"--fz-form-radius":0,"--fz-card-radius":0,"--fz-menu-radius":0,"--fz-sidemenu-bg":"page","--fz-sidemenu-hover-bg":"surface","--fz-sidemenu-item-radius":0}
+ * appearance_primary: #5e3d26
+ * appearance_background: #efebe3
+ * appearance_surface: #fbf9f5
+ * appearance_text: #17130f
+ * appearance_border: #cbc2b2
+ * END FORMULIZE APPEARANCE LOOK
+ */
+/* Formulize appearance stylesheet, generation 8 */
+@import url("https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
+:root {
+  --fz-font-sans: 'Libre Franklin', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --fz-font-heading: 'Source Serif 4', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --fz-title-text-narrow: var(--fz-text-lg);
+  --fz-label-text: var(--fz-text-xs-plus);
+  --fz-field-text: var(--fz-text-sm-plus);
+  --fz-table-text: var(--fz-text-sm);
+  --fz-field-height: calc(var(--fz-spacing) * 9);
+  --fz-field-padding-x: calc(var(--fz-spacing) * 2.5);
+  --fz-field-gap: calc(var(--fz-spacing) * 4.5);
+  --fz-label-gap: calc(var(--fz-spacing) * 1);
+  --fz-help-gap: calc(var(--fz-spacing) * 1);
+  --fz-option-gap: calc(var(--fz-spacing) * 0);
+  --fz-control-height: calc(var(--fz-spacing) * 7.5);
+  --fz-menu-item-height: calc(var(--fz-spacing) * 7);
+  --fz-row-height: calc(var(--fz-spacing) * 9);
+  --fz-table-header-height: calc(var(--fz-spacing) * 8);
+  --fz-toolbar-height: calc(var(--fz-spacing) * 12);
+  --fz-toolbar-padding-x: calc(var(--fz-spacing) * 4);
+  --fz-label-font: var(--fz-font-sans);
+  --fz-field-font: var(--fz-font-heading);
+  --fz-table-font: var(--fz-font-heading);
+  --fz-title-color: var(--fz-color-accent);
+  --fz-label-color: var(--fz-color-text-muted);
+  --fz-header-text: var(--fz-color-text);
+  --fz-header-bg: var(--fz-color-surface);
+  --fz-header-border: var(--fz-color-text);
+  --fz-field-radius: 0px;
+  --fz-button-radius: 0px;
+  --fz-tab-radius: 0px;
+  --fz-form-radius: 0px;
+  --fz-card-radius: 0px;
+  --fz-menu-radius: 0px;
+  --fz-sidemenu-bg: var(--fz-color-page);
+  --fz-sidemenu-hover-bg: var(--fz-color-surface);
+  --fz-sidemenu-item-radius: 0px;
+  --fz-color-accent: #5e3d26;
+  --fz-color-accent-text: #5e3d26;
+  --fz-color-accent-hover: color-mix(in srgb, #5e3d26 85%, #000);
+  --fz-color-accent-soft: color-mix(in srgb, #5e3d26 8%, #fff);
+  --fz-color-accent-soft-2: color-mix(in srgb, #5e3d26 16%, #fff);
+  --fz-color-focus: color-mix(in srgb, #5e3d26 85%, #000);
+  --fz-focus-ring: 0 0 0 3px color-mix(in srgb, #5e3d26 15%, transparent);
+  --fz-color-page: #efebe3;
+  --fz-color-surface: #fbf9f5;
+  --fz-color-surface-2: color-mix(in srgb, #fbf9f5 98%, #555);
+  --fz-color-surface-3: color-mix(in srgb, #fbf9f5 94%, #555);
+  --fz-color-text: #17130f;
+  --fz-color-text-muted: color-mix(in srgb, #17130f 65%, #fff);
+  --fz-color-text-subtle: color-mix(in srgb, #17130f 45%, #fff);
+  --fz-color-border: #cbc2b2;
+  --fz-color-border-strong: color-mix(in srgb, #cbc2b2 90%, #000);
+}

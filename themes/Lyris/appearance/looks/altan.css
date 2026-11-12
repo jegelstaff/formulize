@@ -1,0 +1,94 @@
+/* Formulize appearance look for the Lyris theme.
+ *
+ * Written by Formulize whenever the theme's looks change (Admin > Appearance >
+ * Looks). The block below is the record of the look: its name, the look it is
+ * based on, if any, and what it changes itself. The CSS after it is the look
+ * as pages are shown with it.
+ *
+ * BEGIN FORMULIZE APPEARANCE LOOK v2
+ * name: Altan
+ * description: Soft and roomy. Borderless white cards sit on a leaf-tinted page, with filled fields, pill buttons, a rounded face and the most generous spacing of the set.
+ * base: default
+ * appearance_font: custom
+ * appearance_customfont: Nunito
+ * appearance_headingfont: custom
+ * appearance_headingcustomfont: Fredoka
+ * appearance_overrides: {"--fz-title-text":"2xl","--fz-title-text-narrow":"lg","--fz-label-text":"sm-plus","--fz-label-weight":700,"--fz-field-text":"sm-plus","--fz-help-text":"sm","--fz-control-text":"sm","--fz-table-text":"sm","--fz-table-header-text":"xs-plus","--fz-field-height":12,"--fz-field-padding-x":4.5,"--fz-field-gap":7,"--fz-label-gap":2,"--fz-option-gap":1.5,"--fz-control-height":10,"--fz-control-padding-x":3.5,"--fz-menu-item-height":9,"--fz-tab-padding-y":2,"--fz-tab-padding-x":4.5,"--fz-row-height":13,"--fz-cell-padding-x":4,"--fz-table-header-height":10,"--fz-toolbar-height":16,"--fz-toolbar-padding-x":6,"--fz-card-padding":6,"--fz-card-gap":4,"--fz-form-padding":9,"--fz-drawer-padding-x":7,"--fz-drawer-padding-y":5,"--fz-page-padding":7,"--fz-label-font":"main","--fz-title-color":"primary","--fz-field-bg":"page","--fz-field-border":"border","--fz-form-border":"surface","--fz-tab-bg":"page","--fz-tab-border":"page","--fz-header-bg":"page","--fz-header-border":"border","--fz-row-hover":"primary-soft","--fz-card-border":"surface","--fz-field-radius":14,"--fz-button-radius":999,"--fz-form-radius":16,"--fz-card-radius":16,"--fz-menu-radius":12,"--fz-sidemenu-bg":"page","--fz-sidemenu-border":"page","--fz-sidemenu-hover-bg":"surface","--fz-sidemenu-item-radius":999}
+ * appearance_primary: #2e6b3a
+ * appearance_background: #f0f5eb
+ * appearance_text: #101a12
+ * appearance_border: #d6e2cd
+ * appearance_success: #1f6f5c
+ * END FORMULIZE APPEARANCE LOOK
+ */
+/* Formulize appearance stylesheet, generation 8 */
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Fredoka:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
+:root {
+  --fz-font-sans: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --fz-font-heading: 'Fredoka', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --fz-title-text: var(--fz-text-2xl);
+  --fz-title-text-narrow: var(--fz-text-lg);
+  --fz-label-text: var(--fz-text-sm-plus);
+  --fz-label-weight: 700;
+  --fz-field-text: var(--fz-text-sm-plus);
+  --fz-help-text: var(--fz-text-sm);
+  --fz-control-text: var(--fz-text-sm);
+  --fz-table-text: var(--fz-text-sm);
+  --fz-table-header-text: var(--fz-text-xs-plus);
+  --fz-field-height: calc(var(--fz-spacing) * 12);
+  --fz-field-padding-x: calc(var(--fz-spacing) * 4.5);
+  --fz-field-gap: calc(var(--fz-spacing) * 7);
+  --fz-label-gap: calc(var(--fz-spacing) * 2);
+  --fz-option-gap: calc(var(--fz-spacing) * 1.5);
+  --fz-control-height: calc(var(--fz-spacing) * 10);
+  --fz-control-padding-x: calc(var(--fz-spacing) * 3.5);
+  --fz-menu-item-height: calc(var(--fz-spacing) * 9);
+  --fz-tab-padding-y: calc(var(--fz-spacing) * 2);
+  --fz-tab-padding-x: calc(var(--fz-spacing) * 4.5);
+  --fz-row-height: calc(var(--fz-spacing) * 13);
+  --fz-cell-padding-x: calc(var(--fz-spacing) * 4);
+  --fz-table-header-height: calc(var(--fz-spacing) * 10);
+  --fz-toolbar-height: calc(var(--fz-spacing) * 16);
+  --fz-toolbar-padding-x: calc(var(--fz-spacing) * 6);
+  --fz-card-padding: calc(var(--fz-spacing) * 6);
+  --fz-card-gap: calc(var(--fz-spacing) * 4);
+  --fz-form-padding: calc(var(--fz-spacing) * 9);
+  --fz-drawer-padding-x: calc(var(--fz-spacing) * 7);
+  --fz-drawer-padding-y: calc(var(--fz-spacing) * 5);
+  --fz-page-padding: calc(var(--fz-spacing) * 7);
+  --fz-label-font: var(--fz-font-sans);
+  --fz-title-color: var(--fz-color-accent);
+  --fz-field-bg: var(--fz-color-page);
+  --fz-field-border: var(--fz-color-border);
+  --fz-form-border: var(--fz-color-surface);
+  --fz-tab-bg: var(--fz-color-page);
+  --fz-tab-border: var(--fz-color-page);
+  --fz-header-bg: var(--fz-color-page);
+  --fz-header-border: var(--fz-color-border);
+  --fz-row-hover: var(--fz-color-accent-soft);
+  --fz-card-border: var(--fz-color-surface);
+  --fz-field-radius: 14px;
+  --fz-button-radius: 999px;
+  --fz-form-radius: 16px;
+  --fz-card-radius: 16px;
+  --fz-menu-radius: 12px;
+  --fz-sidemenu-bg: var(--fz-color-page);
+  --fz-sidemenu-border: var(--fz-color-page);
+  --fz-sidemenu-hover-bg: var(--fz-color-surface);
+  --fz-sidemenu-item-radius: 999px;
+  --fz-color-accent: #2e6b3a;
+  --fz-color-accent-text: #2e6b3a;
+  --fz-color-accent-hover: color-mix(in srgb, #2e6b3a 85%, #000);
+  --fz-color-accent-soft: color-mix(in srgb, #2e6b3a 8%, #fff);
+  --fz-color-accent-soft-2: color-mix(in srgb, #2e6b3a 16%, #fff);
+  --fz-color-focus: color-mix(in srgb, #2e6b3a 85%, #000);
+  --fz-focus-ring: 0 0 0 3px color-mix(in srgb, #2e6b3a 15%, transparent);
+  --fz-color-page: #f0f5eb;
+  --fz-color-text: #101a12;
+  --fz-color-text-muted: color-mix(in srgb, #101a12 65%, #fff);
+  --fz-color-text-subtle: color-mix(in srgb, #101a12 45%, #fff);
+  --fz-color-border: #d6e2cd;
+  --fz-color-border-strong: color-mix(in srgb, #d6e2cd 90%, #000);
+  --fz-color-success: #1f6f5c;
+  --fz-color-success-soft: color-mix(in srgb, #1f6f5c 12%, #fff);
+}

@@ -1,0 +1,87 @@
+/* Formulize appearance look for the Lyris theme.
+ *
+ * Written by Formulize whenever the theme's looks change (Admin > Appearance >
+ * Looks). The block below is the record of the look: its name, the look it is
+ * based on, if any, and what it changes itself. The CSS after it is the look
+ * as pages are shown with it.
+ *
+ * BEGIN FORMULIZE APPEARANCE LOOK v2
+ * name: Varetta
+ * description: Built for scanning hundreds of rows. Plex Sans pairs with Plex Mono for titles, labels and column headings, with 3px corners, a strong heading band and the densest spacing of the set.
+ * base: default
+ * appearance_font: custom
+ * appearance_customfont: IBM Plex Sans
+ * appearance_headingfont: custom
+ * appearance_headingcustomfont: IBM Plex Mono
+ * appearance_overrides: {"--fz-title-text":"lg","--fz-label-text":"xs","--fz-label-weight":500,"--fz-field-text":"xs-plus","--fz-help-text":"xs","--fz-field-height":8,"--fz-field-padding-x":2.5,"--fz-field-gap":3.5,"--fz-label-gap":1,"--fz-help-gap":1,"--fz-option-gap":0,"--fz-control-height":7,"--fz-control-padding-x":2.5,"--fz-menu-item-height":6.5,"--fz-tab-padding-y":0.5,"--fz-tab-padding-x":2.5,"--fz-row-height":7.5,"--fz-cell-padding-x":2.5,"--fz-table-header-height":8,"--fz-toolbar-height":11,"--fz-toolbar-padding-x":3,"--fz-card-padding":3,"--fz-card-gap":2,"--fz-form-padding":4,"--fz-drawer-padding-x":4,"--fz-drawer-padding-y":3,"--fz-page-padding":3,"--fz-table-header-font":"secondary","--fz-label-color":"text-muted","--fz-tab-bg":"surface-2","--fz-toolbar-bg":"surface-2","--fz-header-text":"text","--fz-header-bg":"surface-3","--fz-row-hover":"primary-soft","--fz-field-radius":3,"--fz-button-radius":3,"--fz-tab-radius":3,"--fz-form-radius":4,"--fz-card-radius":4,"--fz-menu-radius":4,"--fz-sidemenu-bg":"surface","--fz-sidemenu-item-radius":3,"--fz-sidemenu-active-bg":"primary-soft"}
+ * appearance_primary: #0e6070
+ * appearance_background: #eceff2
+ * appearance_text: #0f1419
+ * appearance_border: #d2d8de
+ * appearance_info: #1f5fa0
+ * END FORMULIZE APPEARANCE LOOK
+ */
+/* Formulize appearance stylesheet, generation 8 */
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap");
+:root {
+  --fz-font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --fz-font-heading: 'IBM Plex Mono', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --fz-title-text: var(--fz-text-lg);
+  --fz-label-text: var(--fz-text-xs);
+  --fz-label-weight: 500;
+  --fz-field-text: var(--fz-text-xs-plus);
+  --fz-help-text: var(--fz-text-xs);
+  --fz-field-height: calc(var(--fz-spacing) * 8);
+  --fz-field-padding-x: calc(var(--fz-spacing) * 2.5);
+  --fz-field-gap: calc(var(--fz-spacing) * 3.5);
+  --fz-label-gap: calc(var(--fz-spacing) * 1);
+  --fz-help-gap: calc(var(--fz-spacing) * 1);
+  --fz-option-gap: calc(var(--fz-spacing) * 0);
+  --fz-control-height: calc(var(--fz-spacing) * 7);
+  --fz-control-padding-x: calc(var(--fz-spacing) * 2.5);
+  --fz-menu-item-height: calc(var(--fz-spacing) * 6.5);
+  --fz-tab-padding-y: calc(var(--fz-spacing) * 0.5);
+  --fz-tab-padding-x: calc(var(--fz-spacing) * 2.5);
+  --fz-row-height: calc(var(--fz-spacing) * 7.5);
+  --fz-cell-padding-x: calc(var(--fz-spacing) * 2.5);
+  --fz-table-header-height: calc(var(--fz-spacing) * 8);
+  --fz-toolbar-height: calc(var(--fz-spacing) * 11);
+  --fz-toolbar-padding-x: calc(var(--fz-spacing) * 3);
+  --fz-card-padding: calc(var(--fz-spacing) * 3);
+  --fz-card-gap: calc(var(--fz-spacing) * 2);
+  --fz-form-padding: calc(var(--fz-spacing) * 4);
+  --fz-drawer-padding-x: calc(var(--fz-spacing) * 4);
+  --fz-drawer-padding-y: calc(var(--fz-spacing) * 3);
+  --fz-page-padding: calc(var(--fz-spacing) * 3);
+  --fz-table-header-font: var(--fz-font-heading);
+  --fz-label-color: var(--fz-color-text-muted);
+  --fz-tab-bg: var(--fz-color-surface-2);
+  --fz-toolbar-bg: var(--fz-color-surface-2);
+  --fz-header-text: var(--fz-color-text);
+  --fz-header-bg: var(--fz-color-surface-3);
+  --fz-row-hover: var(--fz-color-accent-soft);
+  --fz-field-radius: 3px;
+  --fz-button-radius: 3px;
+  --fz-tab-radius: 3px;
+  --fz-form-radius: 4px;
+  --fz-card-radius: 4px;
+  --fz-menu-radius: 4px;
+  --fz-sidemenu-bg: var(--fz-color-surface);
+  --fz-sidemenu-item-radius: 3px;
+  --fz-sidemenu-active-bg: var(--fz-color-accent-soft);
+  --fz-color-accent: #0e6070;
+  --fz-color-accent-text: #0e6070;
+  --fz-color-accent-hover: color-mix(in srgb, #0e6070 85%, #000);
+  --fz-color-accent-soft: color-mix(in srgb, #0e6070 8%, #fff);
+  --fz-color-accent-soft-2: color-mix(in srgb, #0e6070 16%, #fff);
+  --fz-color-focus: color-mix(in srgb, #0e6070 85%, #000);
+  --fz-focus-ring: 0 0 0 3px color-mix(in srgb, #0e6070 15%, transparent);
+  --fz-color-page: #eceff2;
+  --fz-color-text: #0f1419;
+  --fz-color-text-muted: color-mix(in srgb, #0f1419 65%, #fff);
+  --fz-color-text-subtle: color-mix(in srgb, #0f1419 45%, #fff);
+  --fz-color-border: #d2d8de;
+  --fz-color-border-strong: color-mix(in srgb, #d2d8de 90%, #000);
+  --fz-color-info: #1f5fa0;
+  --fz-color-info-soft: color-mix(in srgb, #1f5fa0 12%, #fff);
+}
