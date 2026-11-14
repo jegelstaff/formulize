@@ -275,6 +275,26 @@ a.formulize-open-close-link {
 .icms_checkboxoption {
   clear: both; }
 
+/* The "Other" option of a radio button or checkbox element, when its options are on separate lines.
+   The box goes under the option's text, lined up with it rather than with the button, so the option's
+   line is as tall as the others. Each is a grid of the button in one column, and the text over the box
+   in the other, so the text column starts wherever the theme's button and its margin end.
+   A radio button and its label are siblings, so radioElement.php wraps the option in
+   .formulize-other-option. A checkbox is inside its label, so the label is the grid.
+   Inline-level, so a <br> delimiter after the option adds no blank line. */
+.formulize-other-option,
+.icms_checkboxoption > label:has(> .formulize-other-box) {
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  row-gap: var(--fz-spacing, 0.25rem);
+  max-width: 100%;
+  vertical-align: top; }
+
+.formulize-other-option > .formulize-other-box,
+.icms_checkboxoption > label > .formulize-other-box {
+  grid-column: 2; }
+
 #floating-list-of-entries-save-button {
   padding: 0.5em 1.5em;
   margin: 1em 0;

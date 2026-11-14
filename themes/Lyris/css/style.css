@@ -2454,11 +2454,12 @@ body:has(#formulize-masquerade-block) {
 }
 
 /* The "Other" box of a checkbox or radio option. An option written {OTHER|n}
-   renders as "Other: " followed by a bare <input type=text size=n> inside the
-   option's label (optOther() in modules/formulize/class/elementrenderer.php),
-   so the width:100% in the contextual override above filled the line and
-   dropped the box underneath "Other:". Sized here to its n characters instead,
-   so it sits beside its label. The size attribute is no help: browsers work its
+   renders as "Other: " followed by a bare <input type=text size=n>
+   (optOther() in modules/formulize/class/elementrenderer.php), which core's
+   formulize.css puts under "Other:" when the options are on separate lines,
+   and beside it when they're separated by spaces. The width:100% in the
+   contextual override above would fill the line, so it's sized here to its n
+   characters instead. The size attribute is no help: browsers work its
    width out from metrics in the font, and Geist's put a size=50 box at room for
    about 65 characters of ordinary text. So the width is n at half the box's
    text size each, about what an ordinary character takes in Geist or Arial,
@@ -3804,39 +3805,17 @@ input[type="time"] { font-family: var(--fz-font-sans); }
   }
 
   /* On narrow screens the "Other" box of a checkbox or radio option takes all
-     the room there is, instead of the n characters it gets beside its label on
-     wider ones (see the "Other" box rule in the form-controls section, which
-     this follows on source order). A radio's box goes full width on its own
-     line under "Other:": core splits the radio, "Other:" and the box across
-     separate sibling elements, so nothing holds them as one row to lay out. */
+     the room there is, instead of its n characters (see the "Other" box rule in
+     the form-controls section, which this follows on source order). Under the
+     option's text, that's the width of the text column of core's grid
+     (formulize.css), so the grid takes the whole line. */
   .lyris-form input[type="text"]:where([name^="other["]:not([class*="fz-"])),
   .lyris-form-screen input[type="text"]:where([name^="other["]:not([class*="fz-"])) {
     width: 100%;
   }
-
-  /* A checkbox's box stays on the checkbox's line and fills the rest of it,
-     because core puts the checkbox, "Other:" and the box in one label. That
-     label becomes the row, and its option takes the whole line, inline-level
-     so that a <br> delimiter after it adds no blank line. The box's margin is
-     the space "Other: " ends with, which a flex row drops, at the same 8px the
-     checkbox keeps from its text. */
-  .lyris-form :where(.icms_checkboxoption:has(> label > input[name^="other["])),
-  .lyris-form-screen :where(.icms_checkboxoption:has(> label > input[name^="other["])) {
-    display: inline-flex;
+  .lyris-form :where(.formulize-other-option, .icms_checkboxoption > label:has(> .formulize-other-box)),
+  .lyris-form-screen :where(.formulize-other-option, .icms_checkboxoption > label:has(> .formulize-other-box)) {
     width: 100%;
-  }
-  .lyris-form :where(.icms_checkboxoption > label:has(> input[name^="other["])),
-  .lyris-form-screen :where(.icms_checkboxoption > label:has(> input[name^="other["])) {
-    display: flex;
-    flex: 1 1 auto;
-    align-items: center;
-    min-width: 0;
-  }
-  .lyris-form :where(.icms_checkboxoption > label) > input[type="text"]:where([name^="other["]:not([class*="fz-"])),
-  .lyris-form-screen :where(.icms_checkboxoption > label) > input[type="text"]:where([name^="other["]:not([class*="fz-"])) {
-    flex: 1 1 0;
-    min-width: 0;
-    margin-left: calc(var(--fz-spacing) * 2);
   }
 
   /* ---------- Mobile multipage action bar (issue #9, clutter) ----------

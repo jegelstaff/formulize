@@ -353,7 +353,7 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 					);
 					$other = optOther($oValue, $markupName, $entry_id, $counter, false, $isDisabled);
 					if( $other != false ){
-						$t->addOption($oKey, _formulize_OPT_OTHER."</label><label>$other"); // epic hack to terminate radio button's label so it doesn't include the clickable 'other' box!!
+						$t->addOption($oKey, _formulize_OPT_OTHER."</label><label class='formulize-other-box'>$other"); // epic hack to terminate radio button's label so it doesn't include the clickable 'other' box!!
 						if($oKey == $selected) {
 							$disabledOutputText = _formulize_OPT_OTHER.$other;
 						}
@@ -370,7 +370,18 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 						$GLOBALS['formulize_lastRenderedElementOptions'][$oKey] = $oValue;
 					}
 					$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
-					$form_ele1->addElement($t);
+					if($other != false) {
+						// the Other option's radio button, label and box go in one wrapper, so the box can be laid out under the label (see formulize.css).
+						// A tray rather than rendering the radio button here, so it renders in its turn: radio button ids come from a counter in render()
+						$otherOption = new XoopsFormElementTray('', '');
+						$otherOption->addElement(new XoopsFormLabel('', "<span class='formulize-other-option'>"));
+						$otherOption->addElement($t);
+						$otherOption->addElement(new XoopsFormLabel('', "</span>"));
+						$form_ele1->addElement($otherOption);
+						unset($otherOption);
+					} else {
+						$form_ele1->addElement($t);
+					}
 					unset($t);
 					$counter++;
 				}

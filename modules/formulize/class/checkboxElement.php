@@ -609,7 +609,8 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 						""
 					); // "" means absolutely nothing as delimiter, which gets chucked onto the end of this individual box at render time. :(
 					if($other != false){
-						$t->addOption($oKey, _formulize_OPT_OTHER.$other);
+						// the box is in a span of its own, so it can be laid out under the option's text (see formulize.css)
+						$t->addOption($oKey, _formulize_OPT_OTHER."<span class='formulize-other-box'>$other</span>");
 						if(in_array($oKey, $selected)) {
 							$disabledOutputText[] = _formulize_OPT_OTHER.$other;
 						}
