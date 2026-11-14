@@ -56,6 +56,13 @@ async function chooseThemesAndSave(page, site, admin) {
 	await page.getByRole('button', { name: 'Save your changes' }).click();
 }
 
+// Saving the settings ends with the Settings page drawn again, scrolled to where it was. The theme is stored before
+// that page arrives, and when the questions were asked the save only starts once they've been answered, so wait for
+// the page, the way a person does, before going anywhere else: going on as soon as the theme is stored interrupts it
+async function settingsPageBack(page) {
+	await page.waitForURL(/view=settings.*scrollx=/, { timeout: 120000 });
+}
+
 // The questions, once saving has opened them
 async function openedWizard(page) {
 	const dialog = page.locator('#formulize-lyris-wizard');
@@ -64,7 +71,7 @@ async function openedWizard(page) {
 }
 
 async function next(dialog) {
-	await dialog.getByRole('button', { name: 'Next' }).click();
+	await dialog.getByRole('button', { name: 'Next', exact: true }).click();
 }
 
 // Go through the steps to the summary, choosing none of the templates on the way, if there's a step for them
@@ -108,6 +115,7 @@ test.afterAll(async ({ browser }) => {
 			await chooseThemesAndSave(page, 'Lyris', 'Anari');
 			const dialog = await openedWizard(page);
 			await dialog.getByRole('button', { name: 'Switch without these changes' }).click();
+			await settingsPageBack(page);
 			await expect.poll(() => getSiteTheme().site, { timeout: 60000 }).toBe('Lyris');
 		}
 		if (getSiteTheme().site !== 'Anari' || getSiteTheme().admin !== 'Anari') {
@@ -166,6 +174,7 @@ test('Switch to Lyris gives the chosen screens Lyris\'s settings, switches the s
 	await expect(dialog.locator('.formulize-lyris-summary')).toContainText('Your site switches to Lyris.');
 	await expect(dialog.locator('.formulize-lyris-summary')).toContainText('1 screen gets Lyris\'s screen settings.');
 	await dialog.getByRole('button', { name: 'Switch to Lyris', exact: true }).click();
+	await settingsPageBack(page);
 
 	// the settings are saved once the theme has switched, so the admin theme is the last thing to change
 	await expect.poll(() => getSiteTheme().admin, { timeout: 120000 }).toBe('Lyris');
@@ -186,6 +195,7 @@ test('Once Lyris has been the site\'s theme, switching to it again asks nothing'
 	await chooseSiteThemes(page, 'Anari', 'Anari');
 	await restoreCollections(page);
 	await chooseThemesAndSave(page, 'Lyris', 'Anari');
+	await settingsPageBack(page);
 	await expect.poll(() => getSiteTheme().site, { timeout: 60000 }).toBe('Lyris');
 	await page.goto(SETTINGS_PAGE);
 	await expect(page.locator('#theme_set')).toHaveValue('Lyris');
@@ -201,6 +211,7 @@ test('Switch without these changes switches the site and leaves the screens as t
 	await chooseThemesAndSave(page, 'Lyris', 'Anari');
 	const dialog = await openedWizard(page);
 	await dialog.getByRole('button', { name: 'Switch without these changes' }).click();
+	await settingsPageBack(page);
 
 	await expect.poll(() => getSiteTheme().site, { timeout: 60000 }).toBe('Lyris');
 	await page.goto(SETTINGS_PAGE);

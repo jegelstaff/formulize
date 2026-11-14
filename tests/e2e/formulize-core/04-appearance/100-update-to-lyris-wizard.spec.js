@@ -129,7 +129,7 @@ async function openWizard(page, choice) {
 }
 
 async function next(dialog) {
-	await dialog.getByRole('button', { name: 'Next' }).click();
+	await dialog.getByRole('button', { name: 'Next', exact: true }).click();
 }
 
 test.beforeAll(async ({ browser }) => {
@@ -153,6 +153,8 @@ test.beforeAll(async ({ browser }) => {
 });
 
 test.afterAll(async ({ browser }) => {
+	// emptying and saving every template it made, for two screens in two themes, takes longer than a hook is given
+	test.setTimeout(300000);
 	const page = await adminPage(browser);
 	try {
 		// the version back where the code needs it, in case the update never ran
@@ -190,9 +192,10 @@ test('The update asks about Lyris first, and cancelling changes nothing', async 
 	await setDBVersion(page, required - 1);
 
 	const dialog = await openWizard(page, 'switch');
-	// Anari and Lyris, side by side, drawn from the Appearance editor's samples
-	await expect(dialog.locator('iframe[data-theme="Anari"]')).toHaveAttribute('src', /appearance_preview\.php\?theme=Anari/);
-	await expect(dialog.locator('iframe[data-theme="Lyris"]')).toHaveAttribute('src', /appearance_preview\.php\?theme=Lyris/);
+	// Anari and Lyris, side by side, drawn from the Appearance editor's samples. Each theme has a frame for each
+	// sample, and the List sample is the one shown first
+	await expect(dialog.locator('iframe[data-theme="Anari"]:visible')).toHaveAttribute('src', /appearance_preview\.php\?theme=Anari&screen=list/);
+	await expect(dialog.locator('iframe[data-theme="Lyris"]:visible')).toHaveAttribute('src', /appearance_preview\.php\?theme=Lyris&screen=list/);
 	await next(dialog);
 	// the looks Lyris comes with, to start with one
 	await expect(dialog.getByRole('heading', { name: 'How Lyris looks' })).toBeVisible();

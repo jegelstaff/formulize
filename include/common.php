@@ -64,6 +64,18 @@ if (isset($xoopsOption['pagetype']) && FALSE === strpos($xoopsOption['pagetype']
 
 defined("XOOPS_USE_MULTIBYTES") or define("XOOPS_USE_MULTIBYTES", 0);
 
+// A theme kept in the session, from signing in or from choosing one, gives way when the site's theme changes after
+// it was kept, the way every user's own theme does (see formulize_siteThemeChanged). Otherwise anyone signed in when
+// the site's theme changes keeps the old one until they sign out, as long as it's still an allowed theme. The site's
+// theme it was kept under is noted on the first request after it was kept.
+if (!empty($_SESSION['xoopsUserTheme'])) {
+    if (!isset($_SESSION['xoopsUserThemeSiteTheme'])) {
+        $_SESSION['xoopsUserThemeSiteTheme'] = $icmsConfig['theme_set'];
+    } elseif ($_SESSION['xoopsUserThemeSiteTheme'] !== $icmsConfig['theme_set']) {
+        unset($_SESSION['xoopsUserTheme'], $_SESSION['xoopsUserThemeSiteTheme']);
+    }
+}
+
 if(!empty($icmsConfig['theme_set_allowed'])) {
     if (!empty($_POST['xoops_theme_select']) && in_array($_POST['xoops_theme_select'], $icmsConfig['theme_set_allowed'])) {
         $icmsConfig['theme_set'] = $_POST['xoops_theme_select'];
