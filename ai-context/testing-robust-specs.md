@@ -63,7 +63,7 @@ await conditionalElementReady(
 
 `count()`, `isVisible()`, `isHidden()`, `all()`, `allTextContents()`, `allInnerTexts()` and `evaluateAll()` answer at once with what's on the page at that moment. Right after an action, nothing there can just mean it hasn't arrived yet. `textContent()`, `inputValue()` and `getAttribute()` wait for their element, and assertions like `toHaveText()` retry.
 
-Before one of the reads that doesn't wait, wait for something that proves the content has arrived, or use an assertion that retries. Check what the wait really proves. The page settings popup on a screen's Pages tab loads over AJAX after the click, so reading it straight away finds an empty list, with nothing wrong in the app. Waiting for "Title for page number" works there because the popup's contents arrive all at once.
+Before one of the reads that doesn't wait, wait for something that proves the content has arrived, or use an assertion that retries. Check what the wait really proves. A click that navigates returns once the new page starts arriving, not when it has all arrived, so a message near the top can be showing while the rows of a table below it aren't there yet. Run `await page.waitForLoadState('domcontentloaded')` before reading the whole page (run 43607049861, spec 04-appearance/030). The page settings popup on a screen's Pages tab loads over AJAX after the click, so reading it straight away finds an empty list, with nothing wrong in the app. Waiting for "Title for page number" works there because the popup's contents arrive all at once.
 
 ### Accordion drawers
 

@@ -74,8 +74,12 @@ function usedBy(page, name) {
 	return cell(page, name, 'used').locator(':scope > .fz-text-subtle, :scope > .formulize-looks__more');
 }
 
-// The names of the looks, in the order of the tree, with how deep each is in it
+// The names of the looks, in the order of the tree, with how deep each is in it. A dialog's submit
+// navigates, and its click returns once the new page starts arriving, so the success message, which comes
+// before the table, can be there while the last rows aren't yet: wait for the whole page before reading
+// them (run 43607049861).
 async function tree(page) {
+	await page.waitForLoadState('domcontentloaded');
 	return page.locator('table.fz-tree tbody tr').evaluateAll(rows => rows.map(row => ({
 		name: row.querySelector('.formulize-looks__name strong').textContent,
 		depth: parseInt(row.querySelector('.fz-tree__cell').style.getPropertyValue('--fz-depth'), 10) || 0,
