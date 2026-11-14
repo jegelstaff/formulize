@@ -201,11 +201,29 @@ if(primaryRelationshipExists() === false AND !$formulizeNeedsDBPatch) {
 	}
 }
 
+// Switching a screen's theme, copying its templates from another theme and seeding them all change the screen, so
+// they need permission to edit its form, as its saves do, and are refused on a locked form, as its saves are.
+// Being a module admin isn't enough on its own.
+$templateActionScreen = null;
+if(isset($_GET['sid']) AND ((isset($_POST['themeswitch']) AND $_POST['themeswitch']) OR (isset($_POST['copytemplatesfrom']) AND $_POST['copytemplatesfrom']) OR (isset($_POST['seedtemplates']) AND $_POST['seedtemplates']))) {
+    $screen_handler = xoops_getmodulehandler('screen', 'formulize');
+    if($candidateScreen = $screen_handler->get(intval($_GET['sid']))) {
+        $form_handler = xoops_getmodulehandler('forms', 'formulize');
+        $gperm_handler = xoops_gethandler('groupperm');
+        $candidateForm = $form_handler->get($candidateScreen->getVar('fid'));
+        if($candidateForm AND !$candidateForm->getVar('lockedform') AND $gperm_handler->checkRight('edit_form', $candidateScreen->getVar('fid'), $xoopsUser->getGroups(), getFormulizeModId())) {
+            $templateActionScreen = $candidateScreen;
+        } else {
+            print "<p>"._AM_FORMULIZE_SCREEN_TEMPLATES_NOT_ALLOWED."</p>";
+        }
+    }
+}
+
 // switch the theme for the screen if that's requested
 // only to a theme the list of themes offers, since the name is a folder the screen's templates are kept in
-if(isset($_POST['themeswitch']) AND $_POST['themeswitch'] AND isset($_GET['sid']) AND isset(formulize_selectableThemesList()[$_POST['themeswitch']])) {
+if($templateActionScreen AND isset($_POST['themeswitch']) AND $_POST['themeswitch'] AND isset(formulize_selectableThemesList()[$_POST['themeswitch']])) {
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-    $screen = $screen_handler->get($_GET['sid']);
+    $screen = $templateActionScreen;
     $previousTheme = $screen->getVar('theme');
     $screen->setVar('theme', $_POST['themeswitch']);
     $screen_handler->insert($screen);
@@ -218,19 +236,21 @@ if(isset($_POST['themeswitch']) AND $_POST['themeswitch'] AND isset($_GET['sid']
 
 // copy the screen's own templates from another theme, into the theme the Templates tab is showing, where the
 // screen has none yet
-if(isset($_POST['copytemplatesfrom']) AND $_POST['copytemplatesfrom'] AND isset($_GET['sid']) AND isset(formulize_selectableThemesList()[$_POST['copytemplatesfrom']])) {
+if($templateActionScreen AND isset($_POST['copytemplatesfrom']) AND $_POST['copytemplatesfrom'] AND isset(formulize_selectableThemesList()[$_POST['copytemplatesfrom']])) {
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-    if($screen = $screen_handler->get($_GET['sid'])) {
-        if(!$screen_handler->copyTemplateFilesToTheme($screen, $_POST['copytemplatesfrom'], $screen->getVar('theme'))) {
-            print "<p>".sprintf(_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FAILED, htmlspecialchars($_POST['copytemplatesfrom']))."</p>";
-        }
+    $screen = $templateActionScreen;
+    if(!$screen_handler->copyTemplateFilesToTheme($screen, $_POST['copytemplatesfrom'], $screen->getVar('theme'))) {
+        print "<p>".sprintf(_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FAILED, htmlspecialchars($_POST['copytemplatesfrom']))."</p>";
     }
 }
 
-// create a set of templates for the screen if that's what the user requested
-if(isset($_POST['seedtemplates']) AND $_POST['seedtemplates'] AND isset($_GET['sid'])) {
+// create a set of templates for the screen if that's what the user requested. Only when the screen has no folder of
+// templates in its theme, which is when the Templates tab offers it, so nothing that's there is ever copied over
+if($templateActionScreen AND isset($_POST['seedtemplates']) AND $_POST['seedtemplates']
+    AND isset(formulize_selectableThemesList()[$templateActionScreen->getVar('theme')])
+    AND !file_exists(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$templateActionScreen->getVar('theme')."/".intval($templateActionScreen->getVar('sid')))) {
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
-    $screen = $screen_handler->get($_GET['sid']);
+    $screen = $templateActionScreen;
     $themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/default/".$screen->getVar('type')."/";
     if(!file_exists($themeDefaultPath)) {
         $themeDefaultPath = str_replace($screen->getVar('theme'), '', $themeDefaultPath);

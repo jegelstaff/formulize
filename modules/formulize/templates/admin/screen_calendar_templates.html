@@ -14,7 +14,10 @@
 			<{include file="db:admin/screen_templates_theme.html" content=$content}>
 			<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_TOPTEMPLATE3}></p>
 
-	<{if !$content.usingTemplates}>
+	<{if $content.variablesOnlyNotice}>
+	    <p><{$content.variablesOnlyNotice}></p><br />
+	<{/if}>
+	<{if $content.canSeed}>
 					<p><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES1}><{$content.seedtemplates}><{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES2}></p><br /><p><input type="button" value="<{$smarty.const._AM_FORMULIZE_SCREEN_LOE_DESC_SEEDTEMPLATES3}>" id="seedtemplates"></p><br />
 			<{/if}>
 

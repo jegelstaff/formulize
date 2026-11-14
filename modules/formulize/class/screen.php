@@ -313,7 +313,7 @@ class formulizeScreen extends FormulizeObject {
                 error_log("ERROR: Could not remove empty template cache file: $filename");
                 return false;
             }
-            formulize_removeScreenTemplateFolderIfEmpty($pathname);
+            formulize_removeScreenTemplateFoldersIfEmpty($pathname);
             return true;
         }
 
@@ -332,6 +332,42 @@ class formulizeScreen extends FormulizeObject {
             return false;
         }
 
+        return true;
+    }
+
+    /**
+     * Write one of the screen's variable templates, templates/screens/<theme>/<sid>/variables/<name>.php, which draw
+     * parts of a list such as $pageNavControls (see renderVariableTemplate). A template that says nothing is removed,
+     * so that part is drawn with the default, and the screen's folders go once nothing is left in them.
+     *
+     * @param string $content The template.
+     * @param string $name The variable's name, such as 'pageNavControls'.
+     * @param string $theme The theme's folder name.
+     * @return bool Whether it was written, or removed.
+     */
+    function writeVariableTemplateFile($content, $name, $theme) {
+        $sid = intval($this->getVar('sid'));
+        if (!$sid OR !preg_match('/^[A-Za-z0-9_]+$/', (string) $name) OR !isset(formulize_selectableThemesList()[$theme])) {
+            return false;
+        }
+        $sidFolder = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$sid;
+        $filename = $sidFolder."/variables/".$name.".php";
+        if (formulize_screenTemplateIsEmpty($content)) {
+            if (file_exists($filename) AND !unlink($filename)) {
+                error_log("ERROR: Could not remove empty variable template file: $filename");
+                return false;
+            }
+            formulize_removeScreenTemplateFoldersIfEmpty($sidFolder);
+            return true;
+        }
+        if (!is_dir(dirname($filename)) AND !mkdir(dirname($filename), 0777, true)) {
+            error_log("ERROR: Could not make the folder for variable template file: $filename");
+            return false;
+        }
+        if (file_put_contents($filename, $content) === false) {
+            error_log("ERROR: Could not write to variable template file: $filename");
+            return false;
+        }
         return true;
     }
 
@@ -884,23 +920,54 @@ class formulizeScreenHandler {
 
     /**
      * Remove a deleted screen's own template files, in every theme that has them - templates/screens/<theme>/<sid>/ -
-     * and the folders they were in, so they are not left behind, or picked up by a new screen that gets the same sid.
+     * with the folders in it, such as variables/, and the folder itself, so nothing is left behind, or picked up by a
+     * new screen that gets the same sid. Deleting a form calls this for each of its screens.
      * @param int $sid The screen that has been deleted.
      * @return void
      */
     function deleteTemplateFiles($sid) {
-        if(!$sid = intval($sid)) {
-            return;
+        formulize_deleteScreenTemplateFolders($sid);
+    }
+
+    /**
+     * The variable templates a screen has of its own in one theme, in templates/screens/<theme>/<sid>/variables/,
+     * which draw parts of a list such as $pageNavControls. Empty ones are included, so a stray one can be seen and
+     * cleared. Only files whose names could be a variable's are counted, so the name can be used in a path.
+     *
+     * @param int $sid The screen.
+     * @param string $theme The theme's folder name.
+     * @return array the variable's name, such as 'pageNavControls' => full path of the file, sorted by name
+     */
+    function variableTemplateFiles($sid, $theme) {
+        $sid = intval($sid);
+        if(!$sid OR !isset(formulize_selectableThemesList()[$theme])) {
+            return array();
         }
-        $screensDir = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/";
-        foreach((array) glob($screensDir."*/".$sid, GLOB_ONLYDIR) as $folder) {
-            foreach((array) glob($folder."/*") as $file) {
-                if(is_file($file) AND !unlink($file)) {
-                    error_log("ERROR: Could not delete template file $file of deleted screen $sid");
-                }
+        $files = array();
+        foreach((array) glob(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$sid."/variables/*.php") as $file) {
+            $name = basename($file, '.php');
+            if(is_file($file) AND preg_match('/^[A-Za-z0-9_]+$/', $name)) {
+                $files[$name] = $file;
             }
-            formulize_removeScreenTemplateFolderIfEmpty($folder);
         }
+        ksort($files);
+        return $files;
+    }
+
+    /**
+     * The type of every screen there is.
+     *
+     * @return array|bool sid => type, or false if the screens could not be read
+     */
+    function getTypesBySid() {
+        if(!$result = $this->db->query("SELECT sid, type FROM ".$this->db->prefix("formulize_screen"))) {
+            return false;
+        }
+        $types = array();
+        while($row = $this->db->fetchArray($result)) {
+            $types[intval($row['sid'])] = $row['type'];
+        }
+        return $types;
     }
 
     /**
@@ -1224,12 +1291,9 @@ function formulize_screenTemplatesChanged($files, $defaults) {
  * The files a screen takes along when its templates are copied to another theme, so that it's drawn there just as it
  * is in the theme they come from. When none of its templates have been changed, there's nothing to take: the screen
  * uses the other theme's defaults there. Otherwise it takes its changed templates, and the defaults for the rest of
- * its main templates, since templates of one theme may not fit with another theme's defaults, such as the rows of a
- * list and the table they're in.
- *
- * Variable templates (in variables/) are taken only when the screen has changed ones of its own. The defaults aren't
- * filled in for them, since a screen's variable templates can't yet be seen or cleared in the admin UI, so a copy of
- * one would stay in the screen's folder after its Templates tab had been cleared.
+ * its templates, its variable templates included, since templates of one theme may not fit with another theme's
+ * defaults, such as the rows of a list and the table they're in. Copies of the default variable templates can be
+ * cleared on the screen's Variables tab, like any others.
  *
  * @param array $files The screen's own templates, path inside its folder => full path, as templateFilesInTheme() gives.
  * @param array $defaults The defaults in the theme they come from, as formulize_screenTemplateDefaults() gives them.
@@ -1241,11 +1305,49 @@ function formulize_screenTemplatesToTake($files, $defaults) {
 		return array();
 	}
 	foreach ($defaults as $path => $default) {
-		if (strpos($path, '/') === false AND !isset($changed[$path])) {
+		if (!isset($changed[$path])) {
 			$changed[$path] = $default;
 		}
 	}
 	return $changed;
+}
+
+/**
+ * Is one of a screen's own templates a copy of its theme's default, never edited? The default is the one in the
+ * default/ folder beside the screen's folder, under its type: for templates/screens/Anari/14/toptemplate.php on a list
+ * screen, templates/screens/Anari/default/listOfEntries/toptemplate.php, and for a variable template in variables/,
+ * the same file in that default's variables/. The system's defaults in templates/screens/default/ don't count, so a
+ * template with no counterpart beside it is never a copy. Line endings and the space at either end are evened out
+ * first (see formulize_normalizeScreenTemplate). A template that says nothing is never a copy, since an empty
+ * template has a meaning of its own (see formulize_remove_empty_screen_templates).
+ *
+ * @param string $templatePath The full path of the screen's template, in templates/screens/<theme>/<sid>/.
+ * @param string $type The screen's type. A template screen has no defaults.
+ * @return bool True if it's the same as the default.
+ */
+function formulize_screenTemplateMatchesDefault($templatePath, $type) {
+	if (!preg_match('/^[A-Za-z]+$/', (string) $type) OR $type == 'template' OR !is_file($templatePath)) {
+		return false;
+	}
+	$templatePath = str_replace('\\', '/', $templatePath);
+	$sidFolder = dirname($templatePath);
+	$subfolder = '';
+	if (basename($sidFolder) == 'variables') {
+		$subfolder = 'variables/';
+		$sidFolder = dirname($sidFolder);
+	}
+	if (!ctype_digit(basename($sidFolder))) {
+		return false;
+	}
+	$defaultPath = dirname($sidFolder).'/default/'.$type.'/'.$subfolder.basename($templatePath);
+	if (!is_file($defaultPath)) {
+		return false;
+	}
+	$template = file_get_contents($templatePath);
+	if (formulize_screenTemplateIsEmpty($template)) {
+		return false;
+	}
+	return formulize_normalizeScreenTemplate($template) === formulize_normalizeScreenTemplate(file_get_contents($defaultPath));
 }
 
 /**
@@ -1258,6 +1360,70 @@ function formulize_removeScreenTemplateFolderIfEmpty($folder) {
 	if (is_dir($folder) AND !array_diff((array) scandir($folder), array('.', '..'))) {
 		rmdir($folder);
 	}
+}
+
+/**
+ * Remove a screen's folder of templates, templates/screens/<theme>/<sid>/, once its main templates and its variable
+ * templates are all gone: first its variables/ folder if that's empty, then the screen's folder if that's empty. While
+ * either has a file in it, the screen's folder stays. Everything that removes one of a screen's templates calls this.
+ *
+ * @param string $sidFolder The screen's folder.
+ * @return void
+ */
+function formulize_removeScreenTemplateFoldersIfEmpty($sidFolder) {
+	$sidFolder = rtrim($sidFolder, '/\\');
+	formulize_removeScreenTemplateFolderIfEmpty($sidFolder.'/variables');
+	formulize_removeScreenTemplateFolderIfEmpty($sidFolder);
+}
+
+/**
+ * Remove a screen's folder of templates in every theme, templates/screens/<theme>/<sid>/, with everything in it,
+ * including the folders in it such as variables/. Symbolic links are removed, not followed, so nothing outside the
+ * screen's folder is touched.
+ *
+ * @param int|string $sid The screen. Nothing is done unless it's a positive whole number.
+ * @return array The folders that were removed.
+ */
+function formulize_deleteScreenTemplateFolders($sid) {
+	$sid = (string) $sid;
+	if (!ctype_digit($sid) OR intval($sid) <= 0) {
+		return array();
+	}
+	$removed = array();
+	foreach ((array) glob(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/*/'.$sid, GLOB_ONLYDIR) as $folder) {
+		if (basename(dirname($folder)) === 'default') {
+			continue; // the system's defaults are in folders named for types, never for a screen, but be sure
+		}
+		if (formulize_removeScreenTemplatePath($folder)) {
+			$removed[] = $folder;
+		} else {
+			error_log("ERROR: Could not delete all the template files of deleted screen $sid in $folder");
+		}
+	}
+	return $removed;
+}
+
+/**
+ * Remove a file, a symbolic link or a folder with everything in it. Links are removed themselves, never followed.
+ *
+ * @param string $path The path.
+ * @return bool Whether it's gone.
+ */
+function formulize_removeScreenTemplatePath($path) {
+	if (is_link($path) OR is_file($path)) {
+		// Windows removes a link to a folder with rmdir, which removes the link, not what it points to
+		return @unlink($path) OR (is_link($path) AND is_dir($path) AND rmdir($path));
+	}
+	if (!is_dir($path)) {
+		return !file_exists($path);
+	}
+	$removed = true;
+	foreach (array_diff((array) scandir($path), array('.', '..')) as $name) {
+		if (!formulize_removeScreenTemplatePath($path.'/'.$name)) {
+			$removed = false;
+		}
+	}
+	return $removed AND rmdir($path);
 }
 
 // returns the actual template we will use at render time. Reverts to default template if no specific template is set for this screen.

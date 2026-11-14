@@ -1382,6 +1382,13 @@ define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FROM", "Copy this screen's templates
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_DESC", "This screen has templates of its own in another theme. You can start from a copy of them. They keep that theme's markup, which this theme may not style completely.");
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FAILED", "The screen's templates could not be copied from the %s theme. Check that the web server can write to the modules/formulize/templates/screens folder.");
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_NOT_SITE_THEME", "Your site uses %1\$s. These are this screen's %2\$s templates, which are only used where %2\$s is the theme.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATES_ONLY_VARIABLES", "This screen still has variable templates of its own, on the Variables tab. Once you've emptied them all and saved, you can customize the templates again.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATES_NOT_ALLOWED", "You don't have permission to change this screen's templates, or its form is locked, so nothing was changed.");
+// The Variables tab, for a screen's own variable templates
+define("_AM_FORMULIZE_SCREEN_VARIABLES", "Variables");
+define("_AM_FORMULIZE_SCREEN_VARIABLES_THEME", "These are this screen's variable templates in the %s theme. They draw parts of the screen, such as the page numbers. You choose the theme on the Templates tab.");
+define("_AM_FORMULIZE_SCREEN_VARIABLES_EMPTY", "Empty a box and save, and that part of the screen goes back to the default.");
+define("_AM_FORMULIZE_SCREEN_VARIABLES_SAVE_FAILED", "These variable templates could not be saved: %s. Check that the web server can write to the modules/formulize/templates/screens folder.");
 
 // The update page
 define("_AM_FORMULIZE_UPDATE_TOKEN_FAILED", "The update didn't run, because the page had expired. Nothing has changed.");

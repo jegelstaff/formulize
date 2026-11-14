@@ -555,7 +555,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             error_log("ERROR: Could not remove template screen file: ".$foldername.$name);
             return false;
         }
-        formulize_removeScreenTemplateFolderIfEmpty($foldername);
+        formulize_removeScreenTemplateFoldersIfEmpty($foldername);
         return true;
     }
 

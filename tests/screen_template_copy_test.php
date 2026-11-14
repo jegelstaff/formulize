@@ -15,8 +15,8 @@
  *   - a template that differs from its default, or has no default, is a change
  *   - the theme's own defaults come first, then the system's, as when a screen is drawn
  *   - a screen with nothing changed takes nothing
- *   - a screen with a change takes its changed templates, and the defaults of its theme for the rest of its main
- *     templates. Default variable templates aren't filled in, since the admin UI can't clear them yet
+ *   - a screen with a change takes its changed templates, and the defaults of its theme for the rest of its
+ *     templates, its variable templates included, which its Variables tab can clear
  * The functions are lifted from modules/formulize/class/screen.php (and removeOpeningPHPTag() from include/functions.php),
  * since those files can't be included without the module bootstrap, and run against folders made for the test.
  *
@@ -180,7 +180,7 @@ try {
     check('it takes its changed template', isset($take['listtemplate.php']) && $take['listtemplate.php'] === "$sid/listtemplate.php");
     check('it takes the theme\'s default for a template it has an unchanged copy of', isset($take['toptemplate.php']) && $take['toptemplate.php'] === "$screens/Anari/default/listOfEntries/toptemplate.php");
     check('it takes the default for a template it has no copy of', isset($take['bottomtemplate.php']) && $take['bottomtemplate.php'] === "$screens/default/listOfEntries/bottomtemplate.php");
-    check('it doesn\'t fill in default variable templates', !isset($take['variables/currentViewList.php']));
+    check('it takes the default for a variable template, as it does for the main templates', isset($take['variables/currentViewList.php']) && $take['variables/currentViewList.php'] === "$screens/default/listOfEntries/variables/currentViewList.php");
     check('it takes nothing that isn\'t a template', !isset($take['index.html']));
 
     // a template with no default is the screen's own, and counts as a change

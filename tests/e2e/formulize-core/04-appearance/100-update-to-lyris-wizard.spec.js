@@ -1,8 +1,12 @@
 const { test, expect } = require('@playwright/test');
+const fs = require('fs');
+const path = require('path');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import {
-	login, dbQuery, dbPrefix, getSiteTheme, waitForAdminPageReady, saveAdminForm, setCodeMirrorValue,
-	chooseSiteThemes, expectSiteTheme, setDBVersion,
+	login, dbQuery, dbPrefix, getSiteTheme, waitForAdminPageReady, saveAdminForm,
+	chooseSiteThemes, expectSiteTheme, setDBVersion, screenTemplateFolderExists, openScreenTemplatesTab as openTemplatesTab,
+	showScreenTemplatesFor as showTemplatesFor, screenTemplatesForm as templatesForm, customizeScreenTemplates as customizeTemplates,
+	emptyScreenTemplates as emptyTemplates,
 } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
@@ -14,9 +18,11 @@ test.use({ baseURL: E2E_TEST_BASE_URL });
 // first whether to switch, which screens should take copies of their custom templates along, and which should start
 // using Lyris's screen settings. Nothing changes until the update runs, and cancelling changes nothing.
 //
-// The CI site is already up to date, so the spec sets the database version back by one, to just before the patch
-// that applies the answers. Every other patch has run already, so running the update from there runs only that one.
-// The update itself moves the version back to where the code needs it.
+// The CI site is already up to date, so the spec sets the database version back to just before the version that
+// brings in Lyris, which is when the update asks, and which patch 021 applies the answers at. That's read from
+// include/lyris_update.php, not taken as one below what the code requires, because later versions keep coming.
+// Every patch has run already, so running the update from there runs only the ones gated after it, and the update
+// itself moves the version back to where the code needs it.
 //
 // It uses two museum list screens: Collections, which is given custom templates in Anari first, and Exhibits, which
 // has none. It changes one setting on Collections, and the site's theme, and puts both back, through the admin pages,
@@ -25,6 +31,13 @@ test.use({ baseURL: E2E_TEST_BASE_URL });
 test.describe.configure({ mode: 'serial' });
 
 const UPDATE_PAGE = '/modules/formulize/admin/ui.php?op=patchDB';
+// the dbversion that brings in Lyris: the update asks about Lyris only while the stored version is below it
+const LYRIS_DBVERSION = (() => {
+	const source = fs.readFileSync(path.resolve(__dirname, '../../../../modules/formulize/include/lyris_update.php'), 'utf8');
+	const found = source.match(/define\('FORMULIZE_LYRIS_UPDATE_DBVERSION',\s*(\d+)\)/);
+	if (!found) throw new Error('FORMULIZE_LYRIS_UPDATE_DBVERSION is not defined in include/lyris_update.php');
+	return parseInt(found[1], 10);
+})();
 let required = 0;
 let collections = null;
 let exhibits = null;
@@ -61,40 +74,10 @@ async function requiredDBVersion(page) {
 	return parseInt(said[1], 10);
 }
 
-// Show a screen's templates for a theme on its Templates tab, which makes that the theme the tab edits
-async function showTemplatesFor(page, screen, theme) {
-	await openTemplatesTab(page, screen);
-	const picker = page.locator('select[name="screens-theme"]');
-	if (await picker.inputValue() !== theme) {
-		await Promise.all([page.waitForEvent('load'), picker.selectOption(theme)]);
-		await openTemplatesTab(page, screen);
-	}
-	await expect(picker).toHaveValue(theme);
-}
-
 async function adminPage(browser) {
 	const page = await browser.newPage({ baseURL: E2E_TEST_BASE_URL });
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 	return page;
-}
-
-async function openTemplatesTab(page, screen) {
-	await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${screen.fid}&sid=${screen.sid}&tab=templates`);
-	await waitForAdminPageReady(page);
-}
-
-function templatesForm(page) {
-	return page.locator('form:has(input[name="formulize_admin_handler"][value$="_templates"])');
-}
-
-// Give a screen its own copies of the default templates in the theme its Templates tab shows
-async function customizeTemplates(page, screen) {
-	await openTemplatesTab(page, screen);
-	const customize = page.getByRole('button', { name: 'Customize the Templates' });
-	await expect(customize).toBeVisible();
-	await Promise.all([page.waitForEvent('load'), customize.click()]);
-	await openTemplatesTab(page, screen);
-	await expect(templatesForm(page).locator('.CodeMirror').first()).toBeVisible();
 }
 
 // What one of the screen's templates holds, on its Templates tab, such as 'toptemplate'
@@ -117,22 +100,6 @@ async function changeTopTemplate(page, screen) {
 	await input.press('Enter');
 	await page.keyboard.type(TOP_TEMPLATE_CHANGE);
 	await saveAdminForm(page);
-}
-
-// Empty every template box on the screen's Templates tab and save, which puts the screen back on the default
-// templates in that theme
-async function emptyTemplates(page, screen) {
-	await openTemplatesTab(page, screen);
-	if (await page.getByRole('button', { name: 'Customize the Templates' }).isVisible()) {
-		return;
-	}
-	const boxes = templatesForm(page).locator('textarea.code-textarea');
-	for (const name of await boxes.evaluateAll(all => all.map(box => box.name))) {
-		await setCodeMirrorValue(page, `textarea[name="${name}"]`, '');
-	}
-	await saveAdminForm(page);
-	await openTemplatesTab(page, screen);
-	await expect(page.getByRole('button', { name: 'Customize the Templates' })).toBeVisible();
 }
 
 // Open the questions on the update page, and choose what to do with the theme
@@ -209,8 +176,8 @@ test.afterAll(async ({ browser }) => {
 
 test('The update asks about Lyris first, and cancelling changes nothing', async ({ browser }) => {
 	const page = await adminPage(browser);
-	// just before the patch that applies the answers, which is the only one that runs again
-	await setDBVersion(page, required - 1);
+	// just before the version that brings in Lyris, so the update asks about it again
+	await setDBVersion(page, LYRIS_DBVERSION - 1);
 
 	const dialog = await openWizard(page, 'switch');
 	// Anari and Lyris, side by side, drawn from the Appearance editor's samples. Each theme has a frame for each
@@ -238,7 +205,7 @@ test('The update asks about Lyris first, and cancelling changes nothing', async 
 	await expect(dialog).toBeHidden();
 
 	// nothing has changed
-	expect(storedDBVersion()).toBe(required - 1);
+	expect(storedDBVersion()).toBe(LYRIS_DBVERSION - 1);
 	expect(getSiteTheme().site).toBe('Anari');
 	expect(getSiteTheme().admin).toBe('Anari');
 	expect(screenTheme(collections.sid)).toBe('Anari');
@@ -297,7 +264,11 @@ test('A screen without templates of its own starts from Lyris\'s templates', asy
 	await expect(page.locator('select[name="screens-theme"]')).toHaveValue('Lyris');
 	await customizeTemplates(page, exhibits);
 	expect(await topTemplate(page, exhibits)).toContain('fz-');
+	// Lyris's variable templates come along too, so emptying the Templates tab alone leaves the screen's folder
+	expect(screenTemplateFolderExists('Lyris', exhibits.sid, 'variables')).toBe(true);
 	await emptyTemplates(page, exhibits);
+	// emptying both tabs leaves nothing of the screen's own in Lyris, not even the folder
+	expect(screenTemplateFolderExists('Lyris', exhibits.sid)).toBe(false);
 	await page.close();
 });
 

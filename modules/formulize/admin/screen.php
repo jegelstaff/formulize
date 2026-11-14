@@ -669,6 +669,12 @@ if(!file_exists($themeDefaultPath)) {
 // and a word when the theme shown isn't the one the site uses. Copies of the defaults that were never edited
 // aren't offered, since copying them takes nothing along (see copyTemplateFilesToTheme)
 if ($screen_id != 'new' AND $screen) {
+    // "Customize the Templates" is offered only while the screen has no folder of templates in the theme shown, so
+    // seeding never copies over anything that's there. A folder with only variable templates in it still counts, and
+    // the tab says to clear them on the Variables tab first (see formulize_removeScreenTemplateFoldersIfEmpty)
+    $templates['canSeed'] = (isset($templates['themes'][$screen->getVar('theme')]) AND !file_exists(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/".intval($screen->getVar('sid'))));
+    $templates['variablesOnlyNotice'] = (!$templates['canSeed'] AND empty($templates['usingTemplates']) AND $screen_handler->variableTemplateFiles($screen->getVar('sid'), $screen->getVar('theme')))
+        ? _AM_FORMULIZE_SCREEN_TEMPLATES_ONLY_VARIABLES : '';
     $templates['copyFromThemes'] = array();
     if (!$screen_handler->templateFilesInTheme($screen->getVar('sid'), $screen->getVar('theme'))) {
         foreach (array_keys($templates['themes']) as $otherTheme) {
@@ -731,14 +737,41 @@ if ($screen_id != "new") {
     $appearance['templatesTemplate'] = '';
     $appearance['templatesName'] = '';
     $appearance['subtab'] = 0;
+    // The Variables sub-tab, after Templates, when the screen has variable templates of its own in the theme the
+    // Templates tab shows, such as the ones "Customize the Templates" copies for a Lyris list. They draw parts of a
+    // list, such as $pageNavControls (see renderVariableTemplate)
+    $appearance['variables'] = array();
+    if ($variableTemplateFiles = $screen_handler->variableTemplateFiles($screen->getVar('sid'), $screen->getVar('theme'))) {
+        $appearance['variables']['sid'] = intval($screen->getVar('sid'));
+        $appearance['variables']['themeNotice'] = sprintf(_AM_FORMULIZE_SCREEN_VARIABLES_THEME, htmlspecialchars($screen->getVar('theme')));
+        $appearance['variables']['files'] = array();
+        foreach ($variableTemplateFiles as $variableName => $variableFile) {
+            $appearance['variables']['files'][] = array(
+                'name' => $variableName, // only letters, numbers and underscores (see variableTemplateFiles)
+                'contents' => htmlspecialchars((string) file_get_contents($variableFile)),
+            );
+        }
+    }
     if (isset($templatesTabs[$settings['type']])) {
         list($appearance['templatesTemplate'], $appearance['templatesName']) = $templatesTabs[$settings['type']];
-        // back on the sub-tab that was open, after a reload; or on Templates when it is asked for by name,
-        // as the top-level tab it used to be (ui.php finds no tab by that name, so leaves this choice alone)
+    }
+    // the sub-tabs are Options, then Templates and Variables when the screen has them
+    $subtabs = array('options' => 0);
+    if ($appearance['templatesTemplate']) {
+        $subtabs['templates'] = count($subtabs);
+    }
+    if ($appearance['variables']) {
+        $subtabs['variables'] = count($subtabs);
+    }
+    // back on the sub-tab that was open, after a reload; or on Templates or Variables when it is asked for by name,
+    // as Templates was a top-level tab once (ui.php finds no tab by that name, so leaves this choice alone). A
+    // sub-tab that isn't there any more, such as Variables once the last of them is cleared, opens on Options
+    if (count($subtabs) > 1) {
         if (isset($_POST['appearance_subtab']) AND $_POST['appearance_subtab'] !== '') {
-            $appearance['subtab'] = intval($_POST['appearance_subtab']) ? 1 : 0;
-        } elseif (isset($_GET['tab']) AND $_GET['tab'] == 'templates') {
-            $appearance['subtab'] = 1;
+            $appearance['subtab'] = intval($_POST['appearance_subtab']);
+            $appearance['subtab'] = ($appearance['subtab'] > 0 AND $appearance['subtab'] < count($subtabs)) ? $appearance['subtab'] : 0;
+        } elseif (isset($_GET['tab']) AND ($_GET['tab'] == 'templates' OR $_GET['tab'] == 'variables')) {
+            $appearance['subtab'] = isset($subtabs[$_GET['tab']]) ? $subtabs[$_GET['tab']] : 0;
             $adminPage['tabselected'] = 1; // Appearance, the second tab
         }
     }
@@ -771,6 +804,9 @@ $adminPage['tabs'][1] = array(
 
 if ($screen_id != "new") {
     $appearance['templates'] = $templates + $common;
+    if ($appearance['variables']) {
+        $appearance['variables'] += $common;
+    }
     $adminPage['tabs'][] = array(
         'name'      => _AM_SCREEN_APPEARANCE,
         'template'  => "db:admin/screen_appearance.html",

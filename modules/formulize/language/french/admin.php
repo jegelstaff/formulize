@@ -881,6 +881,13 @@ define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FROM", "Copier les templates de cet 
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_DESC", "Cet écran a ses propres templates dans un autre thème. Vous pouvez partir d'une copie de ceux-ci. Ils gardent le balisage de cet autre thème, que ce thème-ci ne mettra peut-être pas entièrement en forme.");
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FAILED", "Les templates de l'écran n'ont pas pu être copiés depuis le thème %s. Vérifiez que le serveur web peut écrire dans le dossier modules/formulize/templates/screens.");
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_NOT_SITE_THEME", "Votre site utilise %1\$s. Voici les templates %2\$s de cet écran, qui ne servent que là où le thème est %2\$s.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATES_ONLY_VARIABLES", "Cet écran a encore ses propres templates de variables, dans l'onglet Variables. Une fois que vous les aurez tous vidés et enregistrés, vous pourrez de nouveau personnaliser les templates.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATES_NOT_ALLOWED", "Vous n'avez pas la permission de modifier les templates de cet écran, ou son formulaire est verrouillé : rien n'a été changé.");
+// L'onglet Variables, pour les templates de variables propres à un écran
+define("_AM_FORMULIZE_SCREEN_VARIABLES", "Variables");
+define("_AM_FORMULIZE_SCREEN_VARIABLES_THEME", "Voici les templates de variables de cet écran dans le thème %s. Ils dessinent des parties de l'écran, comme les numéros de page. Le thème se choisit dans l'onglet Mise en page.");
+define("_AM_FORMULIZE_SCREEN_VARIABLES_EMPTY", "Videz une case et enregistrez : cette partie de l'écran reprend alors le template par défaut.");
+define("_AM_FORMULIZE_SCREEN_VARIABLES_SAVE_FAILED", "Ces templates de variables n'ont pas pu être enregistrés : %s. Vérifiez que le serveur web peut écrire dans le dossier modules/formulize/templates/screens.");
 
 // La page de mise à jour
 define("_AM_FORMULIZE_UPDATE_TOKEN_FAILED", "La mise à jour ne s'est pas faite, car la page avait expiré. Rien n'a changé.");

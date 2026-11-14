@@ -72,18 +72,31 @@
 </form>
 <{/capture}>
 
-<{if $content.templatesTemplate}>
+<{if $content.templatesTemplate OR $content.variables}>
 <div id="formulize-screen-appearance-tabs">
   <ul>
     <li><a href="#formulize-screen-appearance-options"><{$smarty.const._AM_SCREEN_APPEARANCE_OPTIONS}></a></li>
+    <{if $content.templatesTemplate}>
     <li><a href="#formulize-screen-appearance-templates"><{$content.templatesName}></a></li>
+    <{/if}>
+    <{if $content.variables}>
+    <li><a href="#formulize-screen-appearance-variables"><{$smarty.const._AM_FORMULIZE_SCREEN_VARIABLES}></a></li>
+    <{/if}>
   </ul>
   <div id="formulize-screen-appearance-options">
 <{$smarty.capture.appearanceOptions}>
   </div>
+  <{if $content.templatesTemplate}>
   <div id="formulize-screen-appearance-templates">
 <{include file=$content.templatesTemplate content=$content.templates number="templates"}>
   </div>
+  <{/if}>
+  <{* the screen's own variable templates, when it has any in the theme the Templates tab shows *}>
+  <{if $content.variables}>
+  <div id="formulize-screen-appearance-variables">
+<{include file="db:admin/screen_variable_templates.html" content=$content.variables number="variables"}>
+  </div>
+  <{/if}>
 </div>
 <{else}>
 <{$smarty.capture.appearanceOptions}>

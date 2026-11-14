@@ -371,10 +371,12 @@ modules/formulize/templates/screens/
 │   │   ├── drawer/           # The right slide-out drawer
 │   │   ├── form/             # Forms with no screen, and legacy form screens
 │   │   ├── listOfEntries/
+│   │   │   └── variables/    # Variable templates: currentViewList, moreActionsButton, pageNavControls
 │   │   ├── map/
 │   │   └── multiPage/        # Form screens
 │   ├── 123/                  # Custom templates for screen ID 123
-│   │   └── toptemplate.php
+│   │   ├── toptemplate.php
+│   │   └── variables/        # The screen's own variable templates
 │   └── 456/
 ├── Anari/                    # The same layout, with no drawer/ folder
 └── default/                  # Global fallback templates
@@ -388,6 +390,8 @@ modules/formulize/templates/screens/
 **List of entries:** `toptemplate.php` (content above the list), `openlisttemplate.php` (opens the list container), `listtemplate.php` (each row), `closelisttemplate.php` (closes the container) and `bottomtemplate.php` (content below the list).
 
 **Form screens, in `multiPage/`:** `toptemplate.php` (title, tabs, navigation), `elementcontainero.php` and `elementcontainerc.php` (open and close the container around an element), `elementtemplate1.php` (single-column layout), `elementtemplate2.php` (two-column layout, which collapses to one on narrow screens) and `bottomtemplate.php`.
+
+**Variable templates**, in `variables/`, draw small parts of a list, through `renderVariableTemplate()`, and are looked up one file at a time in the same order. Only Lyris and the global `default/` have them. "Customize the Templates" copies them along with the main templates, and the screen's Variables sub-tab edits them. A screen's folder is removed only once both sets are cleared (`formulize_removeScreenTemplateFoldersIfEmpty()`), and the Templates tab offers to customize only while the screen has no folder, so seeding never copies over a file. The module update removes copies of the theme's defaults that were never edited, compared only with the `default/` folder beside the screen's (`formulize_screenTemplateMatchesDefault()`), and the folders of deleted screens.
 
 A custom template that holds nothing but an opening PHP tag counts as empty, so the next one along is used. `formulize_themeForm::processTemplate()` runs form templates with `eval()`, with the screen's template variables in scope.
 

@@ -1617,6 +1617,116 @@ export function themeHasBeenActivated(theme) {
 	}
 }
 
+// ============================================================================
+// A screen's own templates, on its Appearance tab: the Templates sub-tab, and the Variables sub-tab beside it when
+// the screen has variable templates of its own (Lyris lists do, once their templates are customized)
+// ============================================================================
+
+/**
+ * Whether a screen has a folder of templates of its own in a theme, templates/screens/<theme>/<sid>/, on the server,
+ * or a path inside it such as 'variables'. Only reads, to check what the application did.
+ * @param {string} theme a theme's folder name, e.g. 'Lyris'
+ * @param {number} sid the screen
+ * @param {string} [inside] a path inside the screen's folder
+ * @returns {boolean}
+ */
+export function screenTemplateFolderExists(theme, sid, inside = '') {
+	if (!SAFE_THEME.test(theme)) throw new Error(`Not a theme name: ${theme}`);
+	if (inside && !/^[A-Za-z0-9_./-]+$/.test(inside)) throw new Error(`Not a path: ${inside}`);
+	const path = `/var/www/html/modules/formulize/templates/screens/${theme}/${parseInt(sid, 10)}${inside ? '/' + inside : ''}`;
+	try {
+		execFileSync('docker', ['exec', webContainer(), 'test', '-e', path], { stdio: 'ignore' });
+		return true;
+	} catch (e) {
+		return false;
+	}
+}
+
+/**
+ * Open a screen's Appearance tab on one of its sub-tabs, by name, as a link would.
+ * @param {import('@playwright/test').Page} page
+ * @param {{sid: number, fid: number}} screen
+ * @param {string} [tab] 'templates' or 'variables'
+ */
+export async function openScreenTemplatesTab(page, screen, tab = 'templates') {
+	await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${screen.fid}&sid=${screen.sid}&tab=${tab}`);
+	await waitForAdminPageReady(page);
+}
+
+/** The form on a screen's Templates sub-tab */
+export function screenTemplatesForm(page) {
+	return page.locator('form:has(input[name="formulize_admin_handler"][value$="_templates"]:not([value="screen_variable_templates"]))');
+}
+
+/** The form on a screen's Variables sub-tab */
+export function variableTemplatesForm(page) {
+	return page.locator('form:has(input[name="formulize_admin_handler"][value="screen_variable_templates"])');
+}
+
+/** The link to a screen's Variables sub-tab, which is only there while it has variable templates of its own */
+export function variablesSubtab(page) {
+	return page.locator('#formulize-screen-appearance-tabs > ul').getByRole('link', { name: 'Variables', exact: true });
+}
+
+/**
+ * Show a screen's templates for a theme on its Templates tab, which makes that the theme the tab edits.
+ * @param {import('@playwright/test').Page} page
+ * @param {{sid: number, fid: number}} screen
+ * @param {string} theme
+ */
+export async function showScreenTemplatesFor(page, screen, theme) {
+	await openScreenTemplatesTab(page, screen);
+	const picker = page.locator('select[name="screens-theme"]');
+	if (await picker.inputValue() !== theme) {
+		await Promise.all([page.waitForEvent('load'), picker.selectOption(theme)]);
+		await openScreenTemplatesTab(page, screen);
+	}
+	await expect(picker).toHaveValue(theme);
+}
+
+/**
+ * Give a screen its own copies of the default templates in the theme its Templates tab shows, with "Customize the
+ * Templates".
+ * @param {import('@playwright/test').Page} page
+ * @param {{sid: number, fid: number}} screen
+ */
+export async function customizeScreenTemplates(page, screen) {
+	await openScreenTemplatesTab(page, screen);
+	const customize = page.getByRole('button', { name: 'Customize the Templates' });
+	await expect(customize).toBeVisible();
+	await Promise.all([page.waitForEvent('load'), customize.click()]);
+	await openScreenTemplatesTab(page, screen);
+	await expect(screenTemplatesForm(page).locator('.CodeMirror').first()).toBeVisible();
+}
+
+/**
+ * Empty every box on a screen's Templates tab, and on its Variables tab if it has one, and save them together,
+ * which puts the screen back on the default templates in the theme the Templates tab shows. Does nothing when the
+ * tab already offers "Customize the Templates".
+ * @param {import('@playwright/test').Page} page
+ * @param {{sid: number, fid: number}} screen
+ */
+export async function emptyScreenTemplates(page, screen) {
+	await openScreenTemplatesTab(page, screen);
+	const customize = page.getByRole('button', { name: 'Customize the Templates' });
+	if (await customize.isVisible()) {
+		return;
+	}
+	for (const name of await screenTemplatesForm(page).locator('textarea.code-textarea').evaluateAll(all => all.map(box => box.name))) {
+		await setCodeMirrorValue(page, `textarea[name="${name}"]`, '');
+	}
+	if (await variablesSubtab(page).count()) {
+		await variablesSubtab(page).click();
+		for (const name of await variableTemplatesForm(page).locator('textarea.code-textarea').evaluateAll(all => all.map(box => box.name))) {
+			await setCodeMirrorValue(page, `textarea[name="${name}"]`, '');
+		}
+	}
+	await saveAdminForm(page);
+	await openScreenTemplatesTab(page, screen);
+	await expect(customize).toBeVisible();
+	await expect(variablesSubtab(page)).toHaveCount(0);
+}
+
 /**
  * Forget that a theme has been the site's theme, the way a webmaster does, by deleting activated.lock from the
  * server, so the next switch to it on Appearance > Settings asks about it again. The application has no way to do it.

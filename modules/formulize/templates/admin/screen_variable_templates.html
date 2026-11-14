@@ -1,0 +1,30 @@
+<{* form elements must be named with their object name hyphen field name *}>
+<{* no other elements should have hyphens, since that tells the saving system that this is a property of an object to update *}>
+<{* securitytoken should be part of the form *}>
+<{* formulize_admin_handler and formulize_admin_key are required, to tell what the name of the save handling file is, and what the key is that we are inserting/updating on *}>
+
+<{* The Variables sub-tab of a screen's Appearance tab: one box for each of the screen's own variable templates in the
+   theme the Templates tab shows. The legends are the variables' names as templates use them, which are code, so
+   they aren't translated. ui.html makes each .code-textarea a code editor. *}>
+<form id="form-<{$number}>" class="formulize-admin-form">
+    <{$securitytoken}>
+    <input type="hidden" name="formulize_admin_handler" value="screen_variable_templates">
+    <input type="hidden" name="formulize_admin_key" value="<{$content.sid}>">
+
+    <div class="panel-content content">
+
+        <p><{$content.themeNotice}></p>
+        <p><{$smarty.const._AM_FORMULIZE_SCREEN_VARIABLES_EMPTY}></p><br />
+
+        <{foreach from=$content.files item=variableTemplate}>
+        <div class="form-item">
+            <fieldset>
+                <legend>$<{$variableTemplate.name}></legend>
+                <textarea id="variabletemplates-<{$variableTemplate.name}>" name="variabletemplates-<{$variableTemplate.name}>" class="code-textarea canValidate" rows="20"/>
+<{$variableTemplate.contents}></textarea>
+            </fieldset>
+        </div>
+        <{/foreach}>
+
+    </div>
+</form>

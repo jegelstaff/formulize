@@ -71,7 +71,7 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 
 	formulize_remove_stray_registered_user_edit_form_permissions();
 	formulize_ensure_screen_template_folder_for_theme();
-	formulize_remove_empty_screen_templates();
+	formulize_remove_empty_screen_templates(xoops_getmodulehandler('screen', 'formulize')->getTypesBySid());
 	formulize_warn_about_element_containers_missing_element_class();
 	formulize_repair_custom_openlisttemplate_functions();
 
@@ -168,9 +168,18 @@ function formulize_ensure_screen_template_folder_for_theme() {
 }
 
 /**
- * Remove the screen template files that have nothing in them, and the screens' template folders that leaves
- * empty. Mark the ones that hold only the opening PHP tag as blank on purpose.
+ * Clear out the screens' own templates, in templates/screens/<theme>/<sid>/, that aren't customized. In this order:
  *
+ * 1. The folders of screens that don't exist any more, with everything in them. Deleting a screen used to leave its
+ *    variables/ folder, and the folder it was in, behind, where a new screen with the same sid would pick them up.
+ *    When the screens couldn't be read, this is skipped, so an error is never taken to mean there are no screens.
+ * 2. The templates that are copies of their theme's defaults, never edited (see
+ *    formulize_screenTemplateMatchesDefault): main templates, and variable templates in variables/. Those screens
+ *    are drawn the same without them, and a screen whose templates were all seeded and never edited goes back to
+ *    having none, so its Templates tab offers to customize them again. Template screens have no defaults.
+ * 3. The templates that have nothing in them, as below, in variables/ as well. Then the folders that leaves empty.
+ *
+
  * A screen whose template has nothing in it has no template of its own and is drawn with the default, the same
  * as when there is no file. Saving a screen's templates leaves no files like that (see
  * formulizeScreen::writeTemplateFile), but earlier versions wrote them for every new screen, and for every
@@ -188,18 +197,53 @@ function formulize_ensure_screen_template_folder_for_theme() {
  *
  * Runs on every update, to catch them on every site, including any that come back with a copy of a site's files.
  *
+ * Takes the screens as a parameter, and uses only the functions in class/screen.php that work on files, so
+ * tests/screen_template_cleanup_test.php can run it without the database.
+ *
+ * @param array|bool $screens sid => type of every screen there is, or false if they couldn't be read.
  * @return void
  */
-function formulize_remove_empty_screen_templates() {
-	include_once XOOPS_ROOT_PATH.'/modules/formulize/class/screen.php';
+function formulize_remove_empty_screen_templates($screens) {
+	$screensFolder = XOOPS_ROOT_PATH.'/modules/formulize/templates/screens';
+	$shortenFrom = rtrim(str_replace('\\', '/', XOOPS_ROOT_PATH), '/').'/'; // for paths in the report
+
+	// 1. the folders of screens that don't exist
+	$deletedScreenFolders = array();
+	if(is_array($screens)) {
+		$sidsWithFolders = array();
+		foreach((array) glob($screensFolder.'/*/*', GLOB_ONLYDIR) as $screenFolder) {
+			if(ctype_digit(basename($screenFolder)) AND basename(dirname($screenFolder)) !== 'default') {
+				$sidsWithFolders[basename($screenFolder)] = true;
+			}
+		}
+		foreach(array_keys($sidsWithFolders) as $sid) {
+			if(!isset($screens[intval($sid)])) {
+				$deletedScreenFolders = array_merge($deletedScreenFolders, formulize_deleteScreenTemplateFolders($sid));
+			}
+		}
+	} else {
+		print "Warning: the screens could not be read, so the template folders of deleted screens were not looked for. They will be on the next update.<br>";
+	}
+
+	// 2. copies of the defaults, and 3. empty templates
+	$copiesRemoved = 0;
 	$removed = 0;
 	$markedBlank = array();
 	$notMarked = array();
-	foreach((array) glob(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/*/*', GLOB_ONLYDIR) as $screenFolder) {
-		if(!ctype_digit(basename($screenFolder))) {
+	foreach((array) glob($screensFolder.'/*/*', GLOB_ONLYDIR) as $screenFolder) {
+		if(!ctype_digit(basename($screenFolder)) OR basename(dirname($screenFolder)) === 'default') {
 			continue; // a theme's default templates, not one screen's own
 		}
-		foreach(array_merge((array) glob($screenFolder.'/*.php'), (array) glob($screenFolder.'/template.html')) as $templateFile) {
+		$type = (is_array($screens) AND isset($screens[intval(basename($screenFolder))])) ? $screens[intval(basename($screenFolder))] : '';
+		$variableTemplates = (array) glob($screenFolder.'/variables/*.php');
+		if($type AND $type != 'template') {
+			foreach(array_merge((array) glob($screenFolder.'/*.php'), $variableTemplates) as $templateFile) {
+				if(formulize_screenTemplateMatchesDefault($templateFile, $type) AND unlink($templateFile)) {
+					$copiesRemoved++;
+				}
+			}
+		}
+		foreach(array_merge((array) glob($screenFolder.'/*.php'), (array) glob($screenFolder.'/template.html'), $variableTemplates) as $templateFile) {
 			if(!is_file($templateFile)) {
 				continue;
 			}
@@ -207,8 +251,8 @@ function formulize_remove_empty_screen_templates() {
 			if(trim($template) !== '' AND (basename($templateFile) == 'template.html' OR !formulize_screenTemplateIsEmpty($template))) {
 				continue;
 			}
-			$shortName = str_replace(XOOPS_ROOT_PATH.'/', '', $templateFile);
-			if(trim($template) === '' OR basename($templateFile) == 'code.php') {
+			$shortName = str_replace($shortenFrom, '', str_replace('\\', '/', $templateFile));
+			if(trim($template) === '' OR (basename($templateFile) == 'code.php' AND basename(dirname($templateFile)) != 'variables')) {
 				if(unlink($templateFile)) {
 					$removed++;
 				}
@@ -218,7 +262,14 @@ function formulize_remove_empty_screen_templates() {
 				$notMarked[] = $shortName;
 			}
 		}
-		formulize_removeScreenTemplateFolderIfEmpty($screenFolder);
+		formulize_removeScreenTemplateFoldersIfEmpty($screenFolder);
+	}
+	if($deletedScreenFolders) {
+		print "Removed the template folders of screens that no longer exist. result: OK<br>"
+			.implode("<br>", array_map(function($folder) use ($shortenFrom) { return htmlspecialchars(str_replace($shortenFrom, '', str_replace('\\', '/', $folder))); }, $deletedScreenFolders))."<br>";
+	}
+	if($copiesRemoved) {
+		print "Removed $copiesRemoved screen template files that were copies of their theme's default templates, which the screens use in their place. result: OK<br>";
 	}
 	if($removed) {
 		print "Removed $removed empty screen template files. result: OK<br>";

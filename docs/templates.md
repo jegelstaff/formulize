@@ -24,6 +24,21 @@ Any variables can be made available in a template. Sometimes, determining exactl
 
 The next time the page is refreshed, a popup window will appear listing all of the available variables and showing what they contain.
 
+## A List's Variable Templates
+
+In Lyris, three small parts of a list of entries are drawn by templates of their own, called variable templates:
+
+- `$currentViewList`, the switcher for saved views, beside the list's title
+- `$moreActionsButton`, the button that opens the list's other actions
+- `$pageNavControls`, the page controls at the bottom of the list
+
+When you click **Customize the Templates** on a list screen's Templates tab, the screen gets its own copy of these as well as of its main templates. A **Variables** tab then appears beside Templates, on the screen's Appearance tab, with a box for each one. Edit a box and click **Save your changes**, and the list shows your version of that part.
+
+- The Variables tab shows the files for the theme picked on the Templates tab. Anari has no variable templates, so a list screen there has no Variables tab.
+- Empty a box and save, and that part of the list goes back to the default. Once every box is empty, the Variables tab goes away.
+- While the screen still has variable templates of its own, its Templates tab doesn't offer **Customize the Templates**, even if you've emptied every main template. Empty the boxes on the Variables tab first.
+- To put a screen back on the default templates completely, empty every box on both the Templates and the Variables tabs, and save.
+
 ## Urls
 
 The site can be installed in the root of a website, or in a subfolder. For example, the site might be located at http://formulize.com/ or that might be a blog and the Formulize portion of the website might be located at http://formulize.com/demo/. For this reason, when adding links in templates, use the base url variable like this:
