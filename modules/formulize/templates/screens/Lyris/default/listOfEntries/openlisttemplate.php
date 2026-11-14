@@ -34,7 +34,8 @@ print "
 			$searchRowHidden = $searchesShown == 2 ? ' hidden' : '';
 			print "<tr class='lyris-search-row'$searchRowHidden>";
 
-			if($searchHelp OR $toggleSearches) {
+			// the margin column is there only when the list has checkboxes or view entry links, the same as in drawHeaderRow() and listtemplate.php, so the columns line up
+			if($checkBoxesShown OR $viewEntryLinksShown) {
 				print "<td class='lyris-cb head' id='celladdress_1_margin'>$toggleSearches $searchHelp</td>";
 			}
 

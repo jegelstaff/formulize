@@ -2160,7 +2160,7 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 					// draw in the heading row if necessary and keep track of how many rows it's been
 					if($headcounter == $repeatHeaders AND $repeatHeaders > 0) {
 						if($useHeadings AND function_exists('drawHeaderRow')) {
-							print drawHeaderRow($templateVariables['headers'], $templateVariables['checkBoxesShown'], $templateVariables['viewEntryLinksShown'], $templateVariables['columnWidthStyle'], $templateVariables['headingHelpAndLockShown'], $templateVariables['lockedColumns'], $templateVariables['numberOfInlineCustomButtons'], $templateVariables['spacerNeeded']);
+							print drawHeaderRow($templateVariables['headers'], $templateVariables['checkBoxesShown'], $templateVariables['viewEntryLinksShown'], $templateVariables['columnWidthStyle'], $templateVariables['headingHelpAndLockShown'], $templateVariables['lockedColumns'], $templateVariables['numberOfInlineCustomButtons'], $templateVariables['spacerNeeded'], $templateVariables['toggleSearches']);
 						}
 						$headcounter = 0;
 					}
@@ -2312,10 +2312,12 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 					$templateVariables['customButtons'] = array();
 					foreach($inlineButtons as $caid=>$thisCustomAction) {
 						list($caCode) = processCustomButton($caid, $thisCustomAction, $screen->getVar('sid'), $entry_id, $entry); // only bother with the code, since we already processed any clicked button above
-						if($caCode) {
-							$templateVariables[$thisCustomAction['handle']] = $caCode;
-							$templateVariables['customButtons'][$thisCustomAction['handle']] = $caCode; // assign the button code that was returned
-						}
+						// every inline button gets its place in every row, empty when a button's own HTML has nothing to show for this entry,
+						// so the row has the same cells as the header and search rows, which have one for each of $inlineButtons.
+						// It's set even when empty, because $templateVariables carries over from the previous row, which would otherwise leave that entry's button here
+						$caCode = $caCode ? $caCode : '';
+						$templateVariables[$thisCustomAction['handle']] = $caCode;
+						$templateVariables['customButtons'][$thisCustomAction['handle']] = $caCode;
 					}
 
 					// Groups composite mode: template groups get no checkbox or edit icon.

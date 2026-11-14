@@ -20,7 +20,7 @@ print "
 
 		// draw the row of headers
 		if($headersShown) {
-			print drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $columnWidthStyle, $headingHelpAndLockShown, $lockedColumns, $numberOfInlineCustomButtons, $spacerNeeded);
+			print drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $columnWidthStyle, $headingHelpAndLockShown, $lockedColumns, $numberOfInlineCustomButtons, $spacerNeeded, $toggleSearches);
 		}
 
 		// draw the row of search boxes
@@ -82,7 +82,8 @@ print "
 // $lockedColumns is an array of all columns that are currently locked by the user. The values are numbers indicating which columns are locked. Columns are numbered from 0 on the far left.
 // $numberOfInlineCustomButtons is a number indicating if the number of inline custom buttons, so we can add columns to account for them
 // $spacerNeeded is a boolean that indicates if we need to add something to take up space on the right side. Used so the browser will respect specific widths the user might have specified for columns
-function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $columnWidthStyle, $headingHelpAndLockShown, $lockedColumns, $numberOfInlineCustomButtons, $spacerNeeded) {
+// $toggleSearches is the link for showing and hiding the row of search boxes, when the screen hides that row until the user opens it. It goes in the column for the selection checkboxes and view entry links, so the column is drawn when the link is there, even if there are no checkboxes or links
+function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $columnWidthStyle, $headingHelpAndLockShown, $lockedColumns, $numberOfInlineCustomButtons, $spacerNeeded, $toggleSearches = "") {
 
 	// keep a persistent counter for which heading row we're drawing
 	// since there can be more than one heading row per page, if headings are being repeated
@@ -92,8 +93,8 @@ function drawHeaderRow($headers, $checkBoxesShown, $viewEntryLinksShown, $column
 	// make an array of the cells we are going to draw, then draw them in a row
 	$cells = array();
 
-	// draw in a cell for the column with the selection checkboxes and view entry links
-	if($checkBoxesShown OR $viewEntryLinksShown) {
+	// draw in a cell for the column with the selection checkboxes and view entry links, or the link for toggling the search boxes, the same as the search row and the rows of entries do
+	if($checkBoxesShown OR $viewEntryLinksShown OR $toggleSearches) {
 		$cells[] = "<td class='head formulize-controls-head' id='celladdress_h$headingRowNumber"."_"."margin'>&nbsp;</td>";
 	}
 
