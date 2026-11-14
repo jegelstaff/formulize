@@ -337,27 +337,47 @@ function formulize_lyrisUpdateSettingsOffered() {
 }
 
 /**
- * The screens, other than template screens, that have templates of their own in their theme, and none in Lyris, so
- * they can take copies along.
+ * The screens, other than template screens, that have templates of their own in their theme that were changed from
+ * that theme's defaults, and none in Lyris, so they can take copies along. Copies of the defaults that were never
+ * edited don't count, since a screen with only those is drawn the same with Lyris's own defaults.
  *
  * @return array sid => the theme the templates are in
  */
 function formulize_lyrisUpdateTemplatesOffered() {
-    static $offered = null;
-    if ($offered !== null) {
-        return $offered;
-    }
     $offered = array();
+    foreach (formulize_lyrisUpdateChangedTemplates() as $sid => $changed) {
+        $offered[$sid] = $changed['theme'];
+    }
+    return $offered;
+}
+
+/**
+ * The changed templates of each screen formulize_lyrisUpdateTemplatesOffered() offers, so the wizard can say which
+ * they are. When a screen is copied, the defaults of its theme come along for the rest (see copyTemplateFilesToTheme).
+ *
+ * @return array sid => array('theme' => the theme the templates are in, 'files' => their paths in the screen's
+ *               folder, such as 'toptemplate.php', sorted)
+ */
+function formulize_lyrisUpdateChangedTemplates() {
+    static $changedTemplates = null;
+    if ($changedTemplates !== null) {
+        return $changedTemplates;
+    }
+    $changedTemplates = array();
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
     foreach (formulize_lyrisUpdateScreens() as $sid => $screenInfo) {
         if ($screenInfo['type'] == 'template' OR $screenInfo['theme'] === FORMULIZE_LYRIS_UPDATE_TO) {
             continue;
         }
-        if ($screen_handler->templateFilesInTheme($sid, $screenInfo['theme']) AND !$screen_handler->templateFilesInTheme($sid, FORMULIZE_LYRIS_UPDATE_TO)) {
-            $offered[$sid] = $screenInfo['theme'];
+        if ($screen_handler->templateFilesInTheme($sid, FORMULIZE_LYRIS_UPDATE_TO)) {
+            continue;
+        }
+        if ($files = array_keys($screen_handler->changedTemplateFilesInTheme($sid, $screenInfo['theme'], $screenInfo['type']))) {
+            sort($files);
+            $changedTemplates[$sid] = array('theme' => $screenInfo['theme'], 'files' => $files);
         }
     }
-    return $offered;
+    return $changedTemplates;
 }
 
 /**

@@ -85,11 +85,16 @@ if (!$lyrisSwitching AND isset(formulize_getAppearanceThemes()[$lyrisFromTheme])
 $lyrisPreviewScreen = isset($lyrisPreviewScreens['list']) ? 'list' : (string) key($lyrisPreviewScreens);
 $lyrisPreviewUrl = XOOPS_URL . '/modules/formulize/appearance_preview.php';
 
-// the screens with templates to copy, by where they are
+// the screens with templates to copy, by where they are, each with the templates that were changed, which are the
+// reason it's offered
 $lyrisTemplateGroups = array();
+$lyrisChangedTemplates = formulize_lyrisUpdateChangedTemplates();
 foreach ($lyrisScreens as $sid => $screenInfo) {
     if (isset($lyrisTemplates[$sid])) {
-        $lyrisTemplateGroups[$screenInfo['where']][$sid] = $screenInfo['title'];
+        $lyrisTemplateGroups[$screenInfo['where']][$sid] = array(
+            'title' => $screenInfo['title'],
+            'changed' => sprintf(_AM_FORMULIZE_LYRIS_TEMPLATES_CHANGED, htmlspecialchars(implode(', ', $lyrisChangedTemplates[$sid]['files']))),
+        );
     }
 }
 
@@ -336,8 +341,9 @@ $lyrisSwitchIntro = function ($step) use ($lyrisSwitching, $lyrisFirstStep) {
                 <fieldset class="fz-card fz-field">
                     <legend class="fz-field__label"><?php echo $where; ?></legend>
                     <div class="fz-choice-group">
-                        <?php foreach ($groupScreens as $sid => $title) { ?>
-                        <label class="fz-choice"><input type="checkbox" class="fz-checkbox formulize-lyris-template-screen" name="lyris_copy_templates[]" value="<?php echo intval($sid); ?>" checked> <?php echo $title; ?></label>
+                        <?php foreach ($groupScreens as $sid => $templateScreen) { ?>
+                        <label class="fz-choice"><input type="checkbox" class="fz-checkbox formulize-lyris-template-screen" name="lyris_copy_templates[]" value="<?php echo intval($sid); ?>" checked>
+                            <span class="fz-stack fz-gap-1"><span><?php echo $templateScreen['title']; ?></span><span class="fz-text-sm fz-text-muted fz-wrap-break-word formulize-lyris-template-files"><?php echo $templateScreen['changed']; ?></span></span></label>
                         <?php } ?>
                     </div>
                 </fieldset>

@@ -931,10 +931,31 @@ class formulizeScreenHandler {
     }
 
     /**
-     * Give a screen copies of its own templates from one theme, in a theme where it has none yet. The files are
-     * copied as they are, so they keep the markup of the theme they came from. A screen that already has templates
-     * in the other theme is left alone, so nothing that was made there is ever replaced. A template screen's code
-     * and template are copied by its own handler (formulizeTemplateScreenHandler::copyTemplatesToTheme).
+     * The templates a screen has of its own in one theme that have been changed from that theme's defaults for its
+     * type (see formulize_screenTemplatesChanged). Copies of the defaults that were never edited aren't counted. A
+     * template screen has no defaults, so all of its files count.
+     *
+     * @param int $sid The screen.
+     * @param string $theme The theme's folder name.
+     * @param string $type The screen's type.
+     * @return array path inside the screen's folder => full path of the file
+     */
+    function changedTemplateFilesInTheme($sid, $theme, $type) {
+        $files = $this->templateFilesInTheme($sid, $theme);
+        if($type == 'template' OR !$files) {
+            return $files;
+        }
+        return formulize_screenTemplatesChanged($files, formulize_screenTemplateDefaults(XOOPS_ROOT_PATH."/modules/formulize/templates/screens", $theme, $type));
+    }
+
+    /**
+     * Give a screen copies of its own templates from one theme, in a theme where it has none yet. Only a screen with
+     * templates that were changed from the defaults has anything to take along (see formulize_screenTemplatesToTake),
+     * and it takes its changed templates, and the defaults of the theme they come from for the rest of its main
+     * templates, so it's drawn the same in the other theme. The files are copied as they are, so they keep the markup
+     * of that theme. A screen that already has templates in the other theme is left alone, so nothing that was made
+     * there is ever replaced. A template screen's code and template are copied by its own handler
+     * (formulizeTemplateScreenHandler::copyTemplatesToTheme).
      *
      * @param object $screen The screen.
      * @param string $fromTheme The theme to copy the templates from.
@@ -957,9 +978,11 @@ class formulizeScreenHandler {
         if($this->templateFilesInTheme($sid, $toTheme)) {
             return true;
         }
-        $targetFolder = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$toTheme."/".$sid;
+        $screensFolder = XOOPS_ROOT_PATH."/modules/formulize/templates/screens";
+        $targetFolder = $screensFolder."/".$toTheme."/".$sid;
         $copied = true;
-        foreach($this->templateFilesInTheme($sid, $fromTheme) as $path => $sourceFile) {
+        $filesToTake = formulize_screenTemplatesToTake($this->templateFilesInTheme($sid, $fromTheme), formulize_screenTemplateDefaults($screensFolder, $fromTheme, $screen->getVar('type')));
+        foreach($filesToTake as $path => $sourceFile) {
             $targetFile = $targetFolder."/".$path;
             if((!is_dir(dirname($targetFile)) AND !mkdir(dirname($targetFile), 0777, true)) OR !copy($sourceFile, $targetFile)) {
                 error_log("ERROR: Could not copy template file $sourceFile of screen $sid to the $toTheme theme");
@@ -1122,6 +1145,107 @@ function getDefaultTemplate($templateName, $type, $theme="") {
  */
 function formulize_screenTemplateIsEmpty($template) {
 	return trim(removeOpeningPHPTag((string) $template)) === '';
+}
+
+/**
+ * A screen template's text, ready to compare with another copy of it: every line ending made the same, and the space
+ * at either end removed. Copies may have been through an editor that writes Windows line endings, and the Templates
+ * tab trims what it saves, so an unchanged copy is often not the same byte for byte.
+ *
+ * @param string $template The template's contents.
+ * @return string The contents to compare.
+ */
+function formulize_normalizeScreenTemplate($template) {
+	return trim(str_replace(array("\r\n", "\r"), "\n", (string) $template));
+}
+
+/**
+ * The template files in a folder and the folders in it, such as a type's default templates, that have something in
+ * them (see formulize_screenTemplateIsEmpty). Only PHP files are templates, so notes kept beside them are left out.
+ *
+ * @param string $folder The folder.
+ * @return array path inside the folder, with forward slashes => full path of the file
+ */
+function formulize_screenTemplateFilesIn($folder) {
+	$files = array();
+	if (!is_dir($folder)) {
+		return $files;
+	}
+	foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($folder, FilesystemIterator::SKIP_DOTS)) as $file) {
+		if ($file->isFile() AND strtolower($file->getExtension()) == 'php' AND !formulize_screenTemplateIsEmpty(file_get_contents($file->getPathname()))) {
+			$files[str_replace('\\', '/', substr($file->getPathname(), strlen($folder) + 1))] = $file->getPathname();
+		}
+	}
+	return $files;
+}
+
+/**
+ * The default templates a type of screen is drawn with in a theme, which are what a screen uses for any template it
+ * has none of its own for. Each is the theme's default when the theme has one, and the system default otherwise, the
+ * same choice getTemplatePath() makes when a screen is drawn. Variable templates are included, as 'variables/...'.
+ *
+ * @param string $screensFolder The templates/screens folder.
+ * @param string $theme The theme's folder name.
+ * @param string $type The type of screen, such as 'listOfEntries'.
+ * @return array path inside the type's folder, such as 'toptemplate.php' => full path of the default
+ */
+function formulize_screenTemplateDefaults($screensFolder, $theme, $type) {
+	if (!preg_match('/^[A-Za-z]+$/', (string) $type)) {
+		return array();
+	}
+	$defaults = formulize_screenTemplateFilesIn($screensFolder.'/default/'.$type);
+	if ($theme !== '' AND $theme !== 'default') {
+		// the theme's own take the place of the system's
+		$defaults = formulize_screenTemplateFilesIn($screensFolder.'/'.$theme.'/default/'.$type) + $defaults;
+	}
+	return $defaults;
+}
+
+/**
+ * Which of a screen's own templates have been changed from the defaults: any that differ from the default for that
+ * template, once their line endings and the space at either end are evened out, and any there's no default for.
+ * Copies of the defaults that were never edited are left out.
+ *
+ * @param array $files The screen's own templates, path inside its folder => full path, as templateFilesInTheme() gives.
+ * @param array $defaults The defaults, as formulize_screenTemplateDefaults() gives them.
+ * @return array The changed ones, in the same form as $files.
+ */
+function formulize_screenTemplatesChanged($files, $defaults) {
+	$changed = array();
+	foreach ($files as $path => $file) {
+		if (!isset($defaults[$path]) OR formulize_normalizeScreenTemplate(file_get_contents($file)) !== formulize_normalizeScreenTemplate(file_get_contents($defaults[$path]))) {
+			$changed[$path] = $file;
+		}
+	}
+	return $changed;
+}
+
+/**
+ * The files a screen takes along when its templates are copied to another theme, so that it's drawn there just as it
+ * is in the theme they come from. When none of its templates have been changed, there's nothing to take: the screen
+ * uses the other theme's defaults there. Otherwise it takes its changed templates, and the defaults for the rest of
+ * its main templates, since templates of one theme may not fit with another theme's defaults, such as the rows of a
+ * list and the table they're in.
+ *
+ * Variable templates (in variables/) are taken only when the screen has changed ones of its own. The defaults aren't
+ * filled in for them, since a screen's variable templates can't yet be seen or cleared in the admin UI, so a copy of
+ * one would stay in the screen's folder after its Templates tab had been cleared.
+ *
+ * @param array $files The screen's own templates, path inside its folder => full path, as templateFilesInTheme() gives.
+ * @param array $defaults The defaults in the theme they come from, as formulize_screenTemplateDefaults() gives them.
+ * @return array path inside the screen's folder => full path of the file to copy there
+ */
+function formulize_screenTemplatesToTake($files, $defaults) {
+	$changed = formulize_screenTemplatesChanged($files, $defaults);
+	if (!$changed) {
+		return array();
+	}
+	foreach ($defaults as $path => $default) {
+		if (strpos($path, '/') === false AND !isset($changed[$path])) {
+			$changed[$path] = $default;
+		}
+	}
+	return $changed;
 }
 
 /**

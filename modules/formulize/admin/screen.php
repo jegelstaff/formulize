@@ -665,13 +665,14 @@ $templates['seedtemplates'] = $themeDefaultPath;
 if(!file_exists($themeDefaultPath)) {
     $templates['seedtemplates'] = str_replace($themeFolder.'/default', 'default', $themeDefaultPath);
 }
-// the themes the screen has templates of its own in, to copy into the theme shown when it has none there, and a
-// word when the theme shown isn't the one the site uses
+// the themes the screen has changed templates of its own in, to copy into the theme shown when it has none there,
+// and a word when the theme shown isn't the one the site uses. Copies of the defaults that were never edited
+// aren't offered, since copying them takes nothing along (see copyTemplateFilesToTheme)
 if ($screen_id != 'new' AND $screen) {
     $templates['copyFromThemes'] = array();
     if (!$screen_handler->templateFilesInTheme($screen->getVar('sid'), $screen->getVar('theme'))) {
         foreach (array_keys($templates['themes']) as $otherTheme) {
-            if ($otherTheme !== $screen->getVar('theme') AND $screen_handler->templateFilesInTheme($screen->getVar('sid'), $otherTheme)) {
+            if ($otherTheme !== $screen->getVar('theme') AND $screen_handler->changedTemplateFilesInTheme($screen->getVar('sid'), $otherTheme, $screen->getVar('type'))) {
                 $templates['copyFromThemes'][] = array(
                     'theme' => htmlspecialchars($otherTheme),
                     'label' => htmlspecialchars(sprintf(_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FROM, $otherTheme)),

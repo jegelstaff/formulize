@@ -97,9 +97,26 @@ async function customizeTemplates(page, screen) {
 	await expect(templatesForm(page).locator('.CodeMirror').first()).toBeVisible();
 }
 
-async function topTemplate(page, screen) {
+// What one of the screen's templates holds, on its Templates tab, such as 'toptemplate'
+async function templateText(page, screen, name) {
 	await openTemplatesTab(page, screen);
-	return templatesForm(page).locator('textarea[name="screens-toptemplate"] + .CodeMirror').evaluate(editor => editor.CodeMirror.getValue());
+	return templatesForm(page).locator(`textarea[name="screens-${name}"] + .CodeMirror`).evaluate(editor => editor.CodeMirror.getValue());
+}
+
+async function topTemplate(page, screen) {
+	return templateText(page, screen, 'toptemplate');
+}
+
+// Add a line of our own to the end of the screen's top template, and save. Copies of the defaults alone don't count
+// as templates of its own when they're copied to another theme, so this is what gives a screen something to take.
+const TOP_TEMPLATE_CHANGE = '// Changed for the update to Lyris spec';
+async function changeTopTemplate(page, screen) {
+	await openTemplatesTab(page, screen);
+	const input = templatesForm(page).locator('textarea[name="screens-toptemplate"] + .CodeMirror').getByRole('textbox');
+	await input.press('ControlOrMeta+End');
+	await input.press('Enter');
+	await page.keyboard.type(TOP_TEMPLATE_CHANGE);
+	await saveAdminForm(page);
 }
 
 // Empty every template box on the screen's Templates tab and save, which puts the screen back on the default
@@ -142,11 +159,15 @@ test.beforeAll(async ({ browser }) => {
 		await emptyTemplates(page, collections);
 		await emptyTemplates(page, exhibits);
 		await customizeTemplates(page, collections);
+		await changeTopTemplate(page, collections);
 		anariTopTemplate = await topTemplate(page, collections);
-		expect(anariTopTemplate).not.toBe('');
+		expect(anariTopTemplate).toContain(TOP_TEMPLATE_CHANGE);
 		settingsBefore = listSettings();
-		required = await requiredDBVersion(page);
-		expect(storedDBVersion()).toBe(required);
+		// kept only once the site is up to date, since afterAll puts the stored version back to it: a site that
+		// isn't would otherwise be marked as updated without the update having run
+		const codeVersion = await requiredDBVersion(page);
+		expect(storedDBVersion(), 'the site has had the update its code needs, before the spec starts').toBe(codeVersion);
+		required = codeVersion;
 	} finally {
 		await page.close();
 	}
@@ -205,9 +226,10 @@ test('The update asks about Lyris first, and cancelling changes nothing', async 
 	await expect(dialog.getByRole('heading', { name: "Lyris's screen settings" })).toBeVisible();
 	await expect(dialog.locator(`input[name="lyris_screen_settings[${collections.sid}][]"][value="editdestination"]`)).toBeChecked();
 	await next(dialog);
-	// Collections has templates of its own in Anari, and none in Lyris
+	// Collections has a changed template of its own in Anari, and none in Lyris, and the wizard says which one
 	await expect(dialog.getByRole('heading', { name: 'Screens with their own templates' })).toBeVisible();
 	await expect(dialog.locator(`input.formulize-lyris-template-screen[value="${collections.sid}"]`)).toBeChecked();
+	await expect(dialog.locator('label', { has: page.locator(`input.formulize-lyris-template-screen[value="${collections.sid}"]`) }).locator('.formulize-lyris-template-files')).toHaveText('Changed: toptemplate.php');
 	await expect(dialog.locator(`input.formulize-lyris-template-screen[value="${exhibits.sid}"]`)).toHaveCount(0);
 	await next(dialog);
 	await expect(dialog.getByRole('heading', { name: 'Ready to update' })).toBeVisible();
@@ -262,8 +284,10 @@ test('The update switches the site, copies the chosen templates, and changes onl
 	const expected = JSON.parse(JSON.stringify(settingsBefore));
 	expected[collections.sid].editdestination = 'drawer';
 	expect(after).toEqual(expected);
-	// Collections has its Anari templates in Lyris
+	// Collections has its Anari templates in Lyris: its changed one, and Anari's for the rest, so its rows still fit
+	// the table they're in
 	expect(await topTemplate(page, collections)).toBe(anariTopTemplate);
+	expect(await templateText(page, collections, 'listtemplate')).toContain('floating-column');
 	await page.close();
 });
 
