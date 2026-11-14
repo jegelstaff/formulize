@@ -119,6 +119,8 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/popup_functions.php';
 
 // main body of page goes here...
 
+// get all the groups that have add_own_entry permission
+$groupsWithAddEntry = $gperm_handler->getGroupIds("add_own_entry", $fid, $mid);
 // get all the groups that have view_form permission currently
 $groupsWithViewForm = $gperm_handler->getGroupIds("view_form", $fid, $mid);
 
@@ -127,7 +129,8 @@ if($globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, 
 	// need to make option array with values as gids and text as names of groups
 	$allgroups =& $member_handler->getGroups();
 	for($i=0;$i<count((array) $allgroups);$i++) {
-		if(in_array($allgroups[$i]->getVar('groupid'), $groupsWithViewForm)) {
+		// if the user has global scope, then zero in on only the groups that could have created entries. In rare cases, this could be a different set than the view_form groups, but since we're specifically looking for entry "by" a group, we want the groups that could possibly have created entries, and the user has global scope anyway, so this is a slight execption to the typical "groupscope" logic. When the user has actual groupscope permission, we stick to view_form permission as the requirement, in the code below.
+		if(in_array($allgroups[$i]->getVar('groupid'), $groupsWithAddEntry)) {
 			$availgroups[$allgroups[$i]->getVar('groupid')] = $allgroups[$i]->getVar('name');
 		}
 	}
