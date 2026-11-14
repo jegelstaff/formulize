@@ -28,12 +28,14 @@ if (!defined('XOOPS_ROOT_PATH')) {
  *  - the manifest link, the theme-color and apple-touch-icon tags, and the script that registers the
  *    service worker, all added to the head by formulize_addAppHeadTags()
  *  - the install item at the end of the Formulize menu (formulize_pwaInstallMenuSection()), which
- *    pwa.js shows, and pwa.js is only on the pages where this is true
+ *    pwa.js shows, and pwa.js is only on the pages where this is true. Both also ask
+ *    formulize_pwaOffersInstalling(), because a site its organization installs doesn't offer itself
  *  - when push notifications are added, the item that turns them on for a device
  * A feature added later belongs on this list.
  *
  * The conditions:
- *  - the formulizePWAEnabled preference is on
+ *  - the formulizePWAEnabled preference is on, whether people install the app themselves or their
+ *    organization installs it for them
  *  - the site is in a secure context, because browsers only run service workers there: https, or
  *    localhost for development
  *  - the page is not embedded in another website, and is not in a frame at all. An embedded screen
@@ -57,14 +59,33 @@ function formulize_pwaFeaturesApply() {
 }
 
 /**
- * Whether an administrator has let people install this site as an app. Only the preference: pages
- * ask formulize_pwaFeaturesApply(). The service worker script asks this directly, because when it is
+ * Whether this site works as an installed app at all: people install it themselves (1), or their
+ * organization installs it on their devices (2). Only the preference: pages ask
+ * formulize_pwaFeaturesApply(). The service worker script asks this directly, because when it is
  * off the script has to remove the worker from the devices that already have it.
  *
  * @return bool
  */
 function formulize_pwaEnabled() {
-    return (bool) formulize_moduleConfigValue('formulizePWAEnabled');
+    return intval(formulize_moduleConfigValue('formulizePWAEnabled')) > 0;
+}
+
+/**
+ * Whether the site offers to be installed: the install item in the menu, and the banner Chrome shows
+ * on Android. Not when the site's organization installs the app on people's devices, through browser
+ * policy or device management. Then the app on those devices can't be removed, because the browser
+ * keeps it there, and the site doesn't invite people to install a copy of their own.
+ *
+ * The browser's own menu still offers to install the site anywhere the organization hasn't, and
+ * nothing a page does can take that away. That copy is the person's own, and they can remove it.
+ *
+ * Everything else stays as it is, for the organization's installs to use: the manifest, which gives
+ * the app its name, icons and colours, and the service worker, which shows the offline page.
+ *
+ * @return bool
+ */
+function formulize_pwaOffersInstalling() {
+    return intval(formulize_moduleConfigValue('formulizePWAEnabled')) == 1;
 }
 
 /**
@@ -311,8 +332,9 @@ function formulize_pwaOfflinePage() {
  *
  * Where the site can be installed: the manifest, the colour of the window's title bar (the top bar
  * colour of the look this page is drawn with, so a screen with a look of its own has a title bar
- * that matches it), the iPhone and iPad icon, pwa.js for the install item in the menu, and the
- * registration of the service worker.
+ * that matches it), the iPhone and iPad icon, and the registration of the service worker. Then, where
+ * the site offers to be installed (formulize_pwaOffersInstalling()), pwa.js for the install item in
+ * the menu, and where it doesn't, a script that holds back Chrome's install banner on Android.
  */
 function formulize_addAppHeadTags() {
     global $xoTheme;
@@ -357,14 +379,23 @@ function formulize_addAppHeadTags() {
         . " navigator.serviceWorker.register(window.formulize.pwa.serviceWorker, { scope: window.formulize.pwa.scope, updateViaCache: 'all' })"
         . ".catch(function (error) { if (window.console) { console.warn('The service worker for the installed app could not be registered:', error); } });"
         . ' }); }');
-    $xoTheme->addScript(XOOPS_URL . '/modules/formulize/include/js/pwa.js?v=' . formulize_get_file_version('/modules/formulize/include/js/pwa.js'), array('type' => 'text/javascript'));
+    if (formulize_pwaOffersInstalling()) {
+        $xoTheme->addScript(XOOPS_URL . '/modules/formulize/include/js/pwa.js?v=' . formulize_get_file_version('/modules/formulize/include/js/pwa.js'), array('type' => 'text/javascript'));
+    } else {
+        // the organization installs the app, so the site doesn't invite anyone to. preventDefault() stops
+        // Chrome's banner on Android. It can't take the install option out of the browser's own menu.
+        $xoTheme->addScript('', array('type' => 'text/javascript'),
+            "window.addEventListener('beforeinstallprompt', function (event) { event.preventDefault(); });");
+    }
 }
 
 /**
  * The item at the end of the Formulize menu that installs the site as an app, or shows the steps for
- * the browsers that can't install it from a page. Only for people who are signed in, and only on the
- * pages where the site can be installed. Anyone else can still install it from the browser's own
- * menu, or from the banner Chrome shows on Android.
+ * the browsers that can't install it from a page. Only for people who are signed in, only on the
+ * pages where the site can be installed, and only when the site offers to be installed, which it
+ * doesn't when its organization installs the app for people (formulize_pwaOffersInstalling()).
+ * Anyone else can still install it from the browser's own menu, or from the banner Chrome shows on
+ * Android.
  *
  * It starts hidden. pwa.js shows it where the browser can install the site, gives it the words that
  * browser uses (home screen, Dock, or app), and never shows it in the installed app.
@@ -378,7 +409,7 @@ function formulize_addAppHeadTags() {
  */
 function formulize_pwaInstallMenuSection() {
     global $xoopsUser;
-    if (!$xoopsUser OR !formulize_pwaFeaturesApply()) {
+    if (!$xoopsUser OR !formulize_pwaFeaturesApply() OR !formulize_pwaOffersInstalling()) {
         return array(false, false);
     }
     formulize_pwaLoadLanguage();

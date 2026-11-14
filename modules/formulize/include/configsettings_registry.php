@@ -501,7 +501,7 @@ return array(
                         array(
                             'name' => 'formulizePWAShortName',
                             'scope' => 'formulize',
-                            'showWhen' => array('name' => 'formulizePWAEnabled', 'value' => 1),
+                            'showWhen' => array('name' => 'formulizePWAEnabled', 'op' => '!=', 'value' => 0),
                         ),
                     ),
                     _AM_CFG_SEC_SESSIONS_COOKIES => array(

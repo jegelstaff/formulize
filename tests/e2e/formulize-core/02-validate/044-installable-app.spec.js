@@ -12,6 +12,8 @@ import { E2E_TEST_BASE_URL, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } f
 //
 // localhost counts as a secure context, so all of this works over plain http here.
 //
+// The site installed by its organization, with no install item, is tested in
+// 03-validate-sequential/051-installable-app-installed-by-organization.spec.js.
 // Turning the app off is tested in 03-validate-sequential/050-installable-app-turned-off.spec.js, since it
 // affects everyone on the site. CI runs the validate suite with --workers=4 --fully-parallel, which overrides
 // the serial defaults in playwright.config.js, so these are kept together in one worker.

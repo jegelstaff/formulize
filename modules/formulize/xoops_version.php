@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 36,
+	'dbversion' => 37,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -1619,15 +1619,17 @@ $modversion['config'][] = array(
 	'valuetype' => 'text',
 	'default' => 'formulize_embed',
 );
-// Installing the site as an app on a phone or computer (a progressive web app). See
-// formulize_pwaFeaturesApply() in include/functions.php.
+// Installing the site as an app on a phone or computer (a progressive web app): 0 off, 1 people install
+// it themselves, 2 their organization installs it on their devices. See formulize_pwaEnabled() and
+// formulize_pwaOffersInstalling() in include/functions/pwa.php.
 $modversion['config'][] = array(
 	'name' => 'formulizePWAEnabled',
 	'title' => '_MI_formulize_PWAENABLED',
 	'description' => '_MI_formulize_PWAENABLED_DESC',
-	'formtype' => 'yesno',
+	'formtype' => 'select',
 	'valuetype' => 'int',
 	'default' => 1,
+	'options' => array('_MI_formulize_PWAENABLED_OFF' => 0, '_MI_formulize_PWAENABLED_SELF' => 1, '_MI_formulize_PWAENABLED_MANAGED' => 2),
 );
 $modversion['config'][] = array(
 	'name' => 'formulizePWAShortName',

@@ -35,6 +35,9 @@ iPhone, an iPad or a Mac.
 On an iPhone or iPad, the app keeps its own sign-in, separate from Safari, so you'll be asked to
 sign in the first time you open it.
 
+If your organization looks after your computer or phone, it may install the app on it for you. Then
+there's no item in the menu, because the app is already there.
+
 ## Using it
 
 The app opens on the site's home page. When you open a link to one of the site's pages that would
@@ -61,19 +64,62 @@ Remove it the way you remove any other app on that device:
 
 Removing the app doesn't affect your account or anything on the site.
 
+If your organization installed the app for you, you can't remove it. Ask your IT department if you
+no longer need it.
+
 ## For administrators
 
 Installing is turned on for every site that is served over https. The settings are under
 **Admin > Settings > Advanced**, in **Installing as an app**:
 
-- **Let people install this site as an app on their phone or computer.** Turn this off, and the
-  site stops offering to be installed. Where it is already installed, it keeps working as a web page
-  in its own window, and its icon stays on the device, until the person removes it.
+- **Installing this site as an app on a phone or computer.** Choose one of these:
+  - **Yes, people can install it themselves.** The site offers to be installed, at the bottom of its
+    menu, and people can remove the app whenever they like. This is the default.
+  - **Yes, your organization installs it on people's devices.** For when your IT department puts the
+    app on the organization's devices, and people mustn't be able to remove it. The site no longer
+    offers to be installed. See
+    [Installing the app on your organization's devices](#installing-the-app-on-your-organizations-devices).
+  - **No.** The site stops offering to be installed. Where it is already installed, it keeps working
+    as a web page in its own window, and its icon stays on the device until the person removes it.
 - **Name under the app's icon.** Phones cut long names short under an icon. If your site's name is
   long, give a shorter one here. When it's empty, the site's name is used.
 
 The app's colours are your site's colours, from the Appearance settings: its title bar is the colour
 of the site's top bar, and it opens on the colour of the page background.
+
+### Installing the app on your organization's devices
+
+To put the app on your organization's computers, phones and tablets, so that the people using them
+can't remove it, your IT department installs it through the tools they already use to manage those
+devices. The browser or the device then keeps the app there, and has no option to remove it.
+
+First, in **Installing this site as an app on a phone or computer**, choose **Yes, your organization
+installs it on people's devices**. The site then stops offering to be installed, since your
+organization does that. The setting's description shows the address of your site to give the
+policy: your site's address, ending in `/`, such as `https://example.org/`. Then, for each kind of
+device:
+
+| Devices | What your IT department does |
+|---|---|
+| **Chrome or Edge on Windows, Mac or Linux** | Add the site to the **WebAppInstallForceList** policy, called **Configure list of force-installed Web Apps** in Group Policy. Set it in Group Policy or Intune for Windows, with a configuration profile for Macs, or in the Google Admin console for Chrome. The value is a list like this: `[{"url": "https://example.org/", "default_launch_container": "window", "create_desktop_shortcut": true}]`. People need to restart the browser before the app appears. |
+| **Chromebooks** | In the Google Admin console, add the site as a web app by its address, and set it to **Force install**. |
+| **iPhones and iPads** | In your device management, add a **Web Clip** with the site's address, the name and the icon, and turn on **Full screen**. Turn off **Removable**, so people can't remove it. |
+| **Android** | In your device management, add the site to Managed Google Play as a web app, and make it a required app. |
+
+`default_launch_container` must be `window`, or the app opens as a tab in the browser.
+`create_desktop_shortcut` puts the app's icon on the desktop on Windows and Linux. It has no effect
+on a Mac, where the app is in the **Chrome Apps** or **Edge Apps** folder in the **Applications**
+folder in your home folder.
+
+The app is removed from a device only when your IT department takes the site out of the policy, or
+the device out of management.
+
+On a device your organization doesn't manage, people can still install the site from their browser's
+own menu. That copy is their own, and they can remove it.
+
+If the app appears as a plain browser shortcut, without your site's name or icon, check that the
+address in the policy is your site's address with `/` at the end, that the site is served over
+https, and that **Installing this site as an app on a phone or computer** isn't set to **No**.
 
 ### Giving the app your own icon
 

@@ -2,6 +2,12 @@
 
 A site can be installed as an app. The code is in `modules/formulize/pwa/` (`worker.js`, `sw.php`, `manifest.php`, `remove-worker.js`), `include/functions/pwa.php`, and `include/js/formulize-app.js` and `pwa.js`. Pages ask `formulize_pwaFeaturesApply()` whether the app features apply.
 
+## Installed by the organization
+
+`formulizePWAEnabled` has three values: 0 off, 1 people install the app themselves, 2 their organization installs it. At 2, `formulize_pwaOffersInstalling()` is false, so the menu item and `pwa.js` go, and the page holds back Chrome's Android banner. The manifest and the worker stay, because the organization's installs use them: without the manifest, a policy install is a bare shortcut with no name or icon.
+
+No page can stop someone removing an app they installed. What stops it is installing through browser policy (`WebAppInstallForceList` in Chrome and Edge) or device management (a Web Clip with `IsRemovable` false on iOS), and the setting only stops the site inviting installs. The browser's own menu still offers to install the site on devices the organization doesn't manage. `docs/install_as_an_app.md` has the steps for each kind of device.
+
 ## The service worker runs for everyone
 
 **The worker is registered for every visitor on every page** whenever the setting is on and the site is secure, not only for people who've installed the app. That includes `localhost`, so local runs and CI run with a worker in charge.
@@ -29,7 +35,7 @@ A webmaster's page uses `theme_admin_set`, so anything that applies to the whole
 
 ## Testing
 
-The specs are `02-validate/044-installable-app` and `03-validate-sequential/050-installable-app-turned-off`. The second runs on its own, because turning the setting off reaches every browser with the site open, and would land on whatever else was running.
+The specs are `02-validate/044-installable-app`, `03-validate-sequential/050-installable-app-turned-off` and `03-validate-sequential/051-installable-app-installed-by-organization`. The last two run on their own, because turning the setting off reaches every browser with the site open, and 044 expects the menu item that the organization setting takes away.
 
 - **Offline:** `context.setOffline(true)` works for the worker's own requests in Chromium. Playwright can't take Firefox offline for them, so test registration and the cache in Firefox, and offline in Chromium.
 - **Standalone mode can't be emulated.** Stand in iOS's signal with an init script that defines `navigator.standalone`. That drives `formulize.isInstalledApp()`, but CSS with `fz-show-in-app` still hides things, so check the `hidden` attribute, not visibility.
