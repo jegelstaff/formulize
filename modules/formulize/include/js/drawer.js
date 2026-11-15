@@ -607,7 +607,14 @@
     // a load that re-renders the same page (a save that stays, a subform delete or clone).
     // Full screen does the same through yposition, and only when the save lands on the page
     // it came from; every other load starts at the top. See holdScrollPosition.
-    function fetchIntoDrawer(url, fetchOpts, keepScroll) {
+    //
+    // leaveAtThanks is for page moves. The server decides which page a move lands on,
+    // skipping pages whose conditions the entry doesn't meet, and when it runs off the end
+    // (or off the front, going back) it lands on the thanks page, as full screen does. A
+    // screen with a thanks page shows it. One without has nothing to show there, so the
+    // drawer leaves the entry, as full screen goes to the done destination. The save that
+    // came with the move has already happened in that request.
+    function fetchIntoDrawer(url, fetchOpts, keepScroll, leaveAtThanks) {
         if (!bodyEl) { return Promise.resolve(null); }
         var scrollTop = bodyEl.scrollTop;
         var scrollTo = keepScroll ? scrollTop : 0;
@@ -625,6 +632,17 @@
                 // left over from a previous drawer session.
                 window.formulizechanged = 0;
                 currentEntryNav = readNavMeta();
+                if (leaveAtThanks && currentEntryNav && currentEntryNav.isThanksPage && !currentEntryNav.hasThanksPage) {
+                    bodyEl.classList.remove('formulize-drawer__body--entering');
+                    leaveFinishedEntry();
+                    return readDrawerMeta();
+                }
+                // the thanks page's link to the done destination leaves the entry
+                if (currentEntryNav && currentEntryNav.isThanksPage) {
+                    bodyEl.querySelectorAll('a[data-formulize-done-link]').forEach(function (a) {
+                        a.addEventListener('click', function (e) { e.preventDefault(); leaveFinishedEntry(); });
+                    });
+                }
                 currentEntryButtons = readButtonMeta();
                 currentDrawerTemplates = readDrawerTemplates();
                 var meta = readDrawerMeta();
@@ -835,8 +853,9 @@
     // A screen configured without tabs gets no tabs here, exactly as it gets none full
     // screen. Neither does a
     // form with only one reachable page, so a single page form is untouched.
+    // The thanks page has no tabs, as it has none full screen.
     function drawerTabsVisible(nav) {
-        return !!(nav && nav.showTabs && nav.totalPages > 1 && nav.pages && nav.pages.length > 1);
+        return !!(nav && !nav.isThanksPage && nav.showTabs && nav.totalPages > 1 && nav.pages && nav.pages.length > 1);
     }
 
     // Lay out the header for what just loaded: by the theme's header template when it is
@@ -858,6 +877,9 @@
         if (!bodyEl || !bodyEl.querySelector('form')) { return; }
 
         var nav = currentEntryNav;
+        // The thanks page has nothing to save or page through either. Its own link, and the
+        // header's close and Back, are the ways on, as the link is full screen.
+        if (nav && nav.isThanksPage) { return; }
         var multiPage = nav && nav.totalPages > 1;
         var inSub = drawerStack.length > 0;
         // Fallback for a host that publishes no button metadata: the plain save/cancel
@@ -902,14 +924,26 @@
         // When the screen offers neither paging button and the tab strip isn't drawn either,
         // drawerShowsNavButtons() still asks for buttons so the user isn't stranded, and the
         // set to draw then is the one with Save and Go Back and Save and Continue put back.
-        var navSource = (nav && !nav.showNavButtons && nav.buttonsWithPaging) ? nav.buttonsWithPaging : (nav ? nav.buttons : null);
-        var navSet = (multiPage && navButtons && navSource && navSource.length) ? navSource : null;
+        // A single page screen has no pages to be stranded on, so its set is exactly the
+        // screen's, as full screen: Save and Finish, say, when it has a Thank You page.
+        var navSource = null;
+        if (nav && multiPage && navButtons) {
+            navSource = (!nav.showNavButtons && nav.buttonsWithPaging) ? nav.buttonsWithPaging : nav.buttons;
+        } else if (nav && !multiPage) {
+            navSource = nav.buttons;
+        }
+        var navSet = (navSource && navSource.length) ? navSource : null;
 
         if (navSet) {
             navSet.forEach(function (slotButton) {
                 controls[slotButton.slot] = makeButton(slotButton.text, slotButton.slot,
                                                        navSlotAction(slotButton.slot, nav, inSub));
             });
+            // Full screen, a screen with tabs has its save and leave as the strip's leading
+            // tab. Where the set has no leave control of its own, that becomes the button.
+            if (!controls.prev && buttons.saveAndLeave) {
+                controls.prev = makeButton(buttons.saveAndLeave, 'prev', saveAndLeaveEntry);
+            }
             // A screen with no close button still needs a way out of a sub entry.
             if (inSub && !controls.close) {
                 controls.back = makeButton(S().back, 'close', goBack);
@@ -918,14 +952,14 @@
             return;
         }
 
-        // No multipage button set to follow: either a single page form, or a screen that
-        // offers tabs and neither paging button, where full screen has no prev/next
+        // No multipage button set to follow: either a form with no form screen, or a screen
+        // that offers tabs and neither paging button, where full screen has no prev/next
         // controls and offers save-and-leave as the leading tab of its tab strip instead.
         // The drawer's strip carries pages only, so that control becomes a footer button
         // here — in the bar's "prev" slot, which is literally where full screen puts the
         // leave action when it renders it as a button.
         if (buttons.saveAndLeave) {
-            controls.prev = makeButton(buttons.saveAndLeave, 'prev', saveEntryFromDrawer);
+            controls.prev = makeButton(buttons.saveAndLeave, 'prev', saveAndLeaveEntry);
         }
 
         // The done/close button leaves without saving. Inside a sub entry that means
@@ -994,21 +1028,20 @@
     //   prev   submitForm(previousPage) — save this page and go back one. On page one
     //          there is no previous page, and full screen instead sends the user to the
     //          thanks page (submitForm(thanksPage, 1)), which is the save-and-leave the
-    //          screen's leaveButtonText labels it with.
+    //          screen's leaveButtonText labels it with. So does the drawer, through
+    //          saveAndLeaveEntry.
     //   save   submitForm(currentPage, currentPage) — save in place, stay here.
     //   close  verifyDone() — leave without saving, confirming first if there are edits.
     //          In a sub entry "leaving" is returning to the parent, exactly as full
     //          screen's close does there.
     //   next   submitForm(nextPage) — save this page and go on; when the next page is
-    //          the thanks page this is the finish action, which in the drawer means
-    //          saving and closing (the thanks page renders empty in elements-only mode,
-    //          so there is nothing to show).
+    //          the thanks page this is the finish action (finishDrawer).
     function navSlotAction(slot, nav, inSub) {
         switch (slot) {
             case 'prev':
                 return nav.previousPage
                     ? function () { goToPage(nav.previousPage); }
-                    : saveEntryFromDrawer;
+                    : saveAndLeaveEntry;
             case 'save':
                 return saveAndStay;
             case 'close':
@@ -1305,6 +1338,7 @@
 
         var opts = null;
         if (changed) {
+            savedDuringSession = true; // the list behind needs refreshing when the drawer closes
             form.querySelectorAll('input[type="hidden"]').forEach(function (i) { i.disabled = false; });
             var fd = new FormData(form);
             fd.append('formulize_save', '1');
@@ -1313,20 +1347,38 @@
 
         releaseEntryLocks(); // release the current page's locks before swapping it out
         // a save in place (saveAndStay) asks for the page it is on, and stays where it was scrolled
-        fetchIntoDrawer(url, opts, parseInt(targetPage, 10) === parseInt(currentEntryNav.currentPage, 10));
+        fetchIntoDrawer(url, opts, parseInt(targetPage, 10) === parseInt(currentEntryNav.currentPage, 10), true);
         return true;
     }
 
-    // Finish a multi-page entry: save the final page (if changed) then close and
-    // refresh (or, in a sub entry, return to the parent). The thanks page is never
-    // requested — in elements-only mode it renders empty — so finishing is just a
-    // save-and-done on the last real page.
+    // Finish a multi-page entry. A screen with a thanks page goes there, saving on the
+    // way, as full screen does. One without saves the final page (if changed) and leaves.
     function finishDrawer() {
+        if (currentEntryNav && currentEntryNav.hasThanksPage) {
+            goToPage(currentEntryNav.thanksPage);
+            return;
+        }
         var form = bodyEl ? bodyEl.querySelector('form') : null;
-        var done = drawerStack.length ? popToParent : closeAndRefresh;
-        if (!form || !formHasChanges()) { done(); return; }
+        if (!form || !formHasChanges()) { leaveFinishedEntry(); return; }
         if (!validateCurrentForm(form)) { return; }
-        saveCurrentPage(form).then(done);
+        saveCurrentPage(form).then(leaveFinishedEntry);
+    }
+
+    // The leave control of a multi-page screen: page one's Save and Go Back slot, or the
+    // save and leave button of a screen with tabs. Full screen sends it to the thanks
+    // page, so a screen with one goes there here too. Otherwise it saves and leaves.
+    function saveAndLeaveEntry() {
+        if (currentEntryNav && currentEntryNav.hasThanksPage) {
+            goToPage(currentEntryNav.thanksPage);
+            return;
+        }
+        saveEntryFromDrawer();
+    }
+
+    // The drawer's done destination: close and refresh the list, or in a sub entry go
+    // back to the parent.
+    function leaveFinishedEntry() {
+        if (drawerStack.length) { popToParent(); } else { closeAndRefresh(); }
     }
 
     // Release any entry locks acquired by the loaded form (defined by the endpoint).

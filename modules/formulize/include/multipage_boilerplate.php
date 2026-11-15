@@ -36,7 +36,7 @@ function submitForm(page, prevpage) {
 }
 
 function multipageSetHiddenFields(page, prevpage) {
-	<?php if($screen AND $screen->getVar('finishisdone')) { // user clicked to finish, there is no thanks page, so send them to the done destination ?>
+	<?php if(!$hasThanksPage) { // user clicked to finish, there is no thanks page, so send them to the done destination ?>
   if(page == <?php print $thanksPage; ?>) {
     window.document.formulize_mainform.ventry.value = '';
     jQuery('form[name=formulize_mainform]').attr('action', <?php print json_encode((string) $done_dest, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP); ?>);
@@ -101,62 +101,11 @@ if($currentPage == $thanksPage) {
         print "</form>";
     }
 
-    if($screen AND $screen->getVar('finishisdone')) {
+    if(!$hasThanksPage) {
         print "<script type='text/javascript'>window.document.calreturnform.submit();</script>";
         return; // if we've ended up on the thanks page via conditions (last page was not shown) then we should just bail if there is not supposed to be a thanks page
     }
 
-    // the link to the done destination, which {thankYouNav} in the thanks text stands for, and $thankYouNav in PHP.
-    // It has its own space above, so it is set apart from whatever thanks text comes before it. Centred, it is the
-    // version added below thanks text that doesn't place the link itself.
-    $drawThankYouNav = function($centred) use ($pagesSkipped, $thankYouLinkText, $done_dest, $settings) {
-        $nav = "<div id=\"thankYouNavigation\" class=\"fz-stack fz-gap-2 fz-mt-6".($centred ? " fz-text-center" : "")."\">\n";
-        if($pagesSkipped) {
-            $nav .= "<p>" . _formulize_DMULTI_SKIP . "</p>\n";
-        }
-        if($thankYouLinkText != "{NOBUTTON}") {
-            $nav .= "<div class=\"fz-cluster".($centred ? " fz-justify-center" : "")."\"><a class=\"fz-btn fz-btn--primary fz-btn--lg\" href=\"".htmlspecialchars($done_dest)."\"";
-            if(is_array($settings)) {
-                $nav .= " onclick=\"javascript:window.document.calreturnform.submit();return false;\"";
-            }
-            $nav .= ">" . htmlspecialchars(trans($thankYouLinkText)) . "</a></div>\n"; // plain text, and it can arrive in POST as formulize_buttonText
-        }
-        return $nav . "</div>";
-    };
-    $thankYouNav = $drawThankYouNav(false);
-
-		$entry = $entry_id; // legacy support because there used to be a version of entry id just called entry that was in scope at this point.
-		$form_id = $fid;
-
-		// thanks text that doesn't place the link itself, as {thankYouNav} or $thankYouNav, gets it below, so users
-		// always have a way on
-		$thanksSource = is_array($thankstext) ? (isset($thankstext[1]) ? (string) $thankstext[1] : '') : (string) $thankstext;
-		$thanksPlacesNav = (strpos($thanksSource, 'thankYouNav') !== false);
-
-		// thanks text is stored exactly as the admin typed it, so it is printed or run as it is
-		try {
-			if(is_array($thankstext)) {
-				if($thankstext[0] === "PHP"){
-					eval($thankstext[1]);
-				} elseif(substr(trim($thankstext[1]), 0, 5)=='<?php') {
-					eval(removeOpeningPHPTag($thankstext[1]));
-				} else {
-					print str_replace("{thankYouNav}", $thankYouNav, $thankstext[1]);
-				}
-			} else {
-				if(substr(trim($thankstext), 0, 5)=='<?php') {
-					eval(removeOpeningPHPTag($thankstext));
-				} else { // HTML
-					print str_replace("{thankYouNav}", $thankYouNav, $thankstext);
-				}
-			}
-		} catch (Throwable $e) {
-			error_log("Formulize Error: the thanks text of screen ".(is_object($screen) ? $screen->getVar('sid') : 0)." could not run: ".$e->getMessage());
-		}
-		if(!$thanksPlacesNav) {
-			print $drawThankYouNav(true);
-		}
-
-		unset($entry);
+    include XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_thankspage.php';
 
 }

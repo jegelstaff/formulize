@@ -132,7 +132,8 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 
     // a request going to the Thank You page is still about the entry just saved, so reload blank waits until after it,
     // and the thanks text gets that entry's id
-    $headingToThanksPage = (!$elements_only
+    // (elements-only mode only goes by a page that names its screen, as $currentPage is worked out below)
+    $headingToThanksPage = ((!$elements_only OR $currentPageScreen)
         AND isset($_POST['formulize_currentPage'])
         AND (!$currentPageScreen OR ($screen AND $currentPageScreen == $screen->getVar('sid')))
         AND intval($_POST['formulize_currentPage']) == count((array) $pages) + 1);
@@ -215,6 +216,8 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
         $currentPage = (!$elements_only AND isset($_POST['formulize_currentPage'])) ? $_POST['formulize_currentPage'] : 1;
     }
 	$thanksPage = count((array) $pages) + 1;
+	// whether arriving at the thanks page shows it, or sends the user to the done destination
+	$hasThanksPage = !($screen AND $screen->getVar('finishisdone'));
 
 	// debug control:
 	$currentPage = (isset($_GET['debugpage']) AND is_numeric($_GET['debugpage'])) ? $_GET['debugpage'] : $currentPage;
@@ -503,6 +506,8 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			'nextPage'     => intval($nextPage),
 			'isThanksPage' => ($currentPage == $thanksPage),
 			'nextIsThanks' => $nextIsThanks,
+			'thanksPage'   => intval($thanksPage),
+			'hasThanksPage' => $hasThanksPage,
 			'usersCanSave' => (bool) $usersCanSave,
 			'screenId'     => (is_object($screen) ? intval($screen->getVar('sid')) : 0),
 			'entryId'      => (is_numeric($entry_id) ? intval($entry_id) : 0),
@@ -599,6 +604,9 @@ function displayFormPages($formframe, $entry_id, $mainform, $pages, $conditions=
 			displayForm($forminfo, $entry_id, $mainform, "", $buttonArray, $settings, $titleOverride, $overrideValue, $overrideMulti, "", 0, $printall, $screen); // nmc 2007.03.24 - added empty params & '$printall'
 			if($thisPageDisabled AND !$formulize_forceDisabledWasSetOnEntry) { unset($GLOBALS['formulize_forceElementsDisabled']); }
 		}
+	} elseif($elements_only AND $hasThanksPage) {
+		// full screen draws the thanks page in multipage_boilerplate.php, which elements-only mode skips
+		include XOOPS_ROOT_PATH.'/modules/formulize/include/multipage_thankspage.php';
 	}
 
 	// put in boilerplate code etc, and handle thanks page if applicable...
