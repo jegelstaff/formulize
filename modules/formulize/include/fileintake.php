@@ -19,8 +19,12 @@
  *   formulize_stageFileForElement()   fetch or decode the file into a temporary file and check it,
  *                                     before any entry is written, so a bad file stops the whole
  *                                     request before anything has changed
- *   formulize_commitStagedFile()      once the entry has been written and has an id, move the file
- *                                     into the entry's folder in uploads
+ *   putting it in place               the File Upload element's handler moves the file into the entry's
+ *                                     folder in uploads. For an existing entry this happens before the
+ *                                     entry is saved, beside the file it has now (placeFileBesideExisting),
+ *                                     and the old file is deleted once the entry refers to the new one
+ *                                     (deleteEntryFiles), so the file an entry refers to is always there.
+ *                                     A new entry's file goes in once the entry has an id.
  *
  * Downloading from a URL is the risky part. The danger is not the file, which is checked like any upload,
  * but where the request goes: a caller could point this server at an address that only it can reach, like
@@ -56,8 +60,21 @@ function formulize_remoteFileFetchingEnabled() {
 }
 
 /**
+ * Make a temporary file for a file that is waiting to be checked and put in place.
+ * It goes where PHP puts files uploaded through a form. Hosts that keep PHP inside the site's own folders, with
+ * open_basedir, have to make that folder reachable or uploads in forms would break, but the system temporary folder
+ * is often left out, so tempnam() there fails. When no upload folder is set, PHP uses the system temporary folder
+ * for uploads, so that is used here too.
+ * @return string|false The path of the new, empty file, or false if it could not be made
+ */
+function formulize_fileIntakeTempFile() {
+	$uploadTempFolder = ini_get('upload_tmp_dir');
+	return tempnam($uploadTempFolder ? $uploadTempFolder : sys_get_temp_dir(), 'fzin');
+}
+
+/**
  * Fetch or decode a file for a File Upload element, and check it against the element's settings.
- * Nothing is written to the element's folders. The file waits in a temporary location until formulize_commitStagedFile.
+ * Nothing is written to the element's folders. The file waits in a temporary location until the File Upload element's handler puts it in place.
  * @param mixed $source A URL string, or an array with either 'url' or 'content_base64', and optionally 'filename'
  *        (required with content_base64). Null or an empty string means the file should be removed.
  * @param object $elementObject The File Upload element the file is for
@@ -196,7 +213,7 @@ function formulize_decodeInlineFile($base64, $maxBytes, $maxMegabytes) {
 	if(strlen($content) > $maxBytes) {
 		throw new FormulizeApiException("The file is larger than this element allows ($maxMegabytes MB).", 'invalid_data');
 	}
-	$tmpPath = tempnam(sys_get_temp_dir(), 'fzin');
+	$tmpPath = formulize_fileIntakeTempFile();
 	if(!$tmpPath OR file_put_contents($tmpPath, $content) === false) {
 		throw new FormulizeApiException('The file could not be saved temporarily on the server.', 'internal_formulize_error');
 	}
@@ -222,7 +239,7 @@ function formulize_fetchRemoteFile($url, $maxBytes, $maxMegabytes) {
 		throw new FormulizeApiException('This server cannot fetch files from URLs, because PHP\'s cURL extension is not installed. Send the file as content_base64 instead.', 'internal_formulize_error');
 	}
 
-	$tmpPath = tempnam(sys_get_temp_dir(), 'fzin');
+	$tmpPath = formulize_fileIntakeTempFile();
 	$fileHandle = $tmpPath ? fopen($tmpPath, 'wb') : false;
 	if(!$fileHandle) {
 		throw new FormulizeApiException('The file could not be saved temporarily on the server.', 'internal_formulize_error');
@@ -518,33 +535,7 @@ function formulize_storedFileRecord($staged) {
 }
 
 /**
- * Move a staged file into the folder for an entry, replacing any file the entry had for this element before
- * @param array $staged A staged file from formulize_stageFileForElement
- * @param object $elementObject The File Upload element
- * @param int $entryId The entry, which must have been written already
- * @return bool True if the file is in place
- */
-function formulize_commitStagedFile($staged, $elementObject, $entryId) {
-	$fileUploadHandler = xoops_getmodulehandler('fileUploadElement', 'formulize');
-	formulize_removeFileForEntry($elementObject, $entryId);
-	return $fileUploadHandler->placeFile($fileUploadHandler->entryFolderPath($elementObject, $entryId), $staged['tmpPath'], $staged['storedName']) === true;
-}
-
-/**
- * Remove the file an entry has for a File Upload element, if any
- * @param object $elementObject The File Upload element
- * @param int $entryId The entry
- * @return void
- */
-function formulize_removeFileForEntry($elementObject, $entryId) {
-	if(intval($entryId) > 0) {
-		$fileUploadHandler = xoops_getmodulehandler('fileUploadElement', 'formulize');
-		$fileUploadHandler->deleteAssociatedDataAndResources($elementObject, intval($entryId));
-	}
-}
-
-/**
- * Delete the temporary files of staged files that were not committed, ie: because the request failed part way through
+ * Delete the temporary files of staged files that were not put in place, ie: because the request failed part way through
  * @param array $stagedFiles Staged files from formulize_stageFileForElement, at any depth of nesting
  * @return void
  */

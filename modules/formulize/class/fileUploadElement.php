@@ -352,6 +352,86 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 		return $moveResult ? true : 'lost';
 	}
 
+	/**
+	 * Put a file into the folder for an entry, beside the file the entry has now, so nothing the entry refers to goes
+	 * missing. Only a file with the same name is replaced, and that happens in one step, so the name never leads to a
+	 * missing or half written file, and an existing entry can have its new file in place before it is saved.
+	 * The file is moved in under a temporary name first, because it can be on another disk, and then the move is a
+	 * copy, which takes time and can fail part way. The rename to the stored name is within one folder, so it happens
+	 * at once or not at all.
+	 * @param object $element The element object
+	 * @param int $entryId The entry id
+	 * @param string $sourcePath Where the file is now
+	 * @param string $storedName The name to store it under, from storedFileName
+	 * @return string|false 'added', or 'replaced' if it took the place of a file with the same name. False if it could not be put in place, in which case the folder's files are as they were.
+	 */
+	function placeFileBesideExisting($element, $entryId, $sourcePath, $storedName) {
+		$folderLocation = $this->entryFolderPath($element, $entryId);
+		$finalPath = $folderLocation."/".$storedName;
+		// no extension, so the web server cannot treat the file as any kind of script while it is there
+		$partialName = "fzin_partial_".bin2hex(random_bytes(8));
+		$replacing = file_exists($finalPath);
+		if($this->placeFile($folderLocation, $sourcePath, $partialName) !== true
+			OR !rename($folderLocation."/".$partialName, $finalPath)) {
+			if(file_exists($folderLocation."/".$partialName)) {
+				@unlink($folderLocation."/".$partialName);
+			}
+			return false;
+		}
+		return $replacing ? 'replaced' : 'added';
+	}
+
+	/**
+	 * Take a file that placeFileBesideExisting added out of an entry's folder again, because the entry could not be
+	 * saved and so still refers to the file it had
+	 * @param object $element The element object
+	 * @param int $entryId The entry id
+	 * @param string $storedName The name the file was stored under
+	 * @return void
+	 */
+	function withdrawPlacedFile($element, $entryId, $storedName) {
+		$folderLocation = $this->entryFolderPath($element, $entryId);
+		if(file_exists($folderLocation."/".$storedName)) {
+			unlink($folderLocation."/".$storedName);
+		}
+		@rmdir($folderLocation); // only if it is empty now, ie: the entry had no file before
+	}
+
+	/**
+	 * Delete the files in the folder for an entry, and the folder itself unless a file is kept
+	 * @param object $element The element object
+	 * @param int $entryId The entry id
+	 * @param string $keepName Optional. The stored name of a file to keep, ie: the one the entry now refers to. Its thumbnail is not kept, so a replaced image gets a new one.
+	 * @return array A list of the full paths to the files that were deleted
+	 */
+	function deleteEntryFiles($element, $entryId, $keepName = '') {
+		return $this->deleteFilesInFolder($this->entryFolderPath($element, $entryId), $keepName);
+	}
+
+	/**
+	 * Delete the files in a folder in uploads, and the folder itself unless a file is kept
+	 * @param string $folderLocation The full path of the folder
+	 * @param string $keepName Optional. The name of a file to keep
+	 * @return array A list of the full paths to the files that were deleted
+	 */
+	private function deleteFilesInFolder($folderLocation, $keepName = '') {
+		$deletedFilePaths = array();
+		if(!is_dir($folderLocation)) {
+			return $deletedFilePaths;
+		}
+		foreach(scandir($folderLocation) as $file) {
+			if($file != "." AND $file != ".." AND $file !== $keepName) {
+				if(unlink($folderLocation."/".$file)) {
+					$deletedFilePaths[] = $folderLocation."/".$file;
+				}
+			}
+		}
+		if($keepName === '') {
+			rmdir($folderLocation);
+		}
+		return $deletedFilePaths;
+	}
+
     // this method would gather any data that we need to pass to the template, besides the ele_value and other properties that are already part of the basic element class
     // it receives the element object and returns an array of data that will go to the admin UI template
     // when dealing with new elements, $element might be FALSE
@@ -659,32 +739,16 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 			if($entryScope !== 'null' AND $entryScope === 'all' OR intval($entryScope) > 0) {
 				// we need to delete uploaded files associated with this element
 				// folder names are: formulize_{fid}_{entryId}_{elementId}
-				// delete all folders in the /uploads folder off the root of the XOOPS installation that match this pattern
-				// regex for matching folder names: /^formulize_\d+_\d+_{$elementId}$/
-				// if $scope is 'all', delete all folders that match the elementId
-				// if $scope is an entry ID, delete only the folder that matches that entry ID and the elementId
-				if($entryScope === 'all') {
-					$entryId = '\d+';
-				} else {
-					$entryId = intval($entryScope);
+				// if $scope is an entry ID, delete only the folder for that entry
+				if($entryScope !== 'all') {
+					return $this->deleteEntryFiles($element, intval($entryScope));
 				}
-				$regex = "/^formulize_".$element->getVar('id_form')."_".$entryId."_".$element->getVar('ele_id')."$/";
+				// if $scope is 'all', delete all folders in the /uploads folder off the root of the XOOPS installation that match the elementId
+				$regex = "/^formulize_".$element->getVar('id_form')."_\d+_".$element->getVar('ele_id')."$/";
 				$uploadDir = XOOPS_ROOT_PATH."/uploads/";
-				$allFolders = scandir($uploadDir);
-				foreach($allFolders as $folder) {
+				foreach(scandir($uploadDir) as $folder) {
 					if(preg_match($regex, $folder)) {
-						$folderLocation = $uploadDir.$folder;
-						if(file_exists($folderLocation) AND is_dir($folderLocation)) {
-							$files = scandir($folderLocation);
-							foreach($files as $file) {
-								if($file != "." AND $file != "..") {
-									if(unlink($folderLocation."/".$file)) {
-										$deletedFilePaths[] = $folderLocation."/".$file;
-									}
-								}
-							}
-							rmdir($folderLocation);
-						}
+						$deletedFilePaths = array_merge($deletedFilePaths, $this->deleteFilesInFolder($uploadDir.$folder));
 					}
 				}
 			}

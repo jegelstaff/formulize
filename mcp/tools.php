@@ -7019,6 +7019,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 
 		// Step 3: Write the entries
 		// keys are entry ids when updating, or sequential integers when creating
+		$fileUploadHandler = xoops_getmodulehandler('fileUploadElement', 'formulize');
 		foreach(array_keys($preparedData) as $i) {
 			$entryId = $operation == 'create' ? 'new' : $i;
 			// For EAU creates, use a unique sentinel per iteration so the processUserAccountSubmission
@@ -7069,35 +7070,66 @@ Do not use foreign key values with linked elements; use the readable value inste
 				}
 			}
 
+			// Files for an existing entry go into its folder before the entry is saved, beside the file it has now,
+			// so the entry never refers to a file that is not there yet. The old file is deleted once the entry is
+			// saved. A file that cannot be put in place is left out of the save, so the entry keeps the file it had.
+			$placedFiles = []; // element handle => 'added' or 'replaced'
+			if($operation == 'update') {
+				foreach($stagedFiles[$i] ?? [] as $fileHandle => $staged) {
+					if($placement = $fileUploadHandler->placeFileBesideExisting(_getElementObject($fileHandle), $entryId, $staged['tmpPath'], $staged['storedName'])) {
+						$placedFiles[$fileHandle] = $placement;
+					} else {
+						unset($preparedData[$i][$fileHandle]);
+						$fileNotes[] = "The file for '$fileHandle' in entry $entryId could not be saved on the server, so the entry still has the file it had before, if any. Try again, and if it keeps happening, ask the webmaster to check that the uploads folder can be written to.";
+					}
+				}
+			}
+
 			// Write the entry
 			$resultEntryId = null;
-			if(!empty($preparedData[$i])) {
-				$resultEntryId = formulize_writeEntry($preparedData[$i], $entryId, "replace", $proxyUserId !== null ? $proxyUserId : false); // writes data and manages ownership info
+			try {
+				if(!empty($preparedData[$i])) {
+					$resultEntryId = formulize_writeEntry($preparedData[$i], $entryId, "replace", $proxyUserId !== null ? $proxyUserId : false); // writes data and manages ownership info
+				}
+			} catch (Throwable $e) {
+				// the entry still refers to the files it had, so take the new ones away again. One that replaced a
+				// file of the same name stays, because the entry's record still leads to it.
+				foreach($placedFiles as $fileHandle => $placement) {
+					if($placement == 'added') {
+						$fileUploadHandler->withdrawPlacedFile(_getElementObject($fileHandle), $entryId, $stagedFiles[$i][$fileHandle]['storedName']);
+					}
+				}
+				throw $e;
 			}
 			$finalEntryId = ($entryId === 'new') ? $resultEntryId : $entryId; // for updates, formulize_writeEntry can return null if no data actually changed from current DB state
 			if($proxyUserId !== null && $operation == 'update') {
 				updateOwnerForFormEntry($formId, $proxyUserId, $finalEntryId);
 			}
 
-			// Put files in place now that the entry has an id, and report them by name and address rather than by the stored record
+			// Delete the files the entry no longer refers to, put a new entry's files in place now that it has an id,
+			// and report files by name and address rather than by the stored record
 			if($finalEntryId) {
 				foreach($filesToRemove[$i] ?? [] as $fileHandle) {
-					formulize_removeFileForEntry(_getElementObject($fileHandle), $finalEntryId);
+					$fileUploadHandler->deleteEntryFiles(_getElementObject($fileHandle), $finalEntryId);
 				}
-				$fileUploadHandler = xoops_getmodulehandler('fileUploadElement', 'formulize');
 				foreach($stagedFiles[$i] ?? [] as $fileHandle => $staged) {
 					$fileElementObject = _getElementObject($fileHandle);
-					if(formulize_commitStagedFile($staged, $fileElementObject, $finalEntryId)) {
-						$preparedData[$i][$fileHandle] = [
-							'file_name' => $staged['displayName'],
-							'url' => $fileUploadHandler->createFileURL($fileElementObject, $finalEntryId, $preparedData[$i][$fileHandle]),
-						];
-					} else {
-						// the same as a failed upload in a form: the entry is left with no file
+					if($operation == 'update') {
+						if(!isset($placedFiles[$fileHandle])) {
+							continue; // it could not be put in place, so the entry kept its file, as noted above
+						}
+						$fileUploadHandler->deleteEntryFiles($fileElementObject, $finalEntryId, keepName: $staged['storedName']);
+					} elseif(!$fileUploadHandler->placeFileBesideExisting($fileElementObject, $finalEntryId, $staged['tmpPath'], $staged['storedName'])) {
+						// a new entry has no earlier file to keep, so it is left with none, the same as a failed upload in a form
 						formulize_writeEntry([$fileHandle => null], $finalEntryId);
 						$preparedData[$i][$fileHandle] = null;
 						$fileNotes[] = "The file for '$fileHandle' in entry $finalEntryId could not be saved on the server, so the entry has no file for it. Try again, and if it keeps happening, ask the webmaster to check that the uploads folder can be written to.";
+						continue;
 					}
+					$preparedData[$i][$fileHandle] = [
+						'file_name' => $staged['displayName'],
+						'url' => $fileUploadHandler->createFileURL($fileElementObject, $finalEntryId, $preparedData[$i][$fileHandle]),
+					];
 				}
 			}
 
