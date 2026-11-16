@@ -113,7 +113,7 @@ function block_formulizeMENU_show() {
 
 function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 
-	global $formulizeCanonicalURI, $xoopsUser;
+	global $xoopsUser;
 	$data = array();
 	if(!is_object($application)) {
 		$aid = 0;
@@ -162,7 +162,7 @@ function drawMenuSection($application, $menulinks, $forceOpen, $form_handler){
 			OR $menulink->getVar("screen") == 'sid='.$getSid
 			OR $menulink->getVar("screen") == 'fid='.$getFid
 			OR getCurrentURL() == $url
-			OR trim(XOOPS_URL.'/'.$formulizeCanonicalURI, '/') == trim($url, '/')
+			OR formulize_urlIsCanonicalPage($url)
 			OR (
 				getCurrentURL() == XOOPS_URL.'/modules/formulize/'
 				AND (
@@ -234,16 +234,29 @@ function formulize_menuItemClass() {
  * @return bool True if it is the link to the page being shown
  */
 function formulize_menuLinkIsActive($menulink, $url, $suburl, $defaultFid, $defaultSid) {
-	global $formulizeCanonicalURI;
 	return (getCurrentURL() == XOOPS_URL.'/modules/formulize/index.php?'.$menulink->getVar("screen")
 		OR trim(getCurrentURL(), '/') == trim($suburl, '/')
 		OR getCurrentURL() == $url
-		OR trim(XOOPS_URL.'/'.$formulizeCanonicalURI, '/') == trim($url, '/')
+		OR formulize_urlIsCanonicalPage($url)
 		OR (getCurrentURL() == XOOPS_URL.'/modules/formulize/'
 			AND (
 				$menulink->getVar("screen") == 'sid='.$defaultSid
 				OR $menulink->getVar("screen") == 'fid='.$defaultFid
 			)));
+}
+
+/**
+ * Whether a URL is the Formulize address of the page being shown, when the page was asked for by its alternate URL.
+ * Most pages have no canonical URI, and then nothing matches, not even a link to the site's root.
+ * @param string $url A menu link's URL, from buildMenuLinkURL()
+ * @return bool True if the URL is the canonical address of this page
+ */
+function formulize_urlIsCanonicalPage($url) {
+	global $formulizeCanonicalURI;
+	if (!$formulizeCanonicalURI OR !$url) {
+		return false;
+	}
+	return trim(XOOPS_URL.$formulizeCanonicalURI, '/') == trim($url, '/');
 }
 
 /**
