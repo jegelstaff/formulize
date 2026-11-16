@@ -14,6 +14,10 @@ if (!defined('XOOPS_ROOT_PATH')) {
 //   code. Now HTML and text are kept there too, in <element type>_<element handle>.php, and the copy in the element's
 //   settings in the database is blanked once the file holds it. A file that is already there, with something in it,
 //   is what the element has been showing, so it is kept as it is.
+// - On a site coming from before dbversion 28, the backslashes Formulize used to remove when it used some of this text
+//   are taken out of it, so it works the way it did. See formulize_patch_018_backslashes_shown_before_28(). Full Width
+//   Content still in the database is done here as it moves to its file, which happens once: on a retry the file
+//   already holds the content, and the database copy is blank.
 //
 // A new site has no columns to move, and writes the files from the start.
 //
@@ -79,6 +83,13 @@ function formulize_patch_018_text_to_code_files($prev_dbversion, $required_dbver
                 $screensWritten++;
             }
         }
+        // introtext is dropped first, just below, so while it is still here this has not been done, and once it is
+        // gone it has. See formulize_patch_018_backslashes_shown_before_28()
+        if ($prev_dbversion < 28 AND in_array('introtext', $textColumns)) {
+            if (!formulize_patch_018_backslashes_shown_before_28($codeDir)) {
+                return false;
+            }
+        }
         foreach ($textColumns as $column) {
             if (!$xoopsDB->queryF("ALTER TABLE $table DROP COLUMN `$column`")) {
                 echo '<p>018_text_to_code_files: could not remove the ' . $column . ' column from form screens: ' . htmlspecialchars($xoopsDB->error()) . '</p>';
@@ -94,13 +105,27 @@ function formulize_patch_018_text_to_code_files($prev_dbversion, $required_dbver
         return false;
     }
     $elementsMoved = 0;
+    $backslashesRemoved = 0;
     while ($row = $xoopsDB->fetchArray($result)) {
         $eleValue = @unserialize((string) $row['ele_value']);
         if (!is_array($eleValue) OR !isset($eleValue[0]) OR formulize_authoredTextIsEmpty($eleValue[0]) OR (string) $row['ele_handle'] === '') {
             continue;
         }
+        $text = (string) $eleValue[0];
         $fileName = $row['ele_type'] . '_' . $row['ele_handle'] . '.php';
-        if (!$writeAndCheck($fileName, (string) $eleValue[0])) {
+        clearstatcache(true, $codeDir . $fileName);
+        // Until dbversion 28, Full Width Content was shown with stripslashes() run on it, so the text is written to its
+        // file the way visitors saw it. This is only when the file is to be written here: a file with something in it
+        // is kept, and was dealt with by formulize_patch_018_backslashes_shown_before_28(). PHP is left alone.
+        if ($prev_dbversion < 28 AND $row['ele_type'] == 'fullWidthContent' AND !formulize_patch_018_ranAsPHP($text)
+            AND !(is_file($codeDir . $fileName) AND filesize($codeDir . $fileName) > 0)) {
+            $asShown = stripslashes($text);
+            if ($asShown !== $text) {
+                $text = $asShown;
+                $backslashesRemoved++;
+            }
+        }
+        if (!$writeAndCheck($fileName, $text)) {
             echo '<p>018_text_to_code_files: could not write ' . htmlspecialchars($codeDir . $fileName) . ' for element ' . intval($row['ele_id']) . '. Check that the web server can write to that folder, then run the update again.</p>';
             return false;
         }
@@ -114,5 +139,143 @@ function formulize_patch_018_text_to_code_files($prev_dbversion, $required_dbver
 
     echo '<p>Intro and thanks text of form screens, and the content of static content elements, are now kept in files in modules/formulize/code/ ('
         . $screensWritten . ' text' . ($screensWritten == 1 ? '' : 's') . ' from form screens, ' . $elementsMoved . ' element' . ($elementsMoved == 1 ? '' : 's') . '). result: OK</p>';
+    if ($backslashesRemoved) {
+        echo '<p>Backslashes that Formulize used to remove when it showed Full Width Content have been taken out of the content of '
+            . $backslashesRemoved . ' element' . ($backslashesRemoved == 1 ? '' : 's') . ', so ' . ($backslashesRemoved == 1 ? 'it looks' : 'they look') . ' the same as before. result: OK</p>';
+    }
+    return true;
+}
+
+/**
+ * Whether Full Width Content was run as PHP, by the test the element has always used.
+ *
+ * @param string $text The content
+ * @return bool
+ */
+function formulize_patch_018_ranAsPHP($text) {
+    return (strstr($text, '$value=') OR strstr($text, '$value ='));
+}
+
+/**
+ * Take out of authored text the backslashes Formulize used to remove whenever it used that text, on a site coming from
+ * before dbversion 28.
+ *
+ * Until 28, stripslashes() was run on some text admins write every time it was used, so an apostrophe could be stored as
+ * \' and still come out as '. That stopped at 28, and from then the backslashes showed, or broke the markup or code they
+ * were in. Running stripslashes() once on what is stored gives exactly what was used before:
+ *
+ * - Text box and textarea default values. A plain default had its backslashes removed before it was shown, and a PHP
+ *   default before it was run, so both are done. A PHP default is in text_<handle>.php or textarea_<handle>.php.
+ * - Full Width Content that is in a file but isn't PHP. Content that mentioned $value was put in a file even when it
+ *   wasn't run as PHP. Full Width Content still in the database is done as it moves to its file, in the patch above.
+ *
+ * Full Width Content that is PHP ran as written, and only what it printed had its backslashes removed, so a person has
+ * to look at it, and it is listed. Number elements and Captioned Content never had their backslashes removed, so they
+ * are left alone.
+ *
+ * stripslashes() can't be run twice, because a \\ typed to show a real backslash would lose it. So the patch calls this
+ * only while the introtext column is still there, just before dropping it, and once anything has been changed, a
+ * failure is reported and the rest carries on, rather than stopping the update, so a retry can't repeat it.
+ *
+ * @param string $codeDir The folder the code files are in, ending with a slash
+ * @return bool False only if the elements could not be read, in which case nothing has been changed
+ */
+function formulize_patch_018_backslashes_shown_before_28($codeDir) {
+    global $xoopsDB;
+    require_once XOOPS_ROOT_PATH . '/modules/formulize/class/textElement.php'; // ELE_VALUE_TEXT_DEFAULTVALUE
+    require_once XOOPS_ROOT_PATH . '/modules/formulize/class/textareaElement.php'; // ELE_VALUE_TEXTAREA_DEFAULTVALUE
+
+    $elementsTable = $xoopsDB->prefix('formulize');
+    $sql = "SELECT e.ele_id, e.ele_type, e.ele_handle, e.ele_caption, e.ele_value, f.form_title FROM $elementsTable AS e
+        LEFT JOIN " . $xoopsDB->prefix('formulize_id') . " AS f ON f.id_form = e.id_form
+        WHERE e.ele_type IN ('text', 'textarea', 'fullWidthContent')";
+    if (!$result = $xoopsDB->queryF($sql)) {
+        echo '<p>018_text_to_code_files: could not read the elements to check for backslashes: ' . htmlspecialchars($xoopsDB->error()) . '</p>';
+        return false;
+    }
+
+    // True if the file reads back as exactly this text
+    $rewrite = function($fileName, $text) use ($codeDir) {
+        if (formulize_writeCodeToFile($fileName, $text) === false) {
+            return false;
+        }
+        clearstatcache(true, $codeDir . $fileName);
+        return file_get_contents($codeDir . $fileName) === $text;
+    };
+
+    $changed = 0;
+    $notChanged = array();
+    $toCheck = array();
+    while ($row = $xoopsDB->fetchArray($result)) {
+        $eleValue = @unserialize((string) $row['ele_value']);
+        if (!is_array($eleValue)) {
+            continue;
+        }
+        $type = $row['ele_type'];
+        $fileName = (string) $row['ele_handle'] !== '' ? $type . '_' . $row['ele_handle'] . '.php' : '';
+        $fileText = '';
+        if ($fileName) {
+            clearstatcache(true, $codeDir . $fileName);
+            $fileText = is_file($codeDir . $fileName) ? (string) file_get_contents($codeDir . $fileName) : '';
+        }
+        $label = '<li>' . htmlspecialchars((string) $row['form_title']) . ': ' . htmlspecialchars(strip_tags((string) $row['ele_caption']))
+            . ' (<code>' . htmlspecialchars((string) $row['ele_handle']) . '</code>, element id ' . intval($row['ele_id']) . ')</li>';
+
+        if ($type == 'fullWidthContent') {
+            // the file is what the element showed, when it has something in it
+            $shownText = $fileText !== '' ? $fileText : (isset($eleValue[0]) ? (string) $eleValue[0] : '');
+            if (strpos($shownText, '\\') === false) {
+                continue;
+            }
+            if (formulize_patch_018_ranAsPHP($shownText)) {
+                $toCheck[] = $label;
+            } elseif ($fileText !== '') {
+                if ($rewrite($fileName, stripslashes($fileText))) {
+                    $changed++;
+                } else {
+                    $notChanged[] = $label;
+                }
+            }
+            continue;
+        }
+
+        // text and textarea defaults, in the file when they are PHP, and in the database
+        $key = $type == 'text' ? ELE_VALUE_TEXT_DEFAULTVALUE : ELE_VALUE_TEXTAREA_DEFAULTVALUE;
+        $didChange = false;
+        $failed = false;
+        if (strpos($fileText, '\\') !== false) {
+            if ($rewrite($fileName, stripslashes($fileText))) {
+                $didChange = true;
+            } else {
+                $failed = true;
+            }
+        }
+        if (isset($eleValue[$key]) AND is_string($eleValue[$key]) AND strpos($eleValue[$key], '\\') !== false) {
+            $eleValue[$key] = stripslashes($eleValue[$key]);
+            if ($xoopsDB->queryF("UPDATE $elementsTable SET ele_value = " . $xoopsDB->quoteString(serialize($eleValue)) . " WHERE ele_id = " . intval($row['ele_id']))) {
+                $didChange = true;
+            } else {
+                $failed = true;
+            }
+        }
+        if ($failed) {
+            $notChanged[] = $label;
+        } elseif ($didChange) {
+            $changed++;
+        }
+    }
+
+    if ($changed) {
+        echo '<p>Backslashes that Formulize used to remove when it used them have been taken out of the default values of text boxes and textareas, and out of Full Width Content kept in files, so '
+            . $changed . ' element' . ($changed == 1 ? '' : 's') . ' work' . ($changed == 1 ? 's' : '') . ' the same as before. result: OK</p>';
+    }
+    if ($notChanged) {
+        echo '<h3>Backslashes that could not be taken out:</h3>';
+        echo '<p>Formulize used to remove backslashes (\\) from these when it used them, and doesn&#039;t any more. They could not be changed, so the backslashes will now show, or stop the markup or PHP code working. Remove the backslashes that are only there in front of a \' or a ", for example change \\\' to \':</p><ul>' . implode('', $notChanged) . '</ul>';
+    }
+    if ($toCheck) {
+        echo '<h3>PHP code in Full Width Content to check for backslashes:</h3>';
+        echo '<p>Formulize used to remove backslashes (\\) from what the PHP code in these elements printed, and doesn&#039;t any more. The code has been left as it is, because only a person can tell which backslashes it needs. If the page now shows a backslash it shouldn&#039;t, change the code so it doesn&#039;t print one:</p><ul>' . implode('', $toCheck) . '</ul>';
+    }
     return true;
 }
