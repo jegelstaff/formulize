@@ -295,3 +295,58 @@ test.describe('The Search box in a list', () => {
 		await expect(donorCell.locator('.formulize-searchbox-picked-text')).toHaveText('François-Marie Arouet');
 	});
 });
+
+// The values a column's Search box lists, apart from Show all and Show Blanks, once its list has been drawn
+async function valuesOffered(page) {
+	const panel = page.locator('.formulize-searchbox-panel:popover-open');
+	await expect(panel.locator('.fz-choice').first()).toHaveText('Show all');
+	const texts = (await panel.locator('.fz-choice').allTextContents()).map(text => text.trim());
+	return texts.filter(text => text !== 'Show all' && text !== 'Show Blanks').sort();
+}
+
+// The values a Search box gets from the server, as it asks for them while someone types in a column with more values than the page holds
+async function valuesFetched(page, handle, term) {
+	const url = await page.locator(`.formulize-searchbox[data-name="search_${handle}"]`).getAttribute('data-options-url');
+	const result = await page.evaluate(async url => (await fetch(url, { credentials: 'same-origin' })).json(), url + '&term=' + encodeURIComponent(term));
+	return result.options.map(option => option.label).sort();
+}
+
+test.describe('What a list\'s Search box offers', () => {
+
+	test('Only the values in the entries the other searches leave, while a column\'s own search leaves its values alone', async ({ page }) => {
+		await artifactsListWithEraAndDonor(page);
+		const eraBox = page.locator('input[name="search_artifacts_era"]');
+		await eraBox.fill('=BCE');
+		await eraBox.press('Enter');
+		await waitForWorkingMessage(page);
+		await expect(page.getByText('Showing entries: 1 to 7 of 7.')).toBeVisible();
+
+		// the BCE artifacts were given by three of the donors, and Freeform Solutions, Hart & Sons Antiques and L. Warner Foundation gave none of them
+		await page.locator('input[name="search_artifacts_donor"]').click();
+		expect(await valuesOffered(page)).toEqual(["Aoife O'Brien", 'Emilie Du Châtelet', 'François-Marie Arouet'].sort());
+		await page.keyboard.press('Escape');
+
+		// the values asked for while typing are limited the same way: Fr finds François-Marie Arouet, and not Freeform Solutions
+		expect(await valuesFetched(page, 'artifacts_donor', 'Fr')).toEqual(['François-Marie Arouet']);
+
+		// the Era search is the Era column's own, so its box still offers both eras, and another can be picked
+		await page.locator('input[name="search_artifacts_era"]').click();
+		expect(await valuesOffered(page)).toEqual(['BCE', 'CE']);
+		await page.keyboard.press('Escape');
+	});
+
+	test('A token that isn\'t one, or no token, gives the values the column has always offered', async ({ page }) => {
+		await artifactsListWithEraAndDonor(page);
+		const eraBox = page.locator('input[name="search_artifacts_era"]');
+		await eraBox.fill('=BCE');
+		await eraBox.press('Enter');
+		await waitForWorkingMessage(page);
+		await expect(page.getByText('Showing entries: 1 to 7 of 7.')).toBeVisible();
+		const url = await page.locator('.formulize-searchbox[data-name="search_artifacts_donor"]').getAttribute('data-options-url');
+		expect(url).toMatch(/&entries=[a-f0-9]{32}/);
+		const fetched = async address => (await page.evaluate(async u => (await fetch(u, { credentials: 'same-origin' })).json(), address + '&term=Fr')).options.map(option => option.label).sort();
+		expect(await fetched(url.replace(/&entries=[a-f0-9]{32}/, '&entries=' + '0'.repeat(32)))).toEqual(['François-Marie Arouet', 'Freeform Solutions']);
+		expect(await fetched(url.replace(/&entries=[a-f0-9]{32}/, '&entries=../../mainfile'))).toEqual(['François-Marie Arouet', 'Freeform Solutions']);
+		expect(await fetched(url.replace(/&entries=[a-f0-9]{32}/, ''))).toEqual(['François-Marie Arouet', 'Freeform Solutions']);
+	});
+});

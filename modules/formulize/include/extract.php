@@ -456,7 +456,7 @@ function convertForeignKeysToReadableValuesUncached($value, $handle, $entry_id) 
 						if ($second_source_ele_value = formulize_isLinkedElement($sourceColumnHandle)) {
 							$secondSourceMeta = formulize_linkedSourceParts($second_source_ele_value[2]);
 							$secondFormObject = $form_handler->get($secondSourceMeta[0]);
-							$sql = "SELECT t1.`" . $secondSourceMeta[1] . "`, t1.entry_id FROM " . DBPRE . "formulize_" . $secondFormObject->getVar('form_handle') .
+							$sql = "SELECT " . formulize_fieldValueSQL($secondSourceMeta[1], 't1') . ", t1.entry_id FROM " . DBPRE . "formulize_" . $secondFormObject->getVar('form_handle') .
 								" as t1, " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " as t2 WHERE t2.`entry_id` = $value
 								AND t1.`entry_id` IN (TRIM(',' FROM t2.`" . $sourceColumnHandle . "`)) ORDER BY t2.`entry_id`";
 							if (!$res = $xoopsDB->query($sql)) {
@@ -467,7 +467,7 @@ function convertForeignKeysToReadableValuesUncached($value, $handle, $entry_id) 
 								$query_columns[] = "'" . formulize_db_escape($linkedvalue[0]) . "'"; // use the literal value of the ultimate source (after prep) as a value we're selecting. This will be added to the SELECT below, in case there is more than one field being gathered (because of alternative values). This way, a mix of links to links, and actual fields can work within the same query when alternative values are in effect.
 							}
 						} else {
-							$query_columns[] = "`$sourceColumnHandle` as `prep_this_$sourceColumnHandle`"; // not a link to a link, so we can include the field normally and select whatever its value is
+							$query_columns[] = formulize_fieldValueSQL($sourceColumnHandle) . " as `prep_this_$sourceColumnHandle`"; // not a link to a link, so we can include the field normally and select whatever its value is
 						}
 					}
 					$sql = "SELECT " . implode(", ", $query_columns) . " FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') .
@@ -580,7 +580,7 @@ function formulize_preresolveForeignKeyValues($handle, $rawValues) {
 	// one readable value per source entry, gathered a few hundred entries at a time
 	$selectColumns = array("entry_id AS `formulize_preresolve_entry_id`");
 	foreach ($sourceColumnHandles as $sourceColumnHandle) {
-		$selectColumns[] = "`$sourceColumnHandle` as `prep_this_$sourceColumnHandle`";
+		$selectColumns[] = formulize_fieldValueSQL($sourceColumnHandle) . " as `prep_this_$sourceColumnHandle`";
 	}
 	$sourceTable = DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle');
 	$readableValues = array();
@@ -705,18 +705,6 @@ function prepvalues($value, $handle, $entry_id)
 		throw new Exception("Could not find element metadata for handle '$handle' when preparing value for dataset.");
 	}
 	$type = $elementArray['ele_type'];
-
-	// decrypt encrypted values...pretty inefficient to do this here, one query in the DB per value to decrypt them....but we'd need proper select statements with field names specified in them, instead of *, in order to be able to swap in the AES DECRYPT at the time the data is retrieved in the master query
-	if ($elementArray['ele_encrypt']) {
-		$decryptSQL = "SELECT AES_DECRYPT('" . formulize_db_escape($value) . "', '" . getAESPassword() . "')";
-		global $xoopsDB;
-		if ($decryptResult = $xoopsDB->query($decryptSQL)) {
-			$decryptRow = $xoopsDB->fetchRow($decryptResult);
-			$value = $decryptRow[0];
-		} else {
-			$value = "";
-		}
-	}
 
 	$valueToReturn = "";
 	$elementTypeHandler = xoops_getmodulehandler($type . "Element", "formulize");
@@ -1152,7 +1140,9 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				// validate that the join conditions are valid...either both must have a value, or neither must have a value (match on user id)...otherwise the join is not possible
 				if (($joinHandles[$linkselfids[$id]] and $joinHandles[$linktargetids[$id]]) or ($linkselfids[$id] == '' and $linktargetids[$id] == '')) {
 					formulize_getElementMetaData("", false, $linkedFid); // initialize the element metadata for this form...serious performance gain from this
-					$linkSelectIndex[$formAliasId] = "f$formAliasId.entry_id AS f" . $formAliasId . "_entry_id, f$formAliasId.creation_uid AS f" . $formAliasId . "_creation_uid, f$formAliasId.mod_uid AS f" . $formAliasId . "_mod_uid, f$formAliasId.creation_datetime AS f" . $formAliasId . "_creation_datetime, f$formAliasId.mod_datetime AS f" . $formAliasId . "_mod_datetime, f$formAliasId.*";
+					// fN.* selects every field as stored, so the form's encrypted fields are added after it, decrypted, under their own names. When only
+					// some elements are asked for, fN.* is replaced with those below, and each encrypted one is decrypted there instead, so nothing is added here.
+					$linkSelectIndex[$formAliasId] = "f$formAliasId.entry_id AS f" . $formAliasId . "_entry_id, f$formAliasId.creation_uid AS f" . $formAliasId . "_creation_uid, f$formAliasId.mod_uid AS f" . $formAliasId . "_mod_uid, f$formAliasId.creation_datetime AS f" . $formAliasId . "_creation_datetime, f$formAliasId.mod_datetime AS f" . $formAliasId . "_mod_datetime, f$formAliasId.*" . ($filterElements ? "" : formulize_decryptedColumnsSQL($linkedFid, "f$formAliasId"));
 					$linkSelect .= ", ".$linkSelectIndex[$formAliasId];
 					// when a main form entry with no connected entry would satisfy the search on this form, stay with a LEFT JOIN so those entries survive the join, and then get matched by the "IS NULL" terms in the where clause
 					// an empty set expression on this form does the same thing for a different reason: an entry with nothing connected to it satisfies "no connected entry matches this" by definition, so it has to survive the join to be tested
@@ -1414,7 +1404,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 
 				$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
 				if ($sortFieldMetaData['ele_encrypt']) {
-					$sortFieldFullValue = "AES_DECRYPT($sortFidAlias.`$sortField`, '" . getAESPassword() . "')"; // sorts as text, which will screw up number fields
+					$sortFieldFullValue = "AES_DECRYPT($sortFidAlias.`$sortField`, " . formulize_aesKeySQL() . ")"; // sorts as text, which will screw up number fields
 				} elseif (formulize_isLinkedElement($sortField)) {
 					$ele_value = unserialize($sortFieldMetaData['ele_value']);
 					$boxproperties = formulize_linkedSourceParts($ele_value[2]);
@@ -1471,6 +1461,86 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		$countMasterResults .= "$userJoinText $eauCountJoinText $otherPerGroupFilterJoins WHERE main.$mainIdColumn>0 $mainFormWhereClause $scopeFilter $otherPerGroupFilterWhereClause ";
 		$countMasterResults .= $existsJoinText ? " AND ($existsJoinText) " : "";
 		$countMasterResults .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
+
+		// The FROM and WHERE of the queries that gather the entries. They're built here, before anything is run, so that the
+		// queries below and the list entries query just after this are made of the same strings. Change them here, not in copies.
+
+		// if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
+		// note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
+		// NOTE: Oct 17 2011 - the $oneSideSQL is also used when there are multiple linked subforms, since the exists structure is efficient compared to multiple joins
+		$oneSideSQL = " FROM " . $mainTable . " AS main $userJoinText $eauMainJoinText WHERE main.$mainIdColumn>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested. -- further note: Oct 17 2011 -- appears oneSideFilters[fid] is the same as the mainformwhereclause
+		$oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
+		if (isset($oneSideFilters[$fid]) AND is_array($oneSideFilters[$fid]) AND count($oneSideFilters[$fid]) > 0) {
+			$oneSideSQL .= " AND (";
+			$start = true;
+			foreach ($oneSideFilters[$fid] as $thisOneSideFilter) {
+				$oneSideSQL .= $start ? " ( $thisOneSideFilter ) " : " $andor ( $thisOneSideFilter ) ";
+				$start = false;
+			}
+			$oneSideSQL .= ") ";
+		}
+		$oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
+
+		// the single query, used when there's one connected form or none. $limitByEntryId and $orderByClause go on the end, below
+		$restOfTheSQLFromWhere = " FROM " . $mainTable . $revisionTableYesNo . " AS main $userJoinText $eauMainJoinText $joinText $eauLinkedJoinText $otherPerGroupFilterJoins WHERE main.$mainIdColumn>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause ";
+
+		// the query for each connected form, when there's more than one. The join to the temp table of main form entries goes between the two parts, below
+		$linkQueryFromAndWhere = array();
+		if (count((array) $linkformids) > 1) {
+			foreach ($linkformids as $linkId => $thisLinkFid) {
+				if(!isset($joinTextIndex["f" . $linkId])) {
+					continue;
+				}
+				$linkedFormObject = $form_handler->get($thisLinkFid);
+				$linkedEauJoin = isset($eauLinkedJoinTextIndex[$thisLinkFid]) ? $eauLinkedJoinTextIndex[$thisLinkFid] : "";
+				$linkWhere = array();
+				if (isset($oneSideFilters[$thisLinkFid]) and is_array($oneSideFilters[$thisLinkFid])) {
+					foreach ($oneSideFilters[$thisLinkFid] as $thisOneSideFilter) {
+						$linkWhere[] = "( $thisOneSideFilter )";
+					}
+				}
+				$linkQueryFromAndWhere[$linkId] = array(
+					'from' => " FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main
+          LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
+					$eauMainJoinText
+					LEFT JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$linkId ON " . $joinTextIndex["f" . $linkId] . "
+					$linkedEauJoin ",
+					'where' => $linkWhere ? " WHERE " . implode(" AND ", $linkWhere) . " " : "",
+				);
+			}
+		}
+
+		// The entries a list shows, as FROM ... WHERE, for its filters to take their options from, see formulize_listEntriesSQLForColumn().
+		// Nothing has been run yet, and with this flag set nothing is, so it costs no queries. Each part is the query that really gathers
+		// those entries, with the page's entries ($limitByEntryId, below) widened to every page: the entries the count query finds.
+		if (isset($GLOBALS['formulize_returnAfterSettingListEntriesQuery'])) {
+			$countFromWhere = " FROM " . substr($countMasterResults, strlen("SELECT COUNT(main.$mainIdColumn) FROM "));
+			$onEveryPage = $frid ? " AND main.$mainIdColumn IN (SELECT main.$mainIdColumn $countFromWhere) " : "";
+			$connected = array();
+			if (count((array) $linkformids) > 1) {
+				// the main form entries go into the temp table from $oneSideSQL, and each connected form's entries are joined to them
+				$main = $oneSideSQL . $onEveryPage;
+				foreach ($linkQueryFromAndWhere as $linkId => $linkFromAndWhere) {
+					$connected[$linkId] = $linkFromAndWhere['from'] . " WHERE main.$mainIdColumn IN (SELECT main.$mainIdColumn $main) "
+						. ($linkFromAndWhere['where'] ? " AND " . substr($linkFromAndWhere['where'], strlen(" WHERE ")) : "");
+				}
+			} else {
+				// one query gathers the main form entries and the connected ones
+				$main = $restOfTheSQLFromWhere . $onEveryPage;
+				foreach ($linkformids as $linkId => $thisLinkFid) {
+					if (isset($joinTextIndex["f" . $linkId])) { // a connection left out of the joins, such as a recursive one, has no alias in the query
+						$connected[$linkId] = $main;
+					}
+				}
+			}
+			$GLOBALS['formulize_queryForListEntries'] = array(
+				'main' => $main,
+				'connected' => $connected, // keyed by the connected form's position in linkformids, which is its alias, f0, f1 and so on
+				'linkformids' => $linkformids,
+				'isUserTableForm' => $isUserTableForm,
+			);
+			return true;
+		}
 		if (isset($GLOBALS['formulize_getCountForPageNumbers'])) {
 			// If there's an LOE Limit in place, check that we're not over it first
 			$config_handler = xoops_gethandler('config');
@@ -1499,7 +1569,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				$sortFormObject = $form_handler->get($sortFid);
 
 				if ($sortFieldMetaData['ele_encrypt']) {
-					$useAsSortSubQuery = "(SELECT max(AES_DECRYPT(`$sortField`, '" . getAESPassword() . "')) as subsort FROM " . DBPRE . "formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE " . $joinTextIndex[$sortFidAlias] . " ORDER BY subsort $sortOrder) as usethissort";
+					$useAsSortSubQuery = "(SELECT max(AES_DECRYPT(`$sortField`, " . formulize_aesKeySQL() . ")) as subsort FROM " . DBPRE . "formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE " . $joinTextIndex[$sortFidAlias] . " ORDER BY subsort $sortOrder) as usethissort";
 				} else {
 					$useAsSortSubQuery = "(SELECT max(`$sortField`) as subsort FROM " . DBPRE . "formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE " . $joinTextIndex[$sortFidAlias] . " ORDER BY subsort $sortOrder) as usethissort";
 				}
@@ -1547,6 +1617,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				}
 				foreach ($passedElements as $thisPassedElement) {
 					$fieldSelect = $formAlias . ".`" . formulize_db_escape($thisPassedElement) . "`";
+					// an encrypted field is read decrypted, under its own name
+					$decryptedField = formulize_fieldValueSQL(formulize_db_escape($thisPassedElement), $formAlias);
+					if ($decryptedField !== $fieldSelect) {
+						$fieldSelect = "$decryptedField AS `" . formulize_db_escape($thisPassedElement) . "`";
+					}
 					if ($passedForm == $fid) {
 						$sqlFilterElementsIndex['main'][] = $fieldSelect;
 					} else {
@@ -1640,30 +1715,15 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$selectClause = $mainSelectFields ? "$mainSelectClause $profileSortSelect, $mainSelectFields $linkSelect" : "$mainSelectClause $profileSortSelect $linkSelect";
 			$firstTimeGetAllMainFields = ($mainSelectFields ? "$mainSelectFields " : "") . ", ";
 		} else {
-			$mainSelectFields = isset($sqlFilterElementsIndex['main']) ? implode(",", $sqlFilterElementsIndex['main']) : "main.*"; // prepare for only the main form fields that have been requested
+			$mainSelectFields = isset($sqlFilterElementsIndex['main']) ? implode(",", $sqlFilterElementsIndex['main']) : "main.*" . formulize_decryptedColumnsSQL($fid, "main"); // prepare for only the main form fields that have been requested, and decrypt the encrypted ones
 			$mainSelectClause = "main.entry_id AS main_entry_id, main.creation_uid AS main_creation_uid, main.mod_uid AS main_mod_uid, main.creation_datetime AS main_creation_datetime, main.mod_datetime AS main_mod_datetime $ownerGroupsSortSelect $profileSortSelect";
 			$selectClause = "$mainSelectClause , $mainSelectFields $linkSelect";
 			$firstTimeGetAllMainFields = "$mainSelectFields $eauMainSelectFields , ";
 		}
 
-		// if this is being done for gathering calculations, and the calculation is requested on the one side of a one to many/many to one relationship, then we will need to use different SQL to avoid duplicate values being returned by the database
-		// note: when the main form is on the many side of the relationship, then we need to do something rather different...not sure what it is yet...the SQL as prepared is based on the calculation field and the main form being the one side (and so both are called main), but when field is on one side and main form is many side, then the aliases don't match, and scopefilter issues abound.
-		// NOTE: Oct 17 2011 - the $oneSideSQL is also used when there are multiple linked subforms, since the exists structure is efficient compared to multiple joins
-		$oneSideSQL = " FROM " . $mainTable . " AS main $userJoinText $eauMainJoinText WHERE main.$mainIdColumn>0 $scopeFilter "; // does the mainFormWhereClause need to be used here too?  Needs to be tested. -- further note: Oct 17 2011 -- appears oneSideFilters[fid] is the same as the mainformwhereclause
-		$oneSideSQL .= $existsJoinText ? " AND ($existsJoinText) " : "";
-		if (isset($oneSideFilters[$fid]) AND is_array($oneSideFilters[$fid]) AND count($oneSideFilters[$fid]) > 0) {
-			$oneSideSQL .= " AND (";
-			$start = true;
-			foreach ($oneSideFilters[$fid] as $thisOneSideFilter) {
-				$oneSideSQL .= $start ? " ( $thisOneSideFilter ) " : " $andor ( $thisOneSideFilter ) ";
-				$start = false;
-			}
-			$oneSideSQL .= ") ";
-		}
-		$oneSideSQL .= isset($perGroupFiltersPerForms[$fid]) ? $perGroupFiltersPerForms[$fid] : "";
-
-		$restOfTheSQL = " FROM " . $mainTable . $revisionTableYesNo . " AS main $userJoinText $eauMainJoinText $joinText $eauLinkedJoinText $otherPerGroupFilterJoins WHERE main.$mainIdColumn>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $limitByEntryId $orderByClause ";
-		$restOfTheSQLForExport = " FROM " . $mainTable . $revisionTableYesNo . " AS main $userJoinText $eauMainJoinText $joinText $eauLinkedJoinText $otherPerGroupFilterJoins WHERE main.$mainIdColumn>0 $whereClause $scopeFilter $perGroupFilter $otherPerGroupFilterWhereClause $orderByClause ";  // don't use limitByEntryId since exports include all entries
+		// $oneSideSQL, $restOfTheSQLFromWhere and $linkQueryFromAndWhere are built above, before the count query, see there
+		$restOfTheSQL = $restOfTheSQLFromWhere . "$limitByEntryId $orderByClause ";
+		$restOfTheSQLForExport = $restOfTheSQLFromWhere . "$orderByClause ";  // don't use limitByEntryId since exports include all entries
 		if (count((array) $linkformids) > 1) { // AND $dummy == "never") { // when there is more than 1 joined form, we can get an exponential explosion of records returned, because SQL will give you all combinations of the joins
 			if (!$sortIsOnMain) {
 				$orderByToUse = " ) as innertable ORDER BY usethissort $sortOrder ";
@@ -1766,34 +1826,16 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			// PERFORM NORMAL QUERIES FOR NORMAL OPERATION
 		} else {
 			// FURTHER OPTIMIZATIONS ARE POSSIBLE HERE...WE COULD NOT INCLUDE THE MAIN FORM AGAIN IN ALL THE SELECTS, THAT WOULD IMPROVE THE PROCESSING TIME A BIT, BUT WE WOULD HAVE TO CAREFULLY REFACTOR MORE OF THE LOOPING CODE BELOW THAT PARSES THE ENTRIES, BECAUSE RIGHT NOW IT'S ASSUMING THE FULL MAIN ENTRY IS PRESENT.  AT LEAST THE MAIN ENTRY ID WOULD NEED TO STILL BE USED, SINCE WE USE THAT TO SYNCH UP ALL THE ENTRIES FROM THE OTHER FORMS.
-			foreach ($linkformids as $linkId => $thisLinkFid) {
-				if(!isset($joinTextIndex["f" . $linkId])) {
-					continue;
-				}
-				$linkedFormObject = $form_handler->get($thisLinkFid);
-				$linkedEauJoin = isset($eauLinkedJoinTextIndex[$thisLinkFid]) ? $eauLinkedJoinTextIndex[$thisLinkFid] : "";
+			foreach ($linkQueryFromAndWhere as $linkId => $linkFromAndWhere) {
+				$thisLinkFid = $linkformids[$linkId];
 				$linkedEauSelect = isset($eauLinkedSelectFieldIndex[$thisLinkFid]) ? $eauLinkedSelectFieldIndex[$thisLinkFid] : "";
 				$commaIfNecessary = ($linkSelectIndex[$linkId] OR $linkedEauSelect) ? "," : "";
 				$linkQuery = "SELECT $mainSelectClause , $firstTimeGetAllMainFields "
 					. $linkSelectIndex[$linkId] . $linkedEauSelect . $commaIfNecessary . "
-					usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email
-					FROM " . DBPRE . "formulize_" . $formObject->getVar('form_handle') . " AS main
-          LEFT JOIN " . DBPRE . "users AS usertable ON main.creation_uid=usertable.uid
-					$eauMainJoinText
-					LEFT JOIN " . DBPRE . "formulize_" . $linkedFormObject->getVar('form_handle') . " AS f$linkId ON " . $joinTextIndex["f" . $linkId] . "
-					$linkedEauJoin
-					INNER JOIN " . DBPRE . "formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id ";
-										if (isset($oneSideFilters[$thisLinkFid]) and is_array($oneSideFilters[$thisLinkFid])) {
-					$start = true;
-					foreach ($oneSideFilters[$thisLinkFid] as $thisOneSideFilter) {
-						if (!$start) {
-							$linkQuery .= " AND ( $thisOneSideFilter ) ";
-						} else {
-							$linkQuery .= " WHERE ( $thisOneSideFilter ) ";
-							$start = false;
-						}
-					}
-				}
+					usertable.user_viewemail AS main_user_viewemail, usertable.email AS main_email"
+					. $linkFromAndWhere['from'] . "
+					INNER JOIN " . DBPRE . "formulize_temp_extract_REPLACEWITHTIMESTAMP as sort_and_limit_table ON main.entry_id = sort_and_limit_table.entry_id "
+					. $linkFromAndWhere['where'];
 				// the entries are in the order of the main form's sort, and then each one's entries in this form are in the order of the sort on this form, if any
 				$linkQuery .= " ORDER BY sort_and_limit_table.mastersort";
 				if (!empty($connectedFormOrderByParts["f$linkId"])) {
@@ -3772,7 +3814,7 @@ function formulize_resolveDynamicColumnReference($term, $fid, $linkfids)
 		'alias' => $alias,
 		'formId' => $metaData['id_form'],
 		'handle' => $metaData['ele_handle'],
-		'sql' => $alias === false ? "" : ($metaData['ele_encrypt'] ? "AES_DECRYPT($column, '" . getAESPassword() . "')" : $column)
+		'sql' => $alias === false ? "" : ($metaData['ele_encrypt'] ? "AES_DECRYPT($column, " . formulize_aesKeySQL() . ")" : $column)
 	);
 }
 
@@ -3804,7 +3846,7 @@ function prepareElementMetaData($frid, $fid, $linkfids, $ifPartsZero, $formField
 	$ifPartsZero = "`" . $ifPartsZero . "`";
 
 	if ($queryElementMetaData['ele_encrypt']) {
-		$queryElement = "AES_DECRYPT($elementPrefix." . $ifPartsZero . ", '" . getAESPassword() . "')";
+		$queryElement = "AES_DECRYPT($elementPrefix." . $ifPartsZero . ", " . formulize_aesKeySQL() . ")";
 	} else {
 		$queryElement = "$elementPrefix." . $ifPartsZero;
 	}

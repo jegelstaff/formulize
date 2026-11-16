@@ -616,7 +616,7 @@ class formulizeDataHandler {
 	 * @param int|string|object $element_id The element id, handle or object, or a metadata field such as creation_uid.
 	 * @param array $scope_uids Optional. User ids the entry must have been made by. Only for when entries by the current user are searched for. All other group based scopes should use scope_group_ids.
 	 * @param array $scope_group_ids Optional. Group ids the entry must belong to.
-	 * @return mixed The value, or false if the element is not found or the query failed.
+	 * @return mixed The value, or false if the element is not found or the query failed. An encrypted field's value is decrypted.
 	 * @formulizeElement $element_id one
 	 */
 	function getElementValueInEntry($id, $element_id, $scope_uids=array(), $scope_group_ids=array()) {
@@ -636,12 +636,15 @@ class formulizeDataHandler {
     $formObject = $form_handler->get($this->fid);
 		if(is_array($scope_uids) AND count($scope_uids)>0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids);
-			$sql = "SELECT `". $fieldName . "` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id) . $scopeFilter;
+			$column = formulize_fieldValueSQL($fieldName, '');
+			$sql = "SELECT $column FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id) . $scopeFilter;
 		} elseif(is_array($scope_group_ids) AND count($scope_group_ids)>0) {
 			$scopeFilter = $this->_buildScopeFilter("", $scope_group_ids);
-			$sql = "SELECT `t1.". $fieldName . "` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . "AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE t1.entry_id = " . intval($id) . $scopeFilter;
+			$column = formulize_fieldValueSQL($fieldName, 't1');
+			$sql = "SELECT $column FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE t1.entry_id = " . intval($id) . $scopeFilter;
 		} else {
-			$sql = "SELECT `". $fieldName . "` FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id);
+			$column = formulize_fieldValueSQL($fieldName, '');
+			$sql = "SELECT $column FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id);
 		}
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
@@ -880,7 +883,25 @@ class formulizeDataHandler {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($this->fid);
 		$findFirstEntryLimit = $findFirstOnly ? " LIMIT 0,1" : "";
-		$sql = "SELECT ".formulize_db_escape($fieldsToReturn)."  FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE ";
+		// encrypted fields come back decrypted, under their own names. With *, the decrypted copies come after the stored values, and
+		// a row read by name keeps the last of two columns with the same name, which is the decrypted one
+		$allElementsFormObject = $form_handler->get($this->fid, true); // with the elements shown to no one, which can be encrypted too
+		$encryptedHandles = array_flip((array) $allElementsFormObject->getVar('encryptedElements'));
+		$selectFields = array();
+		foreach(explode(",", (string) $fieldsToReturn) as $fieldToReturn) {
+			$fieldToReturn = trim($fieldToReturn);
+			if($fieldToReturn === '*') {
+				$selectFields[] = '*';
+				foreach(array_keys($encryptedHandles) as $encryptedHandle) {
+					$selectFields[] = formulize_fieldValueSQL($encryptedHandle, '')." AS `$encryptedHandle`";
+				}
+			} elseif(self::validateSqlIdentifier($fieldToReturn) AND ($column = formulize_fieldValueSQL($fieldToReturn, '')) !== "`$fieldToReturn`") {
+				$selectFields[] = "$column AS `$fieldToReturn`";
+			} else {
+				$selectFields[] = formulize_db_escape($fieldToReturn);
+			}
+		}
+		$sql = "SELECT ".implode(", ", $selectFields)."  FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE ";
 		$valuesSQL = array();
 
 		$operatorKeyCounter = 0;
@@ -1046,24 +1067,26 @@ class formulizeDataHandler {
 	 * @param string $fieldName The column name (validated as a SQL identifier) - an element handle, or a metadata field such as entry_id
 	 * @param string $operator  SQL operator (=, !=, LIKE, IN, IS NULL, etc.)
 	 * @param mixed  $value     The comparison value (null, scalar, or comma-delimited string for IN)
-	 * @return string|false SQL fragment like "`field` = 'value'", or false if inputs are invalid
+	 * @param string $tableAlias Optional. The alias of the form's table in the query, if it has one
+	 * @return string|false SQL fragment like "`field` = 'value'", or false if inputs are invalid. An encrypted field is compared decrypted.
 	 * @formulizeElement $fieldName one
 	 */
-	function buildSafeWhereClause($fieldName, $operator, $value) {
+	function buildSafeWhereClause($fieldName, $operator, $value, $tableAlias='') {
 		$operator = self::normalizeSearchOperator($operator);
-		if($operator === false || self::validateSqlIdentifier($fieldName) === false) {
+		if($operator === false || self::validateSqlIdentifier($fieldName) === false || ($tableAlias !== '' AND self::validateSqlIdentifier($tableAlias) === false)) {
 			return false;
 		}
+		$column = formulize_fieldValueSQL($fieldName, $tableAlias);
 
 		if($operator === 'IS NULL' || $operator === 'IS NOT NULL') {
-			return "`$fieldName` $operator";
+			return "$column $operator";
 		}
 
 		if($value === null) {
 			if($operator === '!=' || $operator === '<>' || $operator === 'NOT LIKE' || $operator === 'NOT IN') {
-				return "`$fieldName` IS NOT NULL";
+				return "$column IS NOT NULL";
 			}
-			return "`$fieldName` IS NULL";
+			return "$column IS NULL";
 		}
 
 		if($operator === 'IN' || $operator === 'NOT IN') {
@@ -1075,7 +1098,7 @@ class formulizeDataHandler {
 			if(substr($trimmedInList, 0, 1) !== '(' || substr($trimmedInList, -1) !== ')') {
 				$inList = "($trimmedInList)";
 			}
-			return "`$fieldName` $operator $inList";
+			return "$column $operator $inList";
 		}
 
 		$escapedValue = formulize_db_escape($value);
@@ -1086,7 +1109,7 @@ class formulizeDataHandler {
 		}
 
 		$quotedValue = is_numeric($escapedValue) ? $escapedValue : "\"$escapedValue\"";
-		return "`$fieldName` $operator $quotedValue";
+		return "$column $operator $quotedValue";
 	}
 
 	/**
@@ -1115,16 +1138,17 @@ class formulizeDataHandler {
 		global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $formObject = $form_handler->get($this->fid);
-		$comparisonClause = $this->buildSafeWhereClause($fieldName, $operator, $value);
+		$useGroupScope = (!(is_array($scope_uids) AND count($scope_uids) > 0) AND is_array($scope_group_ids) AND count($scope_group_ids) > 0);
+		$comparisonClause = $this->buildSafeWhereClause($fieldName, $operator, $value, ($useGroupScope ? 't1' : ''));
 		if($comparisonClause === false) {
 			return false;
 		}
 		if(is_array($scope_uids) AND count($scope_uids) > 0) {
 			$scopeFilter = $this->_buildScopeFilter($scope_uids, array());
 			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE $comparisonClause $scopeFilter GROUP BY entry_id ORDER BY entry_id";
-		} elseif(is_array($scope_group_ids) AND count($scope_group_ids)>0) {
+		} elseif($useGroupScope) {
 			$scopeFilter = $this->_buildScopeFilter("", $scope_group_ids);
-			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE t1.$comparisonClause $scopeFilter GROUP BY t1.entry_id ORDER BY t1.entry_id";
+			$sql = "SELECT t1.entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " AS t1, " . $xoopsDB->prefix("formulize_entry_owner_groups") . " AS t2 WHERE $comparisonClause $scopeFilter GROUP BY t1.entry_id ORDER BY t1.entry_id";
 		} else {
 			$sql = "SELECT entry_id FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE $comparisonClause GROUP BY entry_id ORDER BY entry_id";
 		}
@@ -1162,7 +1186,8 @@ class formulizeDataHandler {
             $entries[$i] = intval($entry_id); // ensure we're not getting any funny business passed in to the DB
         }
         if(!isset($cachedValues[$handle][serialize($entries)])) {
-            $sql = "SELECT `$handle`, `entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " WHERE entry_id IN (".implode(',',array_filter($entries, 'is_numeric')).")";
+            $column = formulize_fieldValueSQL($handle, '');
+            $sql = "SELECT $column AS `".str_replace('`', '', $handle)."`, `entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')). " WHERE entry_id IN (".implode(',',array_filter($entries, 'is_numeric')).")";
             if($res = $xoopsDB->query($sql)) {
                 while($array = $xoopsDB->fetchArray($res)) {
                     if($prepValues) {
@@ -1188,36 +1213,40 @@ class formulizeDataHandler {
 	 * @param array $scope_group_ids Optional. Group ids, which limit the values to those owned by users in the groups.
 	 * @param array $scope_uids Optional. User ids, which limit the values to those made by the users.
 	 * @param bool $usePerGroupFilters Optional. Apply the permission filters set for the user's groups.
+	 * @param string $entryIdsSQL Optional. A query selecting entry ids in this form, which limits the values to those entries. See _valuesForFieldWhere().
 	 * @return array The values.
 	 * @formulizeElement $handle one
 	 */
-	function findAllValuesForField($handle, $sort="", $scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false) {
+	function findAllValuesForField($handle, $sort="", $scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false, $entryIdsSQL='') {
 		// cache is keyed by fid as well as handle, because metadata handles (creation_uid, mod_uid, etc.)
-		// are not unique across forms, so two forms on one page would otherwise share each other's values
+		// are not unique across forms, so two forms on one page would otherwise share each other's values.
+		// The entries a read is limited to are part of the key too, so a limited read and an unlimited one never share values.
 		static $cachedValues = array();
 		global $xoopsDB;
 		$cacheFid = intval($this->fid);
-		if(!isset($cachedValues[$cacheFid][$handle])) {
+		$cacheHandle = $entryIdsSQL ? $handle.'-'.md5($entryIdsSQL) : $handle;
+		if(!isset($cachedValues[$cacheFid][$cacheHandle])) {
+			$column = formulize_fieldValueSQL($handle, 'f');
 			if($sort=="ASC") {
-				$sort = " ORDER BY f.`$handle` ASC";
+				$sort = " ORDER BY $column ASC";
 			} elseif($sort =="DESC") {
-				$sort = " ORDER BY f.`$handle` DESC";
+				$sort = " ORDER BY $column DESC";
 			} else {
                 $sort = "";
             }
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
 			$formObject = $form_handler->get($this->fid);
-			$where = $this->_valuesForFieldWhere($scope_group_ids, $scope_uids, $usePerGroupFilters);
-			$sql = "SELECT f.`$handle`, f.`entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS f $where $sort";
+			$where = $this->_valuesForFieldWhere($scope_group_ids, $scope_uids, $usePerGroupFilters, $entryIdsSQL);
+			$sql = "SELECT $column AS `$handle`, f.`entry_id` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS f $where $sort";
 			if($res = $xoopsDB->query($sql)) {
 				while($array = $xoopsDB->fetchArray($res)) {
-					$cachedValues[$cacheFid][$handle][$array['entry_id']] = $array[$handle];
+					$cachedValues[$cacheFid][$cacheHandle][$array['entry_id']] = $array[$handle];
 				}
 			} else {
-				$cachedValues[$cacheFid][$handle] = false;
+				$cachedValues[$cacheFid][$cacheHandle] = false;
 			}
 		}
-		return $cachedValues[$cacheFid][$handle];
+		return $cachedValues[$cacheFid][$cacheHandle];
 	}
 
 	/**
@@ -1230,9 +1259,10 @@ class formulizeDataHandler {
 	 * @param array $scope_group_ids As in findAllValuesForField()
 	 * @param array $scope_uids As in findAllValuesForField()
 	 * @param bool $usePerGroupFilters As in findAllValuesForField()
+	 * @param string $entryIdsSQL As in findAllValuesForField()
 	 * @return array|bool The values, or false if they could not be read
 	 */
-	function findDistinctValuesForField($handle, $term="", $maxValues=0, $scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false) {
+	function findDistinctValuesForField($handle, $term="", $maxValues=0, $scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false, $entryIdsSQL='') {
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		if(!$formObject = $form_handler->get($this->fid)) {
@@ -1242,16 +1272,17 @@ class formulizeDataHandler {
 			return false;
 		}
 		$handle = str_replace('`', '', (string) $handle);
-		$where = $this->_valuesForFieldWhere($scope_group_ids, $scope_uids, $usePerGroupFilters);
+		$column = formulize_fieldValueSQL($handle, 'f');
+		$where = $this->_valuesForFieldWhere($scope_group_ids, $scope_uids, $usePerGroupFilters, $entryIdsSQL);
 		$where = $where ? $where." AND " : "WHERE ";
-		$where .= "f.`$handle` IS NOT NULL AND f.`$handle` != ''";
+		$where .= "$column IS NOT NULL AND $column != ''";
 		if((string) $term !== '') {
 			// the term is matched as it is, so its own % and _ are not wildcards
 			$likeTerm = str_replace(array("\\", "%", "_"), array("\\\\", "\\%", "\\_"), (string) $term);
-			$where .= " AND f.`$handle` LIKE '%".formulize_db_escape($likeTerm)."%'";
+			$where .= " AND $column LIKE '%".formulize_db_escape($likeTerm)."%'";
 		}
 		$limit = intval($maxValues) > 0 ? " LIMIT ".intval($maxValues) : "";
-		$sql = "SELECT DISTINCT f.`$handle` FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS f $where ORDER BY f.`$handle` ASC$limit";
+		$sql = "SELECT DISTINCT $column FROM ".$xoopsDB->prefix("formulize_".$formObject->getVar('form_handle'))." AS f $where ORDER BY $column ASC$limit";
 		if(!$res = $xoopsDB->query($sql)) {
 			return false;
 		}
@@ -1271,10 +1302,11 @@ class formulizeDataHandler {
 	 * @param array $scope_group_ids As in findAllValuesForField()
 	 * @param array $scope_uids As in findAllValuesForField()
 	 * @param bool $usePerGroupFilters As in findAllValuesForField()
+	 * @param string $entryIdsSQL As in findAllValuesForField()
 	 * @return array|bool The text, as it is stored, sorted, or false if it could not be read
 	 * @formulizeElement $handle one
 	 */
-	function findDistinctOtherTextsForElement($handle, $term="", $maxValues=0, $scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false) {
+	function findDistinctOtherTextsForElement($handle, $term="", $maxValues=0, $scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false, $entryIdsSQL='') {
 		global $xoopsDB;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		if(!$formObject = $form_handler->get($this->fid)) {
@@ -1284,7 +1316,7 @@ class formulizeDataHandler {
 			return false;
 		}
 		$handle = str_replace('`', '', (string) $elementObject->getVar('ele_handle'));
-		$where = $this->_valuesForFieldWhere($scope_group_ids, $scope_uids, $usePerGroupFilters);
+		$where = $this->_valuesForFieldWhere($scope_group_ids, $scope_uids, $usePerGroupFilters, $entryIdsSQL);
 		$where = $where ? $where." AND " : "WHERE ";
 		// an entry that no longer has the Other option chosen can still have text left from before, which isn't its value
 		$where .= "o.ele_id = ".intval($elementObject->getVar('ele_id'))." AND o.other_text != '' AND f.`$handle` LIKE '%{OTHER|%'";
@@ -1310,9 +1342,12 @@ class formulizeDataHandler {
 	/**
 	 * The WHERE clause that limits a read of a field's values to the entries a scope allows, shared by
 	 * findAllValuesForField(), findDistinctValuesForField() and findDistinctOtherTextsForElement(). The form's table is aliased f.
+	 * @param string $entryIdsSQL Optional. A query selecting entry ids in this form, such as the entries a list is showing,
+	 * from formulize_listEntriesSQLForColumn(). Only those entries are read. It's SQL the server built, never anything from
+	 * the request, and it's used as it is.
 	 * @return string The clause, starting with WHERE, or empty if nothing limits the entries
 	 */
-	function _valuesForFieldWhere($scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false) {
+	function _valuesForFieldWhere($scope_group_ids=array(), $scope_uids=array(), $usePerGroupFilters=false, $entryIdsSQL='') {
 		global $xoopsDB;
 		$scope = '';
 		if(is_array($scope_group_ids) AND count($scope_group_ids)>0) {
@@ -1338,7 +1373,11 @@ class formulizeDataHandler {
 				$perGroupFilters = "WHERE 1 ".$perGroupFilters;
 			}
 		}
-		return trim("$scope $uidFilter $perGroupFilters");
+		$where = trim("$scope $uidFilter $perGroupFilters");
+		if($entryIdsSQL) {
+			$where .= ($where ? " AND " : "WHERE ")."f.entry_id IN ($entryIdsSQL)";
+		}
+		return $where;
 	}
 
 	function _buildScopeFilter($scope_uids, $scope_group_ids=array()) {
@@ -1645,7 +1684,7 @@ class formulizeDataHandler {
     }
 
 		// escape field names and values before writing to database
-		$aes_password = getAESPassword();
+		$aesKeySQL = formulize_aesKeySQL(); // a session variable that holds the key, see icms_db_Connection::aesKeySQL()
 		foreach ($element_values as $key => $value) {
 			$encrypt_this = in_array($key, $encrypt_element_handles);
 			unset($element_values[$key]);   // since field name is not escaped, remove from array
@@ -1653,7 +1692,7 @@ class formulizeDataHandler {
 			$element_values[$key] = $this->formatValueForQuery($key, $value, $entry_id);
 			if ($encrypt_this) {
 				// this element should be encrypted. note that the actual value is quoted and escapted already
-				$element_values[$key] = "AES_ENCRYPT({$element_values[$key]}, '$aes_password')";
+				$element_values[$key] = "AES_ENCRYPT({$element_values[$key]}, $aesKeySQL)";
 			}
 		}
 

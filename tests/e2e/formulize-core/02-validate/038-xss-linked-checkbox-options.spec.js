@@ -90,6 +90,16 @@ test.describe.serial('T3.6 - linked checkbox option labels are escaped in the fo
 		await page.getByRole('link', { name: 'Options' }).click();
 		await page.locator('#formlink').selectOption('XSS CBLink Source: Source Name');
 		await saveAdminForm(page);
+
+		// a list's filters offer only the values that its entries have, so this entry ticks both source entries
+		await page.goto(`/modules/formulize/index.php?fid=${targetFid}`);
+		await page.getByRole('button', { name: 'Add XSS CBLink Target', exact: true }).click();
+		await page.getByRole('textbox', { name: 'ID *' }).fill('CBTGT038');
+		await page.getByRole('checkbox', { name: new RegExp(LINK_MARKER) }).check();
+		await page.getByRole('checkbox', { name: new RegExp(FILTER_MARKER) }).check();
+		await saveFormulizeForm(page);
+		await page.getByRole('link', { name: 'Save and Close' }).click();
+		await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
 	});
 
 	test('the target ADD form renders the linked option label with the payload neutralised', async ({ page }) => {

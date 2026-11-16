@@ -116,6 +116,8 @@ switch($op) {
 	//   handle - the column: an element handle, or a metadata field name
 	//   fid    - the form, needed for a metadata field, and checked against the element's own form otherwise
 	//   term   - what has been typed so far
+	//   entries - optional, a token for the entries the list is showing, so only the values they have come back.
+	//            See formulize_listEntriesTokenForColumn(). The query it stands for stays on the server.
 	// Only someone who can see the form, and that column in it, gets anything back. The values themselves come
 	// from the entries the person can see, the way a list's filters always have.
 	case 'get_quicksearch_options':
@@ -140,14 +142,16 @@ switch($op) {
 		// on as address[...] (see formulize_addressValuesForFilterOptions()). The conditions look for them in $_GET, so they
 		// go there, in place of this request's own, which are read above and would otherwise be taken for the page's.
 		$qsAddressValues = (isset($_GET['address']) AND is_array($_GET['address'])) ? $_GET['address'] : array();
-		unset($_GET['op'], $_GET['handle'], $_GET['fid'], $_GET['term'], $_GET['address']);
+		// a token that isn't one, or wasn't made for this person and column, gives the values the column has always offered
+		$qsEntryIdsSQL = formulize_listEntriesSQLFromToken(isset($_GET['entries']) ? $_GET['entries'] : '', $qsHandle, $qsFid);
+		unset($_GET['op'], $_GET['handle'], $_GET['fid'], $_GET['term'], $_GET['address'], $_GET['entries']);
 		foreach($qsAddressValues as $qsName=>$qsValue) {
 			if(is_string($qsName) AND is_string($qsValue)) {
 				$_GET[$qsName] = $qsValue;
 			}
 		}
 		$qsLimit = formulize_searchBoxOptionLimit();
-		print json_encode(formulize_getQuickSearchOptions($qsHandle, $qsFid, $qsTerm, $qsLimit) + array('limit' => $qsLimit));
+		print json_encode(formulize_getQuickSearchOptions($qsHandle, $qsFid, $qsTerm, $qsLimit, entryIdsSQL: $qsEntryIdsSQL) + array('limit' => $qsLimit));
 		break;
 
 	case 'render_conditions_filter_ui':

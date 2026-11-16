@@ -840,7 +840,7 @@ function getEntryValues($entryId, $fid, $elements = array(), $groupEntryWithUpda
 
 			$encryptedSelect = "";
 			foreach($formEncryptedElements as $thisEncryptedElement) {
-				$encryptedSelect .= ", AES_DECRYPT(`".$thisEncryptedElement."`, '".getAESPassword()."') as 'decrypted_value_for_".$thisEncryptedElement."'";
+				$encryptedSelect .= ", AES_DECRYPT(`".$thisEncryptedElement."`, ".formulize_aesKeySQL().") as 'decrypted_value_for_".$thisEncryptedElement."'";
 			}
 
 			$viewquerydb = q("SELECT * $encryptedSelect FROM " . $xoopsDB->prefix("formulize_" . $formObject->getVar('form_handle')) . " WHERE entry_id=$entryId");

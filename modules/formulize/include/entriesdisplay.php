@@ -1000,6 +1000,20 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 
  	list($data, $regeneratePageNumbers, $filterToCompare, $flatScope) = formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fid, $scope, $screen, $currentURL, (isset($_POST['forcequery']) ? intval($_POST['forcequery']) : 0), $listEntryId);
 
+	// what the list is showing, so its filters can offer only the values its entries have, see formulize_listEntriesSQLForColumn()
+	// put back at the end, so a list drawn inside this one doesn't leave its own behind. The users and groups lists are left out,
+	// because their data is gathered another way
+	$previousListContextForFilters = isset($GLOBALS['formulize_listContextForFilters']) ? $GLOBALS['formulize_listContextForFilters'] : null;
+	$GLOBALS['formulize_listContextForFilters'] = isset($GLOBALS['formulize_compositeDataMode']) ? null : array(
+		'settings' => $settings,
+		'searches' => $searches,
+		'frid' => $frid,
+		'fid' => $fid,
+		'scope' => $scope,
+		'screen' => $screen,
+		'listEntryId' => $listEntryId,
+	);
+
 	// determine which form IDs are in the dataset, for use by clone UI and other features
 	// have to look at every entry, since a form only appears in entries that have something connected to them in that form
 	$GLOBALS['formulize_LOErendering_fidsInUse'] = array();
@@ -1054,6 +1068,7 @@ function displayEntries($formframe, $mainform="", $loadview="", $loadOnlyView=0,
 	}
 	$formulize_buttonCodeArray['toggleSearchesOnFirst'] = $visibleSearches;
 	formulize_screenLOETemplate($screen, "bottom", $formulize_buttonCodeArray, $settings);
+	$GLOBALS['formulize_listContextForFilters'] = $previousListContextForFilters;
 
 	// catch buffer contents, now that we've actually prepared the entire page
 	$listOfEntriesBufferContents = ob_get_clean();
@@ -2707,10 +2722,16 @@ function formulize_buildQSSearchBox($handle, $search_text, $fid=0, $submitScript
 	if($addressValues = formulize_addressValuesForFilterOptions($elementObject)) {
 		$optionsUrl .= '&'.http_build_query(array('address' => $addressValues));
 	}
+	// in a list, only the values in the entries it's showing, see formulize_listEntriesSQLForColumn(). The values fetched as
+	// someone types are limited the same way, through a token for the query, which stays on the server
+	$entryIdsSQL = formulize_listEntriesSQLForColumn($handle);
+	if($entryIdsSQL AND $entriesToken = formulize_listEntriesTokenForColumn($handle, ($elementObject ? $elementObject->getVar('id_form') : $fid), $entryIdsSQL)) {
+		$optionsUrl .= '&entries='.$entriesToken;
+	}
 	$headings = getHeaders(array($handle));
 	$columnName = trans(strip_tags((string) ($headings[$handle] ?? $handle)));
 	// the first values the column has, so the list is there as soon as the box is opened; only typing asks for others
-	$initialOptions = formulize_getQuickSearchOptions($handle, $fid, '', formulize_searchBoxOptionLimit());
+	$initialOptions = formulize_getQuickSearchOptions($handle, $fid, '', formulize_searchBoxOptionLimit(), entryIdsSQL: $entryIdsSQL);
 	$attributes = array(
 		'data-options-url' => $optionsUrl,
 		'data-orset' => $orset,
@@ -2763,7 +2784,8 @@ function formulize_buildQSFilter($handle, $search_text, $multi=false, $negativeF
     if(substr($search_term, 0, 1)=="!" AND substr($search_term, -1) == "!") {
       $search_term = substr($search_term, 1, -1); // cut off any hidden filter values that might be present
     }
-    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, "{listofentries}", $search_term, false, 0, 0, false, $multi, $negativeFilter, $fid);
+    // only the values in the entries the list is showing, see formulize_listEntriesSQLForColumn()
+    $filterHTML = buildFilter("search_".$handle, $id, _formulize_QSF_DefaultText, "{listofentries}", $search_term, false, 0, 0, false, $multi, $negativeFilter, $fid, formulize_listEntriesSQLForColumn($handle));
     return $filterHTML;
 
 }
@@ -3022,7 +3044,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
 	if($calcElementObject = $element_handler->get($handle)) {
         $calcElementMetaData = formulize_getElementMetaData($handle, true);
         if(isset($calcElementMetaData['ele_encrypt']) AND $calcElementMetaData['ele_encrypt']) {
-        	$calcElement = "AES_DECRYPT($fidAlias.`$handle`, '".getAESPassword()."')";
+        	$calcElement = "AES_DECRYPT($fidAlias.`$handle`, ".formulize_aesKeySQL().")";
         }
 	}
 
@@ -3675,6 +3697,11 @@ function calcDisplayValue($value, $handle) {
 function calcGroupingSQL($ghandle, $galias) {
 	if($ghandle == "creation_uid" OR $ghandle == "mod_uid") {
 		return "(SELECT CASE usertable.name WHEN '' THEN usertable.uname ELSE usertable.name END FROM ". DBPRE."users as usertable WHERE usertable.uid = ".$galias.".`".$ghandle."`)";
+	}
+	// an encrypted field is grouped by its decrypted values, so each group is labelled with the value people typed rather than what's stored
+	$groupingMetaData = isMetaDataField($ghandle) ? array() : formulize_getElementMetaData($ghandle, true);
+	if(!empty($groupingMetaData['ele_encrypt'])) {
+		return "AES_DECRYPT($galias.`$ghandle`, ".formulize_aesKeySQL().")";
 	}
 	return "$galias.`$ghandle`";
 }
@@ -5539,33 +5566,7 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 	}
 	$flatScope = md5($flatScope); // has so it doesn't look like a SQL injection to server security software
 
-	$showcols = explode(",", $settings['oldcols']);
-	if ($settings['global_search']) {
-		foreach($showcols as $column) {
-			// OR: rather than bare OR, since this constructs the OR group syntax programmatically and an all-capitals global
-			// search term (a country code, an acronym) must still be read as an OR search rather than a literal search.
-			if ($searches[$column]) {
-				$searches[$column] .= "//OR:" . $settings['global_search'];
-			} else {
-				$searches[$column] = "OR:" . $settings['global_search'];
-			}
-		}
-	}
-
-	$filter = formulize_parseSearchesIntoFilter($searches);
-
-	// AND on the entry asked for with le=, if any. A filter term that is only a number is the main form's entry id, see formulize_parseFilter()
-	// done before $filterToCompare is worked out, so a different le= goes back to the first page
-	$listEntryId = intval($listEntryId);
-	if($listEntryId > 0) {
-		if(is_array($filter)) {
-			$filter[] = array(0 => "and", 1 => (string) $listEntryId);
-		} elseif($filter) {
-			$filter .= "][" . $listEntryId;
-		} else {
-			$filter = (string) $listEntryId;
-		}
-	}
+	list($filter, $searches) = formulize_listFilterFromSearches($settings, $searches, $listEntryId);
 
 	$filterToCompare = is_array($filter) ? serialize($filter) : $filter;
 	$filterToCompare = md5($filterToCompare); // has so it doesn't look like a SQL injection to server security software
@@ -5602,12 +5603,7 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 		$GLOBALS['formulize_getCountForPageNumbers'] = true; // flag used to trigger setting of the count of entries in the dataset
         $GLOBALS['formulize_setBaseQueryForCalcs'] = true; // flag used to trigger setting of the basequery for calculations
         $GLOBALS['formulize_setQueryForExport'] = true;
-        if($screen) {
-            $fundamental_filters = $screen->getVar('fundamental_filters');
-            if(is_array($fundamental_filters) AND count($fundamental_filters)>0) {
-                $filter = array('fundamental_filters'=>$fundamental_filters, 'active_filters'=>$filter);
-            }
-        }
+        $filter = formulize_addFundamentalFiltersToListFilter($filter, $screen);
 		$data = getData($frid, $fid, $filter, "AND", $scope, $limitStart, $limitSize, $sort, $order, $forcequery);
 
 		// if we deleted entries and the current page is now empty, then shunt back 1 page
@@ -5631,6 +5627,157 @@ function formulize_gatherDataSet($settings, $searches, $sort, $order, $frid, $fi
 	$to_return[2] = $filterToCompare;
 	$to_return[3] = $flatScope;
 	return $to_return;
+}
+
+/**
+ * The filter a list's searches make, for getData(): the searches on its columns, with the global search added to each
+ * column it shows, and the entry asked for with le=, if any. The fundamental filters are added separately, by
+ * formulize_addFundamentalFiltersToListFilter(), because the filter without them is what tells one page load from the next.
+ * @param array $settings The list's settings. oldcols and global_search are used.
+ * @param array $searches handle => the search on that column
+ * @param int $listEntryId An entry id in the main form, to show only that entry. 0 for no limit
+ * @return array The filter, and the searches with the global search added to them
+ */
+function formulize_listFilterFromSearches($settings, $searches, $listEntryId = 0) {
+	if (!is_array($searches)) {
+		$searches = array();
+	}
+	$showcols = explode(",", $settings['oldcols']);
+	if ($settings['global_search']) {
+		foreach($showcols as $column) {
+			// OR: rather than bare OR, since this constructs the OR group syntax programmatically and an all-capitals global
+			// search term (a country code, an acronym) must still be read as an OR search rather than a literal search.
+			if (!empty($searches[$column])) {
+				$searches[$column] .= "//OR:" . $settings['global_search'];
+			} else {
+				$searches[$column] = "OR:" . $settings['global_search'];
+			}
+		}
+	}
+
+	$filter = formulize_parseSearchesIntoFilter($searches);
+
+	// AND on the entry asked for with le=, if any. A filter term that is only a number is the main form's entry id, see formulize_parseFilter()
+	// done before $filterToCompare is worked out, so a different le= goes back to the first page
+	$listEntryId = intval($listEntryId);
+	if($listEntryId > 0) {
+		if(is_array($filter)) {
+			$filter[] = array(0 => "and", 1 => (string) $listEntryId);
+		} elseif($filter) {
+			$filter .= "][" . $listEntryId;
+		} else {
+			$filter = (string) $listEntryId;
+		}
+	}
+	return array($filter, $searches);
+}
+
+/**
+ * A list's filter with the screen's fundamental filters added, which apply whatever the searches are. Saved view searches
+ * that are treated as fundamental are among them, see enforceSearchesAsFundamentalFilters().
+ * @param array|string $filter The filter from formulize_listFilterFromSearches()
+ * @param object|null $screen The list screen, if there is one
+ * @return array|string The filter for getData()
+ */
+function formulize_addFundamentalFiltersToListFilter($filter, $screen) {
+	if($screen) {
+		$fundamental_filters = $screen->getVar('fundamental_filters');
+		if(is_array($fundamental_filters) AND count($fundamental_filters)>0) {
+			$filter = array('fundamental_filters'=>$fundamental_filters, 'active_filters'=>$filter);
+		}
+	}
+	return $filter;
+}
+
+/**
+ * A query selecting the entries a list is showing, in the form a column belongs to, for the column's filters to take their
+ * options from, so they only offer values that some entry in the list has. displayEntries() records what the list is
+ * showing while it draws, in $GLOBALS['formulize_listContextForFilters'], and outside a list this returns nothing, so
+ * filters offer what they always have.
+ *
+ * Every search applies except the column's own, so values can still be added to the ones picked in it, and the fundamental
+ * filters and the scope always apply. A !hidden! search on the column is its own search too: it's the column's
+ * search_<handle> value, and whatever the column's filter submits replaces it.
+ *
+ * @param string $handle The column: an element handle, or a metadata field of the list's main form
+ * @return string SQL selecting entry ids in the column's form, or empty if nothing limits the options
+ * @formulizeElement $handle one
+ */
+function formulize_listEntriesSQLForColumn($handle) {
+	$context = isset($GLOBALS['formulize_listContextForFilters']) ? $GLOBALS['formulize_listContextForFilters'] : null;
+	if(!$context) {
+		return '';
+	}
+	// columns with no search of their own all make the same filter, so they share one query
+	static $queries = array();
+	$searches = $context['searches'];
+	unset($searches[$handle]);
+	list($filter) = formulize_listFilterFromSearches($context['settings'], $searches, $context['listEntryId']);
+	$filter = formulize_addFundamentalFiltersToListFilter($filter, $context['screen']);
+	$queryKey = md5(serialize(array($context['frid'], $context['fid'], $filter, $context['scope'])));
+	if(!array_key_exists($queryKey, $queries)) {
+		$queries[$queryKey] = formulize_buildListEntriesQuery($context['frid'], $context['fid'], $filter, $context['scope']);
+	}
+	$query = $queries[$queryKey];
+	if(!$query OR $query['isUserTableForm']) {
+		return '';
+	}
+	if(isMetaDataField($handle)) {
+		$columnFid = intval($context['fid']);
+	} else {
+		$element_handler = xoops_getmodulehandler('elements', 'formulize');
+		if(!$elementObject = $element_handler->get($handle)) {
+			return '';
+		}
+		$columnFid = intval($elementObject->getVar('id_form'));
+	}
+	if($columnFid == intval($context['fid'])) {
+		return "SELECT DISTINCT main.entry_id ".$query['main'];
+	}
+	// a connected form's alias is f and its position in the relationship's forms, as in dataExtraction()
+	$positions = array_keys((array) $query['linkformids'], $columnFid);
+	if(!$positions OR !isset($query['connected'][$positions[0]])) {
+		return '';
+	}
+	return "SELECT DISTINCT f".intval($positions[0]).".entry_id ".$query['connected'][$positions[0]];
+}
+
+/**
+ * Build the FROM ... WHERE for the entries a list's query would gather, without running it. See the
+ * formulize_returnAfterSettingListEntriesQuery flag in dataExtraction(). The flags the list's own query uses are put aside
+ * while this one is built, so it doesn't count entries, or replace the queries for calculations and export.
+ * @param int $frid The relationship
+ * @param int $fid The main form
+ * @param array|string $filter The filter, as for getData()
+ * @param array|string $scope The scope, as for getData()
+ * @return array|null 'main' and 'connected' FROM ... WHERE clauses, 'linkformids' and 'isUserTableForm', or null if there's no such query, as for a table form
+ */
+function formulize_buildListEntriesQuery($frid, $fid, $filter, $scope) {
+	$form_handler = xoops_getmodulehandler('forms', 'formulize');
+	$formObject = $form_handler->get($fid);
+	if(!$formObject OR $formObject->getVar('tableform')) {
+		return null; // a table form's data is read another way, which would run the query
+	}
+	$flagsToSetAside = array('formulize_getCountForPageNumbers', 'formulize_setBaseQueryForCalcs', 'formulize_setQueryForExport', 'formulize_returnAfterSettingBaseQuery', 'formulize_doNotCacheDataSet');
+	$setAside = array();
+	foreach($flagsToSetAside as $flag) {
+		if(isset($GLOBALS[$flag])) {
+			$setAside[$flag] = $GLOBALS[$flag];
+			unset($GLOBALS[$flag]);
+		}
+	}
+	unset($GLOBALS['formulize_queryForListEntries']);
+	$GLOBALS['formulize_returnAfterSettingListEntriesQuery'] = true;
+	$GLOBALS['formulize_doNotCacheDataSet'] = true; // what comes back is only true, which isn't a dataset to keep
+	// a cache key of its own, so a cached dataset with the same filter can't be returned in place of building the query
+	getData($frid, $fid, $filter, "AND", $scope, "", "", "", "", false, 0, false, "", false, false, null, 'formulize_listEntriesQuery');
+	unset($GLOBALS['formulize_returnAfterSettingListEntriesQuery'], $GLOBALS['formulize_doNotCacheDataSet']);
+	$query = isset($GLOBALS['formulize_queryForListEntries']) ? $GLOBALS['formulize_queryForListEntries'] : null;
+	unset($GLOBALS['formulize_queryForListEntries']);
+	foreach($setAside as $flag=>$value) {
+		$GLOBALS[$flag] = $value;
+	}
+	return $query;
 }
 
 // THIS FUNCTION CALCULATES THE NUMBER OF PAGES AND DRAWS HTML FOR NAVIGATING THEM

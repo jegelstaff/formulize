@@ -70,7 +70,7 @@ if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
     print "<h1 class='fz-card__title'>"._formulize_DE_EXPORT_TITLE."</h1>\n";
 
     if ($_GET['type'] == "update") {
-        print "<p>"._formulize_DE_IMPORT_DATATEMP4." <a href=\"\" onclick=\"javascript:window.opener.showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=".intval($_GET['eq'])."');return false;\">"._formulize_DE_IMPORT_DATATEMP5."</a></p>\n";
+        print "<p>"._formulize_DE_IMPORT_DATATEMP4." <a href=\"\" onclick=\"javascript:window.opener.showPop('" . XOOPS_URL . "/modules/formulize/include/import.php?fid=$fid&eq=".(formulize_exportQueryFile($_GET['eq']) ? $_GET['eq'] : "")."');return false;\">"._formulize_DE_IMPORT_DATATEMP5."</a></p>\n";
         print "<p>"._formulize_DE_IMPORT_DATATEMP3."</p>\n";
     }
 
@@ -112,7 +112,8 @@ if (!isset($_POST['metachoice']) AND !isset($formulize_doingManualExport)) {
     // 5. need to make sure import templates are created appropriately
 
     // read the query data from the cached file
-    $queryData = file(XOOPS_ROOT_PATH."/cache/exportQuery_".intval($_GET['eq']).".formulize_cached_query_for_export");
+    $exportQueryFile = formulize_exportQueryFile(isset($_GET['eq']) ? $_GET['eq'] : '');
+    $queryData = ($exportQueryFile AND file_exists($exportQueryFile)) ? file($exportQueryFile) : array('', '');
     global $xoopsUser;
     $exportUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);

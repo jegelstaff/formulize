@@ -2468,7 +2468,7 @@ class formulizeFormsHandler {
 		if(!$this->db->queryF("ALTER TABLE `$table` ADD `$toField` $typeWithDefault")) {
 			return false;
 		}
-		if(!$this->db->queryF("UPDATE `$table` SET `$toField` = $aesFunction(`$fromField`, " . $this->db->quoteString(getAESPassword()) . ")")) {
+		if(!$this->db->queryF("UPDATE `$table` SET `$toField` = $aesFunction(`$fromField`, " . formulize_aesKeySQL() . ")")) {
 			return false;
 		}
 		return $this->db->queryF("ALTER TABLE `$table` DROP `$fromField`") ? true : false;

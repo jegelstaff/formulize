@@ -1039,31 +1039,51 @@ async function valuesOffered(page, selector) {
 	return text.filter(value => value !== 'Show all' && value !== 'Show Blanks').sort();
 }
 
-test('Section 13: the values a list\'s Search box offers', async ({ page }) => {
-	const rows = casesFor('P');
-	test.setTimeout(rows.length * SECONDS_PER_ROW * 1000);
-	const { selector } = howToCheck('P');
-	const read = () => valuesOffered(page, selector);
+// The donors the Donor list offers in a new Artifact. It shows once the artifact is marked as donated. Only text that's exactly
+// one of the names counts, since the list also has an option that offers no donor.
+async function donorOptionsInForm(page, selector, everything) {
+	await leavePage(page, `/modules/formulize/index.php?fid=${formId('Artifacts')}`);
+	await page.getByRole('button', { name: 'Add Artifact', exact: true }).click();
+	await page.locator('.form-row:has(.formulize-label-artifacts_donated_to_museum)').getByRole('radio', { name: 'Yes', exact: true }).check();
+	await expect(page.locator('.form-row:has(.formulize-label-artifacts_donor) select')).toBeVisible();
+	await conditionalChecksFinished(page);
+	return namesOnPage(page.locator(selector), everything);
+}
+
+// A row's setting, without its letter, so that the rows for the form and the rows for the list can be checked for being the same
+const donorSetting = row => [row['Row'].slice(1), row['Shows'] || '', row['All of'], row['Any of']].join(' | ');
+
+test('Section 13: the values the Donor list offers, in the form and in a list\'s Search box', async ({ page }) => {
+	const formRows = casesFor('H');
+	const listRows = casesFor('P');
+	test.setTimeout((formRows.length + listRows.length) * SECONDS_PER_ROW * 1000);
+	expect(listRows.map(donorSetting), 'each P row is the same setting as the H row with its number').toEqual(formRows.map(donorSetting));
 
 	await login(page, 'curator1', '12345');
-	for (const row of rows) {
-		await checkRow(page, row['Row'], disagreements, async () => {
-			const shows = row['Shows'] || '';
-			const sourceElement = shows ? DONOR_COLUMN_SHOWS[shows] : DONOR_COLUMN_SOURCE;
-			if (!sourceElement) {
-				throw new Error(`The Donor list can't be made to show ${shows}`);
-			}
-			const conditions = conditionsFor(row, DONOR_ELEMENTS);
-			const expected = expectedNames(row['Should show'], namesIn(shows ? `${shows} shown` : 'Donor'));
-			if (expected.length === 0 && shows) {
-				throw new Error('A row that offers nothing is proved by a donor\'s name showing, so it can\'t have a Shows column');
-			}
-			await setDonorColumn(conditions, sourceElement);
-			compare(row, expected, await read());
-			if (expected.length === 0) {
-				await proveQueryRan(row, () => setDonorColumn(provingConditions(conditions, 'donors_name', 'Freeform Solutions')), read, 'Freeform Solutions');
-			}
-		});
+	for (const { letter, rows } of [{ letter: 'H', rows: formRows }, { letter: 'P', rows: listRows }]) {
+		const { selector } = howToCheck(letter);
+		for (const row of rows) {
+			await checkRow(page, row['Row'], disagreements, async () => {
+				const shows = row['Shows'] || '';
+				const sourceElement = shows ? DONOR_COLUMN_SHOWS[shows] : DONOR_COLUMN_SOURCE;
+				if (!sourceElement) {
+					throw new Error(`The Donor list can't be made to show ${shows}`);
+				}
+				const everything = namesIn(shows ? `${shows} shown` : 'Donor');
+				// the form counts only the names, and the list counts every value it offers, see valuesOffered()
+				const read = letter === 'H' ? () => donorOptionsInForm(page, selector, everything) : () => valuesOffered(page, selector);
+				const conditions = conditionsFor(row, DONOR_ELEMENTS);
+				const expected = expectedNames(row['Should show'], everything);
+				if (expected.length === 0 && shows) {
+					throw new Error('A row that offers nothing is proved by a donor\'s name showing, so it can\'t have a Shows column');
+				}
+				await setDonorColumn(conditions, sourceElement);
+				compare(row, expected, await read());
+				if (expected.length === 0) {
+					await proveQueryRan(row, () => setDonorColumn(provingConditions(conditions, 'donors_name', 'Freeform Solutions')), read, 'Freeform Solutions');
+				}
+			});
+		}
 	}
 	await setDonorColumn([]);
 	await leavePage(page);

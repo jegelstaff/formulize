@@ -500,7 +500,12 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 
 			global $xoopsDB;
 			// missing $restrictSQL that linked selectboxes use, otherwise same features as linked selectboxes?
-			$sourceValuesQ = "SELECT t1.entry_id, t1.`".$sourceHandle."` FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1
+			// each source field under its own name, decrypted if it's encrypted, since prepvalues() takes values as people typed them
+			$sourceSelectColumns = array();
+			foreach((!empty($linked_columns) ? $linked_columns : array($boxproperties[1])) as $sourceSelectHandle) {
+				$sourceSelectColumns[] = formulize_fieldValueSQL($sourceSelectHandle, 't1')." AS `".str_replace('`', '', $sourceSelectHandle)."`";
+			}
+			$sourceValuesQ = "SELECT t1.entry_id, ".implode(", ", $sourceSelectColumns)." FROM ".$xoopsDB->prefix("formulize_".$sourceFormObject->getVar('form_handle'))." AS t1
 			$extra_clause $conditionsfilter $conditionsfilter_oom $selfReferenceExclusion $sourceEntrySafetyNetEnd GROUP BY t1.entry_id $sortOrderClause";
 
 			if($sourceValuesRes = $xoopsDB->query($sourceValuesQ)) {

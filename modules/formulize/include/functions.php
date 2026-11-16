@@ -6650,9 +6650,10 @@ function convertAllHandlesAndIds($handles, $frid, $reverse=false, $ids=false, $f
  *
  * @param string $metadataHandle - A metadata field handle (creation_uid, mod_uid, creation_datetime, mod_datetime)
  * @param int $fid - The form id whose data table we read distinct values from
+ * @param string $entryIdsSQL - Optional. A query selecting entry ids in the form, which limits the users to those who made or changed those entries. See formulize_gatherFilterOptions()
  * @return array list($options, $useValue) where $options is keyed value=>label, and $useValue is 'uid' for the user fields, '' otherwise
  */
-function formulize_getMetadataFilterOptions($metadataHandle, $fid) {
+function formulize_getMetadataFilterOptions($metadataHandle, $fid, $entryIdsSQL='') {
     $options = array();
     $useValue = "";
     // only the user metadata fields get a dropdown/checkbox filter
@@ -6680,7 +6681,7 @@ function formulize_getMetadataFilterOptions($metadataHandle, $fid) {
     // distinct creators/modifiers among the entries the user can actually see
     $dataHandler = new formulizeDataHandler($fid);
     // findAllValuesForField returns entry_id=>value for any real column, including the metadata columns
-    $uidValues = $dataHandler->findAllValuesForField($metadataHandle, 'ASC', $groupScopeGroups, $scopeUids, true);
+    $uidValues = $dataHandler->findAllValuesForField($metadataHandle, 'ASC', $groupScopeGroups, $scopeUids, true, $entryIdsSQL);
     $uidValues = is_array($uidValues) ? array_map('intval', array_unique(array_filter($uidValues, 'is_numeric'))) : array();
     if(count($uidValues)==0) {
         return array($options, $useValue);
@@ -6732,6 +6733,77 @@ function formulize_searchBoxOptionLimit() {
 }
 
 /**
+ * A token standing for the entries a list is showing, for a Search box to send with its requests for the values that match
+ * what someone types, so those values are limited to the list's entries too. The queries stay on the server, in a file named
+ * after the token, along with the user they were made for. One file for each list on a page, holding each Search box's query.
+ * The key for encrypted fields is never in them, see formulize_aesKeySQL(). Files more than six hours old are deleted.
+ *
+ * @param string $handle The column
+ * @param int $columnFid The form the column is in, which the request names, and which is checked against this
+ * @param string $entryIdsSQL The query, from formulize_listEntriesSQLForColumn()
+ * @return string The token, or empty if there's no list, or the file couldn't be written
+ * @formulizeElement $handle one
+ */
+function formulize_listEntriesTokenForColumn($handle, $columnFid, $entryIdsSQL) {
+    if(empty($GLOBALS['formulize_listContextForFilters'])) {
+        return '';
+    }
+    $context =& $GLOBALS['formulize_listContextForFilters'];
+    if(empty($context['entriesToken'])) {
+        static $cleanedUp = false;
+        if(!$cleanedUp) {
+            formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "listEntries_");
+            $cleanedUp = true;
+        }
+        $context['entriesToken'] = bin2hex(random_bytes(16));
+        $context['entriesColumns'] = array();
+    }
+    $context['entriesColumns'][(string) $handle] = array('fid' => intval($columnFid), 'sql' => (string) $entryIdsSQL);
+    global $xoopsUser;
+    $contents = serialize(array('uid' => ($xoopsUser ? intval($xoopsUser->getVar('uid')) : 0), 'columns' => $context['entriesColumns']));
+    if(file_put_contents(formulize_listEntriesTokenFile($context['entriesToken']), $contents) === false) {
+        return '';
+    }
+    return $context['entriesToken'];
+}
+
+/**
+ * The query a token from formulize_listEntriesTokenForColumn() stands for, if the token is one, and was made for this user and
+ * this column in this form.
+ * @param string $token The token, as the request sent it
+ * @param string $handle The column
+ * @param int $fid The form the column is in
+ * @return string The query, or empty if there's none to use
+ * @formulizeElement $handle one
+ */
+function formulize_listEntriesSQLFromToken($token, $handle, $fid) {
+    if(!is_string($token) OR !preg_match('/^[a-f0-9]{32}$/', $token)) {
+        return '';
+    }
+    $file = formulize_listEntriesTokenFile($token);
+    if(!file_exists($file) OR !is_string($contents = file_get_contents($file))) {
+        return '';
+    }
+    $data = unserialize($contents, array('allowed_classes' => false));
+    global $xoopsUser;
+    $uid = $xoopsUser ? intval($xoopsUser->getVar('uid')) : 0;
+    if(!is_array($data) OR !isset($data['uid'], $data['columns'][(string) $handle]) OR intval($data['uid']) !== $uid) {
+        return '';
+    }
+    $column = $data['columns'][(string) $handle];
+    return (isset($column['fid'], $column['sql']) AND intval($column['fid']) === intval($fid)) ? (string) $column['sql'] : '';
+}
+
+/**
+ * Where the queries a token from formulize_listEntriesTokenForColumn() stands for are kept
+ * @param string $token The token, which has to be checked first
+ * @return string The file's path
+ */
+function formulize_listEntriesTokenFile($token) {
+    return XOOPS_ROOT_PATH."/cache/listEntries_".$token.".formulize_cached_query";
+}
+
+/**
  * The options the Search box on a column offers, as values and the labels people see, the same values buildFilter()
  * would give its checkboxes, so a search picked in either one means the same thing.
  *
@@ -6740,9 +6812,10 @@ function formulize_searchBoxOptionLimit() {
  * @param string $term Optional. Only options whose label contains this, ignoring case.
  * @param int $maxOptions Optional. At most this many. 0 for all of them.
  * @param array|null $onlyValues Optional. Only these values, for showing the labels of the values already picked.
+ * @param string $entryIdsSQL Optional. Only the values some of these entries have, see formulize_gatherFilterOptions()
  * @return array 'options' => list of array('value' => ..., 'label' => plain text, and 'contains' => true for a value to match as contained in the field rather than equal to it), 'more' => whether there were more than $maxOptions
  */
-function formulize_getQuickSearchOptions($handle, $fid=0, $term='', $maxOptions=0, $onlyValues=null) {
+function formulize_getQuickSearchOptions($handle, $fid=0, $term='', $maxOptions=0, $onlyValues=null, $entryIdsSQL='') {
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
     $elementObject = isMetaDataField($handle) ? false : $element_handler->get($handle);
     if(!$elementObject AND !isMetaDataField($handle)) {
@@ -6753,7 +6826,7 @@ function formulize_getQuickSearchOptions($handle, $fid=0, $term='', $maxOptions=
     // one more than will be shown, so we know whether there are more. Picked values need their labels, whatever they match.
     $readTerm = $onlyValues === null ? $term : '';
     $readMax = ($onlyValues === null AND $maxOptions > 0) ? $maxOptions + 1 : 0;
-    list($options, $useValue, $ele_uitext) = formulize_gatherFilterOptions($elementObject, $identifier, intval($fid), term: $readTerm, maxOptions: $readMax);
+    list($options, $useValue, $ele_uitext) = formulize_gatherFilterOptions($elementObject, $identifier, intval($fid), term: $readTerm, maxOptions: $readMax, entryIdsSQL: $entryIdsSQL);
     $results = array();
     $more = false;
     foreach((array) $options as $option=>$option_value) {
@@ -6793,6 +6866,40 @@ function formulize_getQuickSearchOptions($handle, $fid=0, $term='', $maxOptions=
         $results[] = $result;
     }
     return array('options' => $results, 'more' => $more);
+}
+
+/**
+ * The values stored in an element's field in some entries, each one on its own. A value that holds several, such as a checkbox
+ * series' or a multi-select list's, is split into them, and so is a linked element's list of entry ids. Only the entries the
+ * user can see are read, as for the values filters offer, see formulize_filterValuesScope().
+ *
+ * @param object $elementObject The element
+ * @param string $entryIdsSQL A query selecting entry ids in the element's form, from formulize_listEntriesSQLForColumn()
+ * @param bool $splitOnCommas Optional. Split on commas too, for a linked element, which can store its entry ids as ,1,2,
+ * @return array The distinct values
+ * @formulizeElement $elementObject one
+ */
+function formulize_storedValuePartsInEntries($elementObject, $entryIdsSQL, $splitOnCommas=false) {
+    static $cachedParts = array();
+    $cacheKey = $elementObject->getVar('ele_id').'-'.md5($entryIdsSQL).'-'.($splitOnCommas ? 1 : 0);
+    if(isset($cachedParts[$cacheKey])) {
+        return $cachedParts[$cacheKey];
+    }
+    list($groupScopeGroups, $scopeUids) = formulize_filterValuesScope($elementObject->getVar('id_form'));
+    $dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
+    $storedValues = $dataHandler->findDistinctValuesForField($elementObject->getVar('ele_handle'), '', 0, $groupScopeGroups, $scopeUids, true, $entryIdsSQL);
+    $parts = array();
+    foreach((array) $storedValues as $storedValue) {
+        foreach(explode('*=+*:', trim((string) $storedValue, '*=+*:')) as $part) {
+            foreach($splitOnCommas ? explode(',', trim($part, ',')) : array($part) as $onePart) {
+                if($onePart !== '') {
+                    $parts[$onePart] = $onePart;
+                }
+            }
+        }
+    }
+    $cachedParts[$cacheKey] = array_values($parts);
+    return $cachedParts[$cacheKey];
 }
 
 /**
@@ -6853,9 +6960,12 @@ function formulize_filterOptionForValue($value) {
  * @param int $linked_data_id Experimental, see buildFilter()
  * @param string $term Optional. Only the values that contain this. Where the values come from the database, the database does the matching.
  * @param int $maxOptions Optional. At most this many values are read from the database, where they come from there. 0 means no limit.
+ * @param string $entryIdsSQL Optional. A query selecting entry ids in the element's form, from formulize_listEntriesSQLForColumn(). Only the
+ * options that some of those entries have are offered: the entries a list is showing, so its filters don't offer values that would empty it.
+ * The options are still the ones described above, so this only ever takes options away.
  * @return array The options (keyed by value), a flag saying whether the label to show is the key ('') or the value ('entryid', 'uid', or 'shown' for a date or time, whose label is the value as a list shows it), and the element's ui text
  */
-function formulize_gatherFilterOptions($elementObject, $element_identifier, $metadataFid=0, $limit=false, $subfilter=false, $linked_ele_id=0, $linked_data_id=0, $term='', $maxOptions=0) {
+function formulize_gatherFilterOptions($elementObject, $element_identifier, $metadataFid=0, $limit=false, $subfilter=false, $linked_ele_id=0, $linked_data_id=0, $term='', $maxOptions=0, $entryIdsSQL='') {
     global $xoopsDB;
     $form_handler = xoops_getmodulehandler('forms', 'formulize');
     $element_handler = xoops_getmodulehandler('elements', 'formulize');
@@ -6865,7 +6975,7 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
     // so source their filter options separately and skip all the element-specific logic below
     if(isMetaDataField($element_identifier)) {
     	$ele_uitext = array();
-    	list($options, $useValue) = formulize_getMetadataFilterOptions($element_identifier, $metadataFid);
+    	list($options, $useValue) = formulize_getMetadataFilterOptions($element_identifier, $metadataFid, $entryIdsSQL);
     } else {
 					// Ask the element type itself what its filter options are, rather than switching on
 					// the ele_type string here. That way custom element types that extend a built-in
@@ -6887,6 +6997,13 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 								$hasOtherOption = true;
 							}
 						}
+					}
+					// the element's own options, such as a dropdown's or a checkbox series', are kept only if some of the entries have them.
+					// A user list names the users it offers with a {FULLNAMES} or {USERNAMES} option, and is dealt with below
+					if($entryIdsSQL AND is_array($options) AND $options AND key($options) !== "{FULLNAMES}" AND key($options) !== "{USERNAMES}") {
+							$elementTypeHandler = xoops_getmodulehandler($elementObject->getVar('ele_type').'Element', 'formulize', true);
+							$elementTypeHandler = $elementTypeHandler ? $elementTypeHandler : xoops_getmodulehandler('elements', 'formulize');
+							$options = $elementTypeHandler->filterOptionsPresentInValues($options, formulize_storedValuePartsInEntries($elementObject, $entryIdsSQL), $elementObject);
 					}
 
 					$useValue = ""; // flag to indicate if the value should be used for the label that users see, otherwise we use the key
@@ -6933,9 +7050,20 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 									list($linkConditions) = formulize_conditionsWithoutEntryReferences(isset($ele_value[5]) ? $ele_value[5] : array());
 									list($conditionsfilter, $conditionsfilter_oom, $parentFormFrom) = buildConditionsFilterSQL($linkConditions, $source_form_id, 'new', $fakeOwnerUid, $elementFormObject, "t1");
 									// the options can also be limited to the values picked in another element, the same as in the form
-									if(($limitEntryIds = formulize_optionsLimitByElementValues($ele_value, false, $fakeOwnerUid, $elementFormObject)) !== false) {
-										$directLimit = " AND t1.entry_id IN (".implode(",", $limitEntryIds).") ";
-									}
+										if(($limitEntryIds = formulize_optionsLimitByElementValues($ele_value, false, $fakeOwnerUid, $elementFormObject)) !== false) {
+											$directLimit = " AND t1.entry_id IN (".implode(",", $limitEntryIds).") ";
+										}
+										// only the source entries that the entries asked about point to. Done here, before any LIMIT, so as many are offered as there
+										// would be. A snapshot list holds the text of its options rather than entry ids, so its options are compared with the text, below
+										if($entryIdsSQL AND empty($ele_value['snapshot'])) {
+											$pointedToIds = array();
+											foreach(formulize_storedValuePartsInEntries($elementObject, $entryIdsSQL, true) as $pointedToId) {
+												if(is_numeric($pointedToId) AND intval($pointedToId) > 0) {
+													$pointedToIds[intval($pointedToId)] = intval($pointedToId);
+												}
+											}
+											$directLimit .= " AND t1.entry_id IN (".($pointedToIds ? implode(",", $pointedToIds) : "0").") ";
+										}
 									$sourceEntryIdsForFilters = array(); // filters never have any preselected values from the database
 									list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIdsForFilters);
 									$ele_value['formlink_useonlyusersentries'] = isset($ele_value['formlink_useonlyusersentries']) ? $ele_value['formlink_useonlyusersentries'] : 0;
@@ -6968,10 +7096,10 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 
 							$select_column = '';
 							if(count($linked_columns)==1) {
-									$select_column = "distinct(t1.`".$linked_columns[0]."`)";
+									$select_column = "distinct(".formulize_fieldValueSQL($linked_columns[0], 't1').")";
 							} else {
 									for($i=0;isset($linked_columns[$i]);$i++) {
-											$select_column .= ', t1.`'.$linked_columns[$i]."`";
+											$select_column .= ', '.formulize_fieldValueSQL($linked_columns[$i], 't1');
 									}
 									$select_column = trim($select_column, ",");
 							}
@@ -7001,7 +7129,7 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 													$termMatches = array();
 													break;
 											}
-											$termMatches[] = "t1.`".str_replace('`', '', $linkedColumn)."` LIKE '%$likeTerm%'";
+											$termMatches[] = formulize_fieldValueSQL($linkedColumn, 't1')." LIKE '%$likeTerm%'";
 									}
 									if($termMatches) {
 											$whereClauses .= (stristr($whereClauses, 'WHERE') ? " AND " : " WHERE ")."(".implode(" OR ", $termMatches).")";
@@ -7038,14 +7166,24 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 									}
 									// Two source entries can show the same text. The form offers only one of them, but saved entries can point
 									// at either, so each one is offered here, with its entry id after the text, to tell them apart.
-									if(!$isSnapshot) {
-											$labelCounts = array_count_values(array_map('strval', $options));
-											foreach($options as $sourceEntryId=>$label) {
-													if($labelCounts[(string) $label] > 1) {
-															$options[$sourceEntryId] = sprintf(_formulize_QSF_DUPLICATE_LABEL, $label, $sourceEntryId);
-													}
-											}
-									}
+								if(!$isSnapshot) {
+										$labelCounts = array_count_values(array_map('strval', $options));
+										foreach($options as $sourceEntryId=>$label) {
+												if($labelCounts[(string) $label] > 1) {
+														$options[$sourceEntryId] = sprintf(_formulize_QSF_DUPLICATE_LABEL, $label, $sourceEntryId);
+												}
+										}
+								} elseif($entryIdsSQL) {
+										$storedTexts = array();
+										foreach(formulize_storedValuePartsInEntries($elementObject, $entryIdsSQL) as $storedText) {
+												$storedTexts[undoAllHTMLChars((string) $storedText, ENT_QUOTES)] = true;
+										}
+										foreach($options as $optionValue=>$label) {
+												if(!isset($storedTexts[undoAllHTMLChars((string) $label, ENT_QUOTES)])) {
+														unset($options[$optionValue]);
+												}
+										}
+								}
 							}
 					}
 
@@ -7063,12 +7201,12 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 							$showsValuesItsOwnWay = (elementTypeIsOrExtends($elementObject, 'date') OR elementTypeIsOrExtends($elementObject, 'time'));
 							// if no groups passed and no scope uids passed, then it just gets everything
 							if($showsValuesItsOwnWay) {
-									$options = $dataHandler->findDistinctValuesForField($elementObject->getVar('ele_handle'), '', 0, $groupScopeGroups, $scopeUids, true);
+									$options = $dataHandler->findDistinctValuesForField($elementObject->getVar('ele_handle'), '', 0, $groupScopeGroups, $scopeUids, true, $entryIdsSQL);
 							} elseif((string) $term !== '' OR intval($maxOptions) > 0) {
 									// only the values that match, and only so many: the Search box asks for these as someone types
-									$options = $dataHandler->findDistinctValuesForField($elementObject->getVar('ele_handle'), $term, $maxOptions, $groupScopeGroups, $scopeUids, true);
+									$options = $dataHandler->findDistinctValuesForField($elementObject->getVar('ele_handle'), $term, $maxOptions, $groupScopeGroups, $scopeUids, true, $entryIdsSQL);
 							} else {
-									$options = $dataHandler->findAllValuesForField($elementObject->getVar('ele_handle'),'ASC',$groupScopeGroups,$scopeUids,true);// last true forces per group filters to be respected
+									$options = $dataHandler->findAllValuesForField($elementObject->getVar('ele_handle'),'ASC',$groupScopeGroups,$scopeUids,true,$entryIdsSQL);// the true forces per group filters to be respected
 							}
 							$options = is_array($options) ? array_unique($options) : array();
 							$parsedOptions = array();
@@ -7093,7 +7231,7 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 					if($hasOtherOption AND is_array($options)) {
 							list($groupScopeGroups, $scopeUids) = formulize_filterValuesScope($elementObject->getVar('id_form'));
 							$dataHandler = new formulizeDataHandler($elementObject->getVar('id_form'));
-							$otherTexts = $dataHandler->findDistinctOtherTextsForElement($elementObject->getVar('ele_handle'), $term, $maxOptions, $groupScopeGroups, $scopeUids, true);
+							$otherTexts = $dataHandler->findDistinctOtherTextsForElement($elementObject->getVar('ele_handle'), $term, $maxOptions, $groupScopeGroups, $scopeUids, true, $entryIdsSQL);
 							foreach((array) $otherTexts as $otherText) {
 									$otherText = undoAllHTMLChars($otherText, ENT_QUOTES);
 									if($otherText === '') { continue; }
@@ -7110,10 +7248,19 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
 							global $xoopsUser;
 							$declaredUsersGroups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
 							$currentUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-							$limitUserIds = formulize_optionsLimitByElementValues($ele_value, false, $currentUid, $form_handler->get($elementObject->getVar('id_form')), true);
-							$options = array();
-							foreach (formulize_userListNames($ele_value, $nametype, $declaredUsersGroups) as $auid=>$aname) {
-									if ($limitUserIds !== false AND !in_array(intval($auid), $limitUserIds)) { continue; }
+								$limitUserIds = formulize_optionsLimitByElementValues($ele_value, false, $currentUid, $form_handler->get($elementObject->getVar('id_form')), true);
+								// only the users that the entries asked about name
+								$namedUserIds = false;
+								if ($entryIdsSQL) {
+										$namedUserIds = array();
+										foreach (formulize_storedValuePartsInEntries($elementObject, $entryIdsSQL) as $namedUserId) {
+												$namedUserIds[intval($namedUserId)] = true;
+										}
+								}
+								$options = array();
+								foreach (formulize_userListNames($ele_value, $nametype, $declaredUsersGroups) as $auid=>$aname) {
+										if ($limitUserIds !== false AND !in_array(intval($auid), $limitUserIds)) { continue; }
+										if ($namedUserIds !== false AND !isset($namedUserIds[intval($auid)])) { continue; }
 									$options[$auid] = $aname;
 							}
 							$useValue = 'uid';
@@ -7141,10 +7288,11 @@ function formulize_gatherFilterOptions($elementObject, $element_identifier, $met
  * should be returned as a checkbox series supporting multiple values
  * @param bool $negativeFilter - A flag used to indicate if the filter should be a "negative" filter, that selects which values to exclude instead of include.
  * @param int $metadataFid - The form id to use when $element_identifier is a metadata field (creation_uid, mod_uid, etc.), since metadata fields have no element object to derive the form from. Defaults to 0.
+ * @param string $entryIdsSQL - Optional. A query selecting entry ids in the element's form, such as the entries a list is showing, from formulize_listEntriesSQLForColumn(). Only the options some of those entries have are shown, along with any that are selected now, so a choice in effect can always be seen and undone.
  * @return string HTML markup for the filter element, including necessary javascript to submit the form the filter is part of (based on formDOMid)
  * @formulizeElement $element_identifier one
  */
-function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $defaultValue=false, $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false, $multi=false, $negativeFilter=false, $metadataFid=0) {
+function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $defaultValue=false, $subfilter=false, $linked_ele_id = 0, $linked_data_id=0, $limit=false, $multi=false, $negativeFilter=false, $metadataFid=0, $entryIdsSQL='') {
 
     $multiCounter = $multi ? formulize_nextOrsetNumber() : 0;
 
@@ -7278,6 +7426,13 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
         }
 
         list($options, $useValue, $ele_uitext) = formulize_gatherFilterOptions($elementObject, $element_identifier, $metadataFid, $limit, $subfilter, $linked_ele_id, $linked_data_id);
+        // The options some of the entries have. Every option is still gone through below, so each one keeps the position it has
+        // always had, which some selections are made by, and the ones not in the entries are left out unless they're selected.
+        $optionsInEntries = false;
+        if($entryIdsSQL) {
+            list($optionsInEntries) = formulize_gatherFilterOptions($elementObject, $element_identifier, $metadataFid, $limit, $subfilter, $linked_ele_id, $linked_data_id, entryIdsSQL: $entryIdsSQL);
+            $optionsInEntries = is_array($optionsInEntries) ? $optionsInEntries : array();
+        }
 
         $counter++;
         $anythingChecked = false;
@@ -7285,6 +7440,7 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
 
             $multiIdCounter++;
             $selected = "";
+            $leaveOutUnlessSelected = ($optionsInEntries !== false AND !array_key_exists($option, $optionsInEntries));
             // A label that is a value, rather than the option itself, is the text of another form's entry or a user's
             // name, which anyone could have typed, so it is escaped, once. The other options are already escaped by
             // formulize_gatherFilterOptions(), or are the ones a webmaster wrote for the element, which are left alone.
@@ -7306,12 +7462,20 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                         $anythingChecked = $checked ? true : $anythingChecked;
                         $checked = (!$anythingChecked AND in_array($option, $defaultValue)) ? "checked" : $checked;
                     }
+                    if($leaveOutUnlessSelected AND !$checked) {
+                        $counter++;
+                        continue;
+                    }
                     // the script reads the box's own value, because a value written into the script would be decoded back
                     // into quotes in the attribute, and could end the script's string and run as code
                     $filter .= "<label class='formulize-multifilter-option' for='".$multiIdCounter."_".$id."'><input type='checkbox' name='".$multiIdCounter."_".$id."' id='".$multiIdCounter."_".$id."' class='$id' value='".$option."' $checked onclick=\"if(jQuery(this).attr('checked')) { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val()+'$orset$ORSETOperator'+this.value+'//'); } else { jQuery('#".$id."_hiddenMulti').val(jQuery('#".$id."_hiddenMulti').val().replace('$orset$ORSETOperator'+this.value+'//', '')); } jQuery('#1_".$id."').removeAttr('checked'); jQuery('#apply-button-".$id."').show(200);\"><span>".$labeloption."</span></label>\n";
                 } else {
                     $selected = ($_POST[$id] == $option OR $_GET[$id] == $option) ? "selected" : "";
                     $selected = (!$selected AND in_array($option, $defaultValue)) ? "selected" : $selected;
+                    if($leaveOutUnlessSelected AND !$selected) {
+                        $counter++;
+                        continue;
+                    }
                     $filter .= "<option value=\"" . $option . "\" $selected>" . $labeloption . "</option>\n";
                 }
             } else {
@@ -7341,6 +7505,10 @@ function buildFilter($id, $element_identifier, $defaultText="", $formDOMId="", $
                     } elseif($option == $defaultValue) {
                         $selected = "selected";
                     }
+                }
+                if($leaveOutUnlessSelected AND !$selected) {
+                    $counter++;
+                    continue;
                 }
                 if ($formDOMId == "{listofentries}" AND !$multi) {
                     // need to pass this stupid thing back because we can't compare the option and the contents of $_POST...a typing problem in PHP??!!
@@ -8135,19 +8303,53 @@ function formulize_renderSingleentryGroupsUI() {
 }
 
 /**
- * Get AES password for encryption
+ * What to write in SQL for the key that encrypted fields are encrypted with, as in AES_DECRYPT(f.`field`, <this>). It's the
+ * name of a session variable that holds the key, so write it as it is, without quotes. The key is never in the query, so the
+ * query can be logged, shown or cached. See icms_db_Connection::aesKeySQL().
  *
- * This function retrieves the AES password used for encryption in the system.
- * Want to hash the db pass since we don't want any SQL logging processes to
- * include the db pass as plaintext
- *
- * @return string AES password
+ * @return string SQL for the key
  */
-function getAESPassword() {
-    $icmsDB = SDATA_DB_PASS;
-    $xoopsDB = XOOPS_DB_PASS;
-    $dbPass = $icmsDB ? $icmsDB : $xoopsDB;
-    return sha1($dbPass."I'm a cool, cool, cool dingbat");
+function formulize_aesKeySQL() {
+    return icms_db_Factory::pdoInstance()->aesKeySQL();
+}
+
+/**
+ * How to refer to an element's field in SQL, so that an encrypted field's values are read, compared and sorted decrypted.
+ * Values are decrypted where they're read from the database, and never afterwards: prepvalues() takes the values as people
+ * typed them. So any query that reads an element's field for its value should refer to it this way.
+ * @param string $handle The element handle, or a metadata field
+ * @param string $tableAlias Optional. The alias of the form's table in the query, or empty for none
+ * @return string The column, or the expression that decrypts it. Add an AS if the column has to keep its name.
+ * @formulizeElement $handle one
+ */
+function formulize_fieldValueSQL($handle, $tableAlias = '') {
+    $handle = str_replace('`', '', (string) $handle);
+    $column = ($tableAlias !== '' ? "$tableAlias." : "")."`$handle`";
+    if(!isMetaDataField($handle) AND ($elementObject = _getElementObject($handle)) AND $elementObject->getVar('ele_encrypt')) {
+        return "AES_DECRYPT($column, ".formulize_aesKeySQL().")";
+    }
+    return $column;
+}
+
+/**
+ * The decrypted values of a form's encrypted elements, as more columns for a query that selects alias.*, each named for its
+ * element. They go straight after the form's other columns, so that the decrypted value takes the place of the stored one where
+ * the row is read by name, and in processGetDataResults(), which reads a row by position.
+ * @param int $fid The form
+ * @param string $tableAlias The alias of the form's table in the query
+ * @return string The columns, each with a comma in front, or empty if the form has no encrypted elements
+ */
+function formulize_decryptedColumnsSQL($fid, $tableAlias) {
+    $form_handler = xoops_getmodulehandler('forms', 'formulize');
+    if(!$formObject = $form_handler->get($fid, true)) { // with the elements shown to no one, which can be encrypted too
+        return '';
+    }
+    $columns = '';
+    foreach((array) $formObject->getVar('encryptedElements') as $handle) {
+        $handle = str_replace('`', '', (string) $handle);
+        $columns .= ", AES_DECRYPT($tableAlias.`$handle`, ".formulize_aesKeySQL().") AS `$handle`";
+    }
+    return $columns;
 }
 
 /**
@@ -10981,16 +11183,15 @@ function formulize_getFormsWithDependentDerivedValues($element) {
  * export query generated by gatherDataset, to a file for picking up later so we don't
  * have to figure out all the bits and pieces again
  *
+ * The file is named for the time and a random token, so its name can't be guessed. The cache folder can be read from the web.
+ *
  * @param int $fid The form ID
- * @return void
+ * @return string The id of the query, to pass as eq to export.php and import.php. See formulize_exportQueryFile()
  */
 function formulize_catchAndWriteExportQuery($fid) {
-    static $lastExportTime = 0;
-    $exportTime = time();
-    $exportTime = $lastExportTime == $exportTime ? $exportTime + 1 : $exportTime;
-    $lastExportTime = $exportTime;
     static $importExportCleanupDone;
-    $queryForExportFile = fopen(XOOPS_ROOT_PATH . "/cache/exportQuery_".$exportTime.".formulize_cached_query_for_export", "w");
+    $exportTime = time()."_".bin2hex(random_bytes(16));
+    $queryForExportFile = fopen(formulize_exportQueryFile($exportTime), "w");
     fwrite($queryForExportFile, $fid."\n");
     global $xoopsUser;
     $exportUid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
@@ -11005,6 +11206,18 @@ function formulize_catchAndWriteExportQuery($fid) {
         $importExportCleanupDone = true;
     }
     return $exportTime;
+}
+
+/**
+ * The file a cached export query is in, from the id formulize_catchAndWriteExportQuery() gave it
+ * @param string $exportQueryId The id, as the request sent it
+ * @return string|false The file's path, or false if the id isn't one
+ */
+function formulize_exportQueryFile($exportQueryId) {
+    if(!is_string($exportQueryId) OR !preg_match('/^[0-9]+_[a-f0-9]{32}$/', $exportQueryId)) {
+        return false;
+    }
+    return XOOPS_ROOT_PATH."/cache/exportQuery_".$exportQueryId.".formulize_cached_query_for_export";
 }
 
 /**

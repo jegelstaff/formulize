@@ -890,11 +890,8 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			if (empty($linked_columns)) {
 				$linked_columns = array($boxproperties[1]); // no alternate columns are in effect, or none of the ones that are still exist, so display the linked element's own source column
 			}
-			if (is_array($linked_columns)) {
-					$select_column = "t1.`".implode("`, t1.`", $linked_columns)."`";
-			} else {
-					$select_column = "t1.`{$linked_columns}`";	// in this case, it's just one linked column
-			}
+			// decrypted if they're encrypted, since prepvalues() takes values as people typed them. The columns are read back by position.
+			$select_column = implode(", ", array_map(function($linkedColumn) { return formulize_fieldValueSQL($linkedColumn, 't1'); }, (array) $linked_columns));
 
 			list($sourceEntrySafetyNetStart, $sourceEntrySafetyNetEnd) = prepareLinkedElementSafetyNets($sourceEntryIds);
 

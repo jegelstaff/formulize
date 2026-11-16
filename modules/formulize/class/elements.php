@@ -2046,6 +2046,41 @@ class formulizeElementsHandler {
 		return array();
 	}
 
+	/**
+	 * Which of the options from getFilterOptions() some entries have, so that a filter on a list offers only the values in
+	 * the entries it's showing. An option is there when the value a search for it would look for is one of the stored values,
+	 * which is what prepareLiteralTextForDB() works out, so an element whose stored values are codes (yn) is matched on the
+	 * codes. Override this only for an element type whose stored values can't be compared that way.
+	 *
+	 * @param array $options The options, filter value => label, as getFilterOptions() returns them
+	 * @param array $storedValueParts The values stored in the entries, each one on its own, from formulize_storedValuePartsInEntries()
+	 * @param object $element The element
+	 * @return array The options that are among the stored values
+	 */
+	function filterOptionsPresentInValues($options, $storedValueParts, $element) {
+		$present = array();
+		foreach((array) $storedValueParts as $part) {
+			$present[undoAllHTMLChars((string) $part, ENT_QUOTES)] = true;
+		}
+		$kept = array();
+		foreach((array) $options as $option=>$label) {
+			$candidates = array((string) $option);
+			$dbValue = prepareLiteralTextForDB($element, (string) $option);
+			foreach(is_array($dbValue) ? $dbValue : array($dbValue) as $oneDbValue) {
+				if($oneDbValue !== false AND $oneDbValue !== null) {
+					$candidates[] = (string) $oneDbValue;
+				}
+			}
+			foreach($candidates as $candidate) {
+				if(isset($present[undoAllHTMLChars($candidate, ENT_QUOTES)])) {
+					$kept[$option] = $label;
+					break;
+				}
+			}
+		}
+		return $kept;
+	}
+
 	// this method is used by custom elements, to do final output from the "local" formatDataForList method, so the custom element developer can simply set booleans there, and they will be enforced here
 	//
 	// ORDER OF OPERATIONS IS SECURITY-CRITICAL - do not reorder:
