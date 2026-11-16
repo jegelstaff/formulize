@@ -1,0 +1,248 @@
+<!-- The search cheat sheet. include/search_help.php draws it in a popup page. Formulize UI markup: see the Formulize UI reference. -->
+<header class="fz-card">
+	<h1 class="fz-card__title">Search cheat sheet</h1>
+	<p>There are a lot of different search terms you can type in the search boxes at the top of each column in a list of entries. Here is a brief summary.</p>
+	<nav aria-label="On this page">
+		<ul class="fz-cluster fz-gap-x-4 fz-gap-y-1 fz-list-none fz-p-0 fz-m-0">
+			<li><a href="#basics">The basics</a></li>
+			<li><a href="#numbers">Numbers</a></li>
+			<li><a href="#dates">Dates</a></li>
+			<li><a href="#duration">Duration</a></li>
+			<li><a href="#several-terms">More than one search on a column</a></li>
+			<li><a href="#and-and-or">AND and OR in one column</a></li>
+			<li><a href="#wildcards">{TODAY}, {USER}, {BLANK} and other columns</a></li>
+			<li><a href="#or-across-columns">OR across columns</a></li>
+			<li><a href="#emptyset">Nothing matching in a connected form</a></li>
+			<li><a href="#developers">For developers</a></li>
+		</ul>
+	</nav>
+</header>
+
+<section class="fz-card" id="basics">
+	<h2 class="fz-card__title">The basics</h2>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">This search term</th><th scope="col">Means this</th><th scope="col">It will find</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">orange</code></td><td>Find “orange” by itself or inside something else.</td><td>orange<br>orange peels<br>apples and oranges</td></tr>
+				<tr><td><code class="fz-code">=orange</code></td><td>Find the exact text “orange”, no more, no less.</td><td>orange<br><span class="fz-text-muted">(it won't find “oranges”)</span></td></tr>
+				<tr><td><code class="fz-code">!orange</code></td><td>Find entries that do not have “orange” in them.</td><td>red<br>purple<br>banana peels</td></tr>
+				<tr><td><code class="fz-code">!=orange</code></td><td>Find entries that do not match the exact text “orange”.</td><td>red<br>apples and oranges<br>orange peels</td></tr>
+				<tr><td><code class="fz-code">15</code></td><td>Find the text “15” by itself or inside something else.</td><td>15 baseballs<br>12715<br>15</td></tr>
+				<tr><td><code class="fz-code">=15</code></td><td>Find the exact number 15.</td><td>15</td></tr>
+				<tr><td><code class="fz-code">!15</code></td><td>Find text that does not contain “15”.</td><td>1848<br>3 strikes<br>etc.</td></tr>
+				<tr><td><code class="fz-code">!=15</code></td><td>Find anything except the exact number 15.</td><td>14<br>16<br>15 baseballs</td></tr>
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<section class="fz-card" id="numbers">
+	<h2 class="fz-card__title">Numbers</h2>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">This search term</th><th scope="col">Means this</th><th scope="col">It will find</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">&gt;10</code></td><td>Find numbers greater than 10.</td><td>11, 12, 1485</td></tr>
+				<tr><td><code class="fz-code">&gt;=1000</code></td><td>Find numbers greater than or equal to 1000.</td><td>1000, 1001, etc.</td></tr>
+				<tr><td><code class="fz-code">&lt;65</code></td><td>Find numbers less than 65.</td><td>64, 10, -401</td></tr>
+				<tr><td><code class="fz-code">&lt;=65</code></td><td>Find numbers less than or equal to 65.</td><td>65, 64, etc.</td></tr>
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<section class="fz-card" id="dates">
+	<h2 class="fz-card__title">Dates</h2>
+	<p>Dates don't have to be typed in the YYYY-MM-DD form the database stores them in. Write one the way you would say it and it will be worked out for you, so “Jan 1 2009”, “last Thursday” and “2009-01-01” are all fine. The operators in the table below work with any of them.</p>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">This search term</th><th scope="col">Means this</th><th scope="col">It will find</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">2009-01-01</code></td><td>Find January 1, 2009.</td><td>2009-01-01</td></tr>
+				<tr><td><code class="fz-code">&gt;=2009-01-01</code></td><td>Find dates on or after January 1, 2009.</td><td>2009-01-01<br>2009-05-23<br>2010-02-20<br>etc.</td></tr>
+				<tr><td><code class="fz-code">Jan 1 2009</code><br><code class="fz-code">1 January 2009</code></td><td>The same day, written the way you would say it.</td><td>2009-01-01</td></tr>
+				<tr><td><code class="fz-code">July 25</code><br><code class="fz-code">25 July</code></td><td>Leave the year off and this year is filled in for you.</td><td>July 25 of the current year</td></tr>
+				<tr><td><code class="fz-code">yesterday</code><br><code class="fz-code">last Thursday</code><br><code class="fz-code">next Monday</code><br><code class="fz-code">1 week ago</code></td><td>Dates described in relation to today.</td><td>The one day each of these works out to. “last Thursday” is a single date, not everything since then.</td></tr>
+				<tr><td><code class="fz-code">&gt;=July 1 AND &lt;=July 31</code></td><td>Find dates in July of this year. See <a href="#several-terms">More than one search on a column</a> for using two terms at once.</td><td>Every date in July</td></tr>
+				<tr><td><code class="fz-code">&gt;=2008-10-01 AND &lt;=2008-10-31</code></td><td>Find dates in October 2008.</td><td>Every date in October 2008</td></tr>
+				<tr><td><code class="fz-code">between 2008-10-01 and 2008-10-31</code></td><td>The same search, said more plainly. This one only understands dates written as YYYY-MM-DD.</td><td>Every date in October 2008</td></tr>
+				<tr><td><code class="fz-code">October</code><br><code class="fz-code">Oct</code><br><code class="fz-code">Octobre</code></td><td>Find every date in that month of this year.</td><td>Every date in October</td></tr>
+				<tr><td><code class="fz-code">Oct 2008</code><br><code class="fz-code">2008-10</code></td><td>The same month, in a year you name.</td><td>Every date in October 2008</td></tr>
+				<tr><td><code class="fz-code">2008</code></td><td>Find every date in that year.</td><td>Every date in 2008</td></tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="fz-prose">
+		<p>Naming a month or a year, rather than a day, searches the whole of it. “October” finds every day in October this year, “Oct 2008” finds all of October 2008, and “2008” finds the whole year. Months can be written out or shortened, in English or in the language you are reading the page in, so “Octobre” and “oct” work too.</p>
+		<p>The operators work on the whole period as well, which is usually what you would expect: <code>&gt;=October</code> means on or after the 1st, and <code>&gt;October</code> means after the month has finished.</p>
+	</div>
+	<div class="fz-callout fz-callout--info"><p>If what you type isn't a date that can be worked out, that column is left out of the search, rather than finding nothing at all.</p></div>
+</section>
+
+<section class="fz-card" id="duration">
+	<h2 class="fz-card__title">Duration</h2>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">This search term</th><th scope="col">Means this</th><th scope="col">It will find</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">1d 1h 10m</code><br><code class="fz-code">10m 1d 1h</code></td><td>Find a duration of exactly 1 day, 1 hour and 10 minutes. The parts can be in any order.</td><td>A duration of exactly 1510 minutes</td></tr>
+				<tr><td><code class="fz-code">&lt;=1h 10m</code></td><td>Find a duration less than or equal to 70 minutes.</td><td>Any duration of 70 minutes or less</td></tr>
+				<tr><td><code class="fz-code">&lt;5h AND &gt;10m</code></td><td>Find a duration greater than 10 minutes and less than 5 hours.</td><td>Any duration between 10 minutes and 300 minutes</td></tr>
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<section class="fz-card" id="several-terms">
+	<h2 class="fz-card__title">More than one search on the same column</h2>
+	<p>You can put several search terms in one box, joined by AND or by OR. Type them in capitals, with a space on either side.</p>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">This search term</th><th scope="col">Means this</th><th scope="col">It will find</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">&gt;10 AND &lt;100</code></td><td>Find numbers between 11 and 99.</td><td>11, 12, etc.</td></tr>
+				<tr><td><code class="fz-code">&gt;10 AND &lt;10</code></td><td>Find entries that are both greater than 10 and less than 10.</td><td>Nothing. The search is logically impossible.</td></tr>
+				<tr><td><code class="fz-code">santa AND !monica</code></td><td>Find entries that contain “santa” and not “monica”.</td><td>Santa Claus<br>Santa Cruz</td></tr>
+				<tr><td><code class="fz-code">&gt;=2008-10-01 AND &lt;=2008-10-31</code></td><td>Find dates within October 2008.</td><td>2008-10-01<br>2008-10-15</td></tr>
+				<tr><td><code class="fz-code">red AND orange AND blue</code></td><td>Find all three values. You can have as many terms as you want in a single column.</td><td>Usually only finds anything in a column that takes more than one choice, such as checkboxes, where red, orange and blue are three of the options.</td></tr>
+				<tr><td><code class="fz-code">red OR blue</code></td><td>Find entries that match either one. Terms joined by OR only need one of them to match.</td><td>red<br>blue</td></tr>
+			</tbody>
+		</table>
+	</div>
+	<p class="fz-text-muted">If you use OR in more than one column at a time, all of those terms end up in a single group, so an entry only has to match one of them. See <a href="#or-across-columns">OR searches on more than one column</a> for how that works, and how to make more than one separate group.</p>
+</section>
+
+<section class="fz-card" id="and-and-or">
+	<h2 class="fz-card__title">Using AND and OR in the same column</h2>
+	<div class="fz-prose">
+		<p>Writing AND and OR between terms in the same box does not work. There is no way to tell which part of “red OR blue AND green” you meant to group together, so the whole thing is searched for as plain text, and finds nothing.</p>
+		<p>To do it, join every term with AND, and put <code>OR:</code> on the front of the ones that should only need one match. The <code>OR:</code> terms become a group of their own, and that group is then one of the things that has to be matched.</p>
+	</div>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">This search term</th><th scope="col">Means this</th><th scope="col">It will find</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">santa AND OR:cruz AND OR:claus</code></td><td>“santa” has to match, and then either “cruz” or “claus”.</td><td>Santa Cruz<br>Santa Claus<br><span class="fz-text-muted">(it won't find Santa Fe)</span></td></tr>
+				<tr><td><code class="fz-code">ORSET1:red AND ORSET1:blue AND ORSET2:small AND ORSET2:large</code></td><td>Two separate groups, each needing only one match. Use this when a plain <code class="fz-code">OR:</code> group isn't enough, the same way it works across columns.</td><td>Entries that are red or blue, and that are also small or large</td></tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="fz-callout fz-callout--info"><p>Plain <code class="fz-code">OR:</code> terms all join one group, whichever column they are in. If you are already using <code class="fz-code">OR:</code> on another column, use the numbered ORSET form here to keep the two sets of terms apart.</p></div>
+</section>
+
+<section class="fz-card" id="wildcards">
+	<h2 class="fz-card__title">Wildcard terms: {TODAY}, {USER}, {BLANK} and {element_handle}</h2>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">This search term</th><th scope="col">Means this</th><th scope="col">It will find</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">{TODAY}</code></td><td>Find today's date.</td><td>Today's date, as YYYY-MM-DD</td></tr>
+				<tr><td><code class="fz-code">&gt;={TODAY-30}</code></td><td>Find dates from 30 days ago onwards, including dates in the future.</td><td>You get the idea</td></tr>
+				<tr><td><code class="fz-code">&gt;={TODAY-30} AND &lt;={TODAY}</code></td><td>Find dates between 30 days ago and today.</td><td></td></tr>
+				<tr><td><code class="fz-code">&gt;{TODAY+14}</code></td><td>Find dates more than 14 days in the future.</td><td></td></tr>
+				<tr><td><code class="fz-code">{USER}</code></td><td>Find entries that match the current user's full name, or their username if their profile has no full name.</td><td></td></tr>
+				<tr><td><code class="fz-code">{BLANK}</code></td><td>Find entries that are blank or empty.</td><td></td></tr>
+				<tr><td><code class="fz-code">&gt;{attendance_buyers}</code></td><td>Compare against the value in another column, instead of against a value you type. What goes in the braces is an element handle. Typed into the attendance_sellers column, this finds the entries where the value in attendance_sellers is greater than the value in attendance_buyers.</td><td>An entry with attendance_buyers 12 and attendance_sellers 15</td></tr>
+				<tr><td><code class="fz-code">={attendance_buyers}</code></td><td>Find entries where the two columns hold exactly the same value. Every operator works this way, so &lt;, &gt;=, != and the rest all compare the two values.</td><td>An entry with attendance_buyers 12 and attendance_sellers 12</td></tr>
+				<tr><td><code class="fz-code">{attendance_buyers}</code></td><td>With no operator in front, it means “contains”, the same as any other search term. So this finds entries where the value in attendance_sellers contains the value in attendance_buyers.</td><td>An entry with attendance_buyers 12 and attendance_sellers 120</td></tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="fz-prose">
+		<p>The name inside the braces is an <strong>element handle</strong>: the handle of the element whose column you want to compare against, exactly as it appears in the form editor. The search does not look for that text. It reads the value held in that column and compares this column against it, and it does that for each entry using that entry's own two values, so every entry is measured against itself rather than against any other entry.</p>
+		<p>A few other things to know about comparing two columns:</p>
+		<ul>
+			<li>The element you name has to be on the same form as the column you are searching, or on the main form of the list. A reference to an element on any other form is ignored.</li>
+			<li>The comparison follows the kind of column it is. Two number columns compare as numbers, and two date columns compare as dates, but two ordinary text columns compare as text, where “9” is bigger than “10” because it starts with a bigger character.</li>
+			<li>If the name in the braces is not an element handle, and is not being filled in from the page address, the search term is ignored.</li>
+		</ul>
+	</div>
+</section>
+
+<section class="fz-card" id="or-across-columns">
+	<h2 class="fz-card__title">OR searches on more than one column</h2>
+	<p>The OR you type between two terms only joins terms inside that one box. To make an OR search that spans two different columns, put <code class="fz-code">OR:</code> on the front of the term in each of them instead.</p>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">This search term</th><th scope="col">Means this</th><th scope="col">It will find</th></tr></thead>
+			<tbody>
+				<tr>
+					<td><span class="fz-text-muted">On the fruit column:</span><br><code class="fz-code">OR:apples</code><br><span class="fz-text-muted">and on the vegetable column:</span><br><code class="fz-code">OR:carrots</code></td>
+					<td>Find entries that have apples in the fruit column, or carrots in the vegetable column. Normally, the search terms on every column have to be matched.</td>
+					<td>Apples and spinach<br>Oranges and carrots</td>
+				</tr>
+				<tr>
+					<td><span class="fz-text-muted">On the fruit column:</span><br><code class="fz-code">ORSET1:apples</code><br><span class="fz-text-muted">on the vegetable column:</span><br><code class="fz-code">ORSET1:carrots</code><br><span class="fz-text-muted">on the colour column:</span><br><code class="fz-code">ORSET2:red</code><br><span class="fz-text-muted">on the size column:</span><br><code class="fz-code">ORSET2:large</code></td>
+					<td>Make more than one separate OR group. All the plain <code class="fz-code">OR:</code> terms join together into a single group, but sometimes you need to ask two independent questions. Terms with the same number are OR'd together, and then every group has to be matched.</td>
+					<td>Entries that have apples or carrots, and that are also red or large</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<section class="fz-card" id="emptyset">
+	<h2 class="fz-card__title">Finding entries that have nothing matching in a connected form</h2>
+	<div class="fz-prose">
+		<p>Some lists show information from more than one form at once. A list of customers might also show each customer's orders, for example. In a list like that, a single customer might have several orders showing.</p>
+		<p>Searching for what is missing in a list like that needs a special search term. If you search the product column for <code>!shoes</code> (not shoes), you will find customers who have at least one order that isn't shoes. That includes customers who have an order for shoes and an order for socks, because “socks” matches “not shoes”. Usually that isn't the question you meant to ask.</p>
+		<p><code>EMPTYSET:</code> asks it a different way. Instead of looking at each order on its own, it looks at all of one customer's orders together, and finds the customers where none of them match.</p>
+	</div>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">This search term</th><th scope="col">Means this</th><th scope="col">It will find</th></tr></thead>
+			<tbody>
+				<tr>
+					<td><span class="fz-text-muted">On the product column:</span><br><code class="fz-code">EMPTYSET:shoes</code></td>
+					<td>Find the customers who have never ordered shoes.</td>
+					<td>Customers with no shoe order at all, including customers who have never ordered anything</td>
+				</tr>
+				<tr>
+					<td><span class="fz-text-muted">On the product column:</span><br><code class="fz-code">EMPTYSET:shoes</code><br><span class="fz-text-muted">and on the status column:</span><br><code class="fz-code">EMPTYSET:cancelled</code></td>
+					<td>Find the customers who have no cancelled orders for shoes. When you put <code class="fz-code">EMPTYSET:</code> on more than one column, each connected entry is matched against all of those conditions together.</td>
+					<td>Customers with no cancelled shoe order. A customer who cancelled a sock order is found. So is a customer who ordered shoes and kept them.</td>
+				</tr>
+				<tr>
+					<td><span class="fz-text-muted">On the product column:</span><br><code class="fz-code">EMPTYSET1:shoes</code><br><span class="fz-text-muted">and on the status column:</span><br><code class="fz-code">EMPTYSET2:cancelled</code></td>
+					<td>Ask two separate questions instead of one. Adding a number makes a separate group, the same way ORSET does, so these become two independent conditions rather than a description of one order.</td>
+					<td>Customers who have never ordered shoes, and who have also never cancelled anything</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="fz-prose">
+		<p>A few things to know about <code>EMPTYSET:</code></p>
+		<ul>
+			<li>It only works on columns that come from a connected form. In the example above, <code>EMPTYSET:</code> belongs on the order form's columns, not on the customer form's columns.</li>
+			<li>Entries with nothing connected to them at all are always found. A customer who has never placed an order is included, whatever the search term.</li>
+			<li>You can search for anything you would normally type, not just plain words. <code>EMPTYSET:&gt;100</code> on an amount column finds the entries with no connected entry with an amount over 100.</li>
+			<li><code>EMPTYSET</code> terms are always combined with “and”.</li>
+		</ul>
+	</div>
+</section>
+
+<section class="fz-card" id="developers">
+	<h2 class="fz-card__title">Advanced search terms for developers</h2>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col></colgroup>
+			<thead><tr><th scope="col">This search term</th><th scope="col">Means this</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">{order}</code></td><td>Find entries that match whatever is in <code class="fz-code">$_POST['order']</code>, or if that's empty, <code class="fz-code">$_GET['order']</code>. This is meant for a complex application where a screen might need to show different things at different times. You can save a view with this kind of search term, and then fill in <code class="fz-code">$_POST</code> or <code class="fz-code">$_GET</code> with the values you need at the right time, with JavaScript for example. If there is no value to find, the search term is ignored. A name that is both a request value and an element handle is taken as the request value, so a request value always wins over comparing two columns.</td></tr>
+				<tr><td><code class="fz-code">!{order}</code></td><td>Find entries that do not match whatever is in <code class="fz-code">$_POST['order']</code> or <code class="fz-code">$_GET['order']</code>.</td></tr>
+				<tr><td><code class="fz-code">!orange!</code></td><td>Keep this search term even when this column is not in the view. Some columns are only visible to some groups of users. You might want to search a column that only webmasters can see, to limit the list of entries, and then publish that view to other users who can't see that column. The list of entries is still limited by this search term.</td></tr>
+				<tr><td><code class="fz-code">!!monica! AND !santa!</code></td><td>When you keep a search that has several terms, put the <code class="fz-code">!</code> and <code class="fz-code">!</code> around each term separately, not around the whole thing. Don't get confused by a “not” operator (<code class="fz-code">!</code>) that is part of a term, as in “not monica” at the start of this example.</td></tr>
+			</tbody>
+		</table>
+	</div>
+</section>

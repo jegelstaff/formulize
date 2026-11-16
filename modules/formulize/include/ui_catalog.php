@@ -1430,6 +1430,7 @@ HTML
                 'classes' => array(
                     'fz-code-block' => 'On a `<pre>`: monospaced, its lines kept as they were written, scrolling sideways when one is too long.',
                     'fz-code-block--wrap' => 'Long lines wrap instead, for data such as JSON, where a line can be very long.',
+                    'fz-code' => 'On a `<code>` that is not in `fz-prose`: a short piece of code in a line of text or in a table cell, such as a search term or an element handle. It looks like the `<code>` in `fz-prose`.',
                 ),
                 'notes' => array(
                     'For code in running text, such as instructions with a command in them, use `fz-prose`, which styles the `<pre>` and `<code>` inside it.',
@@ -1442,6 +1443,7 @@ HTML
   &lt;h3 class="fz-card__title"&gt;Robotics club&lt;/h3&gt;
 &lt;/div&gt;</code></pre>
   <pre class="fz-code-block fz-code-block--wrap" style="--fz-code-block-max-height: 6rem">{ "form_id": 12, "title": "Applications", "elements": [ { "handle": "applications_student", "type": "text" }, { "handle": "applications_school", "type": "text" }, { "handle": "applications_status", "type": "radio" } ] }</pre>
+  <p>Type <code class="fz-code">&gt;=2026-09-01</code> in the <code class="fz-code">applications_date</code> column.</p>
 </div>
 HTML
             ),

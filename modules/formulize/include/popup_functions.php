@@ -20,7 +20,7 @@
 // What the popup windows of the list of entries screens have in common: the page
 // they are drawn in, and the Formulize UI markup of their fields and controls.
 // Used by changecols.php, changescope.php, pickcalcs.php, pickadvcalcs.php, save.php, setnot.php,
-// export.php, import.php and moreinfo.php; and by pmlite.php in the site root, the private message popup.
+// export.php, import.php, moreinfo.php and search_help.php; and by pmlite.php in the site root, the private message popup.
 //
 // A popup is a page of its own, opened with showPop(), which no theme draws. So it
 // has to ask for what a theme's page would give it: the Formulize UI stylesheet,
@@ -62,8 +62,9 @@ function formulize_popupHeader($title, $headContent = '') {
     // fz-p-5 is the space at the edges of the page in a theme that has no rule of its own for body.formulize-popup.
     // fz-m-0 takes off the margin a browser gives the body, which a theme's reset would, when the popup loaded it.
     print "<body class=\"formulize-popup fz-m-0 fz-p-5\">\n";
-    // fz-text-sm is the size of the text in the controls, so the text around them matches whatever size the theme's own text is
-    print "<main class=\"fz-stack fz-mx-auto fz-text-sm\" style=\"max-width: var(--fz-container-6xl);\">\n";
+    // fz-text-sm is the size of the text in the controls, so the text around them matches whatever size the theme's own text is.
+    // fz-content marks the content area, as a theme does on its own pages, so links, headings and lists with no class follow the look.
+    print "<main class=\"fz-content fz-stack fz-mx-auto fz-text-sm\" style=\"max-width: var(--fz-container-6xl);\">\n";
 }
 
 /**

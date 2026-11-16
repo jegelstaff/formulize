@@ -2371,7 +2371,8 @@
   max-width: 100%;
   height: auto;
 }
-.fz-prose :where(code) {
+/* fz-code is the same thing outside prose: a search term or a handle in a table cell */
+.fz-prose :where(code), .fz-code {
   padding: 0 var(--fz-spacing);
   border-radius: var(--fz-radius-sm);
   background: var(--fz-color-surface-3);

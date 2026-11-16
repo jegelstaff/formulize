@@ -397,6 +397,7 @@ define("_formulize_DE_CHANGEOWNER_WHICH_FORMS", "Change ownership for which form
 define("_formulize_DE_CHANGEOWNER_CANCEL_BUTTON", "Cancel");
 define("_formulize_DE_CHANGEOWNER_CONFIRM_BUTTON", "Confirm");
 define("_formulize_DE_SEARCH_POP_HELP", "Click here for info about the search terms");
+define("_formulize_DE_SEARCH_HELP_TITLE", "Search cheat sheet");
 define("_formulize_DE_TOGGLE_SEARCHES", "Click to open the search interface");
 define("_formulize_DE_MINE", "Entries by me");
 define("_formulize_DE_GROUP", "Entries by all users in my group(s)");

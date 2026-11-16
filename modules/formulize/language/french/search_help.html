@@ -1,0 +1,248 @@
+<!-- L'aide-mémoire de la recherche. include/search_help.php l'affiche dans une fenêtre surgissante. Balisage Formulize UI : voir la référence Formulize UI. -->
+<header class="fz-card">
+	<h1 class="fz-card__title">Aide-mémoire de la recherche</h1>
+	<p>Il existe beaucoup de termes de recherche différents que vous pouvez taper dans les champs de recherche en haut de chaque colonne d'une liste d'entrées. En voici un bref résumé.</p>
+	<nav aria-label="Sur cette page">
+		<ul class="fz-cluster fz-gap-x-4 fz-gap-y-1 fz-list-none fz-p-0 fz-m-0">
+			<li><a href="#basics">Les bases</a></li>
+			<li><a href="#numbers">Nombres</a></li>
+			<li><a href="#dates">Dates</a></li>
+			<li><a href="#duration">Durées</a></li>
+			<li><a href="#several-terms">Plusieurs recherches dans une colonne</a></li>
+			<li><a href="#and-and-or">AND et OR dans une colonne</a></li>
+			<li><a href="#wildcards">{TODAY}, {USER}, {BLANK} et les autres colonnes</a></li>
+			<li><a href="#or-across-columns">OR sur plusieurs colonnes</a></li>
+			<li><a href="#emptyset">Rien de correspondant dans un formulaire lié</a></li>
+			<li><a href="#developers">Pour les développeurs</a></li>
+		</ul>
+	</nav>
+</header>
+
+<section class="fz-card" id="basics">
+	<h2 class="fz-card__title">Les bases</h2>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">Ce terme de recherche</th><th scope="col">Veut dire</th><th scope="col">Il trouvera</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">orange</code></td><td>Trouver « orange » seul ou à l'intérieur d'un autre texte.</td><td>orange<br>oranges pelées<br>pommes et oranges</td></tr>
+				<tr><td><code class="fz-code">=orange</code></td><td>Trouver exactement le texte « orange », ni plus, ni moins.</td><td>orange<br><span class="fz-text-muted">(il ne trouvera pas « oranges »)</span></td></tr>
+				<tr><td><code class="fz-code">!orange</code></td><td>Trouver les entrées qui ne contiennent pas « orange ».</td><td>rouge<br>violet<br>bananes pelées</td></tr>
+				<tr><td><code class="fz-code">!=orange</code></td><td>Trouver les entrées qui ne sont pas exactement le texte « orange ».</td><td>rouge<br>pommes et oranges<br>oranges pelées</td></tr>
+				<tr><td><code class="fz-code">15</code></td><td>Trouver le texte « 15 » seul ou à l'intérieur d'un autre texte.</td><td>15 balles<br>12715<br>15</td></tr>
+				<tr><td><code class="fz-code">=15</code></td><td>Trouver exactement le nombre 15.</td><td>15</td></tr>
+				<tr><td><code class="fz-code">!15</code></td><td>Trouver le texte qui ne contient pas « 15 ».</td><td>1848<br>3 prises<br>etc.</td></tr>
+				<tr><td><code class="fz-code">!=15</code></td><td>Trouver tout sauf exactement le nombre 15.</td><td>14<br>16<br>15 balles</td></tr>
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<section class="fz-card" id="numbers">
+	<h2 class="fz-card__title">Nombres</h2>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">Ce terme de recherche</th><th scope="col">Veut dire</th><th scope="col">Il trouvera</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">&gt;10</code></td><td>Trouver les nombres supérieurs à 10.</td><td>11, 12, 1485</td></tr>
+				<tr><td><code class="fz-code">&gt;=1000</code></td><td>Trouver les nombres supérieurs ou égaux à 1000.</td><td>1000, 1001, etc.</td></tr>
+				<tr><td><code class="fz-code">&lt;65</code></td><td>Trouver les nombres inférieurs à 65.</td><td>64, 10, -401</td></tr>
+				<tr><td><code class="fz-code">&lt;=65</code></td><td>Trouver les nombres inférieurs ou égaux à 65.</td><td>65, 64, etc.</td></tr>
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<section class="fz-card" id="dates">
+	<h2 class="fz-card__title">Dates</h2>
+	<p>Les dates n'ont pas besoin d'être tapées sous la forme AAAA-MM-JJ dans laquelle la base de données les enregistre. Une date écrite en toutes lettres est comprise elle aussi, comme « Jan 1 2009 » ou « last Thursday », mais en anglais : seuls les noms de mois peuvent être écrits en français. Les opérateurs du tableau ci-dessous fonctionnent avec toutes ces formes.</p>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">Ce terme de recherche</th><th scope="col">Veut dire</th><th scope="col">Il trouvera</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">2009-01-01</code></td><td>Trouver le 1<sup>er</sup> janvier 2009.</td><td>2009-01-01</td></tr>
+				<tr><td><code class="fz-code">&gt;=2009-01-01</code></td><td>Trouver les dates à partir du 1<sup>er</sup> janvier 2009.</td><td>2009-01-01<br>2009-05-23<br>2010-02-20<br>etc.</td></tr>
+				<tr><td><code class="fz-code">Jan 1 2009</code><br><code class="fz-code">1 January 2009</code></td><td>Le même jour, écrit en toutes lettres, en anglais.</td><td>2009-01-01</td></tr>
+				<tr><td><code class="fz-code">July 25</code><br><code class="fz-code">25 July</code></td><td>Sans l'année, c'est l'année en cours qui est utilisée.</td><td>Le 25 juillet de cette année</td></tr>
+				<tr><td><code class="fz-code">yesterday</code><br><code class="fz-code">last Thursday</code><br><code class="fz-code">next Monday</code><br><code class="fz-code">1 week ago</code></td><td>Des dates décrites par rapport à aujourd'hui, en anglais : hier, jeudi dernier, lundi prochain, il y a une semaine.</td><td>Le jour qui correspond à chacune. « last Thursday » est une seule date, pas tout ce qui suit.</td></tr>
+				<tr><td><code class="fz-code">&gt;=July 1 AND &lt;=July 31</code></td><td>Trouver les dates de juillet de cette année. Voir <a href="#several-terms">Plusieurs recherches dans une colonne</a> pour utiliser deux termes à la fois.</td><td>Toutes les dates de juillet</td></tr>
+				<tr><td><code class="fz-code">&gt;=2008-10-01 AND &lt;=2008-10-31</code></td><td>Trouver les dates d'octobre 2008.</td><td>Toutes les dates d'octobre 2008</td></tr>
+				<tr><td><code class="fz-code">between 2008-10-01 and 2008-10-31</code></td><td>La même recherche, dite plus simplement. Celle-ci ne comprend que les dates écrites sous la forme AAAA-MM-JJ.</td><td>Toutes les dates d'octobre 2008</td></tr>
+				<tr><td><code class="fz-code">octobre</code><br><code class="fz-code">oct</code><br><code class="fz-code">October</code></td><td>Trouver toutes les dates de ce mois-là, cette année.</td><td>Toutes les dates d'octobre</td></tr>
+				<tr><td><code class="fz-code">octobre 2008</code><br><code class="fz-code">2008-10</code></td><td>Le même mois, pour l'année que vous indiquez.</td><td>Toutes les dates d'octobre 2008</td></tr>
+				<tr><td><code class="fz-code">2008</code></td><td>Trouver toutes les dates de cette année-là.</td><td>Toutes les dates de 2008</td></tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="fz-prose">
+		<p>Un mois ou une année, plutôt qu'un jour, fait chercher toute la période. « octobre » trouve tous les jours d'octobre de cette année, « octobre 2008 » tout le mois d'octobre 2008, et « 2008 » toute l'année. Les mois peuvent être écrits en entier ou abrégés, en français ou en anglais, donc « oct » et « October » fonctionnent aussi.</p>
+		<p>Les opérateurs s'appliquent eux aussi à toute la période, ce qui correspond en général à ce qu'on attend : <code>&gt;=octobre</code> veut dire à partir du 1<sup>er</sup>, et <code>&gt;octobre</code> veut dire après la fin du mois.</p>
+	</div>
+	<div class="fz-callout fz-callout--info"><p>Si ce que vous tapez n'est pas une date qui peut être comprise, cette colonne n'est pas prise en compte dans la recherche, plutôt que de ne rien trouver du tout.</p></div>
+</section>
+
+<section class="fz-card" id="duration">
+	<h2 class="fz-card__title">Durées</h2>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">Ce terme de recherche</th><th scope="col">Veut dire</th><th scope="col">Il trouvera</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">1d 1h 10m</code><br><code class="fz-code">10m 1d 1h</code></td><td>Trouver une durée d'exactement 1 jour, 1 heure et 10 minutes. Les parties peuvent être dans n'importe quel ordre.</td><td>Une durée d'exactement 1510 minutes</td></tr>
+				<tr><td><code class="fz-code">&lt;=1h 10m</code></td><td>Trouver une durée inférieure ou égale à 70 minutes.</td><td>Toute durée de 70 minutes ou moins</td></tr>
+				<tr><td><code class="fz-code">&lt;5h AND &gt;10m</code></td><td>Trouver une durée de plus de 10 minutes et de moins de 5 heures.</td><td>Toute durée entre 10 et 300 minutes</td></tr>
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<section class="fz-card" id="several-terms">
+	<h2 class="fz-card__title">Plus d'une recherche dans la même colonne</h2>
+	<p>Vous pouvez mettre plusieurs termes de recherche dans un même champ, reliés par AND (et) ou par OR (ou). Tapez-les en majuscules, en anglais, avec une espace de chaque côté.</p>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">Ce terme de recherche</th><th scope="col">Veut dire</th><th scope="col">Il trouvera</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">&gt;10 AND &lt;100</code></td><td>Trouver les nombres entre 11 et 99.</td><td>11, 12, etc.</td></tr>
+				<tr><td><code class="fz-code">&gt;10 AND &lt;10</code></td><td>Trouver les entrées qui sont à la fois supérieures à 10 et inférieures à 10.</td><td>Rien. La recherche est logiquement impossible.</td></tr>
+				<tr><td><code class="fz-code">santa AND !monica</code></td><td>Trouver les entrées qui contiennent « santa » mais pas « monica ».</td><td>Santa Claus<br>Santa Cruz</td></tr>
+				<tr><td><code class="fz-code">&gt;=2008-10-01 AND &lt;=2008-10-31</code></td><td>Trouver les dates d'octobre 2008.</td><td>2008-10-01<br>2008-10-15</td></tr>
+				<tr><td><code class="fz-code">rouge AND orange AND bleu</code></td><td>Trouver les trois valeurs. Vous pouvez mettre autant de termes que vous voulez dans une seule colonne.</td><td>Ne trouve en général quelque chose que dans une colonne qui accepte plusieurs choix, comme des cases à cocher, où rouge, orange et bleu font partie des options.</td></tr>
+				<tr><td><code class="fz-code">rouge OR bleu</code></td><td>Trouver les entrées qui correspondent à l'un ou à l'autre. Avec OR, il suffit qu'un des termes corresponde.</td><td>rouge<br>bleu</td></tr>
+			</tbody>
+		</table>
+	</div>
+	<p class="fz-text-muted">Si vous utilisez OR dans plusieurs colonnes à la fois, tous ces termes forment un seul groupe, et une entrée n'a besoin de correspondre qu'à l'un d'eux. Voir <a href="#or-across-columns">OR sur plusieurs colonnes</a> pour savoir comment cela fonctionne, et comment faire plusieurs groupes distincts.</p>
+</section>
+
+<section class="fz-card" id="and-and-or">
+	<h2 class="fz-card__title">AND et OR dans la même colonne</h2>
+	<div class="fz-prose">
+		<p>Écrire AND et OR entre les termes d'un même champ ne fonctionne pas. Rien ne permet de savoir quelles parties de « rouge OR bleu AND vert » vous vouliez regrouper, donc le tout est cherché comme du simple texte, et rien n'est trouvé.</p>
+		<p>Pour y arriver, reliez tous les termes par AND, et mettez <code>OR:</code> devant ceux dont un seul doit correspondre. Les termes <code>OR:</code> forment un groupe à part, et ce groupe devient l'une des choses qui doivent correspondre.</p>
+	</div>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">Ce terme de recherche</th><th scope="col">Veut dire</th><th scope="col">Il trouvera</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">santa AND OR:cruz AND OR:claus</code></td><td>« santa » doit correspondre, puis « cruz » ou « claus ».</td><td>Santa Cruz<br>Santa Claus<br><span class="fz-text-muted">(il ne trouvera pas Santa Fe)</span></td></tr>
+				<tr><td><code class="fz-code">ORSET1:rouge AND ORSET1:bleu AND ORSET2:petit AND ORSET2:grand</code></td><td>Deux groupes distincts, dans chacun desquels un seul terme doit correspondre. Utilisez cette forme quand un simple groupe <code class="fz-code">OR:</code> ne suffit pas, comme sur plusieurs colonnes.</td><td>Les entrées rouges ou bleues, qui sont aussi petites ou grandes</td></tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="fz-callout fz-callout--info"><p>Les termes <code class="fz-code">OR:</code> simples forment tous un seul groupe, quelle que soit leur colonne. Si vous utilisez déjà <code class="fz-code">OR:</code> dans une autre colonne, utilisez ici la forme numérotée ORSET pour garder les deux ensembles de termes séparés.</p></div>
+</section>
+
+<section class="fz-card" id="wildcards">
+	<h2 class="fz-card__title">Termes spéciaux : {TODAY}, {USER}, {BLANK} et {element_handle}</h2>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">Ce terme de recherche</th><th scope="col">Veut dire</th><th scope="col">Il trouvera</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">{TODAY}</code></td><td>Trouver la date d'aujourd'hui.</td><td>La date d'aujourd'hui, sous la forme AAAA-MM-JJ</td></tr>
+				<tr><td><code class="fz-code">&gt;={TODAY-30}</code></td><td>Trouver les dates à partir d'il y a 30 jours, y compris les dates à venir.</td><td>Vous voyez l'idée</td></tr>
+				<tr><td><code class="fz-code">&gt;={TODAY-30} AND &lt;={TODAY}</code></td><td>Trouver les dates entre il y a 30 jours et aujourd'hui.</td><td></td></tr>
+				<tr><td><code class="fz-code">&gt;{TODAY+14}</code></td><td>Trouver les dates dans plus de 14 jours.</td><td></td></tr>
+				<tr><td><code class="fz-code">{USER}</code></td><td>Trouver les entrées qui correspondent au nom complet de l'utilisateur actuel, ou à son nom d'utilisateur si son profil n'a pas de nom complet.</td><td></td></tr>
+				<tr><td><code class="fz-code">{BLANK}</code></td><td>Trouver les entrées vides.</td><td></td></tr>
+				<tr><td><code class="fz-code">&gt;{attendance_buyers}</code></td><td>Comparer avec la valeur d'une autre colonne, plutôt qu'avec une valeur que vous tapez. Ce qui est entre les accolades est un identifiant d'élément. Tapé dans la colonne attendance_sellers, ce terme trouve les entrées où la valeur d'attendance_sellers est supérieure à celle d'attendance_buyers.</td><td>Une entrée avec 12 dans attendance_buyers et 15 dans attendance_sellers</td></tr>
+				<tr><td><code class="fz-code">={attendance_buyers}</code></td><td>Trouver les entrées où les deux colonnes ont exactement la même valeur. Tous les opérateurs fonctionnent ainsi : &lt;, &gt;=, != et les autres comparent tous les deux valeurs.</td><td>Une entrée avec 12 dans attendance_buyers et 12 dans attendance_sellers</td></tr>
+				<tr><td><code class="fz-code">{attendance_buyers}</code></td><td>Sans opérateur devant, cela veut dire « contient », comme pour tout autre terme de recherche. Ce terme trouve donc les entrées où la valeur d'attendance_sellers contient celle d'attendance_buyers.</td><td>Une entrée avec 12 dans attendance_buyers et 120 dans attendance_sellers</td></tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="fz-prose">
+		<p>Le nom entre les accolades est un <strong>identifiant d'élément</strong> : l'identifiant de l'élément dont vous voulez comparer la colonne, exactement comme il apparaît dans l'éditeur de formulaire. La recherche ne cherche pas ce texte. Elle lit la valeur de cette colonne et compare cette colonne-ci avec elle, et elle le fait pour chaque entrée avec les deux valeurs de cette entrée, de sorte que chaque entrée est comparée à elle-même et non à une autre entrée.</p>
+		<p>Quelques autres choses à savoir sur la comparaison de deux colonnes :</p>
+		<ul>
+			<li>L'élément que vous nommez doit être dans le même formulaire que la colonne où vous cherchez, ou dans le formulaire principal de la liste. Un élément d'un autre formulaire n'est pas pris en compte.</li>
+			<li>La comparaison dépend du genre de colonne. Deux colonnes de nombres se comparent comme des nombres, et deux colonnes de dates comme des dates, mais deux colonnes de texte ordinaire se comparent comme du texte, où « 9 » est plus grand que « 10 » parce qu'il commence par un caractère plus grand.</li>
+			<li>Si le nom entre les accolades n'est pas un identifiant d'élément, et n'est pas rempli à partir de l'adresse de la page, le terme de recherche n'est pas pris en compte.</li>
+		</ul>
+	</div>
+</section>
+
+<section class="fz-card" id="or-across-columns">
+	<h2 class="fz-card__title">OR sur plusieurs colonnes</h2>
+	<p>Le OR que vous tapez entre deux termes ne relie que les termes de ce champ-là. Pour faire une recherche OR sur deux colonnes différentes, mettez plutôt <code class="fz-code">OR:</code> devant le terme dans chacune d'elles.</p>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">Ce terme de recherche</th><th scope="col">Veut dire</th><th scope="col">Il trouvera</th></tr></thead>
+			<tbody>
+				<tr>
+					<td><span class="fz-text-muted">Dans la colonne des fruits :</span><br><code class="fz-code">OR:pommes</code><br><span class="fz-text-muted">et dans la colonne des légumes :</span><br><code class="fz-code">OR:carottes</code></td>
+					<td>Trouver les entrées qui ont des pommes dans la colonne des fruits, ou des carottes dans la colonne des légumes. D'habitude, les termes de recherche de toutes les colonnes doivent correspondre.</td>
+					<td>Pommes et épinards<br>Oranges et carottes</td>
+				</tr>
+				<tr>
+					<td><span class="fz-text-muted">Dans la colonne des fruits :</span><br><code class="fz-code">ORSET1:pommes</code><br><span class="fz-text-muted">dans la colonne des légumes :</span><br><code class="fz-code">ORSET1:carottes</code><br><span class="fz-text-muted">dans la colonne des couleurs :</span><br><code class="fz-code">ORSET2:rouge</code><br><span class="fz-text-muted">dans la colonne des tailles :</span><br><code class="fz-code">ORSET2:grand</code></td>
+					<td>Faire plusieurs groupes OR distincts. Tous les termes <code class="fz-code">OR:</code> simples forment un seul groupe, mais il faut parfois poser deux questions indépendantes. Les termes qui ont le même numéro sont reliés par OR, puis chaque groupe doit correspondre.</td>
+					<td>Les entrées qui ont des pommes ou des carottes, et qui sont aussi rouges ou grandes</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</section>
+
+<section class="fz-card" id="emptyset">
+	<h2 class="fz-card__title">Trouver les entrées qui n'ont rien de correspondant dans un formulaire lié</h2>
+	<div class="fz-prose">
+		<p>Certaines listes montrent les informations de plusieurs formulaires à la fois. Une liste de clients peut aussi montrer les commandes de chaque client, par exemple. Dans une liste comme celle-là, un même client peut avoir plusieurs commandes affichées.</p>
+		<p>Chercher ce qui manque dans une telle liste demande un terme de recherche particulier. Si vous cherchez <code>!chaussures</code> (pas chaussures) dans la colonne des produits, vous trouverez les clients qui ont au moins une commande qui n'est pas des chaussures. Cela comprend les clients qui ont une commande de chaussures et une commande de chaussettes, parce que « chaussettes » correspond à « pas chaussures ». En général, ce n'est pas la question que vous vouliez poser.</p>
+		<p><code>EMPTYSET:</code> pose la question autrement. Au lieu de regarder chaque commande séparément, il regarde toutes les commandes d'un client ensemble, et trouve les clients pour qui aucune ne correspond.</p>
+	</div>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col><col style="width: 30%"></colgroup>
+			<thead><tr><th scope="col">Ce terme de recherche</th><th scope="col">Veut dire</th><th scope="col">Il trouvera</th></tr></thead>
+			<tbody>
+				<tr>
+					<td><span class="fz-text-muted">Dans la colonne des produits :</span><br><code class="fz-code">EMPTYSET:chaussures</code></td>
+					<td>Trouver les clients qui n'ont jamais commandé de chaussures.</td>
+					<td>Les clients sans aucune commande de chaussures, y compris ceux qui n'ont jamais rien commandé</td>
+				</tr>
+				<tr>
+					<td><span class="fz-text-muted">Dans la colonne des produits :</span><br><code class="fz-code">EMPTYSET:chaussures</code><br><span class="fz-text-muted">et dans la colonne des statuts :</span><br><code class="fz-code">EMPTYSET:annulée</code></td>
+					<td>Trouver les clients qui n'ont aucune commande de chaussures annulée. Quand vous mettez <code class="fz-code">EMPTYSET:</code> dans plusieurs colonnes, chaque entrée liée est comparée à toutes ces conditions ensemble.</td>
+					<td>Les clients sans commande de chaussures annulée. Un client qui a annulé une commande de chaussettes est trouvé. Un client qui a commandé des chaussures et les a gardées l'est aussi.</td>
+				</tr>
+				<tr>
+					<td><span class="fz-text-muted">Dans la colonne des produits :</span><br><code class="fz-code">EMPTYSET1:chaussures</code><br><span class="fz-text-muted">et dans la colonne des statuts :</span><br><code class="fz-code">EMPTYSET2:annulée</code></td>
+					<td>Poser deux questions distinctes au lieu d'une seule. Un numéro fait un groupe à part, comme avec ORSET, donc ce sont deux conditions indépendantes plutôt que la description d'une seule commande.</td>
+					<td>Les clients qui n'ont jamais commandé de chaussures, et qui n'ont jamais rien annulé non plus</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="fz-prose">
+		<p>Quelques choses à savoir sur <code>EMPTYSET:</code></p>
+		<ul>
+			<li>Il ne fonctionne que dans les colonnes qui viennent d'un formulaire lié. Dans l'exemple ci-dessus, <code>EMPTYSET:</code> va dans les colonnes du formulaire des commandes, pas dans celles du formulaire des clients.</li>
+			<li>Les entrées auxquelles rien n'est lié sont toujours trouvées. Un client qui n'a jamais passé de commande est inclus, quel que soit le terme de recherche.</li>
+			<li>Vous pouvez chercher tout ce que vous taperiez d'habitude, pas seulement des mots. <code>EMPTYSET:&gt;100</code> dans une colonne de montants trouve les entrées qui n'ont aucune entrée liée d'un montant de plus de 100.</li>
+			<li>Les termes <code>EMPTYSET</code> sont toujours combinés avec « et ».</li>
+		</ul>
+	</div>
+</section>
+
+<section class="fz-card" id="developers">
+	<h2 class="fz-card__title">Termes de recherche avancés pour les développeurs</h2>
+	<div class="fz-overflow-x-auto">
+		<table class="fz-table fz-table--multiline">
+			<colgroup><col style="width: 25%"><col></colgroup>
+			<thead><tr><th scope="col">Ce terme de recherche</th><th scope="col">Veut dire</th></tr></thead>
+			<tbody>
+				<tr><td><code class="fz-code">{order}</code></td><td>Trouver les entrées qui correspondent à ce qui est dans <code class="fz-code">$_POST['order']</code>, ou, s'il est vide, dans <code class="fz-code">$_GET['order']</code>. C'est fait pour une application complexe, où un écran peut avoir besoin de montrer des choses différentes à des moments différents. Vous pouvez enregistrer une vue avec ce genre de terme de recherche, puis remplir <code class="fz-code">$_POST</code> ou <code class="fz-code">$_GET</code> avec les valeurs voulues au bon moment, en JavaScript par exemple. S'il n'y a pas de valeur, le terme de recherche n'est pas pris en compte. Un nom qui est à la fois une valeur de la requête et un identifiant d'élément est pris comme la valeur de la requête : une valeur de la requête l'emporte toujours sur la comparaison de deux colonnes.</td></tr>
+				<tr><td><code class="fz-code">!{order}</code></td><td>Trouver les entrées qui ne correspondent pas à ce qui est dans <code class="fz-code">$_POST['order']</code> ou <code class="fz-code">$_GET['order']</code>.</td></tr>
+				<tr><td><code class="fz-code">!orange!</code></td><td>Garder ce terme de recherche même quand cette colonne n'est pas dans la vue. Certaines colonnes ne sont visibles que par certains groupes d'utilisateurs. Vous pouvez vouloir chercher dans une colonne que seuls les webmestres voient, pour limiter la liste des entrées, puis publier cette vue pour d'autres utilisateurs qui ne voient pas cette colonne. La liste des entrées reste limitée par ce terme de recherche.</td></tr>
+				<tr><td><code class="fz-code">!!monica! AND !santa!</code></td><td>Pour garder une recherche qui a plusieurs termes, mettez les <code class="fz-code">!</code> et <code class="fz-code">!</code> autour de chaque terme séparément, pas autour de l'ensemble. Ne vous laissez pas troubler par un opérateur « pas » (<code class="fz-code">!</code>) qui fait partie d'un terme, comme « pas monica » au début de cet exemple.</td></tr>
+			</tbody>
+		</table>
+	</div>
+</section>
