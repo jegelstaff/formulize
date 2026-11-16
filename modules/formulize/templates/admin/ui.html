@@ -270,7 +270,8 @@ $(document).ready(function() {
   $("input:not(input[name=organize-toggle],input[id^=filter-forms-])").change(function() {
     setDisplay('savewarning','block');
     });
-  $("input[type=text]:not(input[id^=filter-forms-])").keydown(function() {
+  // every input people type into: one with no type attribute is a text box, but input[type=text] doesn't match it
+  $("input:not([type]), input[type=text], input[type=number], input[type=email], input[type=url], input[type=tel], input[type=search], input[type=password]").not("[id^=filter-forms-]").keydown(function() {
     setDisplay('savewarning','block');
     });
   $("select").change(function() {
