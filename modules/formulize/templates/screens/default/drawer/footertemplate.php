@@ -15,7 +15,8 @@
 // A button that is left out of the template does not appear in the drawer.
 //
 //   $printableViewButton  the printable view button
-//   $pageIndicator        "Page 1 of 3", on multi-page forms without tabs
+//   $pageIndicator        "Page 1 of 3", on multi-page forms without tabs, when the screen
+//                         shows the page indicator
 //   $previousPageButton   the previous page button; on the first page, and on single page
 //                         forms, the save and leave button
 //   $closePageButton      the close (done) button; in a sub entry it goes back to the parent

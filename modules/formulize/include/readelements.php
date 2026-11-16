@@ -52,12 +52,12 @@
 
 if(isset($formulize_readElementsWasRun)) { return false; } // intended to make sure this file is only executed once.
 
-if(!defined("XOOPS_ROOT_PATH")) {
+if($formulize_readElementsRequestedDirectly = !defined("XOOPS_ROOT_PATH")) {
 	include_once "../../../mainfile.php"; // include this if it hasn't been already!  -- we can call readelements.php directly when saving data via ajax...jump up three levels to get it, because we assume that we're running here as the start of the process when such an ajax call is made.  But when a normal page loads, it won't find the mainfile that high up, because the root of the normal page load is the index.php file one directory higher than /include/
-    icms::$logger->disableLogger();
+  icms::$logger->disableLogger();
 	while(ob_get_level()) {
-        ob_end_clean(); // no other stuff in the ajax response please
-    }
+    ob_end_clean(); // no other stuff in the ajax response please
+  }
 }
 
 require_once XOOPS_ROOT_PATH . "/modules/formulize/include/common.php";
@@ -335,8 +335,11 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
             if (formulizePermHandler::user_can_edit_entry($elementFid, $uid, $currentEntry)) {
                 $formulize_allSubmittedEntryIds[$elementFid][] = $currentEntry;
 								if($formulize_formObject->getVar('entries_are_users') AND $formulize_formObject->getVar('entries_are_users_user_is_owner') AND isset($userIdsForUserAccountElements[$elementFid][$currentEntry]) AND $userIdsForUserAccountElements[$elementFid][$currentEntry]) {
-									$dataHandler = new formulizeDataHandler($elementFid);
-									$dataHandler->setEntryOwnerGroups($userIdsForUserAccountElements[$elementFid][$currentEntry], $currentEntry);
+									// only when the entry doesn't already belong to the user, so a save that changes nothing writes nothing
+									if(intval(getEntryOwner($currentEntry, $elementFid)) != intval($userIdsForUserAccountElements[$elementFid][$currentEntry])) {
+										$dataHandler = new formulizeDataHandler($elementFid);
+										$dataHandler->setEntryOwnerGroups($userIdsForUserAccountElements[$elementFid][$currentEntry], $currentEntry);
+									}
 								}
 								if($writtenEntryId = formulize_writeEntry($values, $currentEntry)) {
                     $formulize_allWrittenEntryIds[$elementFid][] = $writtenEntryId; // log the written id
@@ -574,6 +577,13 @@ if($overrideFrid) {
     foreach($formulize_allSubmittedEntryIds as $this_fid => $entryIds) {
         formulize_makeOneToOneLinks($overrideFrid, $this_fid);
     }
+}
+
+// Requested directly, the response has to be empty (inline editing in a list shows any response as an error), so
+// whether anything was actually saved goes in a header. The drawer reads it to know whether the list behind it needs
+// refreshing.
+if($formulize_readElementsRequestedDirectly AND !headers_sent()) {
+    header('X-Formulize-Data-Changed: '.(formulizeDataHandler::dataChangedThisRequest() ? '1' : '0'));
 }
 
 return $formulize_allWrittenEntryIds;

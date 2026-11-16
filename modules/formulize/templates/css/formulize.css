@@ -2008,6 +2008,8 @@ div.formulize-office-use-only-start-hidden {
 	   page's Size preset changes; the fallbacks are its Default. */
 	--formulize-drawer-pad-x: var(--fz-drawer-padding-x, 20px);
 	--formulize-drawer-pad-y: var(--fz-drawer-padding-y, 16px);
+	/* the height of the header, which a theme whose top bar isn't --fz-topbar-height sets to its own */
+	--formulize-drawer-head-height: var(--fz-topbar-height, 48px);
 	--formulize-drawer-z: 31;
 
 	position: fixed;
@@ -2084,8 +2086,12 @@ div.formulize-office-use-only-start-hidden {
 	background-color: var(--formulize-drawer-border);
 }
 
+/* As tall as the bar across the top of the page, which the drawer sits beside, so the
+   two line up. A title that wraps makes it taller. */
 .formulize-drawer__head {
-	padding: var(--formulize-drawer-pad-y) var(--formulize-drawer-pad-x);
+	box-sizing: border-box;
+	min-height: var(--formulize-drawer-head-height);
+	padding: var(--fz-spacing, 4px) var(--formulize-drawer-pad-x);
 	border-bottom: 1px solid var(--formulize-drawer-border);
 	display: flex;
 	align-items: center;
@@ -2372,17 +2378,13 @@ div.formulize-office-use-only-start-hidden {
 	height: auto;
 }
 
-/* The footer tray is the full screen form's action bar (#multipage-controls) at a
-   mobile viewport, and is deliberately built from the same parts: same flex row,
-   same wrap, same 16px padding and 8px gap, and buttons that are literally the same
+/* The footer tray is the full screen form's action bar (#multipage-controls), and is
+   deliberately built from the same parts: same flex row, same wrap, same 16px padding
+   and 8px gap, and buttons that are literally the same
    `input.formulize-form-submit-button` elements (see makeButton in drawer.js).
-   The drawer is a mobile-width surface at every window size -- 390px minimum, and
-   only ever a fraction of the window -- so it takes that mobile layout
-   unconditionally rather than behind a media query.
-
-   This replaces a single non-wrapping row of drawer-only buttons, which squeezed
-   four controls into a 390px strip at 32px tall while full screen was giving the
-   same four 44px tap targets two to a row. */
+   These rules are the bar at a phone width, two 44px tap targets to a row, where the
+   drawer fills the window. The min-width media query further down gives it the desktop
+   layout in a wider window, however narrow the drawer is. */
 .formulize-drawer__foot {
 	padding: 16px;
 	border-top: 1px solid var(--formulize-drawer-border);
@@ -2455,17 +2457,24 @@ div.formulize-office-use-only-start-hidden {
 	cursor: pointer;
 }
 
-/* Once the drawer is at least as wide as the mobile breakpoint (768px — drawer.js adds
-   `formulize-drawer--wide` off the drawer's measured width, not the window's, because
-   the drawer is drag-resizable), there is no longer any reason for it to wear the full
-   screen form's MOBILE action bar. The buttons become full screen's ordinary ones: sized
-   to their label, on one row, at the desktop height rather than a 44px tap target. The
-   two-up 50% flex is what makes them look "compact/drawer-specific", so that is what
-   goes. Themes restate the height/padding in their own tokens below. */
-.formulize-drawer--wide .formulize-drawer__foot .formulize-form-submit-button {
-	flex: 0 0 auto;
-	height: 36px;
-	padding: 0 16px;
+/* Wider than 768px, where the drawer stops filling the window, the footer is the full
+   screen form's desktop action bar, however narrow the drawer has been dragged: buttons
+   sized to their label at the desktop height, on the right, and the page indicator on
+   the left of the same row, wherever the footer template puts it. Themes restate the
+   buttons' height/padding in their own tokens. */
+@media (min-width: 769px) {
+	.formulize-drawer .formulize-drawer__foot .formulize-form-submit-button {
+		flex: 0 0 auto;
+		height: 36px;
+		padding: 0 16px;
+	}
+
+	.formulize-drawer .formulize-drawer__page-indicator {
+		flex: 0 1 auto;
+		order: -1;
+		margin-right: auto;
+		text-align: left;
+	}
 }
 
 /* The drawer's own chrome buttons: the header's Back and Close icons. (The footer's

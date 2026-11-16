@@ -118,6 +118,10 @@
   --sh-accent-glow:    0px 4px 10px 0px color-mix(in srgb, var(--fz-color-accent) 24%, transparent);
   --sh-secondary-glow: 0px 4px 10px 0px color-mix(in srgb, var(--fz-color-text-muted) 24%, transparent);
 
+  /* The height of the header, and of what lines up with it: the logo at the top of the
+     sidebar, and the drawer's header. Anari's header doesn't follow the Top bar height. */
+  --anari-header-height: 60px;
+
   /* Legacy aliases. This theme (and any site-specific custom CSS written
      against it) referred to these before the tokens above existed, so they are
      kept, pointing at the tokens, and pick up customizations like everything

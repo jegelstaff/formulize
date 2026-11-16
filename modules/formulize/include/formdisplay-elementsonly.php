@@ -108,6 +108,11 @@ if($screen AND $entry_id AND $entryFid AND $entryFid != $screen->getVar('fid')) 
 $targetPage = isset($_REQUEST['page'])     ? intval($_REQUEST['page'])     : 0;
 $prevPage   = isset($_REQUEST['prevpage']) ? intval($_REQUEST['prevpage']) : 0;
 
+// Add Multiple Entries, from a list: each save brings the form back blank, for the next entry. Full screen
+// the list turns on the screen's reload blank for this (see the ventry handling in entriesdisplay.php), and
+// so does this endpoint, below. That only works if the entry just saved isn't put in place first.
+$addMultiple = !empty($_REQUEST['addmultiple']);
+
 // Nothing is printed until the end of the file, where the response is put together from the
 // pieces worked out on the way. So what the response says can depend on everything that
 // happened, and an error part way through (which the catch-all handler in include/common.php
@@ -122,8 +127,9 @@ if(isset($_POST['formulize_save']) AND $_POST['formulize_save']) {
     // A save that created the entry leaves the client knowing it only as 'new'. Resolve the
     // real id here so the re-render shows the entry that was just written rather than a
     // fresh blank form - the same resolution displayFormPages does for later pages, which
-    // single page renders (the drawer's Save button) need too.
-    if(!$entry_id AND $fid AND isset($GLOBALS['formulize_newEntryIds'][$fid][0]) AND $GLOBALS['formulize_newEntryIds'][$fid][0]) {
+    // single page renders (the drawer's Save button) need too. Not when adding multiple entries, where the
+    // form comes back blank instead.
+    if(!$entry_id AND !$addMultiple AND $fid AND isset($GLOBALS['formulize_newEntryIds'][$fid][0]) AND $GLOBALS['formulize_newEntryIds'][$fid][0]) {
         $entry_id = intval($GLOBALS['formulize_newEntryIds'][$fid][0]);
     }
 }
@@ -196,7 +202,13 @@ if($targetSub) {
         unset($_POST['formulize_currentPage'], $_POST['formulize_prevPage']);
         $targetPage = 0;
         $prevPage = 0;
+        // and so does adding multiple entries
+        $addMultiple = false;
     }
+}
+
+if($screen AND $addMultiple) {
+    $screen->setVar('reloadblank', 1);
 }
 
 if($screen AND $targetPage > 0) {
@@ -458,9 +470,13 @@ if($screen AND $screen->getVar('type') == 'multiPage') {
 // just-created sub entry the client has never seen); parentEntryId reports the resolved
 // parent id so a host that opened a brand-new parent can fix up its navigation state.
 // newSubEntriesAsRows says the add-new flow rendered the parent again, with the new sub
-// entries as rows in its subform, rather than the first new sub entry.
+// entries as rows in its subform, rather than the first new sub entry. dataChanged says
+// whether this request changed any data, by a save, a subform add, delete or clone, or
+// anything those set off, so the host knows whether what is behind the drawer is out of date.
 $drawerMeta = "<script type=\"application/json\" class=\"formulize-drawer-meta\">".json_encode(array(
     'title' => $drawerHeaderTitle,
+    'dataChanged' => formulizeDataHandler::dataChangedThisRequest(),
+    'sid' => intval($sid), // the screen rendered, which the drawer remembers its width for
     'fid' => intval($fid),
     'entryId' => $entry_id ? intval($entry_id) : 'new',
     'parentEntryId' => $parentEntryResolved ? $parentEntryResolved : null,

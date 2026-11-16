@@ -321,6 +321,8 @@ h1, h2, h3, h4, h5, h6,
   --formulize-drawer-foot-bg:  var(--fz-drawer-foot-bg);
   --formulize-drawer-shadow:   var(--fz-shadow-lg);
   --formulize-drawer-radius:   var(--fz-radius-md);
+  /* the header's, which keeps to 48px on a phone whatever the Top bar height is */
+  --formulize-drawer-head-height: var(--lyris-header-height);
 
   /* Lifted above the masquerade bar so the drawer's footer buttons stay clickable. */
   bottom: var(--lyris-masquerade-height);
@@ -3150,8 +3152,7 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 
 /* The drawer footer's sizing is the mobile #multipage-controls sizing (see the
    max-width media query near the end of this file): two buttons to a row, 44px tap
-   targets. It is unconditional because the drawer is a mobile-width surface at every
-   window size. `height` needs !important to beat the 34px !important above and
+   targets, for a phone-width window. `height` needs !important to beat the 34px !important above and
    Lyris's blanket bare-`input[type=button]` reset, exactly as the full screen mobile
    rule does. */
 .formulize-drawer__foot .formulize-form-submit-button {
@@ -3161,15 +3162,16 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
   padding: 0 calc(var(--fz-spacing) * 3);
 }
 
-/* ...until the drawer is wide enough not to be a mobile-width surface any more. At
-   768px and up (drawer.js adds `formulize-drawer--wide` off the drawer's own measured
-   width) the footer's buttons become the ones the full screen bar uses on a desktop:
+/* ...and in a window wider than 768px, however narrow the drawer, the footer's buttons
+   become the ones the full screen bar uses on a desktop:
    content width, one row, the 34px/16px geometry declared for
    `.formulizeThemeForm .formulize-form-submit-button` above (PR #127 review). */
-.formulize-drawer--wide .formulize-drawer__foot .formulize-form-submit-button {
-  flex: 0 0 auto;
-  height: var(--fz-control-height) !important;
-  padding: 0 var(--fz-control-padding-x);
+@media (min-width: 769px) {
+  .formulize-drawer .formulize-drawer__foot .formulize-form-submit-button {
+    flex: 0 0 auto;
+    height: var(--fz-control-height) !important;
+    padding: 0 var(--fz-control-padding-x);
+  }
 }
 
 /* On multi-page forms the bar also holds #prev ("Save and Close") and #next

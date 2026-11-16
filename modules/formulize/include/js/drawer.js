@@ -99,15 +99,9 @@
     // declared on .formulize-drawer in the base stylesheet.
     var MIN_WIDTH        = 390;
     var MOBILE_BREAKPOINT = 768;
-    // Width of the DRAWER (not the window) at which its footer stops being the full
-    // screen form's mobile action bar and becomes the full screen form's ordinary one:
-    // content-width buttons on a single row instead of two 44px tap targets to a row.
-    // Keyed off the drawer because the drawer is drag-resizable, so the window's width
-    // says nothing about how much room the footer actually has. Same 768 the mobile
-    // layout everywhere else in Formulize turns on at.
-    var WIDE_BREAKPOINT  = 768;
     var AI_DEFAULT_WIDTH = '640px'; // chat needs more room than the entry-form default
-    var WIDTH_STORAGE_KEY    = 'formulize-drawer-width';
+    var WIDTH_STORAGE_KEY    = 'formulize-drawer-width'; // the width last set for any form screen
+    var SCREEN_WIDTH_STORAGE_KEY_PREFIX = 'formulize-drawer-width-screen-'; // and for each one, by sid
     var AI_WIDTH_STORAGE_KEY = 'formulize-drawer-width-ai';
 
     // ---- DOM -------------------------------------------------------------------
@@ -199,20 +193,53 @@
 
     var isMobileDrawer  = function () { return window.innerWidth <= MOBILE_BREAKPOINT; };
     var maxDrawerWidth  = function () { return window.innerWidth * 0.92; };
-    var widthStorageKey = function () { return (drawerMode === 'ai' ? AI_WIDTH_STORAGE_KEY : WIDTH_STORAGE_KEY); };
+    // The form screen the drawer is showing: the one the endpoint last rendered, or until
+    // it has, the one asked for. Empty when neither is known, as when a subform opens an
+    // entry and the endpoint works out the screen.
+    var currentScreenId = '';
+    function displayedScreenId() {
+        if (currentScreenId) { return String(currentScreenId); }
+        return (currentFrame && currentFrame.params && currentFrame.params.sid) ? String(currentFrame.params.sid) : '';
+    }
+
+    function readStoredWidth(key) {
+        try { return localStorage.getItem(key); } catch (e) { return null; }
+    }
+
+    // The remembered width for what the drawer is showing. The chat has its own. A form
+    // screen has one of its own once the user has set one for it, and otherwise takes the
+    // width last set for any form screen.
+    function storedDrawerWidth() {
+        if (drawerMode === 'ai') { return readStoredWidth(AI_WIDTH_STORAGE_KEY); }
+        var sid = displayedScreenId();
+        return (sid && readStoredWidth(SCREEN_WIDTH_STORAGE_KEY_PREFIX + sid)) || readStoredWidth(WIDTH_STORAGE_KEY);
+    }
+
+    // Remember a width the user has dragged the drawer to: for the chat, or for the form
+    // screen being shown and as the last width set for any form screen.
+    function storeDrawerWidth(width) {
+        try {
+            if (drawerMode === 'ai') {
+                localStorage.setItem(AI_WIDTH_STORAGE_KEY, width);
+                return;
+            }
+            localStorage.setItem(WIDTH_STORAGE_KEY, width);
+            var sid = displayedScreenId();
+            if (sid) { localStorage.setItem(SCREEN_WIDTH_STORAGE_KEY_PREFIX + sid, width); }
+        } catch (e) { /* ignore */ }
+    }
 
     // Persist the user's drag-resized width across reloads. Desktop only — below the
     // breakpoint the drawer is full-width and must not carry a stale inline width
-    // into that layout. Entry forms and the chat want very different widths, so each
-    // remembers its own and resizing one never moves the other.
+    // into that layout. The chat and each form screen remember their own widths, so
+    // resizing one never moves another (see storedDrawerWidth).
     function applyStoredDrawerWidth() {
         if (!drawer) { return; }
         if (isMobileDrawer()) {
             drawer.style.width = '';
             return;
         }
-        var saved = null;
-        try { saved = localStorage.getItem(widthStorageKey()); } catch (e) { /* ignore */ }
+        var saved = storedDrawerWidth();
         if (saved) {
             // A remembered width always wins over the default, but never takes the
             // drawer below the minimum — a value stored before the minimum was
@@ -223,19 +250,6 @@
         } else {
             drawer.style.width = ''; // fall back to the stylesheet's default
         }
-        syncDrawerWidthClass();
-    }
-
-    // Flag the drawer as "wide" once it is at least as wide as the mobile breakpoint, so
-    // the stylesheet can give its footer the full screen form's ordinary button treatment
-    // instead of the mobile action bar's (PR #127 review). Measured rather than read off
-    // the inline style, because the width can come from the stylesheet's 30vw default, a
-    // remembered px value, or a drag in progress. A hidden element measures 0, so this is
-    // re-run on reveal.
-    function syncDrawerWidthClass() {
-        if (!drawer) { return; }
-        var wide = !drawer.hidden && drawer.getBoundingClientRect().width >= WIDE_BREAKPOINT;
-        drawer.classList.toggle('formulize-drawer--wide', wide);
     }
 
     // Drag-resize via the visible handle on the drawer's left edge. (Native CSS
@@ -249,7 +263,6 @@
             var delta = startX - e.clientX; // dragging toward screen center widens the drawer
             var width = Math.min(Math.max(startWidth + delta, MIN_WIDTH), maxDrawerWidth());
             drawer.style.width = width + 'px';
-            syncDrawerWidthClass(); // the footer's button treatment follows the drag live
         }
 
         function onUp() {
@@ -258,7 +271,7 @@
             resizeHandle.classList.remove('formulize-drawer__resize-handle--active');
             document.body.style.removeProperty('cursor');
             document.body.style.removeProperty('user-select');
-            try { localStorage.setItem(widthStorageKey(), drawer.style.width); } catch (e) { /* ignore */ }
+            storeDrawerWidth(drawer.style.width);
         }
 
         resizeHandle.addEventListener('pointerdown', function (e) {
@@ -292,12 +305,12 @@
         drawer.hidden = false;
         scrim.hidden = false;
         document.documentElement.style.overflow = 'hidden';
-        syncDrawerWidthClass(); // only measurable now that it is displayed
     }
 
     function openDrawer(opts) {
         if (!ensureDom()) { return; }
         opts = opts || {};
+        currentScreenId = ''; // until an entry's screen is rendered, its width is the one for the screen asked for
         setDrawerMode('entry');
         layoutHeader(null); // static content has no header template; an entry applies its own once open
         titleEl.textContent = opts.title || '';
@@ -341,10 +354,12 @@
     var currentDrawerTemplates = null;
     var entryHeaderTemplate = null;
 
-    // Whether anything has been saved since this drawer session opened. A save that
-    // leaves the drawer open still has to be reflected in the list behind it when the
-    // drawer is eventually closed.
-    var savedDuringSession = false;
+    // Whether any data has changed since this drawer session opened, as the server reports
+    // it after each request: the endpoint in its drawer metadata, readelements.php in the
+    // X-Formulize-Data-Changed header. Only then is the list behind the drawer refreshed
+    // when it closes. A save that changes nothing, because the values are what was already
+    // stored, doesn't count, and neither does a request that sent no data.
+    var dataChangedDuringSession = false;
 
     // Subform drill-down state: the drawer shows one entry at a time, but a subform
     // element lets the user descend into a sub entry (and its subs, recursively).
@@ -439,6 +454,7 @@
         if (p.subformElementId) { params.push('subformElementId=' + encodeURIComponent(p.subformElementId)); }
         if (p.entryFid)  { params.push('entry_fid=' + encodeURIComponent(p.entryFid)); }
         if (p.entryFrid) { params.push('entry_frid=' + encodeURIComponent(p.entryFrid)); }
+        if (p.addMultiple) { params.push('addmultiple=1'); }
         if (page)      { params.push('page=' + encodeURIComponent(page)); }
         params.push('formname=' + FORM_NAME);
         return (base || moduleBase + ENDPOINT) + '?' + params.join('&');
@@ -632,10 +648,20 @@
                 // left over from a previous drawer session.
                 window.formulizechanged = 0;
                 currentEntryNav = readNavMeta();
+                var meta = readDrawerMeta();
+                // the server says whether this request changed any data, and only then does
+                // what is behind the drawer need refreshing when it closes
+                if (meta && meta.dataChanged) { dataChangedDuringSession = true; }
                 if (leaveAtThanks && currentEntryNav && currentEntryNav.isThanksPage && !currentEntryNav.hasThanksPage) {
                     bodyEl.classList.remove('formulize-drawer__body--entering');
                     leaveFinishedEntry();
-                    return readDrawerMeta();
+                    return meta;
+                }
+                // each form screen has its own width, so a different screen, such as a sub
+                // entry's, or the one the endpoint chose, takes the width remembered for it
+                if (meta && meta.sid && String(meta.sid) !== String(currentScreenId)) {
+                    currentScreenId = String(meta.sid);
+                    applyStoredDrawerWidth();
                 }
                 // the thanks page's link to the done destination leaves the entry
                 if (currentEntryNav && currentEntryNav.isThanksPage) {
@@ -645,7 +671,6 @@
                 }
                 currentEntryButtons = readButtonMeta();
                 currentDrawerTemplates = readDrawerTemplates();
-                var meta = readDrawerMeta();
                 // A subform "Add" whose element shows new entries as rows comes back as the
                 // parent's page, with the new rows in its subform, rather than as the new sub
                 // entry addSubEntry made a frame for. So the parent is still the current
@@ -688,10 +713,13 @@
         if (!ensureDom()) { return; }
         opts = opts || {};
         drawerStack = [];
-        savedDuringSession = false;
+        dataChangedDuringSession = false;
+        // addMultiple: the list's Add Multiple Entries button, where each save brings the form
+        // back blank for the next entry. It stays with this entry's frame, so every save sends it.
         currentFrame = { params: { fid: opts.fid, frid: opts.frid, sid: opts.sid, entryId: opts.entryId,
                                    subformElementId: opts.subformElementId,
-                                   entryFid: opts.entryFid, entryFrid: opts.entryFrid }, page: 0 };
+                                   entryFid: opts.entryFid, entryFrid: opts.entryFrid,
+                                   addMultiple: !!opts.addMultiple }, page: 0 };
         openDrawer({ title: opts.title || '' });
         layoutHeader(entryHeaderTemplate);
         updateBackButton();
@@ -890,10 +918,11 @@
         // Where they go, and in what order, is up to the template (see placeFooterControls).
         var controls = {};
 
-        // With tabs on show the strip already says which page you are on, so the footer
-        // does not repeat it. (The non-tab case is where a combined page indicator/selector
-        // control belongs - see issue #109.)
-        if (multiPage && !drawerTabsVisible(nav)) {
+        // Only on a screen set to show the page indicator, as full screen. With tabs on show
+        // the strip already says which page you are on, so the footer does not repeat it.
+        // (The non-tab case is where a combined page indicator/selector control belongs -
+        // see issue #109.)
+        if (multiPage && nav.showPageIndicator && !drawerTabsVisible(nav)) {
             var indicator = document.createElement('span');
             indicator.className = 'formulize-drawer__page-indicator';
             indicator.textContent = (nav.pageWord || S().page) + ' ' + nav.currentPage + ' ' +
@@ -1202,21 +1231,26 @@
         var saveUrl = saveAddress(form) +
             '?fid='  + encodeURIComponent(form.getAttribute('data-fid') || '') +
             '&frid=' + encodeURIComponent(form.getAttribute('data-frid') || 0);
+        var xhr = null;
         return whileSaving(function () {
-            return jQuery.post({
+            xhr = jQuery.post({
                 url: saveUrl,
                 data: new FormData(form),
                 cache: false,
                 contentType: false,
                 processData: false
             });
+            return xhr;
         }).then(function (response) {
+            // readelements.php has to return an empty body, because the inline-edit caller in
+            // entriesdisplay.php alerts any non-empty response to the user as an error. So it says
+            // in a header whether anything was actually saved: values the same as what is stored
+            // write nothing, and then the list behind the drawer has nothing to refresh.
+            var dataChanged = !!(xhr && xhr.getResponseHeader('X-Formulize-Data-Changed') === '1');
+            if (dataChanged) { dataChangedDuringSession = true; }
             // Tell the AI chat's activity log what was just saved. readelements.php cannot report
-            // this itself: it has to return an empty body, because the inline-edit caller in
-            // entriesdisplay.php alerts any non-empty response to the user as an error. Nothing
-            // needs to come back from the server anyway - this side is the one that knows what it
-            // asked to be saved.
-            if (window.formulize && typeof window.formulize.recordActivity === 'function') {
+            // this itself, for the same reason; this side knows what it asked to be saved.
+            if (dataChanged && window.formulize && typeof window.formulize.recordActivity === 'function') {
                 var frame = currentFrame && currentFrame.params ? currentFrame.params : {};
                 window.formulize.recordActivity({
                     event: 'saving-data',
@@ -1240,10 +1274,11 @@
         if (typeof hook === 'function') { hook(); }
     }
 
-    // Release locks, close the drawer, and refresh the host (the list, normally).
-    // Used after the final save.
+    // Release locks, close the drawer, and refresh the host (the list, normally), if any
+    // data changed while the drawer was open. Used after the final save.
     function closeAndRefresh() {
-        savedDuringSession = false;
+        var hostNeedsRefresh = dataChangedDuringSession;
+        dataChangedDuringSession = false;
         releaseEntryLocks();
         closeDrawer();
         currentEntryNav = null;
@@ -1251,7 +1286,7 @@
         drawerStack = [];
         currentFrame = null;
         updateBackButton();
-        if (typeof window.formulize.onEntrySaved === 'function') {
+        if (hostNeedsRefresh && typeof window.formulize.onEntrySaved === 'function') {
             window.formulize.onEntrySaved();
         }
         notifyHostClosed();
@@ -1283,7 +1318,6 @@
         if (!form || !currentFrame) { return; }
         if (currentEntryNav) {
             if (!validateCurrentForm(form)) { return; }
-            if (formHasChanges()) { savedDuringSession = true; }
             goToPage(currentEntryNav.currentPage);
             return;
         }
@@ -1292,7 +1326,6 @@
         form.querySelectorAll('input[type="hidden"]').forEach(function (i) { i.disabled = false; });
         var fd = new FormData(form);
         fd.append('formulize_save', '1');
-        savedDuringSession = true;
         releaseEntryLocks(); // the re-render acquires its own
         fetchIntoDrawer(buildEntryUrl(currentFrame.params, 0, writeAddress(form)), { method: 'POST', body: fd }, true);
     }
@@ -1310,7 +1343,6 @@
             return;
         }
         if (!validateCurrentForm(form)) { return; }
-        savedDuringSession = true;
         saveCurrentPage(form).then(drawerStack.length ? popToParent : closeAndRefresh);
     }
 
@@ -1333,12 +1365,12 @@
             sid:     currentEntryNav.screenId,
             fid:     form.getAttribute('data-fid') || '',
             frid:    form.getAttribute('data-frid') || 0,
-            entryId: currentEntryNav.entryId || ''
+            entryId: currentEntryNav.entryId || '',
+            addMultiple: !!(currentFrame && currentFrame.params.addMultiple)
         }, targetPage, changed ? writeAddress(form) : '') + '&prevpage=' + encodeURIComponent(currentEntryNav.currentPage);
 
         var opts = null;
         if (changed) {
-            savedDuringSession = true; // the list behind needs refreshing when the drawer closes
             form.querySelectorAll('input[type="hidden"]').forEach(function (i) { i.disabled = false; });
             var fd = new FormData(form);
             fd.append('formulize_save', '1');
@@ -1508,8 +1540,8 @@
         if (!confirmDiscardIfChanged()) { return; }
         // Save can now leave the drawer open, so a session may end with saved changes the
         // list behind it has not seen yet.
-        var hostNeedsRefresh = savedDuringSession;
-        savedDuringSession = false;
+        var hostNeedsRefresh = dataChangedDuringSession;
+        dataChangedDuringSession = false;
         releaseEntryLocks();
         if (footEl) { footEl.innerHTML = ''; }
         currentEntryNav = null;
@@ -1560,7 +1592,7 @@
         // icon navigates to the full form screen as it always has.
         if (config.editDestination !== 'drawer') { return; }
 
-        function openEntry(entryId, sid) {
+        function openEntry(entryId, sid, addMultiple) {
             if (sid) {
                 // a screen named by the template's own link: the entry id is the template's
                 // to get right for that screen's form, so full screen shows it as given
@@ -1570,7 +1602,7 @@
             // the list's configured screen may be on another form in the relationship;
             // the endpoint maps the list's entry onto that form, as full screen does
             openEntryInDrawer({ fid: config.fid, frid: config.frid, entryId: entryId, sid: config.sid || '',
-                                entryFid: config.fid, entryFrid: config.frid });
+                                entryFid: config.fid, entryFrid: config.frid, addMultiple: addMultiple });
         }
 
         // Formulize's list markup calls goDetails(entry, screen) from the edit icon's
@@ -1578,7 +1610,10 @@
         // functions defined by interfaceJavascript(); overriding them on window is what
         // redirects the same affordances into the drawer without touching the markup.
         window.goDetails = function (entryId, screen) { openEntry(entryId, screen || ''); };
-        window.addNew    = function () { openEntry('', ''); };
+        // addNew() with no flag is Add Multiple Entries (and Add on a one entry form, which
+        // shows the user's entry whatever this says); 'single' is Add. 'proxy' is not
+        // handled in the drawer yet, see drawer-vs-full-screen-plan.md.
+        window.addNew    = function (flag) { openEntry('', '', !flag); };
 
         // After a drawer save, reload the list by submitting its controls form.
         // showLoading() captures the current scroll position and preserves all active

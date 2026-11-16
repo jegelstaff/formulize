@@ -60,6 +60,12 @@ class formulizeDataHandler {
 		return $counts;
 	}
 
+	// whether any form's data has changed during this request. A save whose values match what is already
+	// stored writes nothing, so it doesn't count.
+	static function dataChangedThisRequest() {
+		return !empty(self::$dataChangeCounts);
+	}
+
 	// $fid must be an id
 	function __construct($fid=null){
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
