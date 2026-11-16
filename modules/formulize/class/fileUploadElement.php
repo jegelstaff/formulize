@@ -547,7 +547,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                 }
                 // have to spoof the raw value from the database, in order to generate the URL for use in the download link, since that's what the URL method is expecting
                 $fakeRawValue = serialize(array('name'=>$ele_value[3], 'isfile'=>$ele_value[5]));
-                $introToUploadBox .= "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>".$this->createDownloadLink($element, $this->createFileURL($element, $entry_id, $fakeRawValue), $ele_value[4]).$this->imageFileNameLabel($ele_value[4])." &mdash; <a class='formulize_fileUploadDeleteButton' href='' onclick='warnAboutFileDelete(\"".str_replace("de_","formulize_",$markupName)."\", \"".$element->getVar('ele_id')."\", \"$entry_id\");return false;'>" . _DELETE . "</a></div>";
+                $introToUploadBox .= "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'>".$this->createDownloadLink($element, $this->createFileURL($element, $entry_id, $fakeRawValue), $ele_value[4]).$this->imageFileNameLabel($ele_value[4])." <a class='formulize_fileUploadDeleteButton' href='' onclick='warnAboutFileDelete(\"".str_replace("de_","formulize_",$markupName)."\", \"".$element->getVar('ele_id')."\", \"$entry_id\");return false;'>" . _DELETE . "</a></div>";
             } else {
                 $introToUploadBox = "<div id='formulize_fileStatus_".$element->getVar('ele_id')."_$entry_id' class='no-print formulize-fileupload-element'></div>";
             }
