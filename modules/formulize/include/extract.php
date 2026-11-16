@@ -1771,6 +1771,11 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		} else {
 			$masterQuerySQL = $filter; // need to split this based on some separator, because export ends up passing in a series of statements
 		}
+		// a query built in another request, such as the one an export reads from its file, names the key's session variable, but
+		// nothing has put the key in it on this request's connection, so the encrypted values would decrypt to NULL
+		if (strstr($filter, icms_db_Connection::AES_KEY_VARIABLE)) {
+			formulize_aesKeySQL();
+		}
 	}
 
 	// after the export query has been generated, then let's put the limit on:
