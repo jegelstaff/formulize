@@ -1481,21 +1481,34 @@
     // says new entries show up as rows, the server renders the parent's page again
     // instead, with the new rows in its subform (see fetchIntoDrawer), so the request
     // asks for the parent's page as it is, the way a subform delete or clone does.
+    //
+    // The new sub entries belong to the entry the subform element is drawn in, which
+    // add_sub names (args.parentFid, args.parentEntryId), as it does on a full screen
+    // form. That is usually the drawer's entry. But a subform can be drawn inside an
+    // entry of another subform on the same form (a Full Form subform shows its entries
+    // with their own subforms), and then its parent is that nested entry, not the
+    // drawer's. An entry add_sub knows only as 'new' is the drawer's own entry, which
+    // the save in this request creates.
     function addSubEntry(form, args) {
         form.querySelectorAll('input[type="hidden"]').forEach(function (i) { i.disabled = false; });
         var fd = new FormData(form);
-        var parentFid  = form.getAttribute('data-fid')  || args.parentFid || '';
-        var parentFrid = form.getAttribute('data-frid') || args.frid      || 0;
-        var parentEntryId = (currentFrame && currentFrame.params.entryId) ? currentFrame.params.entryId : '';
+        var formFid  = form.getAttribute('data-fid')  || args.parentFid || '';
+        var formFrid = form.getAttribute('data-frid') || args.frid      || 0;
+        var drawerEntryId = (currentFrame && currentFrame.params.entryId) ? currentFrame.params.entryId : '';
+        var namedEntryId = /^[1-9]\d*$/.test(String(args.parentEntryId || '')) ? String(args.parentEntryId) : '';
+        var parentFid = args.parentFid || formFid;
+        var nested = String(parentFid) !== String(formFid) || (namedEntryId !== '' && namedEntryId !== String(drawerEntryId));
+        var parentFrid = nested ? (args.frid || 0) : formFrid;
+        var parentEntryId = namedEntryId || (nested ? '' : drawerEntryId);
         fd.set('target_sub', args.subFid);
         fd.set('target_sub_fid', parentFid);
         fd.set('target_sub_frid', parentFrid);
         fd.set('target_sub_mainformentry', parentEntryId);
         fd.set('target_sub_subformelement', args.subformElementId);
         fd.set('numsubents', args.numEntries || 1);
-        if (formHasChanges() || !parentEntryId) { fd.set('formulize_save', '1'); }
+        if (formHasChanges() || !drawerEntryId) { fd.set('formulize_save', '1'); }
 
-        var parentParams = currentFrame ? currentFrame.params : { fid: parentFid, frid: parentFrid };
+        var parentParams = currentFrame ? currentFrame.params : { fid: formFid, frid: formFrid };
         var parentPage = (currentFrame && currentFrame.page > 1) ? currentFrame.page : 0;
         var url = buildEntryUrl(parentParams, parentPage, writeAddress(form));
 
@@ -1505,8 +1518,9 @@
         currentFrame = { params: { fid: args.subFid, entryId: '', subformElementId: args.subformElementId }, page: 0 };
         fetchIntoDrawer(url, { method: 'POST', body: fd }).then(function (meta) {
             // a brand-new parent was saved as part of this request; record its real id so
-            // Back reloads the saved entry rather than a blank form
-            if (meta && meta.parentEntryId && parentFrame) { parentFrame.params.entryId = meta.parentEntryId; }
+            // Back reloads the saved entry rather than a blank form. A nested parent is
+            // not the drawer's entry, so its id is no use here.
+            if (meta && meta.parentEntryId && parentFrame && !nested) { parentFrame.params.entryId = meta.parentEntryId; }
         });
     }
 
