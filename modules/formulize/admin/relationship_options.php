@@ -50,7 +50,14 @@ $xoopsTpl = $xoTheme->template;
 $linkId = intval($_GET['linkId']);
 $link = new formulizeFrameworkLink($linkId);
 $rel = $link->getVar('relationship');
-$content = $framework_handler->gatherRelationshipHelpAndOptionsContent($link);
+if(!$content = $framework_handler->gatherRelationshipHelpAndOptionsContent($link)) {
+	icms::$logger->disableLogger();
+	while(ob_get_level()) {
+		ob_end_clean();
+	}
+	print "<p>"._AM_FRAME_LINK_NOT_FOUND."</p>";
+	exit();
+}
 $content['isSaveLocked'] = sendSaveLockPrefToTemplate();
 $content['allowLinkDeletion'] = ($link->getVar('frid') != -1 OR $framework_handler->linkIsOnlyInPrimaryRelationship($link));
 $content['allowSubformInterfaceCreation'] = $rel > 1 ? ($framework_handler->subformInterfaceExistsForLink($link) ? false : true) : false;

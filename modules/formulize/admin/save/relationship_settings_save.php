@@ -88,6 +88,15 @@ switch ($op) {
 function addlink($form1_id, $form2_id, $relationship_id) {
     global $xoopsDB;
     $success = true;
+    $form1_id = intval($form1_id);
+    $form2_id = intval($form2_id);
+    $relationship_id = intval($relationship_id);
+
+    // a new link starts out as "the user who filled them in", which only needs the two forms to exist
+    if(!relationshipLinkIsValid($form1_id, $form2_id, 0, 0)) {
+        print _AM_FRAME_LINK_INVALID;
+        return false;
+    }
 
     // This is the function that makes a new form entry in the framework DB tables
     $forms = array();
@@ -202,6 +211,12 @@ function updateframe($relationship_id) {
 
 function updaterels($fl_id, $value) {
     global $xoopsDB;
+    $fl_id = intval($fl_id);
+    $value = intval($value);
+    // 1 is one to one, 2 is one to many, 3 is many to one
+    if($value < 1 OR $value > 3) {
+        return;
+    }
 
     $sql = "UPDATE " . $xoopsDB->prefix("formulize_framework_links") . " SET fl_relationship='$value' WHERE fl_id='$fl_id'";
     if(!$res = $xoopsDB->query($sql)) {
@@ -213,7 +228,18 @@ function updaterels($fl_id, $value) {
 function updatelinks($fl_id, $value) {
     global $xoopsDB, $processedValues;
 
+    $fl_id = intval($fl_id);
     $keys = explode("+", $value);
+    $keys[0] = intval($keys[0]);
+    $keys[1] = isset($keys[1]) ? intval($keys[1]) : 0;
+
+    // never record a link that can't be used, such as one key of 0 and one real element
+    $link = new formulizeFrameworkLink($fl_id);
+    if(!$link->getVar('lid') OR !relationshipLinkIsValid($link->getVar('form1'), $link->getVar('form2'), $keys[0], $keys[1])) {
+        print _AM_FRAME_LINK_INVALID;
+        return;
+    }
+
     if(isset($keys[2]) AND $keys[2] == "common") {
         $common = 1;
     } else {
@@ -246,12 +272,10 @@ function updatelinks($fl_id, $value) {
     }
 		$rel = isset($_POST['relationships-rel'.$fl_id]) ? $_POST['relationships-rel'.$fl_id] : 2;
 		if($keys[0] AND $keys[1] AND !linkExistsInPrimaryRelationship($common, $rel, $keys[0], $keys[1])) { // must have actual element keys, don't do "user who created" links in primary relationship yet
-			$e1Object = _getElementObject($keys[0]);
-			$e2Object = _getElementObject($keys[1]);
 			$del = (isset($_POST['relationships-delete'.$fl_id]) AND $_POST['relationships-delete'.$fl_id]) ? 1 : 0;
 			$con = (isset($_POST['relationships-conditional'.$fl_id]) AND $_POST['relationships-conditional'.$fl_id]) ? 1 : 0;
 			$book = (isset($_POST['relationships-bookkeeping'.$fl_id]) AND $_POST['relationships-bookkeeping'.$fl_id]) ? 1 : 0;
-			$result = insertLinkIntoPrimaryRelationship($common, $rel, $e1Object->getVar('fid'), $e2Object->getVar('fid'), $keys[0], $keys[1], $del, $con, $book);
+			$result = insertLinkIntoPrimaryRelationship($common, $rel, $link->getVar('form1'), $link->getVar('form2'), $keys[0], $keys[1], $del, $con, $book);
 			if($result !== true) { // result will be text error message on failure
 				print $result;
 			}

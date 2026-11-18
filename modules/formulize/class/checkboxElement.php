@@ -269,7 +269,9 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 							$currentLinkedElementId = convertElementHandlesToElementIds(array($currentEleValue2Parts[1]));
 							$currentLinkedElementId = $currentLinkedElementId[0];
 					}
-					updateLinkedElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'), $array_link['id_form'], $_POST['formlink'], $currentLinkedFormId, $currentLinkedElementId);
+					if(!updateLinkedElementConnectionsInRelationships($element->getVar('fid'), $element->getVar('ele_id'), $array_link['id_form'], $_POST['formlink'], $currentLinkedFormId, $currentLinkedElementId)) {
+						print _AM_FRAME_LINK_NO_SOURCE;
+					}
 					if(isset($_POST['makeSubformInterface']) AND $_POST['makeSubformInterface']) {
 						if(makeSubformInterface($array_link['id_form'], $element->getVar('fid'), $element->getVar('ele_id'))) {
 							$_POST['reload_option_page'] = true;

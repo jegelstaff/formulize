@@ -81,6 +81,12 @@ try {
 	return;
 }
 
+// never record a link that can't be used, such as an element that isn't in the form it's meant to be in
+if(!$f1 OR !$f2 OR !$k1 OR !$k2 OR !relationshipLinkIsValid($f1, $f2, $k1, $k2)) {
+	print _AM_FRAME_LINK_INVALID;
+	return;
+}
+
 if($f1 AND $f2 AND $k1 AND $k2) {
 	if(!linkExistsInPrimaryRelationship($cv, $rel, $k1, $k2)) {
 		$result = insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del, $con, $book);

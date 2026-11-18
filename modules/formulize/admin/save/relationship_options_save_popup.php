@@ -51,6 +51,10 @@ if($deleteLid = intval($deleteLid)) {
 	}
 	if(isset($_POST["relationships-create-subform"]) AND intval($_POST["relationships-create-subform"])) {
 		$link = new formulizeFrameworkLink($lid);
+		if(!$link->getVar('lid')) {
+			print _AM_FRAME_LINK_NOT_FOUND;
+			return;
+		}
 		makeSubformInterface($link->getVar('form1'), $link->getVar('form2'), $link->getVar('key2'));
 		print "/* eval */ jQuery('label[for^=relationships-create-subform]').remove(); $('#dialog-relationship-options').fadeTo(1, 1); window.document.getElementById('relationship-options-popupsavewarning').style.display = 'none';";
 	}

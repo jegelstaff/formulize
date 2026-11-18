@@ -154,9 +154,9 @@ function populatePrimaryRelationship($deleteInvalidLinks) {
 		$con = $row['fl_one2one_conditional'];
 		$book = $row['fl_one2one_bookkeeping'];
 		// 0 and 0 would indicate a "user who made the entries" relationship. Primary relationship doesn't support this initially, since it is dynamically responding to links between forms primarily. But could be added. Can also always be manually created by webmaster in old UI if really necessary.
-		if(!$k1 OR !$k2) { continue; }
-		// validate that the elements are real and are common value or link to each other
-		if(elementExists($k1) AND elementExists($k2) AND ($cv == 1 OR elementsAreLinked($k1, $k2))) {
+		if(!$k1 AND !$k2) { continue; }
+		// validate that the link is usable, and the elements are common value or link to each other
+		if(relationshipLinkIsValid($f1, $f2, $k1, $k2) AND elementExists($k1) AND elementExists($k2) AND ($cv == 1 OR elementsAreLinked($k1, $k2))) {
 			$description = 'forms '.intval($f1).' and '.intval($f2).', using elements '.intval($k1).' and '.intval($k2).', from relationship '.intval($row['fl_frame_id']);
 			$alreadyPresent = linkExistsInPrimaryRelationship($cv, $rel, $k1, $k2);
 			try {
@@ -220,7 +220,7 @@ function populatePrimaryRelationship($deleteInvalidLinks) {
 		$f1 = $sourceFormLookupRow['id_form'];
 		$rel = 2;
 		$cv = 0;
-		if(elementExists($k1) AND elementExists($k2)) {
+		if(relationshipLinkIsValid($f1, $f2, $k1, $k2)) {
 			$description = 'forms '.intval($f1).' and '.intval($f2).', using elements '.intval($k1).' and '.intval($k2).', from a linked element';
 			$alreadyPresent = linkExistsInPrimaryRelationship($cv, $rel, $k1, $k2);
 			try {
@@ -322,7 +322,7 @@ function mirrorRelationship($relationship) {
  * @param int del - 1 or 0 indicating if entries should be deleted from one form when deleted from the other. Defaults to 0. This is a request, not the final say: deletion is turned on only if this is 1 AND formPairEnforcesDeletion() agrees that every other connection between these two forms also asks for it.
  * @param int con - 1 or 0 indicating if a one to one connection should trigger conditional behaviour when forms displayed together. Defaults to 1.
  * @param int book - 1 or 0 indicating if a one to one connection should trigger creation of entries in one form when an entry is saved in the other. Defaults to 1.
- * @return boolean|string - Returns boolean true on success, including if the link already exists, or false if insert failed. Prints out error text.
+ * @return boolean|string - Returns boolean true on success, including if the link already exists, or false if insert failed. Prints out error text. Returns false, and writes nothing, if the link is not usable (see relationshipLinkIsValid).
  */
 function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del=0, $con=1, $book=1) {
 	global $xoopsDB, $linkForms;
@@ -330,6 +330,10 @@ function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del=0
 	// database before calling here - see primePrimaryRelationshipLinkPairs()
 	$linkPairs = &_primaryRelationshipLinkPairs();
 	$result = true;
+	// a link that is not usable is never written, see relationshipLinkIsValid
+	if(!relationshipLinkIsValid($f1, $f2, $k1, $k2)) {
+		return false;
+	}
 	$mrel = mirrorRelationship(intval($rel));
 	if(!isset($linkPairs[intval($cv)][intval($rel)][intval($k1)][intval($k2)]) AND !isset($linkPairs[intval($cv)][$mrel][intval($k2)][intval($k1)])) {
 		$linkPairs[$cv][$rel][$k1][$k2] = true;
@@ -378,16 +382,14 @@ function insertLinkIntoPrimaryRelationship($cv, $rel, $f1, $f2, $k1, $k2, $del=0
 			$result = false;
 			print "<br>Could not insert a link into the Primary Relationship with this SQL:<br>$sql<br>".$xoopsDB->error();
 		} else {
-			$e1 = _getElementObject($k1);
-			$e2 = _getElementObject($k2);
-			if(!is_object($e1) OR !is_object($e2)) {
-				throw new Error("Formulize Warning: could not load element objects to create indexes on elements $k1 and/or $k2");
-			} else {
-				if(strlen($e1->has_index()) == 0){
-					$e1->createIndex();
+			// only real elements get indexes; -1 is the entry id, which is already the primary key, and 0 is the user who made the entries
+			foreach(array($k1, $k2) as $key) {
+				if(intval($key) <= 0) { continue; }
+				if(!$elementObject = _getElementObject($key)) {
+					throw new Error("Formulize Warning: could not load element object to create an index on element $key");
 				}
-				if(strlen($e2->has_index()) == 0){
-					$e2->createIndex();
+				if(strlen($elementObject->has_index()) == 0){
+					$elementObject->createIndex();
 				}
 			}
 		}

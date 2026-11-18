@@ -201,6 +201,11 @@ if(primaryRelationshipExists() === false AND !$formulizeNeedsDBPatch) {
 	}
 }
 
+// remove any relationship links that can't be used, such as one key of 0 and one real element, since nothing can read them or repair them
+if(!$formulizeNeedsDBPatch) {
+	deleteInvalidRelationshipLinks();
+}
+
 // Switching a screen's theme, copying its templates from another theme and seeding them all change the screen, so
 // they need permission to edit its form, as its saves do, and are refused on a locked form, as its saves are.
 // Being a module admin isn't enough on its own.

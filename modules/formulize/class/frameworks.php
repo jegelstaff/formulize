@@ -556,6 +556,7 @@ class formulizeFrameworksHandler {
 				foreach($fidLinks as $link) {
 					$form1Object = $form_handler->get($link['form1']);
 					$form2Object = $form_handler->get($link['form2']);
+					if(!$form1Object OR !$form2Object) { continue; }
 					if($limitToFid AND $form1Object->getVar('fid') != $limitToFid AND $form2Object->getVar('fid') != $limitToFid) { continue; }
 					$form1Text = $form1Object->getSingular();
 					$form2TextSingular = $form2Object->getSingular();
@@ -587,10 +588,13 @@ class formulizeFrameworksHandler {
 	/**
 	 * Gets all data related to displaying the help text and options for a relationship link on the admin side
 	 * @param object link - the link data from the database, a formulizeFrameworkLink object
-	 * @return array all the data needed for the help text and options
+	 * @return array|bool all the data needed for the help text and options, or false if either form in the link doesn't exist
 	 */
 	function gatherRelationshipHelpAndOptionsContent($link) {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if(!is_a($link, 'formulizeFrameworkLink') OR !$form_handler->get($link->getVar('form1')) OR !$form_handler->get($link->getVar('form2'))) {
+			return false;
+		}
 		$firstApp1 = 0;
 		$firstApp2 = 0;
 		$element1Id = 0;
@@ -708,6 +712,77 @@ class formulizeFrameworksHandler {
 
 
 /**
+ * The rule for a usable relationship link, written as an SQL condition over four values. It is the one place the rule is
+ * stated: relationshipLinkIsValid() applies it to values about to be written, and relationshipLinkValidSQL() applies it to the
+ * columns of the links table, for deleteInvalidRelationshipLinks(). See ai-context/relationships.md.
+ *
+ * A link is usable when both forms exist, and either both keys are 0 (the user who made the entries), or each key is -1
+ * (the entry id) or an element in its own form: key 1 in form 1, key 2 in form 2. One key of 0 and one real key is never usable.
+ *
+ * @param string form1 SQL for form 1's id, a column name or an integer
+ * @param string form2 SQL for form 2's id
+ * @param string key1 SQL for the key in form 1
+ * @param string key2 SQL for the key in form 2
+ * @return string The condition, in parentheses
+ */
+function _relationshipLinkValidityCondition($form1, $form2, $key1, $key2) {
+	global $xoopsDB;
+	$formTable = $xoopsDB->prefix('formulize_id');
+	$elementTable = $xoopsDB->prefix('formulize');
+	return "(
+		EXISTS (SELECT 1 FROM $formTable AS fz_linkcheck_f1 WHERE fz_linkcheck_f1.id_form = $form1)
+		AND EXISTS (SELECT 1 FROM $formTable AS fz_linkcheck_f2 WHERE fz_linkcheck_f2.id_form = $form2)
+		AND (
+			($key1 = 0 AND $key2 = 0)
+			OR (
+				($key1 = -1 OR EXISTS (SELECT 1 FROM $elementTable AS fz_linkcheck_e1 WHERE fz_linkcheck_e1.ele_id = $key1 AND fz_linkcheck_e1.id_form = $form1))
+				AND ($key2 = -1 OR EXISTS (SELECT 1 FROM $elementTable AS fz_linkcheck_e2 WHERE fz_linkcheck_e2.ele_id = $key2 AND fz_linkcheck_e2.id_form = $form2))
+			)
+		)
+	)";
+}
+
+/**
+ * An SQL condition that is true only for usable links, written over the columns of the links table. Reads don't use it, because
+ * every write is checked and deleteInvalidRelationshipLinks() removes anything else, and it would slow the queries that read links.
+ * @param string tableAlias Optional. The alias of the links table in the query, if it has one.
+ * @return string The condition, in parentheses
+ */
+function relationshipLinkValidSQL($tableAlias = '') {
+	$p = $tableAlias ? $tableAlias.'.' : '';
+	return _relationshipLinkValidityCondition($p.'fl_form1_id', $p.'fl_form2_id', $p.'fl_key1', $p.'fl_key2');
+}
+
+/**
+ * Check that a link would be usable, before writing it to the links table
+ * @param int form1 The id of form 1
+ * @param int form2 The id of form 2
+ * @param int key1 The key in form 1: an element id in form 1, -1 for the entry id, or 0 for the user who made the entries
+ * @param int key2 The key in form 2, in the same way
+ * @return boolean True if the link would be usable, false if not, or if the check could not be made
+ */
+function relationshipLinkIsValid($form1, $form2, $key1, $key2) {
+	global $xoopsDB;
+	$sql = "SELECT 1 FROM DUAL WHERE "._relationshipLinkValidityCondition(intval($form1), intval($form2), intval($key1), intval($key2));
+	if(!$res = $xoopsDB->query($sql)) {
+		return false;
+	}
+	return $xoopsDB->getRowsNum($res) > 0;
+}
+
+/**
+ * Delete every link that isn't usable, from every relationship. Nothing can read them, and they can't be repaired, because
+ * which element was meant is not recorded. Run on every admin page load, so a bad link never outlasts the next visit to the admin.
+ * @return boolean True if the delete succeeded, whether or not anything was deleted
+ */
+function deleteInvalidRelationshipLinks() {
+	global $xoopsDB;
+	// IS NOT TRUE, so that a row with a NULL form or key, which the condition can't judge, is deleted too
+	$sql = "DELETE FROM ".$xoopsDB->prefix('formulize_framework_links')." WHERE ".relationshipLinkValidSQL()." IS NOT TRUE";
+	return $xoopsDB->queryF($sql) ? true : false;
+}
+
+/**
  * Insert/Update relationship links between two forms/form elements. Only operates on one-to-many (2) and many-to-one (3) connections,
  * that are not common value. When passed a form/element id pair, and a source for the link (the element the options are being drawn from),
  * this function will create the link in the primary relationship if no link exists yet, or it will update all links for the form/element id
@@ -718,7 +793,7 @@ class formulizeFrameworksHandler {
  * @param int sourceElementIdentifier The element id or handle or object, of the source element from which options are gathered for the linked element
  * @param int currentSourceFid The form id of the source element that the linked element is pointing to prior to this update
  * @param int currentSourceElementIdentifier The element id or handle or object, of the source element that the linked element is point to prior to this update
- * @return boolean Returns true or false indicating if the update operation succeeded
+ * @return boolean Returns true or false indicating if the update operation succeeded. False, and nothing written, if the source is not a real element.
  */
 function updateLinkedElementConnectionsInRelationships($fid, $elementId, $sourceFid, $sourceElementIdentifier, $currentSourceFid, $currentSourceElementIdentifier) {
 	global $xoopsDB;
@@ -734,6 +809,12 @@ function updateLinkedElementConnectionsInRelationships($fid, $elementId, $source
 	if($currentSourceElementIdentifier AND $currentSourceElementObject = _getElementObject($currentSourceElementIdentifier)) {
 		$currentSourceElementId = $currentSourceElementObject->getVar('ele_id');
 	}
+	// a linked element with no real source makes no connection, so write nothing, and leave any existing link as it is
+	if(!$sourceElementId OR !relationshipLinkIsValid($sourceFid, $fid, $sourceElementId, $elementId)) {
+		return false;
+	}
+	$result1 = true;
+	$result2 = true;
 	// updating existing link...
 	if($currentSourceFid AND $currentSourceElementId) {
 		// if there's been a change to the source of this link...
@@ -762,7 +843,6 @@ function updateLinkedElementConnectionsInRelationships($fid, $elementId, $source
 	// adding a link to primary relationship (element not currently linked)
 	} else {
 		$result1 = insertLinkIntoPrimaryRelationship(0, 2, $sourceFid, $fid, $sourceElementId, $elementId);
-		$result2 = true;
 	}
 	return ($result1 AND $result2) ? true : false;
 }
