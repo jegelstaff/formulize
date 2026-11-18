@@ -295,6 +295,20 @@ a.formulize-open-close-link {
 .icms_checkboxoption > label > .formulize-other-box {
   grid-column: 2; }
 
+/* Range Slider elements on a touchscreen move only when the knob is dragged. A finger swiping up or
+   down the page often lands on a slider's track, and a tap there would jump the value to that point,
+   usually without the person noticing. So the track ignores touches, which scroll the page as if it
+   weren't there, and only the knob takes them. The keyboard still works. This is here, not in a theme,
+   so that it holds in every theme. A theme must not set pointer-events on the slider or its knob, and
+   should make the knob big enough to take hold of, since it is the only part that takes a touch. */
+@media (pointer: coarse) {
+  input[type="range"].formulize-slider {
+    pointer-events: none; }
+  input[type="range"].formulize-slider::-webkit-slider-thumb {
+    pointer-events: auto; }
+  input[type="range"].formulize-slider::-moz-range-thumb {
+    pointer-events: auto; } }
+
 #floating-list-of-entries-save-button {
   padding: 0.5em 1.5em;
   margin: 1em 0;

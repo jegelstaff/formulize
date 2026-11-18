@@ -3420,6 +3420,26 @@ body:not(.formulize-inline) .lyris-main #pageNavTable.pill-tabs.is-scrolled::aft
 .lyris-form-screen input[type="range"]:focus::-moz-range-thumb {
   box-shadow: var(--fz-focus-ring);
 }
+/* On a touchscreen the knob is the only part of a slider that takes a touch
+   (formulize.css keeps the track from setting the value), so it grows from 20px
+   to 30px, about the size of a phone's own slider knob, to be easy to take hold
+   of. The slider grows with it, so the knob stays inside its own box. */
+@media (pointer: coarse) {
+  .lyris-form-screen input[type="range"] {
+    height: calc(var(--fz-spacing) * 7.5);
+  }
+  .lyris-form-screen input[type="range"]::-webkit-slider-thumb {
+    box-sizing: border-box;
+    width: calc(var(--fz-spacing) * 7.5);
+    height: calc(var(--fz-spacing) * 7.5);
+    margin-top: calc((0.375rem - var(--fz-spacing) * 7.5) / 2);   /* centre the knob on the 6px track */
+  }
+  .lyris-form-screen input[type="range"]::-moz-range-thumb {
+    box-sizing: border-box;
+    width: calc(var(--fz-spacing) * 7.5);
+    height: calc(var(--fz-spacing) * 7.5);
+  }
+}
 /* Live value readout (the <output> beside the slider) → mono bubble.
    No left margin here: read-only mode renders the <output> on its own (core
    emits just the bubble, with no slider and no <nobr> wrapper), so any left

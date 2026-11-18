@@ -241,7 +241,8 @@ class formulizeSliderElementHandler extends formulizeElementsHandler {
             return new XoopsFormLabel($caption, "$renderedValue");
         }
 
-        $slider_html = "<input type=\"range\" ";
+        // the class keeps a touch on the track from setting the value, in every theme (see formulize.css)
+        $slider_html = "<input type=\"range\" class=\"formulize-slider\" ";
         if ($isEmptyDefault) {
             // Range input is display-only; hidden input carries the submitted value
             $slider_html .= "id=\"{$markupName}_range\" ";
