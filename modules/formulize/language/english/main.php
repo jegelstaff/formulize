@@ -939,6 +939,7 @@ define("_formulize_GMM_NO_USERS_FOUND", "No users found.");
 define("_formulize_GMM_NO_NEW_USERS", "No new users found (all may already be pending).");
 define("_formulize_GMM_ERROR_SEARCHING", "Error searching.");
 define("_formulize_GMM_PENDING_ADDITIONS", "Pending additions (saved with form):");
+define("_formulize_GMM_REGISTERED_USERS_FIXED", "Every account is always a member of this group, so no one can be added or removed."); // shown instead of Remove and Add Members when the group is Registered Users
 define("_formulize_UA_MASQUERADE_BUTTON", "Masquerade");
 define("_formulize_UA_MASQUERADE_HELP", "View the site as this user");
 define("_formulize_USERACCOUNT_2FAOPTION_EMAIL", "Email a code");

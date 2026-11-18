@@ -74,6 +74,8 @@ A membership is mandatory if all of these hold: the group, or its template categ
 
 Only required membership is enforced. Nothing prevents someone being added to a group.
 
+**Registered Users is mandatory for everyone.** `isGroupMandatoryForUser()` returns true for `XOOPS_GROUP_USERS` before it looks at any form, so no Remove button is offered on either render path. `processGroupMembershipWidget()` also drops every removal for that group itself, rather than trusting the filter. The widget draws Registered Users read-only, with no Add Members tab and no hidden add/remove inputs, since every account is already in it.
+
 ### Copying permissions from template groups
 
 - `formulizePermHandler::copyGroupPermissions()` copies `group_permission`, `formulize_group_filters` and groupscope settings from one group to another, with a DELETE then INSERT...SELECT, so it can be re-run. An optional `$modid` limits it to one module, and an optional `$groupIdMapping` resolves groupscope targets. Template group references in groupscope settings are replaced with the corresponding entry group ids.

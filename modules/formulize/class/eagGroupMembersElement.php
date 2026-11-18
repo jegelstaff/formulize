@@ -241,22 +241,32 @@ class formulizeEagGroupMembersElementHandler extends formulizeVirtualElementHand
 		$infoHtml .= '</div>';
 		$initialMemberListHtml = $infoHtml . '<div class="gmm-rows">' . $memberRows . '</div>';
 
+		// Every account is always in Registered Users, so its members can be looked at but not added or removed.
+		$readOnly = ($groupId == XOOPS_GROUP_USERS);
+
 		$html = '';
-		// Hidden inputs carry add/remove UID lists to processGroupSubmission on save.
-		// Name includes groupId so multiple categories on the same form don't collide.
-		$html .= '<input type="hidden" name="group_members_add_'    . $fid . '_' . $entry_id . '_' . $groupId . '" id="gmm-add-input-'    . $key . '" value="[]">';
-		$html .= '<input type="hidden" name="group_members_remove_' . $fid . '_' . $entry_id . '_' . $groupId . '" id="gmm-remove-input-' . $key . '" value="[]">';
+		if (!$readOnly) {
+			// Hidden inputs carry add/remove UID lists to processGroupSubmission on save.
+			// Name includes groupId so multiple categories on the same form don't collide.
+			$html .= '<input type="hidden" name="group_members_add_'    . $fid . '_' . $entry_id . '_' . $groupId . '" id="gmm-add-input-'    . $key . '" value="[]">';
+			$html .= '<input type="hidden" name="group_members_remove_' . $fid . '_' . $entry_id . '_' . $groupId . '" id="gmm-remove-input-' . $key . '" value="[]">';
+		}
 
 		$html .= '<div class="gmm-widget" id="gmm-' . $key . '">';
 
 		// Tab bar
-		$html .= '<div class="gmm-tabs">';
-		$html .= '<span class="gmm-tab gmm-tab-active" data-panel="members">' . htmlspecialchars(_formulize_GMM_TAB_MEMBERS, ENT_QUOTES, 'UTF-8') . '</span>';
-		$html .= '<span class="gmm-tab" data-panel="add">' . htmlspecialchars(_formulize_GMM_TAB_ADD_MEMBERS, ENT_QUOTES, 'UTF-8') . '</span>';
-		$html .= '</div>';
+		if (!$readOnly) {
+			$html .= '<div class="gmm-tabs">';
+			$html .= '<span class="gmm-tab gmm-tab-active" data-panel="members">' . htmlspecialchars(_formulize_GMM_TAB_MEMBERS, ENT_QUOTES, 'UTF-8') . '</span>';
+			$html .= '<span class="gmm-tab" data-panel="add">' . htmlspecialchars(_formulize_GMM_TAB_ADD_MEMBERS, ENT_QUOTES, 'UTF-8') . '</span>';
+			$html .= '</div>';
+		}
 
 		// Members panel
 		$html .= '<div class="gmm-panel" id="gmm-panel-members-' . $key . '">';
+		if ($readOnly) {
+			$html .= '<div class="gmm-info">' . htmlspecialchars(_formulize_GMM_REGISTERED_USERS_FIXED) . '</div>';
+		}
 		$html .= '<div class="gmm-searchbar">';
 		$html .= '<input type="text" id="gmm-member-search-' . $key . '" placeholder="' . htmlspecialchars(_formulize_GMM_SEARCH_PLACEHOLDER, ENT_QUOTES, 'UTF-8') . '">';
 		$html .= '<button type="button" onclick="gmmSearchMembers(' . $fidJs . ',' . $groupIdJs . ')">' . htmlspecialchars(_formulize_GMM_SEARCH_BUTTON, ENT_QUOTES, 'UTF-8') . '</button>';
@@ -266,14 +276,16 @@ class formulizeEagGroupMembersElementHandler extends formulizeVirtualElementHand
 		$html .= '</div>';
 
 		// Add Members panel
-		$html .= '<div class="gmm-panel" id="gmm-panel-add-' . $key . '" style="display:none">';
-		$html .= '<div class="gmm-searchbar">';
-		$html .= '<input type="text" id="gmm-add-search-' . $key . '" placeholder="' . htmlspecialchars(_formulize_GMM_FIND_USER_PLACEHOLDER, ENT_QUOTES, 'UTF-8') . '">';
-		$html .= '<button type="button" onclick="gmmSearchNonMembers(' . $fidJs . ',' . $groupIdJs . ')">' . htmlspecialchars(_formulize_GMM_SEARCH_BUTTON, ENT_QUOTES, 'UTF-8') . '</button>';
-		$html .= '</div>';
-		$html .= '<div id="gmm-add-results-' . $key . '"></div>';
-		$html .= '<div class="gmm-pending-adds" id="gmm-pending-adds-' . $key . '"></div>';
-		$html .= '</div>';
+		if (!$readOnly) {
+			$html .= '<div class="gmm-panel" id="gmm-panel-add-' . $key . '" style="display:none">';
+			$html .= '<div class="gmm-searchbar">';
+			$html .= '<input type="text" id="gmm-add-search-' . $key . '" placeholder="' . htmlspecialchars(_formulize_GMM_FIND_USER_PLACEHOLDER, ENT_QUOTES, 'UTF-8') . '">';
+			$html .= '<button type="button" onclick="gmmSearchNonMembers(' . $fidJs . ',' . $groupIdJs . ')">' . htmlspecialchars(_formulize_GMM_SEARCH_BUTTON, ENT_QUOTES, 'UTF-8') . '</button>';
+			$html .= '</div>';
+			$html .= '<div id="gmm-add-results-' . $key . '"></div>';
+			$html .= '<div class="gmm-pending-adds" id="gmm-pending-adds-' . $key . '"></div>';
+			$html .= '</div>';
+		}
 
 		$html .= '</div>'; // .gmm-widget
 		$html .= '<script>jQuery(document).ready(function(){gmmInit(' . $fidJs . ',' . $groupIdJs . ',' . $ajaxUrlJs . ',' . $uidJs . ');});</script>';

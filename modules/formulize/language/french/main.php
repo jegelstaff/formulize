@@ -762,5 +762,30 @@ define("_formulize_SEARCHBOX_ERROR", "Les valeurs n'ont pas pu être trouvées. 
 // une valeur proposée dans les filtres d'une liste qui a le même texte qu'une autre, suivie du numéro de l'entrée d'où elle vient, pour les distinguer
 define("_formulize_QSF_DUPLICATE_LABEL", "%1\$s (%2\$s)");
 
+// Gestion des membres d'un groupe, dans la page des groupes
+define("_formulize_GMM_SAVE_FIRST", "Enregistrez d'abord le groupe pour pouvoir gérer ses membres.");
+define("_formulize_GMM_MEMBER", "membre");
+define("_formulize_GMM_MEMBERS", "membres");
+define("_formulize_GMM_SHOWING_FIRST", "premiers affichés :"); // suivi du nombre affiché, ex. « 40 membres — premiers affichés : 10 »
+define("_formulize_GMM_MATCHING", "correspondant à"); // suivi du terme recherché
+define("_formulize_GMM_TAB_MEMBERS", "Membres actuels");
+define("_formulize_GMM_TAB_ADD_MEMBERS", "Ajouter des membres");
+define("_formulize_GMM_SEARCH_PLACEHOLDER", "Rechercher des membres…");
+define("_formulize_GMM_FIND_USER_PLACEHOLDER", "Trouver un utilisateur par nom ou nom d'utilisateur…");
+define("_formulize_GMM_SEARCH_BUTTON", "Rechercher");
+define("_formulize_GMM_REMOVE_BUTTON", "Retirer");
+define("_formulize_GMM_CANCEL_BUTTON", "Annuler");
+define("_formulize_GMM_ADD_BUTTON", "Ajouter");
+define("_formulize_GMM_SEARCHING", "Recherche en cours…");
+define("_formulize_GMM_NO_MEMBERS_FOUND", "Aucun membre trouvé.");
+define("_formulize_GMM_ERROR_LOADING", "Erreur lors du chargement des membres.");
+define("_formulize_GMM_PENDING_REMOVALS", "Retraits en attente (enregistrés avec le formulaire) :");
+define("_formulize_GMM_MIN_CHARS", "Entrez au moins 2 caractères pour lancer la recherche.");
+define("_formulize_GMM_NO_USERS_FOUND", "Aucun utilisateur trouvé.");
+define("_formulize_GMM_NO_NEW_USERS", "Aucun nouvel utilisateur trouvé (ils sont peut-être tous déjà en attente).");
+define("_formulize_GMM_ERROR_SEARCHING", "Erreur lors de la recherche.");
+define("_formulize_GMM_PENDING_ADDITIONS", "Ajouts en attente (enregistrés avec le formulaire) :");
+define("_formulize_GMM_REGISTERED_USERS_FIXED", "Tous les comptes font toujours partie de ce groupe, donc personne ne peut y être ajouté ni en être retiré."); // remplace Retirer et Ajouter des membres pour le groupe Registered Users
+
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/main.php';

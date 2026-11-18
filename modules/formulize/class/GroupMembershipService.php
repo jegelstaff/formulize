@@ -312,6 +312,11 @@ class GroupMembershipService {
 			$removeUids = self::parseUidList($_POST[$removeKey]);
 		}
 
+		// Every account is always in Registered Users, so nobody can be removed from it
+		if($groupId == XOOPS_GROUP_USERS) {
+			$removeUids = array();
+		}
+
 		// Filter out users with mandatory membership
 		if(!empty($removeUids)) {
 			$removeUids = self::filterMandatoryMemberships($removeUids, $groupId);

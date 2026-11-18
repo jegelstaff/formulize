@@ -404,7 +404,8 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 	}
 
 	/**
-	 * Returns true if the given user must remain a member of the given group
+	 * Returns true if the given user must remain a member of the given group,
+	 * because it is Registered Users, which every account is always in, or
 	 * because at least one entries-are-users form mandates that membership.
 	 * Checks base conditions and per-group conditions for the user's EAU entry.
 	 * Adds are always allowed — this check only governs removals.
@@ -419,6 +420,9 @@ class formulizeUserAccountGroupMembershipElementHandler extends formulizeUserAcc
 		$groupId = intval($groupId);
 		if (!$userId || !$groupId) {
 			return false;
+		}
+		if ($groupId == XOOPS_GROUP_USERS) {
+			return true;
 		}
 		$cacheKey = $userId . '_' . $groupId;
 		if (array_key_exists($cacheKey, $cache)) {
