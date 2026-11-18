@@ -56,6 +56,19 @@ define('_MD_FORMULIZE_AI_MCP_ERROR',              'MCP : Erreur');
 define('_MD_FORMULIZE_AI_SETTINGS_SAVED',         'Paramètres enregistrés. Fournisseur : {provider}, Modèle : {model}');
 define('_MD_FORMULIZE_AI_ACTIVE_TOOLS_STATUS',    'Outils actifs : {active}/{total}  ·  Modèle : {model}');
 define('_MD_FORMULIZE_AI_MODEL_STATUS',           'Modèle : {model}');
+// Quand un administrateur a choisi les outils, tous les outils disponibles sont utilisés, donc
+// « {active}/{total} » se lirait toujours « n/n ».
+define('_MD_FORMULIZE_AI_LOCKED_TOOLS_STATUS',    '🔒 {total} outils  ·  Modèle : {model}');
+
+// Panneau des paramètres en lecture seule, affiché quand un administrateur a configuré l'assistant
+define('_MD_FORMULIZE_AI_SET_BY_ADMIN',           'Ces paramètres ont été choisis par votre administrateur.');
+define('_MD_FORMULIZE_AI_SET_BY_ADMIN_TITLE',     'Configuré par votre administrateur');
+define('_MD_FORMULIZE_AI_READONLY_PROVIDER',      'Fournisseur');
+define('_MD_FORMULIZE_AI_READONLY_MODEL',         'Modèle');
+define('_MD_FORMULIZE_AI_READONLY_HISTORY',       "Limite de l'historique");
+define('_MD_FORMULIZE_AI_READONLY_HISTORY_UNIT',  '{limit} caractères');
+define('_MD_FORMULIZE_AI_READONLY_TOOLS',         'Outils que vous pouvez utiliser ({total})');
+define('_MD_FORMULIZE_AI_NO_ADMIN_KEY',           "Votre administrateur a choisi le fournisseur d'IA de ce site, mais n'a pas encore enregistré de clé API : l'assistant ne peut donc pas être utilisé. Veuillez l'en informer.");
 
 // Messages d'erreur
 define('_MD_FORMULIZE_AI_SAVE_FIRST',             'Veuillez d\'abord enregistrer vos paramètres.');

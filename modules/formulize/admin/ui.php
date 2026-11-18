@@ -99,11 +99,21 @@ $_uiEnvWarning = ob_get_clean();
 $module_handler = xoops_gethandler('module');
 $formulizeModule = $module_handler->getByDirname('formulize');
 // patch needed if dbversion is out of date, or if the primary relationship doesn't exist, or there are pre-81 element types, or there is code that needs conversion to the new storage model
+// The code conversion is in patch 000, which only runs below dbversion 18. From 18 on, every site has its code in files,
+// and an update can't bring back files that have gone missing, so op.php says they're missing instead of prompting for
+// an update that would change nothing.
+$formulizeStoredDBVersion = $formulizeModule->getDBVersion();
+$formulizeCodeNeedsConversion = ($formulizeStoredDBVersion < 18
+	AND (file_exists(XOOPS_ROOT_PATH . '/modules/formulize/custom_code') ? true : codeInNeedOfConversion()));
+$formulizeCodeFilesMissing = array();
+if ($formulizeStoredDBVersion >= 18) {
+	$formulizeCodeFilesMissing = xoops_getmodulehandler('elements', 'formulize')->elementsMissingAllCodeFiles();
+}
 $formulizeNeedsDBPatch = (
-	($formulizeModule->getDBVersion() < intval($formulizeModule->getInfo('dbversion')))
+	($formulizeStoredDBVersion < intval($formulizeModule->getInfo('dbversion')))
   OR !primaryRelationshipExists()
   OR need81ElementTypeConversion()
-  OR (file_exists(XOOPS_ROOT_PATH . '/modules/formulize/custom_code') ? true : codeInNeedOfConversion())
+  OR $formulizeCodeNeedsConversion
 );
 
 // If an update is needed and no other op is in progress, route through the patchDB op

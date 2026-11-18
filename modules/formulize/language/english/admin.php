@@ -1393,6 +1393,10 @@ define("_AM_FORMULIZE_SCREEN_VARIABLES_SAVE_FAILED", "These variable templates c
 // The update page
 define("_AM_FORMULIZE_UPDATE_TOKEN_FAILED", "The update didn't run, because the page had expired. Nothing has changed.");
 define("_AM_FORMULIZE_UPDATE_TOKEN_RETRY", "Go back to the update page");
+define("_AM_FORMULIZE_CODE_FILES_MISSING_TITLE", "Code files are missing");
+// followed by a list of element handles, then _AM_FORMULIZE_CODE_FILES_MISSING_FIX
+define("_AM_FORMULIZE_CODE_FILES_MISSING", "These elements keep their content in files in the modules/formulize/code folder, but none of their files is there:");
+define("_AM_FORMULIZE_CODE_FILES_MISSING_FIX", "The folder may have been emptied, or not copied when the site was moved or restored. Updating Formulize won't bring the files back. Restore the folder from a backup, or enter the content again on each element's admin page. Until then, these elements have no content, and the code of forms and screens may be missing too.");
 
 // The 8.30 update's questions about Lyris
 define("_AM_FORMULIZE_LYRIS_TITLE", "Update Formulize");

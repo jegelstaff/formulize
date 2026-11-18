@@ -63,7 +63,7 @@ A new site gets the change from `sql/mysql.sql`, so a passing test suite doesn't
 
 ## What forces the update page
 
-`admin/ui.php` sends admins to the update page when the stored `dbversion` is behind, and also when `primaryRelationshipExists()` is false, `need81ElementTypeConversion()` is true, or there's code still to convert. That second group has no version check, so it can look as though gating `000` strands those repairs. It doesn't. They all date from before 8.1, so any site where they're true is below 18 anyway.
+`admin/ui.php` sends admins to the update page when the stored `dbversion` is behind, and also when `primaryRelationshipExists()` is false, `need81ElementTypeConversion()` is true, or there's code still to convert. The first two of those have no version check, so it can look as though gating `000` strands those repairs. It doesn't. They all date from before 8.1, so any site where they're true is below 18 anyway, or has been damaged and files are missing.
 
 ## When a patch can't simply be run again
 

@@ -176,6 +176,15 @@ if (!$opResults AND isset($_GET['op'])) {
     }
     $opResults = ob_get_clean();
 }
+// set in ui.php: the handles of the elements that keep their content in code files, when none of their files is there
+if (!empty($formulizeCodeFilesMissing)) {
+    $opResults .= '<h2>' . _AM_FORMULIZE_CODE_FILES_MISSING_TITLE . '</h2>'
+        . '<p>' . htmlspecialchars(_AM_FORMULIZE_CODE_FILES_MISSING) . '</p><ul>';
+    foreach ($formulizeCodeFilesMissing as $missingHandle) {
+        $opResults .= '<li>' . htmlspecialchars($missingHandle) . '</li>';
+    }
+    $opResults .= '</ul><p>' . htmlspecialchars(_AM_FORMULIZE_CODE_FILES_MISSING_FIX) . '</p>';
+}
 $xoopsTpl->assign('opResults', $opResults);
 $xoopsTpl->assign('showOpClose', (isset($_POST['patch40']) || isset($_POST['patchDB-only']) || isset($_POST['setDBVersion'])) && $opResults !== '');
 

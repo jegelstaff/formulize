@@ -1392,6 +1392,39 @@ class formulizeElementsHandler {
 	}
 
 	/**
+	 * The element types that keep their content only in a code file, so an element of one of them has a file whenever
+	 * it has any content. The other types in elementCodeFileTypes() have a file only when a default value is code, and
+	 * the database doesn't say when that is.
+	 * @return array The type names, as they begin the file names.
+	 */
+	public static function elementTypesWithContentInCodeFiles() {
+		return array('derived', 'fullWidthContent', 'captionedContent');
+	}
+
+	/**
+	 * Find out whether the code folder has lost its files, as it does when a site is damaged, or moved or restored
+	 * without them. An element of a type that keeps its content in a file has no file only when it has no content,
+	 * which is rare, so when none of those elements has a file, the files have gone. This runs on every admin page
+	 * load, so it stops at the first file it finds, and a healthy site pays for one query and one file check. It can't
+	 * tell when only some of the files have gone, and it can't tell whether forms and screens should have code.
+	 * @return array The handles of the elements that should have a code file, when none of them has one. Otherwise an
+	 *   empty array.
+	 */
+	public function elementsMissingAllCodeFiles() {
+		$sql = "SELECT ele_type, ele_handle FROM ".$this->db->prefix('formulize')." WHERE ele_type IN ('".implode("','", self::elementTypesWithContentInCodeFiles())."')";
+		$handles = array();
+		if($res = $this->db->query($sql)) {
+			while($row = $this->db->fetchArray($res)) {
+				if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$row['ele_type'].'_'.$row['ele_handle'].'.php')) {
+					return array();
+				}
+				$handles[] = $row['ele_handle'];
+			}
+		}
+		return $handles;
+	}
+
+	/**
 	 * The syntaxes some kinds of code file have for naming elements, which a rename rewrites as well as what it
 	 * rewrites in every code file: the handle as a quoted string where Formulize's functions take an element, and
 	 * filter terms - see formulizeElementHandleCode::renameStrings(). A file whose name starts with none of these

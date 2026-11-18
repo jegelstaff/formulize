@@ -892,6 +892,10 @@ define("_AM_FORMULIZE_SCREEN_VARIABLES_SAVE_FAILED", "Ces templates de variables
 // La page de mise à jour
 define("_AM_FORMULIZE_UPDATE_TOKEN_FAILED", "La mise à jour ne s'est pas faite, car la page avait expiré. Rien n'a changé.");
 define("_AM_FORMULIZE_UPDATE_TOKEN_RETRY", "Revenir à la page de mise à jour");
+define("_AM_FORMULIZE_CODE_FILES_MISSING_TITLE", "Des fichiers de code sont manquants");
+// suivi d'une liste d'identifiants (handles) d'éléments, puis de _AM_FORMULIZE_CODE_FILES_MISSING_FIX
+define("_AM_FORMULIZE_CODE_FILES_MISSING", "Ces éléments gardent leur contenu dans des fichiers du dossier modules/formulize/code, mais aucun de leurs fichiers ne s'y trouve :");
+define("_AM_FORMULIZE_CODE_FILES_MISSING_FIX", "Le dossier a peut-être été vidé, ou n'a pas été copié lors du déplacement ou de la restauration du site. Mettre à jour Formulize ne fera pas revenir les fichiers. Restaurez le dossier à partir d'une sauvegarde, ou saisissez de nouveau le contenu dans la page d'administration de chaque élément. D'ici là, ces éléments n'ont aucun contenu, et le code des formulaires et des écrans manque peut-être aussi.");
 
 // Les questions de la mise à jour 8.30 sur Lyris
 define("_AM_FORMULIZE_LYRIS_TITLE", "Mettre à jour Formulize");
