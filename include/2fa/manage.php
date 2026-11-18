@@ -299,7 +299,7 @@ function tfaLoginJS($id) {
 			modal: true,
 			title: '"._US_2FA."',
 			width: 'auto',
-			position: { my: 'center center', at: 'center center', of: window },
+			position: ".TFA_DIALOG_POSITION_JS.",
 			buttons: [
                 { text: 'OK', icon: 'ui-icon-check', click: function() {
 						close2FADialog(jQuery(this), '$id');
@@ -339,7 +339,9 @@ function tfaLoginJS($id) {
 						if(data) {
 							tfadialog$counter.html(data);
 							tfadialog$counter.dialog('open');
-							tfadialog$counter.closest('.ui-dialog').fadeTo(300, 1, function() { jQuery('#dialog-tfacode').focus(); });
+							// Focus while still inside the tap (this request is synchronous), so iOS brings up the keyboard. It ignores a focus that comes later.
+							jQuery('#dialog-tfacode', tfadialog$counter).focus();
+							tfadialog$counter.closest('.ui-dialog').fadeTo(300, 1);
 						} else {
 							jQuery('input[name=\"tfacode\"]').each(function() {
 								jQuery(this).val('050969');
@@ -356,8 +358,8 @@ function tfaLoginJS($id) {
 			autoOpen: false,
 			modal: true,
 			title: '"._MB_SYSTEM_LPASS."',
-			width: '40%',
-			position: { my: 'center center', at: 'center center', of: window },
+			width: 'auto',
+			position: ".TFA_DIALOG_POSITION_JS.",
 			buttons: [
 				{ text: 'OK', icon: 'ui-icon-check', click: function() {
 						close2FALostPassDialog(jQuery(this), '$id');
@@ -384,11 +386,13 @@ function tfaLoginJS($id) {
 			}
 		});
 
-        jQuery('#lostpass').click(function() {
+        jQuery('#lostpass').click(function(event) {
             event.preventDefault();
-            tfalostpassdialog$counter.html('<center>"._US_USERNAME_OR_EMAIL."<input type=\"text\" id=\"dialog-tfalostaccount\" value=\"\"></center>');
+            tfalostpassdialog$counter.html('<center>"._US_USERNAME_OR_EMAIL."<input type=\"text\" id=\"dialog-tfalostaccount\" value=\"\" autocomplete=\"username\"></center>');
             tfalostpassdialog$counter.dialog('open');
-            tfalostpassdialog$counter.closest('.ui-dialog').fadeTo(300, 1, function() { jQuery('#dialog-tfalostaccount').focus(); });
+            // Focus inside the click, not after the fade, so iOS brings up the keyboard
+            jQuery('#dialog-tfalostaccount', tfalostpassdialog$counter).focus();
+            tfalostpassdialog$counter.closest('.ui-dialog').fadeTo(300, 1);
         });
 
 	});

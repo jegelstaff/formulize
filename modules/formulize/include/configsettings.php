@@ -572,6 +572,8 @@ function formulize_resolveConfigView($subject, $requestedView) {
  *   single condition  — assoc array with a 'name' key
  *   AND list          — indexed array of conditions (default, op='all')
  *   OR wrapper        — array('op'=>'any', 'conditions'=>[...])
+ * An AND list may hold an OR wrapper as one of its items, which holds when any of
+ * its conditions does: (A or B) and C.
  * Each condition's 'value' may be a scalar or an array. A condition may also carry
  * its own 'op' of '=' (the default) or '!=', which inverts that one condition:
  * with an array of values, '!=' means none of them match.
@@ -603,6 +605,13 @@ function formulize_normalizeConfigConditions($showWhen, $defaultScope) {
     }
     $conditions = array();
     foreach ($rawList as $cond) {
+        if (is_array($cond) && !isset($cond['name']) && isset($cond['op'])) {
+            // a group within the list, such as an OR wrapper inside an AND list
+            if ($group = formulize_normalizeConfigConditions($cond, $defaultScope)) {
+                $conditions[] = $group;
+            }
+            continue;
+        }
         if (!is_array($cond) || !isset($cond['name'])) {
             continue;
         }
@@ -637,22 +646,27 @@ function formulize_configConditionsPass($wrapper) {
     }
     $anyMode = (isset($wrapper['op']) && $wrapper['op'] === 'any');
     foreach ($wrapper['conditions'] as $cond) {
-        $ctrl = formulize_resolveConfigItem($cond['name'], $cond['scope']);
-        $current = $ctrl ? $ctrl->getConfValueForOutput() : null;
-        $hit = false;
-        if (is_array($current)) {
-            $current = array_map('strval', $current);
-            foreach ($cond['values'] as $v) {
-                if (in_array($v, $current, true)) {
-                    $hit = true;
-                    break;
-                }
-            }
+        if (isset($cond['conditions'])) {
+            // a group within the list
+            $hit = formulize_configConditionsPass($cond);
         } else {
-            $hit = in_array((string) $current, $cond['values'], true);
-        }
-        if (!empty($cond['negate'])) {
-            $hit = !$hit;
+            $ctrl = formulize_resolveConfigItem($cond['name'], $cond['scope']);
+            $current = $ctrl ? $ctrl->getConfValueForOutput() : null;
+            $hit = false;
+            if (is_array($current)) {
+                $current = array_map('strval', $current);
+                foreach ($cond['values'] as $v) {
+                    if (in_array($v, $current, true)) {
+                        $hit = true;
+                        break;
+                    }
+                }
+            } else {
+                $hit = in_array((string) $current, $cond['values'], true);
+            }
+            if (!empty($cond['negate'])) {
+                $hit = !$hit;
+            }
         }
         if ($anyMode && $hit) {
             return true;
@@ -763,22 +777,27 @@ function formulize_configSettingsScriptBlock() {
         var conditions = wrapper.conditions || [];
         for(var i=0; i<conditions.length; i++){
             var cond = conditions[i];
-            var current = fzGetSettingValue(cond.name);
-            var values = cond.values || [];
             var hit = false;
-            if(current && current.constructor === Array){
-                for(var a=0; a<current.length; a++){
-                    for(var b=0; b<values.length; b++){
-                        if(String(current[a]) === String(values[b])){ hit = true; }
+            if(cond.conditions){
+                // a group within the list — must match formulize_configConditionsPass()
+                hit = fzConditionsPass(cond);
+            } else {
+                var current = fzGetSettingValue(cond.name);
+                var values = cond.values || [];
+                if(current && current.constructor === Array){
+                    for(var a=0; a<current.length; a++){
+                        for(var b=0; b<values.length; b++){
+                            if(String(current[a]) === String(values[b])){ hit = true; }
+                        }
+                    }
+                } else {
+                    for(var c=0; c<values.length; c++){
+                        if(String(current) === String(values[c])){ hit = true; break; }
                     }
                 }
-            } else {
-                for(var c=0; c<values.length; c++){
-                    if(String(current) === String(values[c])){ hit = true; break; }
-                }
+                // condition-level '!=' — must match formulize_configConditionsPass()
+                if(cond.negate){ hit = !hit; }
             }
-            // condition-level '!=' — must match formulize_configConditionsPass()
-            if(cond.negate){ hit = !hit; }
             if(anyMode && hit){ return true; }
             if(!anyMode && !hit){ return false; }
         }

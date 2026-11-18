@@ -61,3 +61,13 @@ if (!defined('TFA_VALIDATE_STEP1_URL_PATH')) {
 if (!defined('TFA_CHALLENGE_URL_PATH')) {
 	define('TFA_CHALLENGE_URL_PATH', '/include/2fa/challenge.php');
 }
+
+// jQuery UI position for the 2FA dialogs (login, lost password, confirming account changes), as a JS
+// object literal. They hold a text input, so they sit near the top of the window rather than in the middle:
+// a phone's keyboard covers the lower half of the screen, and would cover the code box and the OK button.
+// The dialog stays absolutely positioned, not fixed, so on a very short screen the page can still be scrolled to reach the buttons.
+// jQuery UI only sets the top. Left and right are centred with CSS, because an auto width dialog shrinks to fit
+// the space to the right of whatever left jQuery UI gives it, and ends up off centre.
+if (!defined('TFA_DIALOG_POSITION_JS')) {
+	define('TFA_DIALOG_POSITION_JS', "{ my: 'center top', at: 'center top+8%', of: window, collision: 'fit', using: function(pos) { jQuery(this).css({ top: pos.top, left: 0, right: 0, marginLeft: 'auto', marginRight: 'auto', width: 'fit-content' }); } }");
+}

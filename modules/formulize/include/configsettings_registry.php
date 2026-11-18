@@ -62,8 +62,9 @@
  *                                                             // array of values: none of them match)
  *   array( array('name'=>..), array('name'=>..) )             // all must hold (AND)
  *   array('op'=>'any', 'conditions'=>array(...))              // at least one must hold (OR between conditions)
+ *   array( array('op'=>'any', 'conditions'=>array(...)), array('name'=>..) )
+ *                                                             // an OR group inside an AND list: (A or B) and C
  *   A condition's 'scope' defaults to the setting's own scope.
- *   AND lists and the OR wrapper do not nest.
  *
  * Saving is delegated to the system preferences handler, so every side-effect and
  * validation still fires exactly as on the legacy preferences page.
@@ -105,24 +106,28 @@ return array(
                 'type' => 'settings',
                 'sections' => array(
                     _AM_CFG_SEC_SIGNING_IN => array(
-                        // Two-factor settings only apply to normal username/password
-                        // logins, so they hide when an external identity provider
-                        // (Google or Okta) is in use. Okta is "on" when its endpoint
-                        // textbox has a value, so the condition checks for empty.
+                        // Two-factor settings apply to signing in with a username and
+                        // password. Google and Okta only add another way to sign in, so
+                        // these hide only when "Use only Google authentication" is on,
+                        // and no one signs in through the site's own form. That setting
+                        // counts only while Google is on, because it stays saved, hidden,
+                        // after Google is turned off.
                         array(
                             'name' => 'auth_2fa',
                             'scope' => 'auth',
-                            'showWhen' => array(
+                            'showWhen' => array('op' => 'any', 'conditions' => array(
                                 array('name' => 'auth_openid', 'value' => 0),
-                                array('name' => 'auth_okta', 'value' => ''),
-                            ),
+                                array('name' => 'auth_googleonly', 'value' => 0),
+                            )),
                         ),
                         array(
                             'name' => 'auth_2fa_groups',
                             'scope' => 'auth',
                             'showWhen' => array(
-                                array('name' => 'auth_openid', 'value' => 0),
-                                array('name' => 'auth_okta', 'value' => ''),
+                                array('op' => 'any', 'conditions' => array(
+                                    array('name' => 'auth_openid', 'value' => 0),
+                                    array('name' => 'auth_googleonly', 'value' => 0),
+                                )),
                                 array('name' => 'auth_2fa', 'value' => 1),
                             ),
                         ),
@@ -135,8 +140,10 @@ return array(
                             'name' => 'tfaRememberDeviceDays',
                             'scope' => 'formulize',
                             'showWhen' => array(
-                                array('name' => 'auth_openid', 'scope' => 'auth', 'value' => 0),
-                                array('name' => 'auth_okta', 'scope' => 'auth', 'value' => ''),
+                                array('op' => 'any', 'conditions' => array(
+                                    array('name' => 'auth_openid', 'scope' => 'auth', 'value' => 0),
+                                    array('name' => 'auth_googleonly', 'scope' => 'auth', 'value' => 0),
+                                )),
                                 array('name' => 'auth_2fa', 'scope' => 'auth', 'value' => 1),
                             ),
                         ),

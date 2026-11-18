@@ -217,25 +217,33 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 		<input type='hidden' name='formulize_tfa_step1token' id='tfa-step1token-{$safeId}' value=''>
 	<input type='hidden' name='tfa_confirm_token' id='tfa-confirm-token-{$safeId}' value=''>
 		<script type='text/javascript'>
-	function tfa_recentreDialog_{$safeId}() {
-		var dlgWrap = jQuery('#tfa-dialog-{$safeId}').closest('.ui-dialog');
+	// Content arrives after the dialog opens, so place it again once it has its final size
+	function tfa_positionDialog_{$safeId}() {
 		setTimeout(function() {
-			dlgWrap.css({
-				position: 'fixed',
-				top: '50%',
-				left: '50%',
-				marginLeft: '0',
-				marginTop: '0',
-				transform: 'translate(-50%, -50%)'
-			});
+			jQuery('#tfa-dialog-{$safeId}').dialog('option', 'position', ".TFA_DIALOG_POSITION_JS.");
 		}, 0);
+	}
+
+	// iOS only brings up the keyboard for a focus made inside the tap, and the code box arrives by AJAX after it.
+	// So during the tap, focus a stand-in input on the dialog. tfa_showDialog then moves focus to the code box,
+	// and the keyboard stays up, because focus is passing from one input to another.
+	function tfa_holdKeyboard_{$safeId}() {
+		var dlgWrap = jQuery('#tfa-dialog-{$safeId}').closest('.ui-dialog');
+		var holder = dlgWrap.find('.tfa-keyboard-holder');
+		if(!holder.length) {
+			holder = jQuery(\"<input type='text' class='tfa-keyboard-holder' inputmode='numeric' tabindex='-1' aria-hidden='true' style='position:absolute;top:0;left:0;width:1px;height:1px;padding:0;border:0;opacity:0;font-size:16px;'>\");
+			dlgWrap.append(holder);
+		}
+		holder.focus();
 	}
 
 	function tfa_showDialog_{$safeId}() {
 		jQuery('#tfa-loading-{$safeId}').hide();
-		jQuery('#tfa-dialog-{$safeId}').closest('.ui-dialog').fadeTo(300, 1, function() {
-			jQuery('#tfa-dialog-{$safeId} #dialog-tfacode').focus();
-		});
+		var dlgWrap = jQuery('#tfa-dialog-{$safeId}').closest('.ui-dialog');
+		// Focus the code box before removing the stand-in, so the keyboard isn't dropped in between
+		jQuery('#tfa-dialog-{$safeId} #dialog-tfacode').focus();
+		dlgWrap.find('.tfa-keyboard-holder').remove();
+		dlgWrap.fadeTo(300, 1);
 	}
 
 		jQuery(document).ready(function() {
@@ -252,6 +260,8 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 			function tfa_doStep1Ajax_{$safeId}(\$dlg) {
 				var code = jQuery('#dialog-tfacode', \$dlg).val();
 				if(!code) return;
+				// The code box is about to be replaced, so keep the keyboard up for the next one
+				tfa_holdKeyboard_{$safeId}();
 				jQuery('#tfa-dialog-{$safeId}').closest('.ui-dialog').fadeTo(150, 0);
 				jQuery('#tfa-loading-{$safeId}').show();
 				jQuery.post(
@@ -273,7 +283,7 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 						// On error retry, validate_step1.php returns a fresh confirm token â store it
 						var ct = jQuery('.tfa-confirm-token', \$dlg).val();
 						if(ct) { \$dlg.data('tfa-phase1-token', ct); }
-						tfa_recentreDialog_{$safeId}();
+						tfa_positionDialog_{$safeId}();
 						tfa_showDialog_{$safeId}();
 					}
 				);
@@ -284,7 +294,7 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 				modal: true,
 				title: '{$dialogTitle}',
 				width: 'auto',
-				position: { my: 'center center', at: 'center center', of: window },
+				position: ".TFA_DIALOG_POSITION_JS.",
 				buttons: [
 					{ text: 'OK', icon: 'ui-icon-check', click: function() {
 						var \$dlg = jQuery(this);
@@ -310,7 +320,8 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 				open: function() {
 					jQuery(this).css('overflow-y', 'auto !important');
 					jQuery(this).closest('.ui-dialog').css('opacity', 0);
-					tfa_recentreDialog_{$safeId}();
+					tfa_positionDialog_{$safeId}();
+					tfa_holdKeyboard_{$safeId}(); // the dialog opens inside the Save tap, and its content loads after
 					var tfa_btns = jQuery(this).closest('.ui-dialog').find('.ui-dialog-buttonpane button');
 					tfa_btns.eq(0).attr('id', 'tfa-btn-ok-{$safeId}');
 					tfa_btns.eq(1).attr('id', 'tfa-btn-cancel-{$safeId}');
@@ -353,10 +364,10 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 					tfa_dlg_ro.data('tfa-new-method', tfa_newMethod_ro);
 					tfa_dlg_ro.data('tfa-new-phone', tfa_newPhone_ro);
 					tfa_dlg_ro.data('tfa-new-email', tfa_newEmail_ro || '');
-					tfa_dlg_ro.load(tfa_auto_singlephaseBaseUrl, { method: tfa_auto_currentMethod, phone: tfa_auto_currentPhone, selectedMethod: tfa_auto_currentMethod, email: tfa_auto_currentEmail, twophase: 1, error: 1 }, function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg_ro).val(); tfa_dlg_ro.data('tfa-phase1-token', ct || ''); window['tfa_recentreDialog_'+tfa_auto_safeId](); window['tfa_showDialog_'+tfa_auto_safeId](); });
+					tfa_dlg_ro.load(tfa_auto_singlephaseBaseUrl, { method: tfa_auto_currentMethod, phone: tfa_auto_currentPhone, selectedMethod: tfa_auto_currentMethod, email: tfa_auto_currentEmail, twophase: 1, error: 1 }, function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg_ro).val(); tfa_dlg_ro.data('tfa-phase1-token', ct || ''); window['tfa_positionDialog_'+tfa_auto_safeId](); window['tfa_showDialog_'+tfa_auto_safeId](); });
 				} else {
 					tfa_dlg_ro.data('tfa-phase', 0);
-					tfa_dlg_ro.load(tfa_auto_singlephaseBaseUrl, { method: tfa_newMethod_ro, phone: tfa_newPhone_ro, email: (tfa_newEmail_ro || ''), selectedMethod: tfa_newMethod_ro, error: 1 }, function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg_ro).val(); if(ct) { window['tfa_form_' + tfa_auto_safeId].find('input[name=\"tfa_confirm_token\"]').val(ct); } window['tfa_recentreDialog_'+tfa_auto_safeId](); window['tfa_showDialog_'+tfa_auto_safeId](); });
+					tfa_dlg_ro.load(tfa_auto_singlephaseBaseUrl, { method: tfa_newMethod_ro, phone: tfa_newPhone_ro, email: (tfa_newEmail_ro || ''), selectedMethod: tfa_newMethod_ro, error: 1 }, function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg_ro).val(); if(ct) { window['tfa_form_' + tfa_auto_safeId].find('input[name=\"tfa_confirm_token\"]').val(ct); } window['tfa_positionDialog_'+tfa_auto_safeId](); window['tfa_showDialog_'+tfa_auto_safeId](); });
 				}
 			}, 400);
 		}
@@ -468,10 +479,10 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 		$js[] = "        tfa_dlg.data('tfa-new-method', tfa_newMethod);";
 		$js[] = "        tfa_dlg.data('tfa-new-phone', tfa_newPhone);";
 		$js[] = "        tfa_dlg.data('tfa-new-email', tfa_newEmail || '');";
-		$js[] = "        tfa_dlg.load('".XOOPS_URL.TFA_CONFIRM_URL_PATH."', { method: {$currentMethodJs}, phone: {$currentPhoneJs}, selectedMethod: {$currentMethodJs}, email: {$currentEmailJs}, twophase: 1 }, function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg).val(); tfa_dlg.data('tfa-phase1-token', ct || ''); tfa_recentreDialog_{$safeId}(); tfa_showDialog_{$safeId}(); });";
+		$js[] = "        tfa_dlg.load('".XOOPS_URL.TFA_CONFIRM_URL_PATH."', { method: {$currentMethodJs}, phone: {$currentPhoneJs}, selectedMethod: {$currentMethodJs}, email: {$currentEmailJs}, twophase: 1 }, function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg).val(); tfa_dlg.data('tfa-phase1-token', ct || ''); tfa_positionDialog_{$safeId}(); tfa_showDialog_{$safeId}(); });";
 		$js[] = "    } else {";
 		$js[] = "        tfa_dlg.data('tfa-phase', 0);";
-		$js[] = "        tfa_dlg.load('".XOOPS_URL.TFA_CONFIRM_URL_PATH."', { method: tfa_newMethod, phone: tfa_newPhone, email: (tfa_newEmail || ''), selectedMethod: tfa_newMethod }, function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg).val(); if(ct) { window['tfa_form_{$safeId}'].find('input[name=\"tfa_confirm_token\"]').val(ct); } tfa_recentreDialog_{$safeId}(); tfa_showDialog_{$safeId}(); });";
+		$js[] = "        tfa_dlg.load('".XOOPS_URL.TFA_CONFIRM_URL_PATH."', { method: tfa_newMethod, phone: tfa_newPhone, email: (tfa_newEmail || ''), selectedMethod: tfa_newMethod }, function() { var ct = jQuery('.tfa-confirm-token', tfa_dlg).val(); if(ct) { window['tfa_form_{$safeId}'].find('input[name=\"tfa_confirm_token\"]').val(ct); } tfa_positionDialog_{$safeId}(); tfa_showDialog_{$safeId}(); });";
 		$js[] = "    }";
 		$js[] = "    return false;";
 		$js[] = "}";
