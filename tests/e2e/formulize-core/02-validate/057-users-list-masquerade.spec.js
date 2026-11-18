@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
-import { login, leavePage, dbQuery, dbPrefix, entryIsLocked, entriesThePageWillRelease } from '../../utils';
+import { login, leavePage, dbQuery, dbPrefix, entryIsLocked, entriesThePageWillRelease, waitForWorkingMessage } from '../../utils';
 
 // The list of users shows a Masquerade button for each user, the same button their account shows in a form. It's
 // the column's value in the list, not an element to edit there, so it shows without anything being clicked. A
@@ -13,8 +13,13 @@ import { login, leavePage, dbQuery, dbPrefix, entryIsLocked, entriesThePageWillR
 //
 // The list of users is drawn the way a list screen is, so it has the page width the site gives list screens, the same
 // as the Artifacts list, whatever the theme and the site's settings are.
+//
+// The installer gives the first admin a level of 5 in the users table, where Status has words only for 1, 0 and -1.
+// Any level above 0 can log in, so 5 is Active: it reads as Active, a search for Active finds it, and saving Active
+// again keeps the 5. The database is only read, for the level.
 
 const uidOf = loginName => dbQuery(`SELECT uid FROM ${dbPrefix()}_users WHERE login_name = '${loginName}'`)[0][0];
+const levelOf = loginName => dbQuery(`SELECT level FROM ${dbPrefix()}_users WHERE login_name = '${loginName}'`)[0][0];
 
 // The width the theme keeps the page's content to, which a screen's page width sets
 const contentMaxWidth = page => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--formulize-content-max-width').trim());
@@ -81,6 +86,39 @@ test('a user\'s Status opens from its pen, and only then is that user locked', a
 	await status.locator('a.formulize-de-cancel').click();
 	await expect(status.locator('select')).toHaveCount(0);
 	await expect.poll(() => entryIsLocked(fid, entry), { message: 'closing Status releases the user' }).toBe(false);
+
+	await leavePage(page, '/modules/formulize/application.php?id=all');
+	await expect(page).toHaveURL(/\/application\.php\?id=all$/);
+});
+
+test('the installer\'s admin, at level 5, is Active, is found as Active, and stays at 5 when saved as Active', async ({ page }) => {
+	expect(levelOf(E2E_TEST_ADMIN_USERNAME), 'the installer gives the first admin level 5').toBe('5');
+
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	await page.goto('/modules/formulize/users.php');
+	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
+
+	const rowOf = loginName => page.getByRole('row').filter({ has: page.getByRole('cell', { name: loginName, exact: true }) });
+	const status = () => rowOf(E2E_TEST_ADMIN_USERNAME).locator('[id^="deDiv_formulize_user_account_status_"]');
+	await expect(status()).toContainText('Active');
+
+	// a search of Status for Active finds the admin, as well as users at level 1
+	const box = page.locator('input[name^="search_formulize_user_account_status_"]');
+	await box.fill('Active');
+	await box.press('Enter');
+	await waitForWorkingMessage(page);
+	await expect(page.locator('input[name^="search_formulize_user_account_status_"]')).toHaveValue('Active');
+	await expect(rowOf(E2E_TEST_ADMIN_USERNAME)).toHaveCount(1);
+	await expect(rowOf('curator1')).toHaveCount(1);
+
+	// opened from the pen, Status shows Active selected, and saving it unchanged leaves the level as it was
+	await status().locator('a.de-edit-icon').click();
+	await expect(status().locator('select')).toBeVisible();
+	await expect(status().locator('select option:checked')).toHaveText('Active');
+	await status().locator('a.formulize-de-save').click();
+	await expect(status()).not.toHaveClass(/formulize-de-editing/);
+	await expect(status()).toContainText('Active');
+	expect(levelOf(E2E_TEST_ADMIN_USERNAME), 'saving Active keeps level 5').toBe('5');
 
 	await leavePage(page, '/modules/formulize/application.php?id=all');
 	await expect(page).toHaveURL(/\/application\.php\?id=all$/);

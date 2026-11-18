@@ -800,10 +800,18 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 					$unameParts[] = $value;
 					$value = implode(' ', $unameParts);
 				}
-				if($userProperty == 'level' && intval($value) != 1) {
-					global $xoopsUser;
-					if($entryUserId && $xoopsUser && intval($entryUserId) == intval($xoopsUser->getVar('uid'))) {
-						continue; // safety net: active user cannot disable their own account
+				if($userProperty == 'level') {
+					// The form offers a status, not a level. A changed status is stored as its own level, 1, 0 or -1.
+					// An unchanged one leaves the level as it was, such as the 5 the installer gives the first admin.
+					$value = formulizeUserAccountStatusElementHandler::statusOfLevel($value);
+					if($entryUserId) {
+						if($value == formulizeUserAccountStatusElementHandler::statusOfLevel($userObject->getVar('level'))) {
+							continue;
+						}
+						global $xoopsUser;
+						if($value != 1 && $xoopsUser && intval($entryUserId) == intval($xoopsUser->getVar('uid'))) {
+							continue; // safety net: active user cannot disable their own account
+						}
 					}
 				}
 				$pendingUserVars[$userProperty] = $value;

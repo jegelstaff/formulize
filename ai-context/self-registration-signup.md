@@ -31,6 +31,8 @@ A token comes from `?token=` or the invitation code box, is kept in `$_SESSION['
 
 Level 0 is "Pending confirmation", distinct from -1, Disabled. Self-registered accounts start at 0 and change to 1 on confirmation. `include/checklogin.php` rejects level 0 or below, so pending users can't log in. When rendering status, null means a new account, which defaults to Active, and an explicit 0 means Pending.
 
+Other levels are in real databases. The installer gives the first admin 5, and `Formulize::createUser()` in `integration_api.php` stores whatever level it's sent. Nothing gives them a meaning of their own, so Status goes by `statusOfLevel()` in `userAccountStatusElement.php`: above 0 is Active, below 0 is Disabled. Showing, searching and rendering all go through it. A save that leaves the status as it was leaves the level alone, so the admin keeps 5. Only a changed status is stored as 1, 0 or -1.
+
 ## Settings
 
 - `allow_register` and `requireTokenForSignup` are both in the New Users section of the Users settings page, in `configsettings_registry.php`. The second only shows when the first is on.

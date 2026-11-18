@@ -50,26 +50,41 @@ class formulizeUserAccountStatusElementHandler extends formulizeUserAccountEleme
 	}
 
 	/**
+	 * The status of a level. Only 1, 0 and -1 have words, but real accounts have other levels: the installer gives
+	 * the first admin 5, and Formulize::createUser() in integration_api.php stores whatever level it's sent. Nothing
+	 * gives those levels a meaning of their own. What counts is whether the account can log in, which
+	 * checklogin.php allows above 0, so any level above 0 is Active and any level below 0 is Disabled.
+	 *
+	 * @param mixed $level The users table's level
+	 * @return int 1, 0 or -1, a key of statusLabels()
+	 */
+	public static function statusOfLevel($level) {
+		$level = intval($level);
+		return $level > 0 ? 1 : ($level < 0 ? -1 : 0);
+	}
+
+	/**
 	 * The status in words, for a list and anything else that reads the dataset, the way an option's words replace
-	 * its stored value. The stored value is the users table's level. A level that isn't a status is left as it is.
+	 * its stored value. The stored value is the users table's level, and any level has a status, see statusOfLevel().
 	 *
 	 * @param mixed  $value    The level
 	 * @param string $handle   Element handle
 	 * @param int    $entry_id Entry ID
-	 * @return mixed The status's words, or the value as it was
+	 * @return mixed The status's words, or the value as it was if it isn't a number
 	 */
 	function prepareDataForDataset($value, $handle, $entry_id) {
 		$labels = $this->statusLabels();
-		return (is_numeric($value) AND isset($labels[intval($value)])) ? $labels[intval($value)] : $value;
+		return is_numeric($value) ? $labels[self::statusOfLevel($value)] : $value;
 	}
 
 	/**
-	 * Build a WHERE clause fragment to search by account status label or numeric level.
+	 * Build a WHERE clause fragment to search by account status.
 	 *
-	 * Matches "Active" (level=1) and "Disabled" (level=-1) by label substring or numeric key.
+	 * A term matches a status by its words, or by a level, which stands for that level's status. Each status covers
+	 * a range of levels, see statusOfLevel(), so searching for Active finds the first admin's level of 5 too.
 	 *
-	 * @param string|array $term       Search term(s) (label substring or numeric level)
-	 * @param string       $operator   SQL operator; 'NOT LIKE'/'!=' produces a NOT IN clause
+	 * @param string|array $term       Search term(s) (part of a status's words, or a level)
+	 * @param string       $operator   SQL operator; 'NOT LIKE'/'!=' excludes the matching statuses
 	 * @param string       $quotes     Ignored
 	 * @param string       $likebits   Ignored
 	 * @param int          $fid        Form ID (unused)
@@ -80,34 +95,40 @@ class formulizeUserAccountStatusElementHandler extends formulizeUserAccountEleme
 		$isNegative = (trim($operator) === 'NOT LIKE' || trim($operator) === '!=');
 		$options = $this->statusLabels();
 		$terms = is_array($term) ? $term : array($term);
-		$matchingKeys = array();
+		$matchingStatuses = array();
 		foreach ($terms as $t) {
 			$t = trim($t);
-			foreach ($options as $k => $label) {
+			foreach ($options as $status => $label) {
 				if (strlen($t) > 0 && stripos($label, $t) !== false) {
-					$matchingKeys[] = $k;
+					$matchingStatuses[] = $status;
 				}
 			}
-			if (is_numeric($t) && array_key_exists(intval($t), $options)) {
-				$matchingKeys[] = intval($t);
+			if (is_numeric($t)) {
+				$matchingStatuses[] = self::statusOfLevel($t);
 			}
 		}
-		$matchingKeys = array_unique($matchingKeys);
-		if (empty($matchingKeys)) {
+		$matchingStatuses = array_unique($matchingStatuses);
+		if (empty($matchingStatuses)) {
 			return $isNegative ? '1=1' : '1=0';
 		}
-		$safeKeys = implode(',', $matchingKeys);
-		return $isNegative
-			? "{$tableAlias}.`level` NOT IN ($safeKeys)"
-			: "{$tableAlias}.`level` IN ($safeKeys)";
+		// level is a varchar column, so compare it as a number
+		$levelRanges = array(1 => '> 0', 0 => '= 0', -1 => '< 0');
+		$comparisons = array();
+		foreach ($matchingStatuses as $status) {
+			$comparisons[] = "CAST({$tableAlias}.`level` AS SIGNED) " . $levelRanges[$status];
+		}
+		$clause = '(' . implode(' OR ', $comparisons) . ')';
+		return $isNegative ? "NOT $clause" : $clause;
 	}
 
 	/**
-	 * Render the account status field as a dropdown (Active / Disabled).
+	 * Render the account status field as a dropdown (Active / Pending / Disabled).
 	 *
-	 * Defaults to Active when no value is set. When disabled, renders the label as read-only.
+	 * Defaults to Active when no value is set. When disabled, renders the label as read-only. The status shown is the
+	 * level's status (see statusOfLevel()), and saving the same status keeps the level as it was, see
+	 * collectPendingUserVars() in userAccountElement.php.
 	 *
-	 * @param mixed  $ele_value  Current level value (1 = Active, -1 = Disabled)
+	 * @param mixed  $ele_value  Current level value (above 0 = Active, 0 = Pending, below 0 = Disabled)
 	 * @param string $caption    Field caption
 	 * @param string $markupName HTML element name
 	 * @param bool   $isDisabled Whether the field is read-only
@@ -124,12 +145,12 @@ class formulizeUserAccountStatusElementHandler extends formulizeUserAccountEleme
 		if ($ele_value === null || $ele_value === '') {
 			$ele_value = 1; // new accounts default to Active
 		}
+		$status = self::statusOfLevel($ele_value);
 		if ($isDisabled) {
-			$label = isset($options[$ele_value]) ? $options[$ele_value] : htmlspecialchars($ele_value, ENT_QUOTES);
-			$form_ele = new XoopsFormLabel($caption, $label, $markupName);
+			$form_ele = new XoopsFormLabel($caption, $options[$status], $markupName);
 			return $form_ele;
 		}
-		$form_ele = new XoopsFormSelect($caption, $markupName, (int)$ele_value);
+		$form_ele = new XoopsFormSelect($caption, $markupName, $status);
 		$form_ele->addOptionArray($options);
 		$form_ele->setExtra('onchange="javascript:formulizechanged=1;"');
 		return $form_ele;
