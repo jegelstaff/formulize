@@ -375,7 +375,8 @@ function displayCalendar($formframes, $mainforms, $viewHandles, $dateHandles, $f
             $calendarDataItem[1] = $frids[$i];
             $calendarDataItem[2] = $fids[$i];
             $calendarDataItem[3] = $textToDisplay;
-            $calendarDataItem[4] = $usedeleteicons[$i] AND ($i == 0 and formulizePermHandler::user_can_delete_entry($fids[$i], getValue($entry, "creation_uid"), $ids[0])); // only active for the first dataset??
+            // whether the current user can delete this entry. The parentheses matter, because AND binds more loosely than =
+            $calendarDataItem[4] = ($usedeleteicons[$i] AND formulizePermHandler::user_can_delete_entry($fids[$i], $uid, $ids[0]));
 
             if($type == "month"
                 || $type == "mini_month"

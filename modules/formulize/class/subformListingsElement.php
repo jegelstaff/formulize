@@ -1059,13 +1059,19 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
     $col_two = "
 				<div id='subform_button_controls_$subform_id$subformElementId$subformInstance' class='subform_button_controls fz-toolbar__end'>";
 
+    // The Delete and Clone buttons, for the selection bar. Delete permission can depend on the entry (only your own, only
+    // your groups'), so having some delete permission on the form only makes Delete possible. Each entry is checked with
+    // user_can_delete_entry() when the entries are drawn, and Delete is left out if none of them can be deleted.
     $deleteButton = "";
+    $cloneButton = "";
+    $deletableSubEntries = array(); // entry ids as keys, for the entries the user can delete
+    $drawSelectionBoxes = false;
 		if(((count((array) $sub_entries[$subform_id])>0 AND $sub_entries[$subform_id][0] != "") OR $sub_entry_new OR is_array($sub_entry_written)) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
 			if((!isset($subform_element_object->ele_value["show_delete_button"]) OR $subform_element_object->ele_value["show_delete_button"]) AND ($gperm_handler->checkRight("delete_own_entry", $subform_id, $groups, $mid) OR $gperm_handler->checkRight("delete_group_entries", $subform_id, $groups, $mid) OR $gperm_handler->checkRight("delete_other_entries", $subform_id, $groups, $mid))) {
 				$deleteButton = "<input class='subform-delete-clone-buttons$subformElementId$subformInstance' type=button name=deletesubs value='" . _formulize_DELETE_CHECKED . "' onclick=\"javascript:sub_del($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
 			}
 			if((!isset($subform_element_object->ele_value["show_clone_button"]) OR $subform_element_object->ele_value["show_clone_button"]) AND $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid)) {
-				$deleteButton .= "<input class='subform-delete-clone-buttons$subformElementId$subformInstance' type=button name=clonesubs value='" . _formulize_CLONE_CHECKED . "' onclick=\"javascript:sub_clone($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
+				$cloneButton = "<input class='subform-delete-clone-buttons$subformElementId$subformInstance' type=button name=clonesubs value='" . _formulize_CLONE_CHECKED . "' onclick=\"javascript:sub_clone($subform_id, '$viewType', ".intval($_GET['subformElementId']).", '$fid', '$entry');\">";
 			}
 		}
 
@@ -1091,7 +1097,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 			$allowed_to_add_entries = formulizePermHandler::user_can_edit_entry($fid, $uid, $entry);
     }
 
-    if (($allowed_to_add_entries OR $deleteButton) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+    if ($allowed_to_add_entries AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
         if ($allowed_to_add_entries AND !$hidingAddEntries AND count((array) $sub_entries[$subform_id]) == 1 AND $sub_entries[$subform_id][0] === "" AND $sub_single) {
             $col_two .= "<input type=button class='formulize-subform__add-button' name=addsub value='". _formulize_ADD_ONE . "' onclick=\"javascript:add_sub('$subform_id', 1, ".$subformElementId.$subformInstance.", '$frid', '$fid', '$entry', '$subformElementId', '$addViewType', ".(isset($_GET['subformElementId']) ? intval($_GET['subformElementId']) : 0).");\">";
         } elseif(!$sub_single) {
@@ -1346,14 +1352,16 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 		$currentSubformInstance = $subformInstance;
 
-        // check if user can delete any subform entry
-        if(!$userCouldDeleteOrClone = $gperm_handler->checkRight("add_own_entry", $subform_id, $groups, $mid) AND $deleteButton) {
+        // which of the entries on this page the user can delete. An entry gets a checkbox if it can be deleted, or if it
+        // can be cloned, which needs only permission to add entries. formdisplay.php checks each one again before deleting.
+        if($deleteButton) {
             foreach($sub_entries[$subform_id] as $sub_ent) {
-                if($userCouldDeleteOrClone = formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent)) {
-                    break;
+                if(formulizePermHandler::user_can_delete_entry($subform_id, $uid, $sub_ent)) {
+                    $deletableSubEntries[$sub_ent] = true;
                 }
             }
         }
+        $drawSelectionBoxes = (($cloneButton OR $deletableSubEntries) AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php"));
 
 		// if there is a display screen for this subform, the entries' links go to their alternate URLs in it, if it has them
 		$displayScreenObject = false;
@@ -1381,11 +1389,19 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 
 				$subEntriesDrawn++;
 
+				// the entry's checkbox, if it can be deleted or cloned. data-deletable lets showHideDeleteClone hide Delete
+				// while an entry that can only be cloned is checked.
+				$selectionBox = "";
+				$subEntryDeletable = isset($deletableSubEntries[$sub_ent]);
+				if($sub_ent !== "new" AND $drawSelectionBoxes AND ($cloneButton OR $subEntryDeletable)) {
+					$selectionBox = "<input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent data-deletable='".($subEntryDeletable ? 1 : 0)."' onclick='showHideDeleteClone($subformElementId$subformInstance);'></input>";
+				}
+
 				if($rowsOrForms=='row' OR $rowsOrForms =='') {
 
 					if(!$drawnHeadersOnce) {
 						$col_two .= "<tr>";
-                        if ($sub_ent !== "new" AND $deleteButton AND $userCouldDeleteOrClone AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
+                        if ($sub_ent !== "new" AND $drawSelectionBoxes) {
                             // a box that checks or unchecks every entry (see formulizeSubformSelectAll below)
                             $selectAllBox = "<input type='checkbox' class='formulize-subform__select-all' aria-label='".htmlspecialchars(_formulize_DE_SELALL, ENT_QUOTES)."' title='".htmlspecialchars(_formulize_DE_SELALL, ENT_QUOTES)."' onclick='formulizeSubformSelectAll($subformElementId$subformInstance, this.checked);'>";
                             $col_two .= "<th class='subentry-delete-cell'>$selectAllBox</th>\n";
@@ -1399,9 +1415,10 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
                     $subElementId = is_object($subform_element_object) ? $subform_element_object->getVar('ele_id') : 0;
 					$col_two .= "<tr class='row-".$sub_ent."-".$subElementId."'>\n";
 					// check to see if we draw a delete box or not
-					if ($sub_ent !== "new" AND $deleteButton AND $userCouldDeleteOrClone AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-						// note: if the add/delete entry buttons are hidden, then these delete checkboxes are hidden as well
-						$col_two .= "<td class='subentry-delete-cell'><input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent onclick='showHideDeleteClone($subformElementId$subformInstance);'></input></td>";
+					if ($sub_ent !== "new" AND $drawSelectionBoxes) {
+						// note: if the delete and clone buttons are hidden, then these checkboxes are hidden as well. An entry
+						// that can't be deleted or cloned gets an empty cell, so the columns still line up.
+						$col_two .= "<td class='subentry-delete-cell'>$selectionBox</td>";
 					}
 					$additionalParams = $viewType == 'Modal' ? "'$frid', '$fid', '$entry', $subElementId, 0" : $subElementId;
 					if($showViewButtons AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
@@ -1464,10 +1481,7 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 					}
 
 					// check to see if we draw a delete box or not
-					$deleteBox = "";
-                    if ($sub_ent !== "new" AND $deleteButton AND $userCouldDeleteOrClone AND !strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
-					    $deleteBox = "<input type=checkbox class='delbox' name=delbox$sub_ent value=$sub_ent onclick='showHideDeleteClone($subformElementId$subformInstance);'></input>&nbsp;&nbsp;";
-					}
+					$deleteBox = $selectionBox ? $selectionBox."&nbsp;&nbsp;" : "";
 
 					if(!strstr($_SERVER['PHP_SELF'], "formulize/printview.php")) {
                         $flatformClass = ($rowsOrForms == 'flatform') ? 'subform-flatform' : '';
@@ -1530,14 +1544,18 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
 	}
 	// the selection bar, placed over this subform's header while entries are checked
 	$frameSelectionBar = "";
-	if($deleteButton) {
+	if(!$deletableSubEntries) {
+		$deleteButton = "";
+	}
+	$selectionButtons = $deleteButton.$cloneButton;
+	if($selectionButtons) {
 		$frameSelectionBar = "
 		<div class='fz-toolbar formulize-subform__selbar'>
 			<div class='fz-toolbar__start'>
 				<input type='button' class='formulize-subform__clear' value='".htmlspecialchars(_formulize_FILTERPOP_CLEAR, ENT_QUOTES)."' onclick='formulizeSubformSelectAll($frameInstance, false);'>
 				<span class='formulize-subform__selection-count'></span>
 			</div>
-			<div class='fz-toolbar__end'>$deleteButton</div>
+			<div class='fz-toolbar__end'>$selectionButtons</div>
 		</div>";
 	}
 	$col_two = "
@@ -1596,6 +1614,8 @@ function drawSubLinks($subform_id, $sub_entries, $uid, $groups, $frid, $mid, $fi
         var bar = frame.children('.formulize-subform__top').children('.formulize-subform__selbar');
         bar.toggleClass('is-active', checked > 0);
         bar.find('.formulize-subform__selection-count').text(".json_encode(_formulize_FILTERPOP_SELECTED).".replace('%s', checked));
+        // Delete only while every checked entry can be deleted. The others are there to be cloned.
+        bar.find(\"input[name='deletesubs']\").toggle(boxes.filter(':checked').filter(\"[data-deletable='0']\").length == 0);
         frame.find('.formulize-subform__select-all').filter(function() { return jQuery(this).closest('.formulize-subform')[0] === frame[0]; }).prop('checked', checked > 0 && checked == boxes.length);
     }
     function formulizeSubformSelectAll(elementInstance, state) {
