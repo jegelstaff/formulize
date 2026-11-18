@@ -540,17 +540,22 @@ class formulizeDataHandler {
 	// $data_handler = new formulizeDataHandler($fid);
     // list($creation_datetime, $mod_datetime, $creation_uid, $mod_uid) = $data_handler->getEntryMeta($entry_id);
 	// if $updateCache is set, then the data should be queried for fresh, and cache reupdated
+	// An entry with no metadata gets four nulls, never false, because callers unpack the result with list(). A form over
+	// another table, such as System Users, has no metadata columns, so its table isn't queried. An entry that doesn't
+	// exist has no row.
 	function getEntryMeta($id, $updateCache = false) {
 		static $cachedEntryMeta = array();
 		if(!isset($cachedEntryMeta[$this->fid][$id]) OR $updateCache) {
 			global $xoopsDB;
             $form_handler = xoops_getmodulehandler('forms', 'formulize');
             $formObject = $form_handler->get($this->fid);
-			$sql = "SELECT creation_datetime, mod_datetime, creation_uid, mod_uid FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id);
-			if(!$res = $xoopsDB->query($sql)) {
-				$cachedEntryMeta[$this->fid][$id] = false;
+			$cachedEntryMeta[$this->fid][$id] = array(null, null, null, null);
+			if($formObject AND !$formObject->getVar('tableform')) {
+				$sql = "SELECT creation_datetime, mod_datetime, creation_uid, mod_uid FROM " . $xoopsDB->prefix("formulize_".$formObject->getVar('form_handle')) . " WHERE entry_id = " . intval($id);
+				if($res = $xoopsDB->query($sql) AND $row = $xoopsDB->fetchRow($res)) {
+					$cachedEntryMeta[$this->fid][$id] = $row;
+				}
 			}
-			$cachedEntryMeta[$this->fid][$id] = $xoopsDB->fetchRow($res);
 		}
 		return $cachedEntryMeta[$this->fid][$id];
 	}
