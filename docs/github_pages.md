@@ -85,7 +85,7 @@ roadmap and the latest news without anyone editing a Markdown file.
 | `_plugins/mcp_tool_pages.rb` | every build | one page per MCP tool |
 | `_plugins/mcp_item_extractor.rb` | every build | MCP resources and prompts |
 | `_plugins/formulize_ui_pages.rb` | every build | the Formulize UI reference |
-| Roadmap fetch in `jekyll.yml` | CI only | the roadmap release sections |
+| `_plugins/roadmap_data.rb` | every build | the roadmap release sections |
 | `_plugins/copy_writable_folders.rb` | every build | the writable folders list |
 | `_plugins/breadcrumbs.rb` | every build | the breadcrumb trail on every page |
 
@@ -114,7 +114,8 @@ There are no Jekyll `_posts` anywhere on this site, which is why
 worked on posts.
 
 Every successful fetch is cached to `_data/news.json`, and a fetch that fails
-all three attempts falls back to that cache. Building with
+all three attempts falls back to that cache. CI never has a cache, so there a
+fetch that fails all three attempts fails the build. Building with
 `FORMULIZE_NEWS_OFFLINE=1` skips the network entirely and builds from the cache
 — useful on a plane, or when formulize.net is unreachable.
 
@@ -159,8 +160,8 @@ the pages are never edited here: change the catalog.
 
 The plugin runs the catalog with `--json`, so it needs PHP: `php` if it is
 installed (GitHub's runners have it), otherwise the local development
-environment's `formulize-web-1` container. With neither, the pages are left out
-of that build and the plugin logs an error. The catalog is outside `docs/`, so
+environment's `formulize-web-1` container. With neither, a published build
+fails, and a local preview leaves the pages out and logs an error. The catalog is outside `docs/`, so
 `jekyll serve` doesn't rebuild when it changes; restart it to see a change.
 
 Each example is shown as it looks, above its code. It is in a frame, as a page
@@ -180,18 +181,20 @@ doesn't exist.
 
 ### Roadmap
 
-The [roadmap](/documentation/roadmap) is the one feed that is not a plugin: it
-is a step in the deploy workflow, because it needs a GitHub API token. It queries
-the repository for every **open** milestone whose title is a plain version
-number (8.3, 9.0, 10.0 …), collects the issues and pull requests in each one
-labelled `Marquee Feature`, sorts the versions numerically, and writes
-`_data/roadmap_issues.json`.
+`_plugins/roadmap_data.rb` builds the [roadmap](/documentation/roadmap) from the
+GitHub API. It queries the repository for every **open** milestone whose title
+is a plain version number (8.3, 9.0, 10.0 …), collects the issues and pull
+requests in each one labelled `Marquee Feature`, sorts the versions numerically,
+and writes `_data/roadmap_issues.json`, which it falls back to when GitHub can't
+be reached. It uses a token from `JEKYLL_GITHUB_TOKEN`, `GITHUB_TOKEN` or
+`GH_TOKEN` when one is set, to get past GitHub's limit of 60 unauthenticated
+requests an hour.
 
 Nothing about that list is hardcoded, so closing a milestone on GitHub drops it
 from the roadmap on the next deploy and opening one adds it, with no edit to the
 workflow. Milestones whose titles are not version numbers (Backlog, Deep
-Backlog) are ignored. Because this runs only in CI, a local build has no roadmap
-data, and the roadmap page renders with no release sections.
+Backlog) are ignored. With no open version-numbered milestone, the roadmap page
+would be empty, so a published build fails until one is opened.
 
 ### Writable folders
 
@@ -216,13 +219,22 @@ there is produced during the build: `news.json` by the news plugin,
 `writableFilesAndFolders.json` by the copy plugin.
 
 The practical consequence is that CI always starts cold, with no previous copy of
-anything to fall back on. Each feed is written to degrade instead of failing the
-deploy: news retries and then falls back to its cache (cold in CI, so the
-retries are what matter there); a failed roadmap fetch publishes a roadmap with
-no release sections and logs a warning; a failed tool dump means the tool pages
-are not generated for that build, and the plugin logs an error; so does a build
-without PHP for the Formulize UI reference. In every case the
-site still builds and deploys. Slightly incomplete beats broken.
+anything to fall back on.
+
+### An incomplete site is a failed build
+
+A published build that can't produce part of the site fails, and nothing is
+deployed, so the site stays as it was until a build succeeds. That covers the
+MCP tool dump, the MCP resources and prompts, the news stories and their
+images, the roadmap, the Formulize UI reference, the writable folders list,
+and the latest release that the download links point to. It also covers a
+news story that names an image nobody uploaded to it, or has a published date
+that can't be read. The failed run on the **Actions** tab names the story.
+
+`_plugins/incomplete_site.rb` holds that rule, and every plugin reports through
+it. A local preview only logs the same errors and leaves those parts out, so it
+still works without the network, PHP or a tool dump. To check a change the way
+CI will build it, build with `JEKYLL_ENV=production`.
 
 ## How it deploys
 

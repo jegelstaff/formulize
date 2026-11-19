@@ -23,7 +23,7 @@ module Jekyll
 
       unless mcp_dir
         error_msg = "MCP directory not found in any of the attempted locations. Jekyll source: #{site.source}"
-        Jekyll.logger.error "MCP extractor", error_msg
+        IncompleteSite.report "MCP extractor", error_msg
         site.data['mcp_items'] = {
           'error' => error_msg,
           'attempted_paths' => base_paths,
@@ -73,10 +73,13 @@ module Jekyll
           }
         }
 
-        # Add any errors
+        # Add any errors. Finding nothing at all means the scraper no longer
+        # matches the source, so it counts as an error too.
         errors = []
         errors << resources_data['error'] if resources_data['error']
         errors << prompts_data['error'] if prompts_data['error']
+        errors << "No resources were found in resources.php" if combined_data['resources_count'] == 0 && !resources_data['error']
+        errors << "No prompts were found in prompts.php" if combined_data['prompts_count'] == 0 && !prompts_data['error']
         combined_data['errors'] = errors unless errors.empty?
 
         # Store in Jekyll's data for use in templates
@@ -84,9 +87,14 @@ module Jekyll
 
         Jekyll.logger.info "MCP extractor", "Extracted #{combined_data['total_count']} MCP items (#{combined_data['resources_count']} resources, #{combined_data['prompts_count']} prompts)"
       rescue => e
-        Jekyll.logger.error "MCP extractor", "Error processing MCP files: #{e.message}"
         site.data['mcp_items'] = { 'error' => e.message }
+        IncompleteSite.report "MCP extractor", "Error processing MCP files: #{e.message}"
+        return
       end
+
+      # Reported outside the begin block, so its rescue doesn't catch the failure
+      # a production build raises.
+      IncompleteSite.report "MCP extractor", errors.join("; ") unless errors.empty?
     end
 
     private

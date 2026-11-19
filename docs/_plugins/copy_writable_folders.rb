@@ -16,7 +16,7 @@ Jekyll::Hooks.register :site, :after_init do |site|
     FileUtils.cp(source_file, dest_file)
     Jekyll.logger.debug "Writable folders", "Copied #{source_file} into _data."
   else
-    Jekyll.logger.warn "Writable folders",
-      "#{source_file} not found - the writable folders list in the install docs will be empty."
+    Jekyll::IncompleteSite.report "Writable folders",
+      "#{source_file} not found - the writable folders list in the install docs would be empty."
   end
 end

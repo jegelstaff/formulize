@@ -75,7 +75,9 @@ How it works is in `tests/coverage/`. `prepend.php` runs before every request an
 Two parts of the build are not just Jekyll:
 
 * **The roadmap** is fetched live from the GitHub API. Every open milestone whose title is a plain version number becomes a section on the [roadmap](../roadmap), ordered by version, with its Marquee Feature issues under it. Closing a milestone on GitHub drops it from the roadmap on the next deploy; opening one adds it. Nothing about the roadmap is hardcoded in the workflow.
-* **The MCP tool reference** is dumped from a real running copy of Formulize. The workflow brings up Docker, runs the install spec from the e2e suite to get an installed system, and then runs `mcp/dump_tools_for_docs.php` against it, so the [tool reference](../../ai/mcp-reference/) shows actual resolved schemas — including the tools whose schemas are built entirely at runtime and cannot be read as static text. If any of that fails, the step falls back to the committed `docs/_data/mcp_tools.json` rather than failing the deploy. Slightly stale tool docs beat a broken site.
+* **The MCP tool reference** is dumped from a real running copy of Formulize. The workflow brings up Docker, runs the install spec from the e2e suite to get an installed system, and then runs `mcp/dump_tools_for_docs.php` against it, so the [tool reference](../../ai/mcp-reference/) shows actual resolved schemas — including the tools whose schemas are built entirely at runtime and cannot be read as static text.
+
+If any part of the site can't be built, such as the news, the roadmap or the tool reference, the build fails and nothing is deployed, so the site stays as it was. See [An incomplete site is a failed build](../version_control/documentation/github_pages#an-incomplete-site-is-a-failed-build).
 
 See [Writing and previewing documentation](../version_control/documentation) for how to work on the site, and [GitHub Pages config](../version_control/documentation/github_pages) for how it is hosted.
 

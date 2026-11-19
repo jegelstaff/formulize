@@ -79,7 +79,11 @@ module Jekyll
       @image_widths = {} # src => pixel width, so each image is measured once per build
 
       raw_entries = load_entries(site)
-      return if raw_entries.nil? || raw_entries.empty?
+      return if raw_entries.nil?
+      if raw_entries.empty?
+        IncompleteSite.report "News pages", "The News form returned no stories, so the site would have no news section."
+        return
+      end
 
       images_by_story = group_images(load_images(site))
 
@@ -124,12 +128,13 @@ module Jekyll
     # ---- fetching -------------------------------------------------------
 
     # Writes every successful fetch to _data/news.json and falls back to it
-    # when the API cannot be reached, so a wobble at formulize.net degrades the
-    # docs deploy to "slightly stale" rather than "broken" - the same tradeoff
-    # the MCP tool dump makes in .github/workflows/jekyll.yml.
+    # when the API cannot be reached, so a local build that has worked once
+    # keeps its news offline.
     #
     # _data is gitignored in full, so in CI the cache is always cold and the
     # live fetch is what matters; the retries below are there for that case.
+    # With no stories to build from, a production build fails (see
+    # incomplete_site.rb).
     def load_entries(site)
       cache_path = File.join(site.source, "_data", "news.json")
 
@@ -139,10 +144,7 @@ module Jekyll
           Jekyll.logger.info "News pages",
             "FORMULIZE_NEWS_OFFLINE=1 - built #{cached.length} stories from the cached _data/news.json, without contacting formulize.net."
         else
-          # Silence here would mean a site with no news section and no
-          # explanation, which is the one outcome this plugin must never
-          # produce quietly.
-          Jekyll.logger.error "News pages",
+          IncompleteSite.report "News pages",
             "FORMULIZE_NEWS_OFFLINE=1 but there is no cached _data/news.json to build from. No news pages will be generated. Run a build without that variable set to populate the cache."
         end
         return cached
@@ -175,21 +177,25 @@ module Jekyll
         return cached
       end
 
-      Jekyll.logger.error "News pages",
+      IncompleteSite.report "News pages",
         "Could not read the News form (#{last_error && last_error.message}) and there is no cached _data/news.json. No news pages will be generated for this build."
       nil
     end
 
-    # Images are fetched separately from the stories, and a failure here is only
-    # a warning: a story is still worth publishing without its uploaded images,
-    # where a missing story is not. The same caching applies, in its own file.
+    # Images are fetched separately from the stories, with the same caching in
+    # their own file. Stories without their uploaded images are incomplete, so
+    # with no images to build from, a production build fails.
     #
     # Asking for a field the form does not have is refused outright by the API,
     # so if an element in IMAGE_FIELDS is ever renamed or removed, this is where
-    # it shows up - as the warning below, with the API's own message in it.
+    # it shows up - as the error below, with the API's own message in it.
     def load_images(site)
       cache_path = File.join(site.source, "_data", "news_images.json")
-      return read_cache(cache_path) || [] if ENV["FORMULIZE_NEWS_OFFLINE"] == "1"
+      if ENV["FORMULIZE_NEWS_OFFLINE"] == "1"
+        cached = read_cache(cache_path)
+        IncompleteSite.report "News pages", "FORMULIZE_NEWS_OFFLINE=1 but there is no cached _data/news_images.json, so stories would be built without their uploaded images." unless cached
+        return cached || []
+      end
 
       last_error = nil
       FETCH_ATTEMPTS.times do
@@ -207,10 +213,15 @@ module Jekyll
       end
 
       cached = read_cache(cache_path)
-      Jekyll.logger.warn "News pages",
-        "Could not read the News Images form (#{last_error && last_error.message}). " +
-        (cached ? "Using the cached _data/news_images.json - images may be out of date." : "Stories will be built without their uploaded images.")
-      cached || []
+      if cached
+        Jekyll.logger.warn "News pages",
+          "Could not read the News Images form (#{last_error && last_error.message}). Using the cached _data/news_images.json - images may be out of date."
+        return cached
+      end
+
+      IncompleteSite.report "News pages",
+        "Could not read the News Images form (#{last_error && last_error.message}) and there is no cached _data/news_images.json, so stories would be built without their uploaded images."
+      []
     end
 
     def fetch_rows(url, parameters)
@@ -680,7 +691,7 @@ module Jekyll
       name = URI::DEFAULT_PARSER.unescape(src)
       image = images.find { |candidate| candidate["file_name"] && candidate["file_name"].casecmp?(name) }
       unless image
-        Jekyll.logger.warn "News pages",
+        IncompleteSite.report "News pages",
           "The story \"#{headline}\" shows an image called #{name}, but no image with that file name has been uploaded to it."
         return
       end
@@ -727,7 +738,7 @@ module Jekyll
 
       Date.parse(text).strftime("%Y-%m-%d")
     rescue StandardError
-      Jekyll.logger.warn "News pages", "Could not read the published date #{text.inspect}; the story is sorted as undated."
+      IncompleteSite.report "News pages", "Could not read the published date #{text.inspect}; the story would be shown without a date."
       nil
     end
 

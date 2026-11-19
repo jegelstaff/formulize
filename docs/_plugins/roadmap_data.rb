@@ -58,18 +58,31 @@ module Jekyll
     # as a fallback when GitHub can't be reached (or the rate limit is hit), so
     # a local build that has worked once keeps a populated roadmap offline.
     # _data is gitignored in full, so in CI the cache is always cold.
+    #
+    # A roadmap with no releases on it is incomplete, so a production build
+    # fails when there are none to show (see incomplete_site.rb). The failure is
+    # reported outside the begin block, so its rescue doesn't catch it.
     def load_releases(site)
       cache_path = File.join(site.source, "_data", "roadmap_issues.json")
 
-      begin
-        releases = fetch_releases
-        write_cache(cache_path, releases)
-        Jekyll.logger.info "Roadmap",
-          "Read #{releases.length} release(s) from GitHub: " +
-          releases.map { |r| "#{r["version"]} (#{r["done"].length} done, #{r["open"].length} open)" }.join(", ")
-        return releases
+      releases = begin
+        fetch_releases
       rescue StandardError => error
         Jekyll.logger.warn "Roadmap", "Could not read milestones/issues from GitHub: #{error.message}"
+        nil
+      end
+
+      if releases
+        write_cache(cache_path, releases)
+        if releases.empty?
+          IncompleteSite.report "Roadmap",
+            "GitHub has no open milestone titled with a version number, such as 8.3, so the roadmap page would have no releases on it."
+        else
+          Jekyll.logger.info "Roadmap",
+            "Read #{releases.length} release(s) from GitHub: " +
+            releases.map { |r| "#{r["version"]} (#{r["done"].length} done, #{r["open"].length} open)" }.join(", ")
+        end
+        return releases
       end
 
       cached = read_cache(cache_path)
@@ -78,8 +91,8 @@ module Jekyll
         return cached
       end
 
-      Jekyll.logger.error "Roadmap",
-        "No cached _data/roadmap_issues.json to fall back on. The roadmap page will have no release sections." +
+      IncompleteSite.report "Roadmap",
+        "No cached _data/roadmap_issues.json to fall back on. The roadmap page would have no release sections." +
         (token ? "" : " Setting JEKYLL_GITHUB_TOKEN avoids GitHub's unauthenticated rate limit.")
       []
     end
@@ -88,8 +101,6 @@ module Jekyll
       milestones = api_get("/milestones?state=open&per_page=100")
         .select { |ms| ms["title"].to_s =~ VERSION_TITLE }
         .sort_by { |ms| ms["title"].split(".").map(&:to_i) }
-
-      Jekyll.logger.warn "Roadmap", "No open version-numbered milestones found." if milestones.empty?
 
       milestones.map do |ms|
         query = "labels=#{URI.encode_www_form_component(LABEL)}&milestone=#{ms["number"]}&per_page=100"

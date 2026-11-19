@@ -70,7 +70,7 @@ module Jekyll
       raw_tools = site.data["mcp_tools"]
 
       unless raw_tools.is_a?(Array) && !raw_tools.empty?
-        Jekyll.logger.error "MCP tool pages", "site.data['mcp_tools'] is missing or empty - no tool pages generated. Run mcp/dump_tools_for_docs.php to (re)populate docs/_data/mcp_tools.json."
+        IncompleteSite.report "MCP tool pages", "site.data['mcp_tools'] is missing or empty - no tool pages generated. Run mcp/dump_tools_for_docs.php to (re)populate docs/_data/mcp_tools.json."
         return
       end
 

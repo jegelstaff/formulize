@@ -57,8 +57,10 @@ jobs:
         run: bundle install --gemfile=/home/runner/work/formulize/formulize/docs/Gemfile
       - name: Set file/directory permissions
         working-directory: /home/runner/work/formulize/formulize
+        # The paths come from writableFilesAndFolders.json, the same list the installer checks,
+        # so a path added there can't leave the installer stuck on its Paths settings page here.
         run: |
-          chmod 777 trust uploads modules templates_c cache themes tokens logs modules/formulize/cache modules/formulize/code modules/formulize/export modules/formulize/language/english/mail_template modules/formulize/queue modules/formulize/temp modules/formulize/templates/screens modules/formulize/upload mainfile.php ~/work/formulize/formulize
+          chmod 777 trust logs ~/work/formulize/formulize $(jq -r '.paths[]' writableFilesAndFolders.json)
       - name: Stop existing containers (if any)
         working-directory: /home/runner/work/formulize/formulize
         run: docker compose down --remove-orphans || true
@@ -71,35 +73,29 @@ jobs:
       # empty. Reuse the e2e suite's own install test (the same one
       # e2e-test-manual.yml relies on) to bring the site up to a normal installed,
       # open state before asking it for its tool schemas. If any of this fails, the
-      # dump step below still falls back to the committed docs/_data/mcp_tools.json
-      # rather than failing the whole docs deploy.
+      # build fails and nothing is deployed. docs/_data/ is gitignored, so there is
+      # no earlier copy of the tools to fall back on, and the tool reference would
+      # otherwise be published empty.
       - name: Setup Node.js
         uses: actions/setup-node@v6
-        continue-on-error: true
         with:
           node-version: 20
           cache: 'npm'
           cache-dependency-path: tests/e2e/package-lock.json
       - name: Install e2e test dependencies
         working-directory: /home/runner/work/formulize/formulize/tests/e2e
-        continue-on-error: true
         run: npm ci
       - name: Install Playwright Browsers
         working-directory: /home/runner/work/formulize/formulize/tests/e2e
-        continue-on-error: true
         run: npx playwright install chromium --with-deps
       - name: Install Formulize (Playwright)
         working-directory: /home/runner/work/formulize/formulize/tests/e2e
-        continue-on-error: true
         run: npx playwright test formulize-core/01-setup/001-install-formulize.spec.js
       - name: Dump MCP tool schemas from PHP
         # Runs the real registerTools() code (see mcp/dump_tools_for_docs.php) so
         # tool docs reflect actual resolved schemas - including the create/update
         # element tools, which are built entirely at runtime and can't be read as
-        # static text. Never lets a failure here fail the docs deploy: if the app
-        # doesn't boot cleanly in CI for some unrelated reason, we fall back to
-        # the already-committed docs/_data/mcp_tools.json (slightly stale tool
-        # docs beat a broken deploy).
+        # static text. If no usable dump comes back, the build fails.
         working-directory: /home/runner/work/formulize/formulize
         run: |
           # A cold `--build` container can restart once shortly after coming
@@ -135,11 +131,12 @@ jobs:
             cp /tmp/mcp_tools.json docs/_data/mcp_tools.json
             echo "Dumped $(jq 'length' /tmp/mcp_tools.json) tools from the running app on attempt $attempt."
           else
-            echo "::warning::Failed to dump MCP tool schemas from the running app after $attempt attempts (last exit $DUMP_EXIT) - keeping the committed docs/_data/mcp_tools.json (tool docs may be slightly stale)."
+            echo "::error::Failed to dump MCP tool schemas from the running app after $attempt attempts (last exit $DUMP_EXIT)."
             echo "--- stderr from dump_tools_for_docs.php (last attempt) ---"
             cat /tmp/mcp_tools_stderr.log || true
             echo "--- container status ---"
             docker ps -a || true
+            exit 1
           fi
       - name: Stop Formulize
         working-directory: /home/runner/work/formulize/formulize

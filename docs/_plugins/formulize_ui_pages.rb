@@ -13,9 +13,9 @@
 #
 # It needs PHP. It uses php if it is installed, as it is on GitHub's runners,
 # and otherwise the local development environment's web container (see
-# docs/deploying_locally). Like the site's other generated feeds, it degrades
-# rather than failing the deploy: without PHP the reference pages are left out
-# of that build, with an error in the log (and a warning on the workflow run).
+# docs/deploying_locally). Without either, a production build fails, and any
+# other build leaves the reference pages out, with an error in the log (see
+# incomplete_site.rb).
 #
 # The catalog is outside docs/, so `jekyll serve` doesn't rebuild when it
 # changes. Restart it, or save any file in docs/, to see a change.
@@ -278,9 +278,7 @@ module Jekyll
     def generate(site)
       catalog = FormulizeUi.load_catalog
       if catalog.nil?
-        message = "Couldn't run modules/formulize/include/ui_catalog.php, so the Formulize UI reference pages were not built. Install PHP, or start the local development environment."
-        Jekyll.logger.error "Formulize UI", message
-        puts "::warning::#{message}" if ENV["GITHUB_ACTIONS"]
+        IncompleteSite.report "Formulize UI", "Couldn't run modules/formulize/include/ui_catalog.php, so the Formulize UI reference pages were not built. Install PHP, or start the local development environment."
         return
       end
 
