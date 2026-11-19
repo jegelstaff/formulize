@@ -79,6 +79,9 @@ test('An admin page reloads with the same drawer open, or the first one if that 
 	await dragDrawer(page, drawer('Appraisal'), drawer('Location and loans'));
 	await heading('Artifact').click();
 	await expect(editLink('Artifact')).toBeVisible();
+	// Appraisal is sliding shut, and the accordion ignores the next click until it has. Its link stays visible while it slides, so
+	// an ignored click passes the check below. Run 44469603575 clicked 156ms into the slide, and the page reloaded on Artifact.
+	await waitForJQueryAnimations(page);
 	await heading('Appraisal').click();
 	await expect(editLink('Appraisal')).toBeVisible();
 

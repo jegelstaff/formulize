@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, openElementAccordion, deleteElement, setCodeMirrorValue, showPermissionsFor, openApplicationAccordion } from '../../utils';
+import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, openElementAccordion, deleteElement, setCodeMirrorValue, showPermissionsFor, openApplicationAccordion, waitForJQueryAnimations } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -619,6 +619,8 @@ test.describe('Set Special Survey Permissions', async () => {
 	test('Adjust permission for flagged surveys', async ({ page }) => {
 		await openApplicationAccordion(page, 'Museum');
 	  await page.locator('div[id^=form-details-box-]').nth(4).getByText('Surveys').first().click();
+		// Permissions is in the form's details, which grow open
+		await waitForJQueryAnimations(page);
   	await page.getByRole('link', { name: 'Permissions', exact: true }).click();
 		await showPermissionsFor(page, ['All Staff']);
 		// The per-group entry-filter ("conditions") UI is in the group's panel in

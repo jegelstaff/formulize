@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, waitForAdminPageReady, showPermissionsFor, openApplicationAccordion } from '../../utils';
+import { login, saveAdminForm, waitForAdminPageReady, showPermissionsFor, openApplicationAccordion, waitForJQueryAnimations } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -30,6 +30,8 @@ test.describe('Permission inheritance', () => {
 		// on the template groups in 015).
 		await openApplicationAccordion(page, 'Museum');
 		await page.getByText('Artifacts').first().click();
+		// Permissions is in the form's details, which grow open
+		await waitForJQueryAnimations(page);
 		await page.getByRole('link', { name: 'Permissions', exact: true }).click();
 
 		// Show the template group's panel (which carries the entry-group-selector widget).

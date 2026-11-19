@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, setCodeMirrorValue, createMuseumForm,
-	deleteMuseumFormsTitled, showPermissionsFor, waitForFormulizeFormToken, leavePage, dbQuery, dbPrefix, sqlEscape } from '../../utils';
+	deleteMuseumFormsTitled, showPermissionsFor, waitForFormulizeFormToken, leavePage, dbQuery, dbPrefix, sqlEscape, openApplicationAccordion,
+	waitForJQueryAnimations } from '../../utils';
 const { execFileSync } = require('child_process');
 const { webContainer } = require('../../docker-containers');
 
@@ -338,11 +339,13 @@ test('A cloned form keeps its static content', async ({ page }) => {
 	await login(page, 'admin');
 	await page.goto('/modules/formulize/admin/ui.php?page=home');
 	await waitForAdminPageReady(page);
-	await page.getByRole('link', { name: 'Application: Museum' }).click();
-	await waitForAdminPageReady(page);
+	await openApplicationAccordion(page, 'Museum');
 	const formBox = page.locator(`div.form-listing-box[formid="${fid}"]`);
 	await expect(formBox).toBeVisible();
 	await formBox.locator('.form-name-text').click();
+	// the Clone link is in the form's details, which grow open
+	await expect(formBox).toHaveClass(/\bselected-form\b/);
+	await waitForJQueryAnimations(page);
 	await Promise.all([
 		page.waitForEvent('load'),
 		formBox.locator('a.cloneform').click(),

@@ -340,6 +340,10 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 
 	// type can be 'regular' or 'popup'
 	if(type == 'regular') {
+		// The page fades in over 250ms once it has loaded, and that fade is below full opacity too, so a save clicked during it would
+		// look as if it had started, and finished when the fade did. The save's own fade waits behind it, and so does the save itself
+		// when the code is checked first.
+		await waitForJQueryAnimations(page);
 		await page.getByRole('button', { name: 'Save your changes' }).click();
 		// First wait for opacity to drop (save in progress)
 		await page.waitForFunction(
@@ -353,12 +357,16 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 			{ timeout }
 		);
 	} else {
-		let opacityTarget = '#dialog-page-settings';
+		// The page settings popup fades to 0.25 while it saves, and back when the save has come back. Custom code on the page is
+		// checked before the fade starts, and a quick save can be over between two checks of the opacity, so wait for the save
+		// itself, then for the popup to be back.
+		opacityTarget = '#dialog-page-settings';
+		const saved = page.waitForResponse(response => response.url().includes('save.php?popupsave=1'), { timeout });
 		await page.getByLabel('Edit Page Settings').getByRole('button', { name: 'Save your changes' }).click();
-		await page.waitForTimeout(200); // wait a moment for the dialog to start closing
+		await saved;
 	}
 
-	// wait for the admin UI to become fully opaque again
+	// wait for the admin UI, or the popup, to become fully opaque again
 	await page.waitForFunction(
 		(selector) => {
 			const element = document.querySelector(selector);
@@ -695,6 +703,9 @@ export async function conditionalChecksFinished(page) {
 	// Clean up the marker
 	await page.evaluate(() => delete window._stableCheckStart);
 
+	// An element the check shows or hides fades for a second, starting when the check comes back, so the wait above can end with
+	// one still on its way. One that's hidden is only emptied when its fade ends.
+	await waitForJQueryAnimations(page);
 }
 
 /**
@@ -772,6 +783,8 @@ export async function deleteElement(page, accordionHeaderText, opts = {}) {
 export async function enableEntriesAreUsers(page) {
 	await page.locator('#form_type-users').check();
 	await expect(page.locator('#entries_are_users_container')).toBeVisible();
+	// it's visible as soon as it starts to slide
+	await waitForJQueryAnimations(page);
 }
 
 /**
@@ -784,6 +797,8 @@ export async function enableEntriesAreGroups(page) {
 	await page.locator('#form_type-groups').check();
 	await expect(page.locator('#entries_are_groups_container')).toBeVisible();
 	await expect(page.locator('#group_categories_container')).toBeVisible();
+	// they're visible as soon as they start to slide
+	await waitForJQueryAnimations(page);
 }
 
 /**
@@ -895,6 +910,8 @@ export async function showConditionsPanel(page, groupId) {
 	await page.locator('#entries_are_users_default_groups_container').waitFor({ state: 'visible' });
 	await page.locator(`.toggle-group-conditions-btn[data-groupid="${groupId}"]`).click();
 	await expect(page.locator(`.per-group-conditions-panel[data-groupid="${groupId}"]`)).toBeVisible();
+	// it's visible as soon as it starts to slide
+	await waitForJQueryAnimations(page);
 }
 
 /**

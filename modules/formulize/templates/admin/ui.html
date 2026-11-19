@@ -443,8 +443,9 @@ $(document).ready(function() {
     <{/if}>
     var accordion_active = "";
     if(pagehasaccordion["accordion-"+tabs_selected]) {
-      <{* where the open drawer is now, which is where it will be after the reload. The accordion's active option is where it was when it was opened, before any dragging. *}>
-      var $openDrawer = $("#accordion-"+tabs_selected+" > div > .ui-accordion-content-active").parent();
+      <{* where the open drawer is now, which is where it will be after the reload. The accordion's active option is where it was when it was opened, before any dragging.
+          Go by the heading, which changes as soon as a drawer is clicked. The drawer that's closing keeps ui-accordion-content-active until it has finished sliding, so a save in that time would find two. *}>
+      var $openDrawer = $("#accordion-"+tabs_selected+" > div > h3.ui-state-active").parent();
       accordion_active = $openDrawer.length ? $openDrawer.index() : "";
     }
     window.document.scrollposition.accordion_active.value = accordion_active;
