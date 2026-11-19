@@ -884,44 +884,14 @@ function createNewFormWithName($name, $activeFormIdentifier) {
 		global $xoopsDB;
 		$formObject = $form_handler->create();
 		$handle = formulizeForm::sanitize_handle_name($name);
-		if (strlen($handle)) {
-    	$uniqueCheckCounter = 0;
-			while (!$uniqueCheck = $form_handler->isFormHandleUnique($handle, "")) {
-        $handle = str_replace('_'.$uniqueCheckCounter,'',$handle);
-        $uniqueCheckCounter++;
-        $handle = $handle . "_".$uniqueCheckCounter;
-			}
-    }
 		if(strlen($handle)) {
+			// setVar makes the handle unique
 			$formObject->setVar('form_handle', $handle);
 			$formObject->setVar('title', $name);
 			$formObject->setVar('single', '');
+			// insert creates the data table and the default screens for a new form
+			// forced, because the subform element's popup asks for this with a GET
 			if($fid = $form_handler->insert($formObject, force: true)) {
-
-				$formObject->setVar('id_form', $fid);
-				$formObject->setVar('fid', $fid);
- 				$form_handler->createDataTable($fid);
-
-				// setup default screens...
-				$multiPageScreenHandler = xoops_getmodulehandler('multiPageScreen', 'formulize');
-  			$defaultFormScreen = $multiPageScreenHandler->create();
-  			$multiPageScreenHandler->setDefaultFormScreenVars($defaultFormScreen, $formObject);
-  			if(!$defaultFormScreenId = $multiPageScreenHandler->insert($defaultFormScreen, force: true)) {
-    			print "Error: could not create default form screen: ".$xoopsDB->error();
-  			}
-  			$listScreenHandler = xoops_getmodulehandler('listOfEntriesScreen', 'formulize');
-    		$screen = $listScreenHandler->create();
-    		$listScreenHandler->setDefaultListScreenVars($screen, $defaultFormScreenId, $formObject);
-  			if(!$defaultListScreenId = $listScreenHandler->insert($screen, force: true)) {
-    			print "Error: could not create default list screen: ".$xoopsDB->error();
-  			}
-				if($defaultFormScreenId AND $defaultListScreenId) {
-					$formObject->setVar('defaultform', $defaultFormScreenId);
-					$formObject->setVar('defaultlist', $defaultListScreenId);
-					if(!$form_handler->insert($formObject, force: true)) {
-						print "Error: could not update form with default screens: ".$xoopsDB->error();
-					}
-				}
 
 				// assign this form as required to the active form's applications (the form which gave rise to this once)
 				$application_handler = xoops_getmodulehandler('applications', 'formulize');
