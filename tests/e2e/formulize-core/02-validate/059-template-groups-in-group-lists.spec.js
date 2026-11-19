@@ -16,7 +16,7 @@ import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createM
 // in order: each one depends on the ones before it.
 test.describe.configure({ mode: 'serial' });
 
-const FORM_TITLE = 'Template group scopes';
+const FORM_TITLE = 'Template group scope test'; // no final s, which the Add button's label would leave off
 const STAFF_ENTRY = 'Made by a staff member';
 const CURATOR_ENTRY = 'Made by a curator';
 
