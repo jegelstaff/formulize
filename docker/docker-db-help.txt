@@ -15,9 +15,10 @@ GETTING A DUMP OF A PRODUCTION DATABASE
 To get a dump of a live database from a server, to use as a seed (see above), you can export it from phpmyadmin, or whatever control panel your server uses. If the .sql file does not work, you may get better results by manually running mysqldump on the command line with the --single_transaction flag. Doing so will cause the generated SQL to be structured differently and more simply.
 
 GETTING A DUMP OF YOUR LOCAL DATABASE
-If you're using the Docker setup in Formulize, you can dump the DB to a file like this (in a Powershell terminal):
+If you're using the Docker setup in Formulize, you can dump the DB to a file with these two lines (in a Powershell terminal):
 
-docker exec formulize-mariadb-1 mariadb-dump --user user --password=password --default-character-set=utf8mb4 --databases formulize > formulize.sql
+docker exec formulize-mariadb-1 mariadb-dump --user user --password=password --default-character-set=utf8mb4 --databases formulize --result-file=/tmp/formulize.sql
+docker cp formulize-mariadb-1:/tmp/formulize.sql formulize.sql
 
 RUNNING SQL AGAINST YOUR LOCAL DATABASE
 You can run sql against the DB manually by putting a .sql file in the /docker/mariadb/seed folder and then doing this:
