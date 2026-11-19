@@ -406,7 +406,9 @@ if ($_GET['fid'] != "new") {
     }
     if ($orderGroups == "alpha") {
         ksort($groups);
+        ksort($groupsMinusEntryGroups);
     }
+    $groupOptions = formulizeHandler::getGroupOptionsForAdminLists($orderGroups);
 
     // setup the user selection list
     // 1. Make Formulize Autocomplete Users Element Object - config settings for element
@@ -546,19 +548,38 @@ function egsCancelAdd(tgid,gid){
         $scopeGroups = $formulize_permHandler->getGroupScopeGroupIds($groupObject->getVar('groupid'));
         if ($scopeGroups === false) {
             $groupperms[$i]['groupscope_choice'][0] = " selected";
+            $groupperms[$i]['groupscope_selected'] = array(0);
             $groupperms[$i]['groupscope_text'] = _AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER;
             $groupperms[$i]['groupscope_is_custom'] = false;
         } else {
             foreach ($scopeGroups as $thisScopeGroupId) {
                 $groupperms[$i]['groupscope_choice'][$thisScopeGroupId] = " selected";
             }
+            $groupperms[$i]['groupscope_selected'] = array_values($scopeGroups);
+            // a template group's entry groups are stored with it, so name the template group and count them, instead of naming them all
+            $templateGroupMap = formulizeHandler::getTemplateToEntryGroupMap();
+            $entryGroupsCountedInTemplates = array();
+            foreach ((array) $scopeGroups as $sgid) {
+                if (isset($templateGroupMap[intval($sgid)])) {
+                    $entryGroupsCountedInTemplates = array_merge($entryGroupsCountedInTemplates, array_intersect($templateGroupMap[intval($sgid)], $scopeGroups));
+                }
+            }
             $scopeNames = array();
             foreach ((array) $scopeGroups as $sgid) {
                 if (intval($sgid) == 0) {
                     $scopeNames[] = _AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER;
+                } elseif (in_array(intval($sgid), $entryGroupsCountedInTemplates)) {
+                    continue;
                 } else {
                     $sgObj = $member_handler->getGroup(intval($sgid));
-                    $scopeNames[] = $sgObj ? $sgObj->getVar('name') : "Group $sgid";
+                    $sgName = $sgObj ? $sgObj->getVar('name') : "Group $sgid";
+                    $entryGroupCount = isset($templateGroupMap[intval($sgid)]) ? count(array_intersect($templateGroupMap[intval($sgid)], $scopeGroups)) : 0;
+                    if ($entryGroupCount == 1) {
+                        $sgName = sprintf(_AM_PERMISSIONS_GROUPSCOPE_TEMPLATE_GROUP_ONE, $sgName);
+                    } elseif ($entryGroupCount > 1) {
+                        $sgName = sprintf(_AM_PERMISSIONS_GROUPSCOPE_TEMPLATE_GROUP, $sgName, $entryGroupCount);
+                    }
+                    $scopeNames[] = $sgName;
                 }
             }
             $groupperms[$i]['groupscope_text'] = $scopeNames ? implode(', ', $scopeNames) : _AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER;
@@ -1083,6 +1104,8 @@ if ($fid != "new") {
     $adminPage['tabs'][$i]['template'] = "db:admin/form_permissions.html";
     $adminPage['tabs'][$i]['content'] = $common;
     $adminPage['tabs'][$i]['content']['groups'] = $groupsMinusEntryGroups;
+    $adminPage['tabs'][$i]['content']['groupOptions'] = $groupOptions;
+    $adminPage['tabs'][$i]['content']['selectedGroupIds'] = $selectedGroups;
     $adminPage['tabs'][$i]['content']['grouplists'] = $grouplists;
     $adminPage['tabs'][$i]['content']['order'] = $orderGroups;
     $adminPage['tabs'][$i]['content']['groupperms'] = $groupperms;

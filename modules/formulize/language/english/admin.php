@@ -1354,6 +1354,10 @@ define("_AM_SITEMENU_FIELD_GROUPS", "Show this link to these groups");
 define("_AM_SITEMENU_FIELD_LANDING", "Send these groups to this link right after they log in");
 define("_AM_SITEMENU_FIELD_LANDING_HELP", "Only groups that can see the link are sent to it, and only if Formulize is their start page, under <a href='%s' target='_blank'>General Settings</a>. When a group is sent to more than one link, it goes to the first one in the menu.");
 define("_AM_SITEMENU_FORM_BASED", "Form-based group");
+define("_AM_GROUPS_REGULAR", "Regular groups");
+define("_AM_GROUPS_FORM_BASED", "Form-based groups");
+define("_AM_PERMISSIONS_GROUPSCOPE_TEMPLATE_GROUP", "%s (%s groups)");
+define("_AM_PERMISSIONS_GROUPSCOPE_TEMPLATE_GROUP_ONE", "%s (1 group)");
 define("_AM_SITEMENU_LIST_TITLE", "What's in the menu");
 define("_AM_SITEMENU_MOVE", "Move %s"); // %s is the name of an application or link
 define("_AM_SITEMENU_MOVED", "Moved %1\$s to position %2\$s of %3\$s"); // %1$s is its name, %2$s its new position, %3$s how many items there are

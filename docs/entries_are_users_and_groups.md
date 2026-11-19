@@ -30,17 +30,25 @@ If the information in your application is divided by project, you can have the g
 
 One entry can create several groups, because you may need different groups for a project's managers, staff and customers. List these under **User Categories for each entry in this form**. There is always an All Users category.
 
-## Setting permissions with template groups
+## Choosing a Form-based group in a list of groups
 
-For a Projects form with Staff and Volunteers categories, Formulize creates a **template group** for each category: Projects All Users, Projects Staff and Projects Volunteers. These represent the categories in general, not any one project.
+If you have forms with this setting turned on where the entries are associated with groups, then there will usually be two subheadings in the list of groups: **Regular groups** and **Form-based groups**. The form-based groups are the group categories that are created for each entry in such forms.
 
-**Set your permissions on the template groups.** When someone creates a project called Ravine Cleanup, Formulize creates these groups for it:
+When you choose one of these form-based groups, it stands for every group of that category, including groups created in the future when new entries are made in the form.
+
+For example, choosing _Projects - Volunteers_ includes every _Volunteers_ group for every entry in the _Projects_ form.
+
+## Setting permissions with Form-based groups
+
+For a Projects form with Staff and Volunteers categories, Formulize creates a **Form-based group** for each category: _Projects - All Users_, _Projects - Staff_ and _Projects - Volunteers_. These represent the categories in general, not any one project.
+
+**Set your permissions on the Form-based groups.** When someone creates a project called Ravine Cleanup, Formulize creates these groups for it:
 
 - Ravine Cleanup - All Users
 - Ravine Cleanup - Staff
 - Ravine Cleanup - Volunteers
 
-Each one automatically gets a copy of the permissions of the matching template group. If you change a template group's permissions later, its groups get the change too.
+Each one automatically gets a copy of the permissions of the matching Form-based group. If you change a Form-based group's permissions later, its groups get the change too.
 
 The groups for each entry stay out of the way when you're setting permissions. If one really needs something different, you can set an override on it.
 
@@ -48,8 +56,8 @@ The groups for each entry stay out of the way when you're setting permissions. I
 
 Put a linked element in a form that creates accounts, with a form that creates groups as its source, and a new user's groups can follow what's selected.
 
-For example, a Volunteers form has a dropdown list linked to the Projects form, and Projects has a Volunteers category. In the Volunteers form's **Group Memberships**, add the Projects Volunteers template group, and choose the dropdown as the element that determines which project's group to use.
+For example, a Volunteers form has a dropdown list linked to the Projects form, and Projects has a Volunteers category. In the Volunteers form's **Group Memberships**, add the _Projects - Volunteers_ Form-based group, and choose the dropdown as the element that determines which project's group to use.
 
-Now, when someone creates a volunteer and selects Ravine Cleanup, that person gets an account and joins Ravine Cleanup - Volunteers, with that group's permissions. Nobody has to set up an account, a group or a permission by hand.
+Now, when someone creates a volunteer and selects Ravine Cleanup, that person gets an account and joins _Ravine Cleanup - Volunteers_, with that group's permissions. Nobody has to set up an account, a group or a permission by hand.
 
 To find out how forms link together, see [How forms connect](/documentation/relationships/).

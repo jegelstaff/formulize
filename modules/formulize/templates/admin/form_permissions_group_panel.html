@@ -27,10 +27,7 @@
                 <div class="groupselectionbox" id="groupscope_div_<{$content.fid}>_<{$groupperm.id}>" style="margin-bottom:0<{if !$groupperm.groupscope_is_custom}>;display:none<{/if}>">
                     <select name="groupsscope_choice_<{$content.fid}>_<{$groupperm.id}>[]" size=6 multiple>
                         <option value=0<{$groupperm.groupscope_choice.0}>><{$smarty.const._AM_PERMISSIONS_DEFINE_VISIBILITY_VIEWOTHERGROUPISAMEMEBER}></option>
-                        <{foreach from=$content.groups item=group}>
-                        <{assign var=groupid value=$group.id}>
-                        <option value=<{$groupid}><{$groupperm.groupscope_choice.$groupid}>><{$group.name}></option>
-                        <{/foreach}>
+                        <{html_options options=$content.groupOptions selected=$groupperm.groupscope_selected}>
                     </select>
                     <br><a href="#" onclick="formulize_hideGroupScope('<{$content.fid}>','<{$groupperm.id}>'); return false;" style="font-size:.85em"><{$smarty.const._AM_PERMISSIONS_GROUPSCOPE_USE_DEFAULT}></a>
                 </div></div>

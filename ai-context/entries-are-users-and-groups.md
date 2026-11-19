@@ -84,6 +84,18 @@ Only required membership is enforced. Nothing prevents someone being added to a 
 - `formulizeHandler::propagateTemplateGroupPermissions()` passes on changes. `form_permissions_save.php` and `application_menu_entries_save.php` call it after permission changes to template groups.
 - Saving a single element also syncs its group references: `element_display_save.php` and `element_options_save.php` call `formulizeHandler::upsertElementSchemaAndResources()`.
 
+### Template groups in settings that list groups
+
+Template groups own no entries and have no members. So wherever a setting can name a template group, its entry groups are stored as well, or are given the same setting, and nothing has to turn a template group into entry groups at run time. Code that reads these settings uses the ids as they are, and so do the notifications, the change scope dialog and configuration as code.
+
+- **Element settings** (display, disabled, a linked element's scope): `synchronizeGroupReferencesInElement()` stores the entry groups beside the template group, and takes them out when it's gone.
+- **Permissions, filters and menu links** are copied to each entry group by `copyGroupPermissions()`.
+- **Group scope** (`formulize_groupscope_settings`): `setGroupScopeGroups()` stores a template group's entry groups with it, through `addEntryGroupsOfTemplateGroups()`, *except* in the scope of a group from the template group's own form. There the template group means the same entry's group, which `copyGroupPermissions()` maps in when it copies the template group's scope to an entry group. Adding every entry group to a template group's own scope would give every entry group all of them. `copyAllTemplateSettingsToEntryGroups()` calls `refreshEntryGroupsInScopes()` so new entry groups join the scopes that hold their template group.
+
+The admin lists of groups leave entry groups out and put template groups under their own heading, through `formulizeHandler::getGroupOptionsForAdminLists()`. Saving a list without its entry groups is safe because of the above: the save adds them back. A new place that lists groups for a setting needs the same storage, or it can't leave entry groups out.
+
+`getTemplateToEntryGroupMap()` is cached for the request. Code that runs after entry groups are made in the same request has to pass `refreshCache: true`.
+
 ### Deleting a user
 
 Delete means delete. `modules/formulize/users.php` removes the `users` row and the `groups_users_link` rows. `$member_handler->deleteUser()` in ICMS only sets `level` to -1 and scrambles the password, so the name and email stay. Those accounts didn't show in the UI but still collided on email and username. Anything that deletes a user should do what `users.php` does, and never call `deleteUser()` on its own. To keep someone's record, make the account inactive.

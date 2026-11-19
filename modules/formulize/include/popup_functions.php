@@ -121,7 +121,7 @@ function formulize_popupChoice($type, $name, $value, $label, $checked = false, $
  * A dropdown list, or a listbox when it has a size or takes several choices.
  *
  * @param string $name the name of the select, which is also its id (without any [] on the end)
- * @param array $options the options, value => label, the labels as HTML
+ * @param array $options the options, value => label, the labels as HTML. A heading => array of options makes an optgroup, with the heading as plain text
  * @param mixed $selected the value chosen, or an array of them
  * @param string $attributes other attributes for the select, as HTML
  * @param string $classes other classes for the select, such as fz-w-auto for one that is only as wide as its options
@@ -131,8 +131,28 @@ function formulize_popupSelect($name, $options, $selected = array(), $attributes
     $selected = array_map('strval', (array) $selected);
     $html = "<select class='fz-select" . ($classes ? " " . $classes : "") . "' name='" . $name . "' id='" . str_replace('[]', '', $name) . "'" . ($attributes ? " " . $attributes : "") . ">\n";
     foreach ((array) $options as $value => $label) {
-        $html .= "<option value='" . htmlspecialchars($value) . "'" . (in_array(strval($value), $selected, true) ? " selected='selected'" : "") . ">" . $label . "</option>\n";
+        if (is_array($label)) {
+            $html .= "<optgroup label='" . htmlspecialchars($value) . "'>\n";
+            foreach ($label as $groupedValue => $groupedLabel) {
+                $html .= formulize_popupSelectOption($groupedValue, $groupedLabel, $selected);
+            }
+            $html .= "</optgroup>\n";
+        } else {
+            $html .= formulize_popupSelectOption($value, $label, $selected);
+        }
     }
     $html .= "</select>";
     return $html;
+}
+
+/**
+ * One option of formulize_popupSelect().
+ *
+ * @param string $value the value of the option
+ * @param string $label the label, as HTML
+ * @param array $selected the values chosen, as strings
+ * @return string HTML
+ */
+function formulize_popupSelectOption($value, $label, $selected) {
+    return "<option value='" . htmlspecialchars($value) . "'" . (in_array(strval($value), $selected, true) ? " selected='selected'" : "") . ">" . $label . "</option>\n";
 }

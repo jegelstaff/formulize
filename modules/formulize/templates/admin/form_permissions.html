@@ -45,9 +45,7 @@
 			<legend><label class="question"><{$smarty.const._AM_PERMISSIONS_VISIBILITY_FILTERS}></label></legend>
 			<p><{$smarty.const._AM_PERMISSIONS_VISIBILITY_FILTERS_EXPLAIN}></p>
 			<select name="groups[]" id="groups_filter_selector" size=8 multiple>
-				<{foreach from=$content.groups item=group}>
-					<option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
-				<{/foreach}>
+				<{html_options options=$content.groupOptions selected=$content.selectedGroupIds}>
 			</select>
 			<br /><br />
 			<input type="button" id="showperms_filter" value="<{$smarty.const._AM_PERMISSIONS_SHOW_PERMS_FOR_GROUPS}>" />
@@ -68,9 +66,7 @@
 			<fieldset>
                 <legend><label class="question"><{$smarty.const._AM_PERMISSIONS_CHOOSE_GROUPS}></label></legend>
                 <select name="groups[]" id="groups" size=10 multiple>
-                    <{foreach from=$content.groups item=group}>
-                        <option value=<{$group.id}><{$group.selected}>><{$group.name}></option>
-                    <{/foreach}>
+                    <{html_options options=$content.groupOptions selected=$content.selectedGroupIds}>
                 </select>
 							<br /><br />
 							<input type="button" name="showperms" value="<{$smarty.const._AM_PERMISSIONS_SHOW_PERMS_FOR_GROUPS}>" />

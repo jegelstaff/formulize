@@ -161,14 +161,8 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 					$dataToSendToTemplate['ele_value'] = array();
         }
 
-        // setup group list:
-        $member_handler = xoops_gethandler('member');
-        $allGroups = $member_handler->getGroups();
-        $formlinkGroups = array();
-        foreach($allGroups as $thisGroup) {
-            $formlinkGroups[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name');
-        }
-        $dataToSendToTemplate['formlink_scope_options'] = array('all'=>_AM_ELE_FORMLINK_SCOPE_ALL) + $formlinkGroups;
+        // setup group list. Entry groups are left out, because saving the element adds them for each template group that is selected
+        $dataToSendToTemplate['formlink_scope_options'] = array('all'=>_AM_ELE_FORMLINK_SCOPE_ALL) + formulizeHandler::getGroupOptionsForAdminLists();
 
         // $selectedLinkElementId can be used later to initialize a set of filters, if we add that to checkboxes.
         list($formlink, $selectedLinkElementId) = createFieldList($ele_value[2]);
@@ -295,7 +289,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 				}
 
 				// grab formlink scope options
-				$ele_value['formlink_scope'] = implode(",", (array)$_POST['element_formlink_scope']);
+				$ele_value['formlink_scope'] = isset($_POST['element_formlink_scope']) ? implode(",", (array)$_POST['element_formlink_scope']) : '';
 
 				$filter_key = 'formlinkfilter';
 				list($ele_value[5], $changed) = parseSubmittedConditions($filter_key, 'optionsconditionsdelete');

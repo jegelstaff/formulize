@@ -478,7 +478,8 @@ test.describe('Exhibits Elements', async () => {
 		await page.getByRole('link', { name: 'Options' }).click();
   	await page.locator('#formlink').selectOption('Collections: Name');
 		await page.getByRole('radio', { name: 'Allowed', exact: true }).check();
-		await page.locator('#element-formlink_scope').selectOption(['Ancient History - All Users', 'Modern History - All Users']);
+		// each department's staff are offered the collections their own department made, and the curators' (02-validate/060)
+		await page.locator('#element-formlink_scope').selectOption('Departments - All Users');
 	  await page.getByText('Yes. Only use groups that the').click();
 		await saveAdminForm(page);
 		await expect(page.getByRole('heading')).toContainText('Collections');
@@ -674,7 +675,8 @@ test.describe('Create linked fields and settings', async () => {
 		await page.locator('input[name="elements-ele_handle"]').fill('artifacts_collections');
     await page.getByRole('link', { name: 'Options' }).click();
     await page.locator('#formlink').selectOption('Collections: Name');
-	  await page.locator('#element-formlink_scope').selectOption(['Ancient History - All Users', 'Modern History - All Users']);
+	  // each department's staff are offered the collections their own department made, and the curators' (02-validate/060)
+	  await page.locator('#element-formlink_scope').selectOption('Departments - All Users');
 	  await page.getByText('Yes. Only use groups that the').click();
 		await page.getByRole('checkbox', { name: 'Create a Subform interface' }).check();
 		await saveAdminForm(page);

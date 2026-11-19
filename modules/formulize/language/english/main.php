@@ -560,6 +560,7 @@ define("_formulize_DE_DATAHEADING", "List of Entries");
 define("_formulize_DE_ADVSCOPE", "Advanced scope");
 define("_formulize_DE_PICKASCOPE", "Choose the groups to use for the scope");
 define("_formulize_DE_AVAILGROUPS", "Available groups:");
+define("_formulize_DE_SCOPE_REGULAR_GROUPS", "Regular groups");
 define("_formulize_DE_USETHISSCOPE", "Use these groups as the scope");
 define("_formulize_DE_AS_ENTRIESBY", "Entries by: ");
 define("_formulize_DE_AS_PICKGROUPS", "Entries by all users in...[pick groups]");

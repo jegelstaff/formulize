@@ -461,14 +461,8 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				$options['optionDefaultSelection'] = "";
 		}
 
-		// setup group list:
-    $member_handler = xoops_gethandler('member');
-    $allGroups = $member_handler->getGroups();
-    $formlinkGroups = array();
-    foreach($allGroups as $thisGroup) {
-      $formlinkGroups[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name');
-    }
-		$options['formlink_scope_options'] = array('all'=>_AM_ELE_FORMLINK_SCOPE_ALL) + $formlinkGroups;
+		// setup group list. Entry groups are left out, because saving the element adds them for each template group that is selected
+		$options['formlink_scope_options'] = array('all'=>_AM_ELE_FORMLINK_SCOPE_ALL) + formulizeHandler::getGroupOptionsForAdminLists();
 
 		// setup conditions:
 		// not using old profile form feature presently, but could/should soon when revamped to use a form for user management

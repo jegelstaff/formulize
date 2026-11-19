@@ -853,6 +853,10 @@ define("_AM_SITEMENU_FIELD_GROUPS", "Afficher ce lien à ces groupes");
 define("_AM_SITEMENU_FIELD_LANDING", "Envoyer ces groupes vers ce lien dès leur connexion");
 define("_AM_SITEMENU_FIELD_LANDING_HELP", "Seuls les groupes qui voient le lien y sont envoyés, et seulement si Formulize est leur page de démarrage, dans les <a href='%s' target='_blank'>Préférences générales</a>. Un groupe envoyé vers plusieurs liens va au premier d'entre eux dans le menu.");
 define("_AM_SITEMENU_FORM_BASED", "Groupe basé sur un formulaire");
+define("_AM_GROUPS_REGULAR", "Groupes ordinaires");
+define("_AM_GROUPS_FORM_BASED", "Groupes basés sur un formulaire");
+define("_AM_PERMISSIONS_GROUPSCOPE_TEMPLATE_GROUP", "%s (%s groupes)");
+define("_AM_PERMISSIONS_GROUPSCOPE_TEMPLATE_GROUP_ONE", "%s (1 groupe)");
 define("_AM_SITEMENU_LIST_TITLE", "Le contenu du menu");
 define("_AM_SITEMENU_MOVE", "Déplacer %s"); // %s est le nom d'une application ou d'un lien
 define("_AM_SITEMENU_MOVED", "%1\$s déplacé en position %2\$s sur %3\$s"); // %1$s est son nom, %2$s sa nouvelle position, %3$s le nombre d'éléments

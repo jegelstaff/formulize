@@ -2204,7 +2204,19 @@ class formulizeHandler {
 			formulizePermHandler::copyGroupPermissions($templateGroupId, $entryGroupId, null, $templateToEntryGroupMap);
 		}
 
-		// b) Synchronize element display/disabled/filter settings across all elements
+		// The map may have been built earlier in this request, before the new entry groups existed
+		self::getTemplateToEntryGroupMap(refreshCache: true);
+
+		// b) Add the new entry groups to the groupscope settings that hold their template groups
+		$templateGroupsOfNewGroups = array();
+		foreach ($templateToEntryGroupMap as $templateGroupId => $entryGroupId) {
+			if (in_array($entryGroupId, $newGroupIds)) {
+				$templateGroupsOfNewGroups[] = $templateGroupId;
+			}
+		}
+		formulizePermHandler::refreshEntryGroupsInScopes($templateGroupsOfNewGroups);
+
+		// c) Synchronize element display/disabled/filter settings across all elements
 		// Uses the same logic as individual element saves - ensures entry groups mirror template groups
 		$allForms = $form_handler->getAllForms(true);
 		foreach ($allForms as $thisForm) {
@@ -2226,24 +2238,19 @@ class formulizeHandler {
 	}
 
 	/**
-	 * Builds a map of all template groups to their entry groups across all entries_are_groups forms.
-	 * Result is cached per request via a static variable.
-	 *
-	 * @return array Map of templateGroupId => [entryGroupId1, entryGroupId2, ...]
-	 */
-	/**
 	 * Get a map of template group IDs to their corresponding entry group IDs.
 	 * Results are cached for the duration of the request.
 	 *
 	 * @param int|null $templateGroupId Optional. If provided, returns just the entry group IDs
 	 *        for that specific template group (array of ints). If null, returns the full map
 	 *        (templateGroupId => array of entry group IDs).
+	 * @param bool $refreshCache True to build the map again, after entry groups have been created
 	 * @return array Either the full map or a single template group's entry group IDs
 	 */
-	public static function getTemplateToEntryGroupMap($templateGroupId = null) {
+	public static function getTemplateToEntryGroupMap($templateGroupId = null, $refreshCache = false) {
 		static $templateGroupMap = null;
 
-		if ($templateGroupMap === null) {
+		if ($templateGroupMap === null OR $refreshCache) {
 			$templateGroupMap = array();
 
 			global $xoopsDB;
@@ -2280,6 +2287,45 @@ class formulizeHandler {
 		}
 
 		return $templateGroupMap;
+	}
+
+	/**
+	 * The groups to offer in a list of groups in the admin UI, as options for Smarty's html_options.
+	 * Entry groups are left out. Wherever a template group is chosen, its entry groups are stored
+	 * with it, or given the same settings. See ai-context/entries-are-users-and-groups.md
+	 *
+	 * When there are template groups, the regular groups and the template groups are in two
+	 * optgroups, each sorted on its own.
+	 *
+	 * @param string $order 'alpha' to sort by name, anything else for the order the groups were made in
+	 * @return array group id => name, or optgroup label => array(group id => name) when there are template groups
+	 */
+	public static function getGroupOptionsForAdminLists($order = 'creation') {
+		$member_handler = xoops_gethandler('member');
+		$regularGroups = array();
+		$templateGroups = array();
+		foreach ($member_handler->getGroups() as $thisGroup) {
+			if ($thisGroup->getVar('entry_id') > 0) {
+				continue;
+			}
+			// html_options escapes the names
+			if ($thisGroup->getVar('is_group_template') == 1) {
+				$templateGroups[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name', 'n');
+			} else {
+				$regularGroups[$thisGroup->getVar('groupid')] = $thisGroup->getVar('name', 'n');
+			}
+		}
+		if ($order == 'alpha') {
+			natcasesort($regularGroups);
+			natcasesort($templateGroups);
+		}
+		if (empty($templateGroups)) {
+			return $regularGroups;
+		}
+		return array(
+			_AM_GROUPS_REGULAR => $regularGroups,
+			_AM_GROUPS_FORM_BASED => $templateGroups
+		);
 	}
 
 	/**

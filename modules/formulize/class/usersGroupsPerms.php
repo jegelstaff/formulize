@@ -323,6 +323,7 @@ class formulizePermHandler {
 	 * Set the groupscope (view_groupids) for a group on this form.
 	 *
 	 * Inserts groups that are newly added and removes groups that are no longer in scope.
+	 * Template groups in the scope get their entry groups stored with them, see addEntryGroupsOfTemplateGroups().
 	 *
 	 * @param int       $gid  The group ID whose scope is being set
 	 * @param int|array $gids The group ID(s) to set as the scope (empty array clears the scope)
@@ -336,6 +337,8 @@ class formulizePermHandler {
 				$gids = array();
 			}
 		}
+		$gids = self::addEntryGroupsOfTemplateGroups($gid, $gids);
+		$groupsToDelete = array();
 		$currentViewGroups = $this->getGroupScopeGroupIds($gid);
 		if($currentViewGroups !== false) {
 			$groupsToInsert = array_diff($gids, (array)$currentViewGroups);
@@ -367,6 +370,89 @@ class formulizePermHandler {
 			}
 		}
 		$this->_getGroupScopeGroupInfo($gid, true); // true forces the cached values to be updated
+		return true;
+	}
+
+	/**
+	 * Add the entry groups of any template groups in a group's scope, so the scope means every
+	 * group in that template group's category. Template groups own no entries, so on its own
+	 * a template group in a scope would show nothing. See ai-context/entries-are-users-and-groups.md
+	 *
+	 * Not for a group from the template group's own form. There it means the same entry's group,
+	 * which copyGroupPermissions() puts in when it copies a template group's settings to an entry group.
+	 * If all the entry groups were added to a template group's scope, every entry group would get them.
+	 *
+	 * @param int $gid The group whose scope this is
+	 * @param array $gids The groups in the scope
+	 * @return array The groups in the scope, with the entry groups added
+	 */
+	static function addEntryGroupsOfTemplateGroups($gid, $gids) {
+		$templateGroupMap = formulizeHandler::getTemplateToEntryGroupMap();
+		$templateGroupsInScope = array();
+		foreach((array)$gids as $thisGid) {
+			if(isset($templateGroupMap[intval($thisGid)])) {
+				$templateGroupsInScope[] = intval($thisGid);
+			}
+		}
+		if(empty($templateGroupsInScope)) {
+			return $gids;
+		}
+		global $xoopsDB;
+		$formIds = array();
+		$groupIdsToLookUp = $templateGroupsInScope;
+		$groupIdsToLookUp[] = intval($gid);
+		if($res = $xoopsDB->query("SELECT groupid, form_id FROM ".$xoopsDB->prefix("groups")." WHERE groupid IN (".implode(",", $groupIdsToLookUp).")")) {
+			while($row = $xoopsDB->fetchArray($res)) {
+				$formIds[intval($row['groupid'])] = intval($row['form_id']);
+			}
+		}
+		$ownFormId = isset($formIds[intval($gid)]) ? $formIds[intval($gid)] : 0;
+		foreach($templateGroupsInScope as $templateGroupId) {
+			if($ownFormId AND isset($formIds[$templateGroupId]) AND $formIds[$templateGroupId] == $ownFormId) {
+				continue;
+			}
+			foreach($templateGroupMap[$templateGroupId] as $entryGroupId) {
+				if(!in_array($entryGroupId, $gids)) {
+					$gids[] = $entryGroupId;
+				}
+			}
+		}
+		return $gids;
+	}
+
+	/**
+	 * Store the entry groups of these template groups in every groupscope setting that holds the
+	 * template groups. Used when entry groups are made, and by the update for scopes saved before
+	 * entry groups were stored with them.
+	 *
+	 * @param array|null $templateGroupIds The template groups, or null for all of them
+	 * @return bool True on success, false on database failure
+	 */
+	static function refreshEntryGroupsInScopes($templateGroupIds = null) {
+		if($templateGroupIds === null) {
+			$templateGroupIds = array_keys(formulizeHandler::getTemplateToEntryGroupMap());
+		}
+		$templateGroupIds = array_filter(array_map('intval', (array)$templateGroupIds));
+		if(empty($templateGroupIds)) {
+			return true;
+		}
+		global $xoopsDB;
+		$sql = "SELECT DISTINCT groupid, fid FROM ".$xoopsDB->prefix("formulize_groupscope_settings")." WHERE view_groupid IN (".implode(",", $templateGroupIds).")";
+		if(!$res = $xoopsDB->query($sql)) {
+			return false;
+		}
+		$scopes = array();
+		while($row = $xoopsDB->fetchArray($res)) {
+			$scopes[] = $row;
+		}
+		foreach($scopes as $scope) {
+			$permHandler = new formulizePermHandler(intval($scope['fid']));
+			$currentScope = $permHandler->getGroupScopeGroupIds(intval($scope['groupid']));
+			// setGroupScopeGroups adds the entry groups
+			if(!$permHandler->setGroupScopeGroups(intval($scope['groupid']), array_values((array)$currentScope))) {
+				return false;
+			}
+		}
 		return true;
 	}
 

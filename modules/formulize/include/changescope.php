@@ -153,6 +153,37 @@ if($globalscope = $gperm_handler->checkRight("view_globalscope", $fid, $groups, 
 	exit("Error: no advanced scope permission detected.");
 }
 
+// Put entry groups under the name of their template group. Leave out the template groups, which own no entries, so choosing one would show nothing.
+$templateGroupMap = formulizeHandler::getTemplateToEntryGroupMap();
+if(!empty($templateGroupMap) AND count((array) $availgroups) > 0) {
+	$templateGroupOfEntryGroup = array();
+	foreach($templateGroupMap as $templateGroupId => $entryGroupIds) {
+		foreach($entryGroupIds as $entryGroupId) {
+			$templateGroupOfEntryGroup[$entryGroupId] = $templateGroupId;
+		}
+	}
+	$regularGroups = array();
+	$entryGroupsByTemplateGroup = array();
+	foreach($availgroups as $gid => $groupName) {
+		if(isset($templateGroupMap[$gid])) {
+			continue;
+		} elseif(isset($templateGroupOfEntryGroup[$gid])) {
+			$entryGroupsByTemplateGroup[$templateGroupOfEntryGroup[$gid]][$gid] = $groupName;
+		} else {
+			$regularGroups[$gid] = $groupName;
+		}
+	}
+	$availgroups = $regularGroups;
+	if(!empty($entryGroupsByTemplateGroup)) {
+		$availgroups = count($regularGroups) > 0 ? array(_formulize_DE_SCOPE_REGULAR_GROUPS => $regularGroups) : array();
+		foreach($entryGroupsByTemplateGroup as $templateGroupId => $entryGroups) {
+			$templateGroupObject = $member_handler->getGroup($templateGroupId);
+			$heading = $templateGroupObject ? $templateGroupObject->getVar('name', 'n') : strval($templateGroupId); // formulize_popupSelect escapes headings
+			$availgroups[$heading] = isset($availgroups[$heading]) ? $availgroups[$heading] + $entryGroups : $entryGroups;
+		}
+	}
+}
+
 ob_start();
 scopeJavascript();
 formulize_popupHeader(_formulize_DE_PICKASCOPE, ob_get_clean());
@@ -160,7 +191,7 @@ formulize_popupHeader(_formulize_DE_PICKASCOPE, ob_get_clean());
 print "<form id='advscope' name='advscope' class='fz-card' method='post' action='" . XOOPS_URL."/modules/formulize/include/advscope.php?fid=$fid&frid=$frid'>\n";
 print "<h1 class='fz-card__title'>" . _formulize_DE_PICKASCOPE . "</h1>\n";
 
-$gcount = count((array) $availgroups);
+$gcount = count((array) $availgroups, COUNT_RECURSIVE); // the headings take a line each too
 $size = ($gcount<10) ? $gcount : 10 ;
 print formulize_popupField(_formulize_DE_AVAILGROUPS, formulize_popupSelect('newscope[]', $availgroups, $curgroups, "size='$size' multiple='multiple'"), '', 'newscope');
 

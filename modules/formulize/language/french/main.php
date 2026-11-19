@@ -264,6 +264,7 @@ define("_formulize_DE_AS_QUERYSOFAR", "Requested Query So Far:");
 define("_formulize_DE_AS_REMOVE", "Remove last item from the query");
 define("_formulize_DE_AVAILCOLS", "Colonnes disponibles:");
 define("_formulize_DE_AVAILGROUPS", "Groupes disponibles:");
+define("_formulize_DE_SCOPE_REGULAR_GROUPS", "Groupes ordinaires");
 define("_formulize_DE_BUILDQUERY", "Construisez votre requête");
 define("_formulize_DE_CALC_AVG", "Moyennes");
 define("_formulize_DE_CALC_BTEXT", "Quelles entrées?");
