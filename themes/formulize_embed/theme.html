@@ -234,8 +234,11 @@ if($xoopsUser) {
 						// position (formdisplay.php, entriesdisplay.php, mapdisplay.php) would silently never run.
 						//
 						// So ask the document whether load has already happened instead of assuming it has not.
+						//
+						// It fades in rather than using show() with a duration, which grows the body from its top left corner,
+						// so everything would move while it appears, and the frame's height would be reported as it grew.
             var formulizeShowPage = function() {
-                jQuery('body').show(200, function() {
+                jQuery('body').fadeIn(200, function() {
                     var formulize_pageShown = new CustomEvent('formulize_pageShown');
                     window.dispatchEvent(formulize_pageShown);
                     reportHeight();
