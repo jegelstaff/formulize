@@ -66,6 +66,7 @@ function floatAdminToolbar($toolbar) {
 	if (!$toolbar.length || $toolbar.hasClass('toolbar_fixed')) {
 		return;
 	}
+	var scrollTop = $(window).scrollTop();
 	var $after = $toolbar.nextAll(':visible:not(.toolbar_fixed)').first();
 	var before = $after.length ? $after.offset().top : 0;
 	var $space = $('<div class="toolbar-space"></div>').insertBefore($toolbar);
@@ -77,6 +78,12 @@ function floatAdminToolbar($toolbar) {
 		// measured again, since a space with a height stops the margins either side of it meeting, as they
 		// did through the toolbar
 		$space.height(gap + before - $after.offset().top);
+	}
+	// The page is back where it was, but Chrome and Firefox can scroll it down by the space's height when the space
+	// gets it (scroll anchoring), so it jumps after all. That happens when the page gets past this point in one
+	// move, such as from the top, not a little at a time. Put the scroll back, before the page is drawn.
+	if ($(window).scrollTop() != scrollTop) {
+		$(window).scrollTop(scrollTop);
 	}
 }
 
