@@ -47,7 +47,9 @@ function createRelationshipConnections(form1Id, formIds=[], subformInterface='')
 	$("#dialog-relationship-create-connection-content").empty();
 	let urlFormIds = formIds.length > 0 ? '&formIds[]=' + formIds.join('&formIds[]=') : '';
 	let si = subformInterface ? encodeURIComponent(subformInterface) : 0;
-	$("#dialog-relationship-create-connection-content").load('/modules/formulize/admin/relationship_create_connection.php?subformInterface='+si+'&form1Id=' + form1Id + urlFormIds, function() {
+	// asking for a 'new' form makes one, and Formulize only writes to the database on a POST. load() posts when it's given data
+	let postData = formIds.includes('new') ? {} : null;
+	$("#dialog-relationship-create-connection-content").load('/modules/formulize/admin/relationship_create_connection.php?subformInterface='+si+'&form1Id=' + form1Id + urlFormIds, postData, function() {
 		if($("#dialog-relationship-create-connection-content").html()) {
 			$("#dialog-relationship-create-connection").dialog('open');
 			$("#dialog-relationship-create-connection-content").fadeIn(100);

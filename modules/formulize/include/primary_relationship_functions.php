@@ -871,59 +871,31 @@ function addElementToMultiPageScreens($fid, $elementIdentifier, $makeNewPageIfNo
 }
 
 /**
- * Create a new form with the given name, including setting up default screens, etc, as if the user created it normally themselves
+ * Create a new form with the given name, the way the form settings page makes one, in the applications of the form it was made from
+ * Writes only happen on a POST request
  * @param string name - The name to use for the form
  * @param int|string|object - activeFormIdentifier - the id, handle or object of the form that was active when this creation event was triggered
- * @return int|boolean Returns the new form id, or false if creation failed
+ * @throws Exception if the form can't be made, including when the user is not a webmaster
+ * @return int|boolean Returns the new form id, or false if there is no name, no handle can be made from it, or there is no active form
  */
 function createNewFormWithName($name, $activeFormIdentifier) {
-	$result = false;
 	$form_handler = xoops_getmodulehandler('forms', 'formulize');
 	$activeForm = is_a($activeFormIdentifier, 'formulizeForm') ? $activeFormIdentifier : $form_handler->get($activeFormIdentifier);
-	if($name AND $activeForm) {
-		global $xoopsDB;
-		$formObject = $form_handler->create();
-		$handle = formulizeForm::sanitize_handle_name($name);
-		if(strlen($handle)) {
-			// setVar makes the handle unique
-			$formObject->setVar('form_handle', $handle);
-			$formObject->setVar('title', $name);
-			$formObject->setVar('single', '');
-			// insert creates the data table and the default screens for a new form
-			// forced, because the subform element's popup asks for this with a GET
-			if($fid = $form_handler->insert($formObject, force: true)) {
-
-				// assign this form as required to the active form's applications (the form which gave rise to this once)
-				$application_handler = xoops_getmodulehandler('applications', 'formulize');
-				$apps = $application_handler->getApplicationsByForm($activeForm->getVar('fid'));
-
-				$selectedAppIds = array();
-				foreach($apps as $thisAppObject) {
-					$selectedAppIds[] = $thisAppObject->getVar('appid');
-					$thisAppForms = $thisAppObject->getVar('forms');
-					$thisAppForms[] = $fid;
-					$thisAppObject->setVar('forms', serialize($thisAppForms));
-					if(!$application_handler->insert($thisAppObject, force: true)) {
-						print "Error: could not add the form to one of the applications properly: ".$xoopsDB->error();
-					}
-				}
-
-				// setup the menu links
-				$selectedAdminGroupIdsForMenu = array(XOOPS_GROUP_ADMIN);
-				$menuitems = "null::" . formulize_db_escape($formObject->getVar('title')) . "::fid=" . formulize_db_escape($fid) . "::::".implode(',',$selectedAdminGroupIdsForMenu)."::null";
-				if(!empty($selectedAppIds)) {
-					foreach($selectedAppIds as $appid) {
-						$application_handler->insertMenuLink(formulize_db_escape($appid), $menuitems, force: true);
-					}
-				} else {
-					$application_handler->insertMenuLink(0, $menuitems, force: true);
-				}
-
-				$result = $fid;
-			}
-		}
+	if(!$name OR !$activeForm OR !strlen(formulizeForm::sanitize_handle_name($name))) {
+		return false;
 	}
-	return $result;
+	$application_handler = xoops_getmodulehandler('applications', 'formulize');
+	$applicationIds = array();
+	foreach($application_handler->getApplicationsByForm($activeForm->getVar('fid')) as $thisAppObject) {
+		$applicationIds[] = $thisAppObject->getVar('appid');
+	}
+	// the same defaults as the form settings page: multiple entries per user, and webmasters can edit the form
+	$formObject = formulizeHandler::upsertFormSchemaAndResources(
+		array('form_title' => $name, 'single' => array(2 => 'off')),
+		array(XOOPS_GROUP_ADMIN),
+		$applicationIds ? $applicationIds : array(0)
+	);
+	return $formObject->getVar('fid');
 }
 
 /**
