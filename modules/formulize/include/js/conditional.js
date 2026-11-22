@@ -1,14 +1,16 @@
 // need to be global!
-var conditionalHTML = new Array();
-var governedElements = new Array();
-var relevantElements = new Array();
-var oneToOneElements = new Array();
-var elementScreenIds = new Array();
-var elementIsSimpleDisplayCondition = new Array();
+// This file runs again when the drawer shows a form over a page that already loaded it. Keep what the page set up,
+// so its conditional elements keep working. The drawer's form adds its own entries, which are keyed by entry id.
+var conditionalHTML = window.conditionalHTML || new Array();
+var governedElements = window.governedElements || new Array();
+var relevantElements = window.relevantElements || new Array();
+var oneToOneElements = window.oneToOneElements || new Array();
+var elementScreenIds = window.elementScreenIds || new Array();
+var elementIsSimpleDisplayCondition = window.elementIsSimpleDisplayCondition || new Array();
 
-var conditionalCheckInProgress = 0;
-var currentlyProcessingHandles = {};
-var completedHandlesInCurrentCascade = {};
+var conditionalCheckInProgress = window.conditionalCheckInProgress || 0;
+var currentlyProcessingHandles = window.currentlyProcessingHandles || {};
+var completedHandlesInCurrentCascade = window.completedHandlesInCurrentCascade || {};
 
 function callCheckCondition(name, callHistory = []) {
 	if(callHistory.length === 0) {

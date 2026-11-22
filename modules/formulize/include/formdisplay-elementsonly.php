@@ -432,6 +432,7 @@ $formHtml = "<form id='".htmlspecialchars($formname)."' data-fid='".intval($fid)
     .$tokenElement->render()
     ."<input type='hidden' name='formulize_entry_lock_token' value='".getEntryLockSecurityToken()."'>"
     ."</form>\n"
+    .formulize_conditionalHTMLCaptureDiv()
     .$tokenJs;
 
 // Which form buttons this screen presents, and what each is called. Decided by the same

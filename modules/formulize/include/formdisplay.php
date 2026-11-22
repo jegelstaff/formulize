@@ -3570,12 +3570,16 @@ function _drawJavascriptForConditionalElements($initCode) {
 
 	static $codeIncluded = false;
 
+	$code = "";
 	if(!$codeIncluded) {
 			$conditionalJsVersion = formulize_get_file_version('/modules/formulize/include/js/conditional.js');
 			$code = "
 				<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/conditional.js?v=".$conditionalJsVersion."'></script>\n
-				<div id='conditionalHTMLCapture' class='used-to-assign-html-then-read-innerHTML-so-we-always-get-standardized-conversion-of-quotes-urlencoding-etc' style='display: none;'></div>\n
 			";
+			// the drawer's endpoint puts everything printed here inside its form, so it writes the capture div itself, after the form
+			if(!isset($GLOBALS['formulize_elementsOnly_wrapperTemplateType']) OR $GLOBALS['formulize_elementsOnly_wrapperTemplateType'] !== 'drawer') {
+				$code .= formulize_conditionalHTMLCaptureDiv();
+			}
 			$codeIncluded = true;
 	}
 	$code .= "<script type='text/javascript'>
@@ -3584,6 +3588,12 @@ $initCode
 
 	return $code;
 
+}
+
+// conditional.js puts markup in this div and reads it back, so markup can be compared after the browser's own conversion of quotes, entities and so on.
+// It must not be inside the form whose elements it copies: a copy of a checked radio button would join the real one's group and take the checked state from it.
+function formulize_conditionalHTMLCaptureDiv() {
+	return "<div id='conditionalHTMLCapture' class='used-to-assign-html-then-read-innerHTML-so-we-always-get-standardized-conversion-of-quotes-urlencoding-etc' style='display: none;'></div>\n";
 }
 
 function compileGoverningElementsForConditionalElements($conditionalElements, $entries, $sub_entries) {
