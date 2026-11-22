@@ -1705,19 +1705,25 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 				]
 			],
 			'application_id_or_name' => [
+				'description' => 'Optional. The applications this form should belong to, by id or by name. Use the name of an existing application to add the form to it. Use a new name to create a new application. Use the list_applications tool to see the applications and their ids.',
 				'oneOf' => [
 					[
 						'type' => 'string',
-						'description' => 'Optional. The name of a new application to create, which this form will belong to.'
+						'description' => 'The name of the one application this form should belong to. If no application has this name already, then a new application will be created.'
 					],
 					[
 						'type' => 'integer',
-						'description' => 'Optional. The id of an existing application this form should belong to. Use the list_applications tool to find them.'
+						'description' => 'The id of the one application this form should belong to.'
 					],
 					[
 						'type' => 'array',
-						'items' => [ 'type' => 'integer' ],
-						'description' => 'Optional. The ids of all the applications this form should belong to. This replaces the current set, so include every application the form should be in, not just the ones you are adding.'
+						'items' => [
+							'oneOf' => [
+								[ 'type' => 'integer' ],
+								[ 'type' => 'string' ]
+							]
+						],
+						'description' => 'All the applications this form should belong to, each by id or by name. This replaces the current set, so include every application the form should be in, not just the ones you are adding.'
 					]
 				]
 			]
@@ -1973,35 +1979,113 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 	}
 
 	/**
-	 * Work out which applications a form should belong to, from the application_id_or_name argument.
-	 * Returns null when the caller did not mention applications at all, which tells
-	 * upsertFormSchemaAndResources to leave the form's application assignments alone.
+	 * Work out which applications a form should belong to, from the application_id_or_name argument. Each
+	 * value can be an id or a name, and a name is the application with that name, or a new application if none
+	 * has it. Every name is looked up before any application is made, so a name that more than one application
+	 * has is refused with nothing left behind.
 	 * @param array $arguments The tool arguments
-	 * @return array|null Application ids, or null to leave assignments untouched
-	 * @throws FormulizeMCPException if a new application cannot be created
+	 * @return array|null The part of the tool's response about applications: 'application_ids', the applications
+	 * the form should be in, and 'created_application_ids', the ones made for names that no application had. Null
+	 * when the caller did not mention applications, which tells upsertFormSchemaAndResources to leave the form's
+	 * applications alone.
+	 * @throws FormulizeMCPException if a name matches more than one application, or a new application cannot be made
 	 */
-	private function resolveApplicationIds($arguments) {
+	private function resolveApplications($arguments) {
+		$idsAndNames = $this->applicationIdsAndNames($arguments);
+		if($idsAndNames === null) {
+			return null;
+		}
+		$foundIds = $this->findApplications($idsAndNames);
+		$createdIds = $this->createApplicationsNamed(array_diff_key($idsAndNames, $foundIds));
+		$applicationIds = $foundIds + $createdIds;
+		ksort($applicationIds); // in the order they were given
+		return [
+			'application_ids' => array_values(array_unique($applicationIds)),
+			'created_application_ids' => array_values(array_unique($createdIds))
+		];
+	}
+
+	/**
+	 * The ids and names in the application_id_or_name argument, as a list. Ids are integers, names are
+	 * trimmed, and empty names are left out.
+	 * @param array $arguments The tool arguments
+	 * @return array|null The ids and names, or null if the argument is absent or holds no id or name
+	 */
+	private function applicationIdsAndNames($arguments) {
 		if(!array_key_exists('application_id_or_name', $arguments)) {
 			return null;
 		}
 		$value = $arguments['application_id_or_name'];
-		if(is_array($value)) {
-			return array_map('intval', $value);
-		}
-		if(is_numeric($value)) {
-			return array(intval($value));
-		}
-		if(is_string($value) AND trim($value) !== '') {
-			$application_handler = xoops_getmodulehandler('applications','formulize');
-			$newAppObject = $application_handler->create();
-			$newAppObject->setVar('name', trim($value));
-			if(!$application_handler->insert($newAppObject)) {
-				global $xoopsDB;
-				throw new FormulizeMCPException('Could not create new application. '.$xoopsDB->error(), 'database_error');
+		$given = is_array($value) ? $value : array($value);
+		$idsAndNames = array();
+		foreach($given as $idOrName) {
+			if(is_numeric($idOrName)) {
+				$idsAndNames[] = intval($idOrName);
+			} elseif(is_string($idOrName) AND trim($idOrName) !== '') {
+				$idsAndNames[] = trim($idOrName);
 			}
-			return array($newAppObject->getVar('appid'));
 		}
-		return null;
+		// an empty array is a request to take the form out of every application, but a lone empty name is no request at all
+		if(!is_array($value) AND empty($idsAndNames)) {
+			return null;
+		}
+		return $idsAndNames;
+	}
+
+	/**
+	 * The applications that already exist for a list of ids and names. A name matches an application with that
+	 * name, ignoring case. Names that match no application are left out, with the same keys as the list otherwise.
+	 * @param array $idsAndNames From applicationIdsAndNames()
+	 * @return array The application ids, keyed as in the list
+	 * @throws FormulizeMCPException if a name matches more than one application
+	 */
+	private function findApplications($idsAndNames) {
+		$application_handler = xoops_getmodulehandler('applications','formulize');
+		$foundIds = array();
+		foreach($idsAndNames as $key => $idOrName) {
+			if(is_int($idOrName)) {
+				$foundIds[$key] = $idOrName;
+				continue;
+			}
+			$matchingIds = $application_handler->getIdsByName($idOrName);
+			if(count($matchingIds) > 1) {
+				throw new FormulizeMCPException(
+					"More than one application is named '$idOrName', so it is not clear which one is meant. Their ids are ".implode(', ', $matchingIds).'. Nothing was changed.',
+					'invalid_data',
+					context: [ 'hint' => 'Give the id of the application you mean instead of its name. The list_applications tool shows what is in each one.' ]
+				);
+			}
+			if(count($matchingIds) == 1) {
+				$foundIds[$key] = $matchingIds[0];
+			}
+		}
+		return $foundIds;
+	}
+
+	/**
+	 * Make an application for each name. A name given twice, in any case, makes one application.
+	 * @param array $names The names
+	 * @return array The new application ids, keyed as the names were
+	 * @throws FormulizeMCPException if an application cannot be made
+	 */
+	private function createApplicationsNamed($names) {
+		$application_handler = xoops_getmodulehandler('applications','formulize');
+		$idsByName = array();
+		$createdIds = array();
+		foreach($names as $key => $name) {
+			$lowerName = mb_strtolower($name);
+			if(!isset($idsByName[$lowerName])) {
+				$newAppObject = $application_handler->create();
+				$newAppObject->setVar('name', $name);
+				if(!$application_handler->insert($newAppObject)) {
+					global $xoopsDB;
+					throw new FormulizeMCPException('Could not create new application. '.$xoopsDB->error(), 'database_error');
+				}
+				$idsByName[$lowerName] = intval($newAppObject->getVar('appid'));
+			}
+			$createdIds[$key] = $idsByName[$lowerName];
+		}
+		return $createdIds;
 	}
 
 	/**
@@ -2306,7 +2390,7 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 	 * - 'title': The name of the form (required).
 	 * - 'notes': Optional internal notes about the form.
 	 * - 'limit_entries': Optional. How many entries each person may make: 'off' = no limit (default), 'user' = one entry per user, 'group' = one entry per group. Either a plain value applying to everyone with an account, or a map of group id => value. See buildLimitEntriesArray().
-	 * - 'application_id_or_name': Optional. If omitted, the form will not be part of a specific application. If this is a number, it is treated as the ID of an application that this form should belong to. Use the list_applications tool to find the existing applications. If this is a string, it is used as the name of a new application which this form should be part of, and the new application will be created automatically by this tool.
+	 * - 'application_id_or_name': Optional. If omitted, the form will not be part of a specific application. An application id or name, or an array of them. A name is the existing application with that name, or a new one if none has it. See resolveApplications().
 	 * @return array An associative array containing details about the newly created form, including its ID, name, handle, limit entries setting, default screen IDs, associated application IDs, success status, and message.
 	 * @throws formulizeMCPException If there is an error creating the form or if required parameters are missing or invalid.
 	 */
@@ -2330,19 +2414,16 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 		}
 
 		// applications default to none for a new form, rather than being left untouched as they are on update
-		$applicationIds = $this->resolveApplicationIds($arguments);
-		if($applicationIds === null) {
-			$applicationIds = [0];
-		}
+		$applications = $this->resolveApplications($arguments) ?? [ 'application_ids' => [0], 'created_application_ids' => [] ];
 
 		$groupsThatCanEdit = array(XOOPS_GROUP_ADMIN);
 		try {
-			$formObject = formulizeHandler::upsertFormSchemaAndResources($formData, $groupsThatCanEdit, $applicationIds);
+			$formObject = formulizeHandler::upsertFormSchemaAndResources($formData, $groupsThatCanEdit, $applications['application_ids']);
 		} catch (Exception $e) {
 			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
 		}
 
-		return $this->formToolResponse($formObject, $applicationIds, 'Form and related resources created successfully');
+		return $this->formToolResponse($formObject, $applications, 'Form and related resources created successfully');
 	}
 
 	/**
@@ -2379,26 +2460,26 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 		$formData['fid'] = $formId; // this is what makes upsertFormSchemaAndResources update rather than create
 
 		// null leaves the form's application assignments untouched
-		$applicationIds = $this->resolveApplicationIds($arguments);
+		$applications = $this->resolveApplications($arguments);
 
 		try {
-			$formObject = formulizeHandler::upsertFormSchemaAndResources($formData, array(), $applicationIds);
+			$formObject = formulizeHandler::upsertFormSchemaAndResources($formData, array(), $applications['application_ids'] ?? null);
 		} catch (Exception $e) {
 			throw new FormulizeMCPException($e->getMessage(), 'invalid_data');
 		}
 
-		return $this->formToolResponse($formObject, $applicationIds, 'Form settings updated successfully');
+		return $this->formToolResponse($formObject, $applications, 'Form settings updated successfully');
 	}
 
 	/**
 	 * The response both form tools return, so what a caller sees after creating a form and after updating
 	 * one has the same shape.
 	 * @param object $formObject The saved form
-	 * @param array|null $applicationIds The applications that were assigned, or null if they were left alone
+	 * @param array|null $applications From resolveApplications(), or null if the form's applications were left alone
 	 * @param string $message
 	 * @return array
 	 */
-	private function formToolResponse($formObject, $applicationIds, $message) {
+	private function formToolResponse($formObject, $applications, $message) {
 		$response = [
 			'form_id' => $formObject->getVar('fid'),
 			'title' => $formObject->getVar('title'),
@@ -2418,8 +2499,8 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 			'default_form_screen_id' => $formObject->getVar('defaultform'),
 			'default_list_screen_id' => $formObject->getVar('defaultlist'),
 		];
-		if($applicationIds !== null) {
-			$response['application_ids'] = $applicationIds;
+		if($applications !== null) {
+			$response = array_merge($response, $applications);
 		}
 		$response['success'] = true;
 		$response['message'] = $message;

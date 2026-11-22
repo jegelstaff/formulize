@@ -112,6 +112,8 @@ test.afterAll(async ({ browser }) => {
 	await deleteTheForms(browser);
 	const left = dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title IN ('${sqlEscape(CASES_FORM)}', '${sqlEscape(EXHIBITIONS_FORM)}')`);
 	expect(left, 'the forms this file made should be gone').toEqual([]);
+	// the forms were put in Museum by name, which should find it, not make another
+	expect(dbQuery(`SELECT appid FROM ${dbPrefix()}_formulize_applications WHERE name = 'Museum'`).length, 'there should still be one Museum application').toBe(1);
 	await api?.dispose();
 });
 

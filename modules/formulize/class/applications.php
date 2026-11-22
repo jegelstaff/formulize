@@ -438,6 +438,23 @@ class formulizeApplicationsHandler {
     return $this->get('all',$fid);
   }
 
+  /**
+   * The ids of the applications with this name, ignoring case and any spaces at either end.
+   * Names aren't unique, so there can be more than one.
+   * @param string $name The application name
+   * @return array The ids, oldest first
+   */
+  function getIdsByName($name) {
+    $ids = array();
+    $sql = "SELECT appid FROM ".$this->db->prefix("formulize_applications")." WHERE LOWER(TRIM(`name`)) = LOWER('".formulize_db_escape(trim($name))."') ORDER BY appid";
+    if($result = $this->db->query($sql)) {
+      while($row = $this->db->fetchArray($result)) {
+        $ids[] = intval($row['appid']);
+      }
+    }
+    return $ids;
+  }
+
   function insert(&$appObject, $force=false) {
     if( get_class($appObject) != 'formulizeApplication'){
         return false;

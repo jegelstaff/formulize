@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { dbQuery, dbPrefix, getSystemConfig, setSystemConfig, getUserByLogin, login, deleteMuseumForm } from '../../utils';
+import { dbQuery, dbPrefix, sqlEscape, getSystemConfig, setSystemConfig, getUserByLogin, login, deleteMuseumForm, saveAdminForm, waitForAdminPageReady, waitForJQueryAnimations } from '../../utils';
 
 // A Subform Interface shows entries from a source form, so the two forms have to be connected. When they
 // are not, the create subform tool promises to connect them: a linked element is made in the source form,
@@ -11,6 +11,10 @@ import { dbQuery, dbPrefix, getSystemConfig, setSystemConfig, getUserByLogin, lo
 //
 // The source form is fixed once the Subform Interface exists, as in the admin UI, so the update tool has to
 // refuse to change it.
+//
+// The form tools also take applications by name. A name is the application with that name, or a new one when
+// none has it, and a name that more than one application has is refused, so a client that names an application
+// it means to use doesn't make another one alongside it.
 //
 // The forms made here are deleted through the admin UI at the end, which also makes this the place that
 // checks form deletion: that it removes everything attached to a form (permissions, groupscope settings,
@@ -27,13 +31,19 @@ const MCP = '/mcp/index.php/mcp';
 // Every form this file makes has a title starting with this, so that forms left behind by an interrupted
 // earlier run can be found and removed before starting
 const TITLE_PREFIX = 'MCP Subform Test';
+// The applications this file makes have names starting with this. The admin home lists applications by name and
+// opens the first one, so the name has to sort after Museum and Staff Management, or the specs running alongside
+// this one would find a different application open.
+const APP_PREFIX = 'Test Application For MCP';
+const APP_NAME = `${APP_PREFIX} Names`;
 
 let apiKey = null;
 let adminUid = null;
 let mcpServerWasEnabled = null;
 let requestId = 0;
 // The forms are made in the Museum application, so that they can be deleted through the admin UI with
-// deleteMuseumForm, the same as the other validate specs' throwaway forms
+// deleteMuseumForm, the same as the other validate specs' throwaway forms. They're put there by name, and
+// the id is read from the database only to check what the tools did.
 let museumAppId = null;
 // Every form made, so afterAll can remove them all, however far the tests got
 const createdFids = [];
@@ -44,6 +54,9 @@ let parentPiId = null;
 let childFid = null;
 let childElementId = null;
 let subformId = null;
+let appsFid = null;
+// the Museum application's id, as create_form reported it
+let museumIdFromTool = null;
 
 /**
  * Call an MCP tool as the admin user.
@@ -114,7 +127,7 @@ function primaryRelationshipLinks(fidA, fidB) {
  * difference here, since the first element with data in a form becomes its Principal Identifier regardless.
  */
 async function makeFormWithTextBox(request, title, pi) {
-	const form = await callToolOk(request, 'create_form', { title: `${TITLE_PREFIX} ${title}`, application_id_or_name: museumAppId });
+	const form = await callToolOk(request, 'create_form', { title: `${TITLE_PREFIX} ${title}`, application_id_or_name: 'Museum' });
 	const fid = parseInt(form.form_id, 10);
 	createdFids.push(fid);
 	const element = await callToolOk(request, 'create_text_box_element', {
@@ -195,6 +208,58 @@ function seedRowsForForm(fid, otherFid) {
 }
 
 /**
+ * The ids of the applications with this exact name, or with names starting with APP_PREFIX if none is given.
+ */
+function applicationIds(name = null) {
+	const where = name === null ? `name LIKE '${sqlEscape(APP_PREFIX)}%'` : `name = '${sqlEscape(name)}'`;
+	return dbQuery(`SELECT appid FROM ${dbPrefix()}_formulize_applications WHERE ${where} ORDER BY appid`)
+		.map(row => parseInt(row[0], 10));
+}
+
+/**
+ * The ids of the applications a form is in.
+ */
+function applicationsOfForm(fid) {
+	return dbQuery(`SELECT appid FROM ${dbPrefix()}_formulize_application_form_link WHERE fid = ${fid} ORDER BY appid`)
+		.map(row => parseInt(row[0], 10));
+}
+
+/**
+ * Delete the applications this file made, from the admin home. Run it before deleting the forms: a form in
+ * several applications is listed in each of them, and deleteMuseumForm expects to find it once.
+ */
+async function deleteApplications(browser) {
+	const ids = applicationIds();
+	if (!ids.length) { return; }
+	const page = await browser.newPage();
+	try {
+		await login(page, 'admin');
+		for (const aid of ids) {
+			await page.goto('/modules/formulize/admin/ui.php?page=home');
+			await waitForAdminPageReady(page);
+			// The Delete link is inside the application's section, so open it. A click on a section that is
+			// open closes it, so click only while the link is hidden, and give the section time to slide open.
+			const deleteLink = page.locator(`a.deleteapplink[target="${aid}"]`);
+			const section = page.locator('div[id^="drawer-"]').filter({ has: deleteLink });
+			await expect(async () => {
+				if (!(await deleteLink.isVisible())) {
+					await section.locator('h3 a').click();
+				}
+				await expect(deleteLink).toBeVisible({ timeout: 2000 });
+			}).toPass({ timeout: 20000 });
+			await waitForJQueryAnimations(page);
+			// it asks for confirmation, and the page reloads without the application once it is deleted
+			page.once('dialog', dialog => dialog.accept());
+			await deleteLink.click();
+			await expect(deleteLink).toHaveCount(0);
+			await waitForAdminPageReady(page);
+		}
+	} finally {
+		await page.close();
+	}
+}
+
+/**
  * Delete forms through the admin UI. Deleting a form takes its elements, screens, menu links, data table and
  * Primary Relationship links with it, so this removes everything these tests made, including the linked
  * elements the tools put in the source forms, since every source form here is one of these forms too.
@@ -220,7 +285,8 @@ test.beforeAll(async ({ browser }) => {
 	expect(museum.length, 'the Museum application from the setup tests should exist').toBe(1);
 	museumAppId = parseInt(museum[0][0], 10);
 
-	// A run that was interrupted before its afterAll could leave forms behind
+	// A run that was interrupted before its afterAll could leave applications and forms behind
+	await deleteApplications(browser);
 	await deleteForms(browser, formsMadeByThisFile());
 
 	// Straight into the database, as test 042 does for the Public API. 03-validate-sequential/040 covers turning the MCP
@@ -238,6 +304,8 @@ test.beforeAll(async ({ browser }) => {
 // and that would leave the forms behind. afterAll runs either way.
 test.afterAll(async ({ browser }) => {
 	try {
+		await deleteApplications(browser);
+		expect(applicationIds(), 'the applications these tests made should be gone').toEqual([]);
 		await deleteForms(browser, createdFids);
 		// Nothing these tests made is left: no forms, no elements in them, no connections to them, and nothing
 		// attached to them (create_form grants permissions, and the last test seeds everything else)
@@ -426,5 +494,68 @@ test.describe('MCP subform tools connect the forms they join', () => {
 		expect(rowsAttachedToForm(childFid)).toEqual(childRowsBefore);
 		// The inheriting form keeps its own copy of the permissions, and stops pointing at a form that is gone
 		expect(dbQuery(`SELECT parent_perm_fid FROM ${dbPrefix()}_formulize_id WHERE id_form = ${childFid}`)).toEqual([['0']]);
+	});
+});
+
+test.describe('MCP form tools find applications by name', () => {
+
+	test('create_form puts a form in the application with the name given, ignoring case', async ({ request }) => {
+		const form = await callToolOk(request, 'create_form', { title: `${TITLE_PREFIX} Applications`, application_id_or_name: 'museum' });
+		appsFid = parseInt(form.form_id, 10);
+		createdFids.push(appsFid);
+
+		expect(form.application_ids).toEqual([museumAppId]);
+		expect(form.created_application_ids).toEqual([]);
+		museumIdFromTool = form.application_ids[0];
+		expect(applicationsOfForm(appsFid)).toEqual([museumAppId]);
+		expect(applicationIds('Museum'), 'no other Museum application should be made').toEqual([museumAppId]);
+	});
+
+	test('update_form makes an application for a name that none has, and finds it after that', async ({ request }) => {
+		expect(appsFid && museumIdFromTool, 'the previous test should have made the form').toBeTruthy();
+		expect(applicationIds(), 'no application should have the name yet, or this test proves nothing').toEqual([]);
+		// An id and a name together. Museum stays in the list, so the form is still in Museum for afterAll to delete it from.
+		const args = { form_id: appsFid, application_id_or_name: [museumIdFromTool, APP_NAME] };
+
+		const first = await callToolOk(request, 'update_form', args);
+		const made = applicationIds(APP_NAME);
+		expect(made.length, 'one application should be made').toBe(1);
+		expect(first.created_application_ids).toEqual(made);
+		expect(first.application_ids).toEqual([museumAppId, made[0]]);
+
+		const second = await callToolOk(request, 'update_form', args);
+		expect(second.created_application_ids).toEqual([]);
+		expect(second.application_ids).toEqual([museumAppId, made[0]]);
+		expect(applicationIds(APP_NAME), 'the name should find the application, not make another').toEqual(made);
+		expect(applicationsOfForm(appsFid)).toEqual([museumAppId, made[0]].sort((a, b) => a - b));
+	});
+
+	test('a name that more than one application has is refused, and nothing changes', async ({ page, request }) => {
+		expect(applicationIds(APP_NAME).length, 'the previous test should have made the application').toBe(1);
+
+		// A second application with the same name, made the way a person makes one, from a form's settings
+		await login(page, 'admin');
+		await page.goto(`/modules/formulize/admin/ui.php?page=form&fid=${appsFid}&tab=settings`);
+		await waitForAdminPageReady(page);
+		await page.locator('#new-app-yes').check();
+		await page.locator('#applications-name').fill(APP_NAME);
+		await saveAdminForm(page);
+		await expect.poll(() => applicationIds(APP_NAME).length, 'the admin UI should make a second application with the name').toBe(2);
+		const sameName = applicationIds(APP_NAME);
+		const appsBefore = applicationsOfForm(appsFid);
+
+		// The new name comes after the one that can't be resolved, and must not be made either
+		const unusedName = `${APP_PREFIX} Nobody Has`;
+		const { error } = await callTool(request, 'update_form', {
+			form_id: appsFid,
+			application_id_or_name: [museumIdFromTool, APP_NAME, unusedName]
+		});
+		expect(error, 'the tool should refuse').not.toBeNull();
+		for (const aid of sameName) {
+			expect(error.message, 'the error should list the applications with the name').toContain(String(aid));
+		}
+		expect(applicationsOfForm(appsFid)).toEqual(appsBefore);
+		expect(applicationIds(unusedName)).toEqual([]);
+		expect(applicationIds(APP_NAME)).toEqual(sameName);
 	});
 });
