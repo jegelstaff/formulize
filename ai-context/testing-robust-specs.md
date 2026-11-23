@@ -122,6 +122,8 @@ CI runs the whole suite in several environments at once, each a job on its own r
 
 A browser feature only one browser has, such as clearing the cache over a DevTools session or emulating a phone, is skipped in the others with `test.skip()` and the reason. `aDayPassesForTheWorker()` does this itself.
 
+Firefox runs with its own user agent, not the one in Playwright's profile. Playwright gives an overridden user agent to a Firefox page and not to its service worker. Our [worker](installable-app.md) makes the page loads and the page makes the POSTs, so with an override each [security token](security-tokens.md) is made for one user agent and checked against another, and every save is refused. Don't set `userAgent` in a spec that runs in Firefox.
+
 Each job runs the suite in four passes, in `.github/workflows/e2e-test-manual.yml`:
 
 | Folder | Flags |
@@ -158,7 +160,7 @@ A spec is written once, for both. Do what a person does through the helpers in t
 | To | Use | Why there's a helper |
 |---|---|---|
 | Follow a menu link | `openMainMenu()`, `goToMenuLink()`, `ensureMainMenuOpen()` | Lyris's sidebar is closed on most pages, and closed it has no width, so its links count as visible to Playwright and a click can't reach them |
-| Open an entry from a list, by its row's link or the Add button | `openEntry(page, trigger)` | It opens on the form screen or in the drawer, as the list's `editdestination` says, and it waits for whichever |
+| Open an entry from a list, by its row's link or the Add button, or add one with a subform's Add button | `openEntry(page, trigger)` | It opens on the form screen or in the drawer, as the list's `editdestination` says, and it waits for whichever. The trigger can be a function, for a button `clickListAction()` has to find, such as a list's Add multiple entries |
 | Look for an entry's elements | `entryArea(page)` | It's the drawer's body while the drawer is open, and the page otherwise. Over a list, `page.getByText()` and `page.getByLabel()` also match the list's cells and its "Search …" boxes, and they count hidden matches too |
 | Click an entry's own button without saving, such as Close | `entryButton(page, name)` | In the drawer they're in its footer, outside `entryArea` |
 | Save | `saveFormulizeForm()`, `saveAndCloseEntry()` | They save in the drawer when it's open. Save and Close is a link on a form screen and a button in the drawer |

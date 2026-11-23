@@ -1676,16 +1676,42 @@ export async function drawerEntryReady(page, timeout = 60000) {
 
 /**
  * Open an entry from a list, by clicking something on the list, such as a row's link or the Add button, and wait
- * for it: the form screen it goes to, or the entry in the drawer, as the list's settings say.
+ * for it: the form screen it goes to, or the entry in the drawer, as the list's settings say. A subform's Add button
+ * works the same way: it draws the form again, on a new page or in the drawer.
  * @param {import('@playwright/test').Page} page
- * @param {import('@playwright/test').Locator} trigger - What to click
+ * @param {import('@playwright/test').Locator|function(): Promise<void>} trigger - What to click, or a function that
+ *   clicks it, for a button that has to be found first, as clickListAction() does
  */
 export async function openEntry(page, trigger) {
 	await page.waitForLoadState('load');
-	await trigger.click();
-	// the drawer opens as the click is handled, and a list that goes to a form screen starts navigating instead
-	await expect.poll(async () => (await drawerIsOpen(page)) || !(await trigger.isVisible().catch(() => false)), { timeout: 60000 }).toBe(true);
-	if (await drawerIsOpen(page)) {
+	// Mark this page, and any form the drawer has from before, so what comes next can be told apart from it. What was
+	// clicked can't tell them apart, because it can be on the next page too, as a subform's Add button is.
+	await page.evaluate(() => {
+		window.e2eBeforeOpening = true;
+		const form = document.querySelector('.formulize-drawer form#formulize_drawer');
+		if (form) {
+			form.e2eBeforeOpening = true;
+		}
+	});
+	await (typeof trigger === 'function' ? trigger() : trigger.click());
+	// either a new page arrives, or the drawer gets a form it didn't have
+	const opened = async () => {
+		try {
+			return await page.evaluate(() => {
+				if (!window.e2eBeforeOpening) {
+					return 'page';
+				}
+				const drawer = document.querySelector('.formulize-drawer');
+				const form = drawer && !drawer.hidden && drawer.querySelector('form#formulize_drawer');
+				return form && !form.e2eBeforeOpening ? 'drawer' : '';
+			});
+		} catch (e) {
+			return ''; // the page is on its way
+		}
+	};
+	let where = '';
+	await expect.poll(async () => (where = await opened()), { timeout: 60000 }).not.toBe('');
+	if (where === 'drawer') {
 		await drawerEntryReady(page);
 	} else {
 		await page.waitForLoadState('load');
@@ -2059,8 +2085,10 @@ export async function chooseSiteThemes(page, site, admin) {
 	await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 	await page.locator('#theme_set').selectOption(site);
 	await page.locator('#theme_admin_set').selectOption(admin);
+	// A save comes back to this page with scrollx in its address, which it didn't have before. One that's refused goes
+	// to the system preferences instead.
 	await Promise.all([
-		page.waitForURL(/page=appearance/),
+		page.waitForURL(/view=settings.*scrollx=/),
 		page.getByRole('button', { name: 'Save your changes' }).click(),
 	]);
 	await page.goto(settingsUrl);

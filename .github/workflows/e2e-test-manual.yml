@@ -199,6 +199,7 @@ jobs:
         docker compose down --remove-orphans || true
 
     - name: Run Docker Compose up
+      id: containers
       run: |
         if [ "${{ inputs.skip_docker_build }}" == "false" ]; then
           echo "Building and starting containers..."
@@ -208,59 +209,65 @@ jobs:
           docker compose up -d
         fi
 
+    # In the jobs that don't decide the run, a logic test that fails doesn't stop the others, or the specs: they only
+    # need the containers. The job still fails.
     - name: PHP logic tests (A4 password hashing)
-      if: ${{ matrix.php }}
+      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/password_hashing_test.php
 
     - name: PHP logic tests ({element_handle} reference binding)
-      if: ${{ matrix.php }}
+      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/reference_binding_test.php
 
     - name: PHP logic tests (T3.1' normalize-then-escape form sinks)
-      if: ${{ matrix.php }}
+      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/normalize_then_escape_test.php
 
     - name: PHP logic tests (EMPTYSET searches and search term prefixes)
-      if: ${{ matrix.php }}
+      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/empty_set_search_test.php
 
     - name: PHP logic tests (partial date searches)
-      if: ${{ matrix.php }}
+      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/date_search_test.php
 
     - name: PHP logic tests (partial date searches, as a site that shows dates as d/m/Y)
-      if: ${{ matrix.php }}
+      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/date_search_test.php --date-format=d/m/Y
 
     - name: PHP logic tests (the formats time elements show times in)
-      if: ${{ matrix.php }}
+      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/time_format_test.php
 
     - name: PHP logic tests (blocked file-extension lists in step)
-      if: ${{ matrix.php }}
+      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/blocked_extensions_sync_test.php
 
     - name: PHP logic tests (the text of Other options in element values)
-      if: ${{ matrix.php }}
+      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/other_text_values_test.php
 
     - name: PHP logic tests (every theme's screen defaults are complete)
-      if: ${{ matrix.php }}
+      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/screen_defaults_test.php
 
     - name: PHP logic tests (what a screen's templates take along to another theme)
-      if: ${{ matrix.php }}
+      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/screen_template_copy_test.php
 
     - name: PHP logic tests (what the update clears out of the screens' own templates, and deleting a screen's)
-      if: ${{ matrix.php }}
+      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/screen_template_cleanup_test.php
 
     - name: Install dependencies
+      id: dependencies
+      if: ${{ !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
       run: npm ci
       working-directory: tests/e2e
 
     - name: Install Playwright Browsers
+      id: browsers
+      if: ${{ !cancelled() && (success() || (!matrix.decides && steps.dependencies.outcome == 'success')) }}
       run: npx playwright install ${{ matrix.browser }} --with-deps
       working-directory: tests/e2e
 
@@ -274,6 +281,7 @@ jobs:
     # sequential and appearance specs stop at theirs too, since they change what the specs after them stand on.
     - name: Run Playwright setup tests (sequential)
       id: setup
+      if: ${{ !cancelled() && (success() || (!matrix.decides && steps.browsers.outcome == 'success')) }}
       env:
         E2E_REPORT_DIR: test-report/${{ inputs.test_filter && 'filtered' || '01-setup' }}
       run: |
@@ -289,7 +297,7 @@ jobs:
       working-directory: tests/e2e
 
     - name: Run Playwright validation tests (concurrent)
-      if: ${{ !inputs.test_filter }}
+      if: ${{ !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
       env:
         E2E_REPORT_DIR: test-report/02-validate
       run: |

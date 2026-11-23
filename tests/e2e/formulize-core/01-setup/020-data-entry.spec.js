@@ -49,7 +49,7 @@ test.describe('Data Entry for Collections', () => {
 		await login(page, 'ahstaff', '12345');
 		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-		await openEntry(page, page.getByRole('button', { name: 'Add Collections', exact: true }));
+		await openEntry(page, () => clickListAction(page, 'Add Collections', { exact: true }));
   	await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('Ancient History');
 	  await entryArea(page).getByRole('checkbox', { name: 'Children' }).check();
   	await entryArea(page).getByRole('checkbox', { name: 'Adults' }).check();
@@ -61,7 +61,7 @@ test.describe('Data Entry for Collections', () => {
 		await login(page, 'mhstaff', '12345');
 		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-		await openEntry(page, page.getByRole('button', { name: 'Add Collections', exact: true }));
+		await openEntry(page, () => clickListAction(page, 'Add Collections', { exact: true }));
   	await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('Modern History');
 	  await entryArea(page).getByRole('checkbox', { name: 'Children' }).check();
   	await entryArea(page).getByRole('checkbox', { name: 'Adults' }).check();
@@ -73,7 +73,7 @@ test.describe('Data Entry for Collections', () => {
 		await login(page, 'curator1', '12345');
 		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-		await openEntry(page, page.getByRole('button', { name: 'Add Collections' }));
+		await openEntry(page, () => clickListAction(page, 'Add Collections'));
   	await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('Coins');
    	await entryArea(page).getByRole('checkbox', { name: 'Adults' }).check();
 		await saveFormulizeForm(page);
@@ -84,7 +84,7 @@ test.describe('Data Entry for Collections', () => {
 		await login(page, 'curator1', '12345');
 		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-		await openEntry(page, page.getByRole('button', { name: 'Add Collections' }));
+		await openEntry(page, () => clickListAction(page, 'Add Collections'));
 		await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('Weapons');
 		await entryArea(page).getByRole('checkbox', { name: 'Children' }).check();
    	await entryArea(page).getByRole('checkbox', { name: 'Adults' }).check();

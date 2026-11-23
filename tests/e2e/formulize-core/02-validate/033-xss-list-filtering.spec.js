@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveFormulizeForm, dbQuery, dbPrefix, openMainMenu, openEntry, entryArea, saveAndCloseEntry } from '../../utils';
+import { login, saveFormulizeForm, dbQuery, dbPrefix, openMainMenu, openEntry, entryArea, saveAndCloseEntry, clickListAction } from '../../utils';
 
 /**
  * T2 (list pipeline) security regression tests.
@@ -35,7 +35,7 @@ test.describe('T2 - XSS filtering in list output', () => {
 		// Create a Collection whose Name is the payload (Name is a plain-text element).
 		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-		await openEntry(page, page.getByRole('button', { name: 'Add Collections', exact: true }));
+		await openEntry(page, () => clickListAction(page, 'Add Collections', { exact: true }));
 		await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill(PLAIN_TEXT_PAYLOAD);
 		await entryArea(page).getByRole('checkbox', { name: 'Children' }).check();
 		await entryArea(page).getByRole('checkbox', { name: 'Adults' }).check();

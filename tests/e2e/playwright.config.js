@@ -10,6 +10,14 @@ if (!BROWSER_DEVICES[E2E_BROWSER]) {
   throw new Error(`E2E_BROWSER is "${E2E_BROWSER}". It must be one of: ${Object.keys(BROWSER_DEVICES).join(', ')}`);
 }
 
+/* Firefox uses its own user agent. The one Playwright's Firefox profile gives reaches the page and not the service
+   worker, which loads the pages (modules/formulize/pwa/worker.js), so the server would see two browsers. A security
+   token only works from the browser it was made for, so every save would be refused. */
+const device = { ...devices[BROWSER_DEVICES[E2E_BROWSER]] };
+if (E2E_BROWSER === 'firefox') {
+  delete device.userAgent;
+}
+
 /* Where the HTML report goes. Each run empties the folder first, so CI gives each of its runs a folder of its own. */
 const REPORT_DIR = process.env.E2E_REPORT_DIR || './test-report';
 
@@ -82,7 +90,7 @@ module.exports = defineConfig({
   projects: [
     {
       name: E2E_BROWSER,
-      use: { ...devices[BROWSER_DEVICES[E2E_BROWSER]] }
+      use: device
     }
   ]
 });

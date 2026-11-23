@@ -18,7 +18,7 @@ For how CI runs the suite, see [Concurrency](testing-robust-specs.md#concurrency
 
 **`page.goto: net::ERR_ABORTED` next to a test timeout means the navigation hung.** Teardown aborted it. In the trace, the `goto` has a `before` and no `after` until the After Hooks.
 
-**A red run can hide what's behind it.** With `maxFailures: 1`, a failing spec stops everything after it, so breakage in a later spec can stay hidden for days. When a later spec suddenly fails, find the last run that reached it, not the last commit. That's how the job that decides the run behaves. The other environments' jobs carry on once setup has passed, and run all of `02-validate`, so they can show several failures at once. A failure in `03-validate-sequential` or `04-appearance` there may come from an earlier step that failed and left the system changed.
+**A red run can hide what's behind it.** With `maxFailures: 1`, a failing spec stops everything after it, so breakage in a later spec can stay hidden for days. When a later spec suddenly fails, find the last run that reached it, not the last commit. That's how the job that decides the run behaves. The other environments' jobs carry on past a PHP logic test that fails, and past anything once setup has passed, and run all of `02-validate`, so they can show several failures at once. A failure in `03-validate-sequential` or `04-appearance` there may come from an earlier step that failed and left the system changed.
 
 **Consecutive red runs may be different failures.** Compare their annotations. A downloaded report belongs to the run it came from, so check that it's the one you're looking at.
 

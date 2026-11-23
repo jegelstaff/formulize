@@ -56,7 +56,7 @@ In order:
 
 Steps 7 to 9 are skipped when the manual run is given a test filter, because a partly built system is not the system they are asking about.
 
-In `mariadb-chromium-anari`, the first failure stops the job, and the steps after it are skipped. The other jobs go on as far as they can, so one run shows more of what's wrong in an environment that's new. Once their setup specs pass, every later step runs, even after one that failed, and the validate specs in step 7 run to the end rather than stopping at their first failure. Their setup, sequential and appearance specs still stop at their first failure, because each of those specs builds on or changes what the ones after it use.
+In `mariadb-chromium-anari`, the first failure stops the job, and the steps after it are skipped. The other jobs go on as far as they can, so one run shows more of what's wrong in an environment that's new. A PHP logic test that fails doesn't stop the steps after it. Once their setup specs pass, every later step runs, even after one that failed, and the validate specs in step 7 run to the end rather than stopping at their first failure. Their setup, sequential and appearance specs still stop at their first failure, because each of those specs builds on or changes what the ones after it use.
 
 A few tests use something only one browser has, such as emulating a phone or clearing the browser's cache, and they're skipped in the others, with the reason in the report.
 
