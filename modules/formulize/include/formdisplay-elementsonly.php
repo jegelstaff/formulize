@@ -577,7 +577,10 @@ window.officeUseOnlyToggle = function() {
 
 // validation + entry-lock cleanup helpers, keyed to this form's name so multiple
 // elements-only forms can coexist on a page.
-// NOTE: elements-only validation does not currently support unique value checks.
+// NOTE: the element validation code collected here is written for full screen's xoopsFormValidate_<form>(leave, myform),
+// and this function takes only myform. The unique value checks in the text and user account elements use leave, so here
+// they throw and the save does nothing, and their answer from the server calls full screen's validateAndSubmit().
+// See ai-context/drawer.md.
 $validationJs = "<script type='text/javascript'>
 function xoopsFormValidate_".$formname."(myform) {
 "

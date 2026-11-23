@@ -57,4 +57,4 @@ Drawing a form in elements-only mode skips `drawJavascript()`, so the endpoint h
 
 **Conditional elements** are drawn by the outermost form, which here is the drawer's. See [conditions](conditions.md#which-form-draws-the-javascript).
 
-Elements-only validation doesn't run unique value checks.
+**Validation runs element code written for full screen.** Full screen's validation function is `xoopsFormValidate_<form>(leave, myform)`, and the endpoint's takes only `myform`. The unique value checks in the text and user account elements use `leave`, so in the drawer they throw, and the save does nothing. Their answer from the server also calls full screen's `validateAndSubmit()`, which a list page doesn't have.
