@@ -201,7 +201,7 @@ test('Make an exhibition with a display case, each with a conditional element an
 	const caseName = await tool('create_text_box_element', { form_id: casesFid, type: 'text', caption: 'Name', handle: 'dct_case_name', properties: {}, principal_identifier: true });
 	await tool('create_list_element', { form_id: casesFid, type: 'radio', caption: 'Lighting', handle: 'dct_case_lighting', properties: { options: ['Natural', 'Spotlit'] } });
 	await tool('create_list_element', {
-		form_id: casesFid, type: 'radio', caption: 'Spotlight colour', handle: 'dct_case_spotlight', properties: { options: ['Warm', 'Cool'] }, required: true,
+		form_id: casesFid, type: 'radio', caption: 'Spotlight colour', handle: 'dct_case_spotlight', properties: { options: ['Warm', 'Cool'] },
 		display_conditions: [{ element: 'dct_case_lighting', operator: '=', value: 'Spotlit', type: 'match-all' }],
 	});
 	await tool('create_text_box_element', { form_id: casesFid, type: 'textarea', caption: 'Notes', handle: 'dct_case_notes', properties: { useRichTextEditor: 1 } });
@@ -436,6 +436,10 @@ async function dialogFrom(page, action, answer = 'accept') {
 const drawerSave = page => drawer(page).locator('.formulize-drawer__foot input[name="save"]');
 
 test('The drawer waits for conditional elements before it saves', async ({ page }) => {
+	// The Spotlight colour has to be given when it shows. It's made required now, after Case Two exists, because MCP asks for
+	// every required element when it makes an entry, even one whose condition hides it, as Case Two's does.
+	await tool('update_list_element', { element_identifier: 'dct_case_spotlight', required: true });
+	expect(dbQuery(`SELECT ele_required FROM ${dbPrefix()}_formulize WHERE ele_handle = 'dct_case_spotlight'`)[0][0], 'the Spotlight colour should be required').toBe('1');
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 	await openDisplayCaseInDrawer(page, otherCaseEntryId, 'dct_case_lighting');
 
