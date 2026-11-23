@@ -101,7 +101,7 @@ class formulizeUserAccountTimezoneElementHandler extends formulizeUserAccountEle
 			return new XoopsFormLabel($caption, $this->makeValueSafeForReadOnlyDisplay($ele_value, $element->getVar('ele_handle'), $entry_id), $markupName);
 		}
 		$timezones = formulize_getTimezoneList();
-		$html = '<select name="'.$markupName.'" id="'.$markupName.'" onchange="javascript:formulizechanged=1;">';
+		$html = '<select name="'.$markupName.'" id="'.$markupName.'">';
 		foreach($timezones as $tz) {
 			$selected = ($tz == $ele_value) ? ' selected="selected"' : '';
 			$html .= '<option value="'.htmlspecialchars($tz, ENT_QUOTES).'"'.$selected.'>'.htmlspecialchars($tz, ENT_QUOTES).'</option>';

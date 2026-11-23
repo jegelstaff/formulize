@@ -112,7 +112,6 @@ class formulizeUserAccountPhoneElementHandler extends formulizeUserAccountElemen
 			$ele_value['format'] = (isset($ele_value['format']) AND $ele_value['format']) ? $ele_value['format'] : 'XXX-XXX-XXXX';
 			$formElement = new xoopsFormText($caption, $markupName, 15, 255, $ele_value['number']); // caption, markup name, size, maxlength, default value, according to the xoops form class
 			$formElement->setExtra('placeholder="'.$ele_value['format'].'"');
-			$formElement->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
 		}
 		return $formElement;
 	}

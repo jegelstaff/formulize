@@ -279,7 +279,7 @@ class formulizeDurationElementHandler extends formulizeElementsHandler
 				);
 				${"input_$unit"}->setExtra("min='0'");
 				${"input_$unit"}->setExtra("class='formulize-duration-element-input'");
-				${"input_$unit"}->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$unitMarkupName\" ");
+				${"input_$unit"}->setExtra(" jquerytag=\"$unitMarkupName\" ");
 				$container->addElement(${"input_$unit"});
 			}
 		}

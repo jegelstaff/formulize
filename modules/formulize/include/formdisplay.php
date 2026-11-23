@@ -2767,6 +2767,32 @@ function writeHiddenSettings($settings, $form = null, $entries = array(), $sub_e
 }
 
 
+/**
+ * The JavaScript that marks the form as changed when one of its fields changes. The page asks before it discards changes,
+ * checks the fields, and saves, only if the form has changed. It listens to the page, so no field needs an onchange for this.
+ * An element's onchange is only for work of its own, since a browser uses the first one a field has and ignores the rest.
+ * - The names are the ones elements are given to draw their fields with (elementdisplay.php), and the Other boxes (optOther()).
+ *   An element that adds a field with a name that isn't based on the one it was given has to mark the form itself.
+ * - What's typed to search in an autocomplete isn't a change. Choosing something is, and autocomplete.js handles that.
+ * - It's a jQuery listener because a change that jQuery triggers, such as formulize.js clearing a radio button, isn't an
+ *   event in the browser.
+ * Adds its listener once per page, because the drawer runs a form's scripts again for every form it opens.
+ * @return string The JavaScript, without script tags
+ */
+function formulize_formChangedJs() {
+	return <<<'JS'
+if(!window.formulizeFormChangedAdded) {
+    window.formulizeFormChangedAdded = true;
+    jQuery(document).on('change', function(e) {
+        if(/^(de_|desubform|denosave_|other\[)/.test(e.target.name || '') && !jQuery(e.target).hasClass('formulize_autocomplete')) {
+            window.formulizechanged = 1;
+        }
+    });
+}
+
+JS;
+}
+
 // draw in javascript for this form that is relevant to subforms
 // $nosave indicates that the user cannot save this entry, so we shouldn't check for formulizechanged
 /**
@@ -3475,6 +3501,7 @@ function removeTags(html) {
         print $output;
     }
 
+    print formulize_formChangedJs();
     print formulize_otherBoxFocusJs();
 
     $autocompleteJsVersion = formulize_get_file_version('/modules/formulize/include/js/autocomplete.js');

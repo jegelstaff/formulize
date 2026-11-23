@@ -338,7 +338,6 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 					}
 					$counter++;
 				}
-				$form_ele1->setExtra("onchange=\"javascript:formulizechanged=1;\"");
         $GLOBALS['formulize_lastRenderedElementOptions'] = $form_ele1->getOptions();
 				break;
 			default:
@@ -369,7 +368,6 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 						}
 						$GLOBALS['formulize_lastRenderedElementOptions'][$oKey] = $oValue;
 					}
-					$t->setExtra("onchange=\"javascript:formulizechanged=1;\"");
 					if($other != false) {
 						// the Other option's radio button, label and box go in one wrapper, so the box can be laid out under the label (see formulize.css).
 						// A tray rather than rendering the radio button here, so it renders in its turn: radio button ids come from a counter in render()

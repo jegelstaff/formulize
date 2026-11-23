@@ -250,6 +250,7 @@ if(!window.formulizeShowHideOverrideApplied) {
 // drawJavascript(), which is skipped in elements-only mode. Guarded so a host page
 // that already defines them (a real form page) is not clobbered.
 if(typeof formulizechanged === 'undefined') { window.formulizechanged = 0; }
+".formulize_formChangedJs()."
 if(typeof formulize_javascriptFileIncluded === 'undefined') { window.formulize_javascriptFileIncluded = []; }
 if(typeof formulize_xhr_returned_check_for_unique_value === 'undefined') { window.formulize_xhr_returned_check_for_unique_value = []; }
 var FORMULIZE = {

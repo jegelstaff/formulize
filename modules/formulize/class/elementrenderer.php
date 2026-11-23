@@ -181,7 +181,6 @@ class formulizeElementRenderer{
 
 			$previousEntryUIRendered = $previousEntryUI ? "&nbsp;&nbsp;" . $previousEntryUI->render() : "";
 
-			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
 			$form_ele_new = new xoopsFormLabel($form_ele->getCaption(), $form_ele->render().$previousEntryUIRendered.$specialValidationLogicDisplay.$elementCue, $renderedElementMarkupName);
 
 			$form_ele_new->setName($renderedElementMarkupName); // need to set this as the name, in case it is required and then the name will be picked up by any "required" checks that get done and used in the required validation javascript for textboxes
@@ -728,9 +727,9 @@ function optOther($s, $id, $entry_id, $counter, $checkbox=false, $isDisabled=fal
     }
     $box = new XoopsFormText('', 'other['.$otherKey.']', $len, 255, $other_text);
     if($checkbox) {
-        $box->setExtra("onchange=\"javascript:formulizechanged=1;\" onkeydown=\"javascript:if(this.value != ''){this.form.elements['" . $id . "[]'][$counter].checked = true;}\"");
+        $box->setExtra("onkeydown=\"javascript:if(this.value != ''){this.form.elements['" . $id . "[]'][$counter].checked = true;}\"");
     } else {
-        $box->setExtra("onchange=\"javascript:formulizechanged=1;\" onkeydown=\"javascript:if(this.value != ''){this.form." . $id . "[$counter].checked = true;}\"");
+        $box->setExtra("onkeydown=\"javascript:if(this.value != ''){this.form." . $id . "[$counter].checked = true;}\"");
     }
     // the box's width in characters, for themes that size the box themselves rather than
     // leave it to the size attribute, which browsers work out from the font (see Lyris's style.css)

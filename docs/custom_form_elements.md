@@ -125,10 +125,6 @@ class formulizeShuffledRadioElementHandler extends formulizeRadioElementHandler 
 		$formElement = new XoopsFormRadio($caption, $markupName, $selectedOption, "<br />");
 		$formElement->addOptionArray($keyValuePairs);
 
-		// A lot of saving and validation behaviours depend on this global javascript value being set
-		// So we make sure to add code to the element so this is set when there's a change in the selection
-		$formElement->setExtra("onchange=\"javascript:formulizechanged=1;\"");
-
 		return $formElement;
 	}
 

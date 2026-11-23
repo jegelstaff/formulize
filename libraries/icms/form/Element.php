@@ -259,6 +259,9 @@ abstract class icms_form_Element {
 	 * This string will be inserted verbatim and unvalidated in the
 	 * element's tag. Know what you are doing!
 	 *
+	 * Text is added to what's there already, and the browser uses the first attribute with a given name
+	 * and ignores the rest. So a second onchange, for example, never runs.
+	 *
 	 * @param	string  $extra
 	 * @param   string  $replace If true, passed string will replace current content otherwise it will be appended to it
 	 * @return	array   New content of the extra string

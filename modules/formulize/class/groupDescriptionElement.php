@@ -67,7 +67,6 @@ class formulizeGroupDescriptionElementHandler extends formulizeGroupTableElement
 				5,   // rows
 				40   // cols
 			);
-			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
 		}
 		return $form_ele;
 	}

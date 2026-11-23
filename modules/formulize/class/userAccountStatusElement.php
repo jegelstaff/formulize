@@ -152,7 +152,6 @@ class formulizeUserAccountStatusElementHandler extends formulizeUserAccountEleme
 		}
 		$form_ele = new XoopsFormSelect($caption, $markupName, $status);
 		$form_ele->addOptionArray($options);
-		$form_ele->setExtra('onchange="javascript:formulizechanged=1;"');
 		return $form_ele;
 	}
 

@@ -933,7 +933,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 					$defaultSelected = "";
 				}
 				$form_ele = new XoopsFormSelect($caption, $markupName, $defaultSelected, $ele_value[ELE_VALUE_SELECT_NUMROWS], $ele_value[ELE_VALUE_SELECT_MULTIPLE]);
-				$form_ele->setExtra("onchange=\"javascript:formulizechanged=1;\" jquerytag='$markupName'");
+				$form_ele->setExtra("jquerytag='$markupName'");
 				if($ele_value[ELE_VALUE_SELECT_NUMROWS] == 1 AND !$ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE]) { // add the initial default entry, singular or plural based on whether the box is one line or not.
 					$form_ele->addOption("none", _AM_FORMLINK_PICK);
 				}
@@ -1148,7 +1148,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				$ele_value[ELE_VALUE_SELECT_MULTIPLE]	  //	multiple
 			);
 
-			$form_ele1->setExtra("onchange=\"javascript:formulizechanged=1;\" jquerytag='$markupName'");
+			$form_ele1->setExtra("jquerytag='$markupName'");
 
 			// must check the options for uitext before adding to the element -- aug 25, 2007
 			// extra extra confusing -- now in the $options array, keys are the ordinal (as determined above, or something else for special kinds of lists), and values are the text of the options to show users

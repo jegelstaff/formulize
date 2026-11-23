@@ -92,7 +92,7 @@ class formulizeUserAccountPasswordElementHandler extends formulizeUserAccountEle
 				(isset($formulizeConfig['t_max']) ? $formulizeConfig['t_max'] : 255),	//	max width
 				$ele_value
 			);
-			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\" autocomplete=\"new-password\"");
+			$form_ele->setExtra(" autocomplete=\"new-password\"");
 			$form_ele2 = new XoopsFormPassword(
 				'',
 				'pw_two',
@@ -101,6 +101,7 @@ class formulizeUserAccountPasswordElementHandler extends formulizeUserAccountEle
 				$ele_value
 			);
 
+			// marks the form as changed itself, because its name is its own (see formulize_formChangedJs())
 			$form_ele2->setExtra(" onchange=\"javascript:formulizechanged=1;\" autocomplete=\"new-password\"");
 			$tray = new XoopsFormElementTray('', '<br>');
 			$tray->addElement($form_ele);

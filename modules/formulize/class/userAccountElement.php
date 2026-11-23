@@ -420,7 +420,7 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			);
 			$t->addOption($oKey, $oValue);
 			$thisDisabled = $disabled ?: (in_array($oKey, $disabledOptions) ? 'disabled="disabled"' : '');
-			$t->setExtra("onchange=\"javascript:formulizechanged=1;\" $thisDisabled");
+			$t->setExtra($thisDisabled);
 			$form_ele->addElement($t);
 			unset($t);
 		}
@@ -1191,7 +1191,6 @@ class formulizeUserAccountElementHandler extends formulizeElementsHandler {
 			false,		// autocomplete
 			'text'		// type
 		);
-		$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
 		return $form_ele;
 	}
 

@@ -71,7 +71,6 @@ class formulizeGroupNameElementHandler extends formulizeGroupTableElementHandler
 				false,
 				'text'
 			);
-			$form_ele->setExtra(" onchange=\"javascript:formulizechanged=1;\"");
 		}
 		return $form_ele;
 	}

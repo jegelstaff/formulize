@@ -594,7 +594,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 					}
 					$counter++;
 				}
-				$form_ele1->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
+				$form_ele1->setExtra(" jquerytag=\"$markupName\" ");
 				$GLOBALS['formulize_lastRenderedElementOptions'] = $form_ele1->getOptions();
 				break;
 			default:
@@ -627,7 +627,7 @@ class formulizeCheckboxElementHandler extends formulizeBaseClassForListsElementH
 						}
 												$GLOBALS['formulize_lastRenderedElementOptions'][$oKey] = $oValue;
 					}
-					$t->setExtra(" onchange=\"javascript:formulizechanged=1;\" jquerytag=\"$markupName\" ");
+					$t->setExtra(" jquerytag=\"$markupName\" ");
 					$form_ele1->addElement($t);
 					unset($t);
 					$counter++;
