@@ -750,10 +750,7 @@ function formulizeMultipageSaveAndLeaveText($saveAndContinueButtonText, $origina
 	global $xoopsUser, $formulize_displayingSubform;
 	$leaveButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['leaveButtonText'])) ? $saveAndContinueButtonText['leaveButtonText'] : '';
 	$prevButtonText = (is_array($saveAndContinueButtonText) AND isset($saveAndContinueButtonText['prevButtonText'])) ? $saveAndContinueButtonText['prevButtonText'] : '';
-	// A genuine subform render carries the parent it has to go back to, as an array of
-	// originalFid/originalEntry. The elements-only endpoint also sets this flag to a bare
-	// true, but only to keep displayForm out of its full page subform navigation, so testing for the
-	// array is what distinguishes actually being in a sub entry from that reuse.
+	// A subform render carries the parent it has to go back to, as an array of originalFid/originalEntry
 	if(is_array($formulize_displayingSubform)) {
 		return $prevButtonText ? trans($prevButtonText) : trans(_formulize_SAVE_AND_GOBACK);
 	}

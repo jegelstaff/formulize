@@ -53,7 +53,7 @@ Drawing a form in elements-only mode skips `drawJavascript()`, so the endpoint h
 
 **Going into a sub entry** keeps a stack of frames, so Back returns to the parent. If the parent has changes, they're saved first, as they are full screen.
 
-**`$formulize_displayingSubform = true` in the endpoint has to stay.** It stops `displayForm()` from sending the page to a subform screen, or jumping into a new sub entry's multipage screen, which the drawer's Add would otherwise cause.
+**The endpoint marks its request as the drawer's,** and `formulize_renderingInDrawer()` in `formdisplay.php` says whether a request is. It's true for every form drawn in the request, including sub entries drawn inside the drawer's form, so check `$GLOBALS['formulize_inlineSubformFrid']` too for something that is only for the drawer's own form, as the drawer's wrapper template is. It also keeps `displayForm()` out of full screen's subform navigation, because the drawer opens sub entries itself, through `subformAction()`, and never posts `goto_sfid`.
 
 **`window.formulizechanged` is shared with the page behind.** The drawer resets it for each form, so a host that opens the drawer has to put its own value back, as `goSubModal()` does with `onDrawerClosed`.
 

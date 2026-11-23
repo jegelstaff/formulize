@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 import { saveDrawerForm, waitForDrawerFormToken } from '../../utils';
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, leavePage, conditionalElementReady, conditionalChecksFinished, waitForJQueryAnimations, waitForAdminPageReady, saveFormulizeForm, saveAdminForm, openElementSettings, dbQuery, dbPrefix, sqlEscape, deleteMuseumFormsTitled } from '../../utils';
+import { login, leavePage, conditionalElementReady, conditionalChecksFinished, waitForJQueryAnimations, waitForAdminPageReady, saveFormulizeForm, saveAdminForm, openElementSettings, elementId, dbQuery, dbPrefix, sqlEscape, deleteMuseumFormsTitled } from '../../utils';
 
 // A sub entry opened in the drawer, over a form screen. The drawer's form runs its scripts in the same page as the form
 // behind it, and each has conditional elements and a rich text field.
@@ -31,6 +31,8 @@ import { login, leavePage, conditionalElementReady, conditionalChecksFinished, w
 //  - A script in the drawer's form that waits for the page to load runs, and a script file the page already has isn't
 //    loaded again. CKEditor used to refuse its second copy with an error, and an existing user's password was marked as
 //    required, because the script that takes the mark away waited for a load that had already happened.
+//  - Only the drawer's own form is wrapped in the drawer's container. A sub entry drawn inside it as a full form used to
+//    get one too, which full screen doesn't give it.
 //
 // The forms are made here with MCP, in the Museum application, and deleted at the end, so nothing the other specs use
 // changes. MCP is part of the application, and 040 turns it on and makes an API key, which this reads from the admin UI.
@@ -572,4 +574,26 @@ test('An existing user\'s password is not marked as required in the drawer', asy
 	} finally {
 		await setEditDestination(page, staffFid, staffListSid, original);
 	}
+});
+
+test('Only the drawer\'s own form is wrapped in the drawer\'s container', async ({ page }) => {
+	// the exhibition shows its display cases as full forms, one after the other
+	await tool('create_subform_interface', {
+		form_id: exhibitionsFid, type: 'subformFullForm', caption: 'Display cases in full', handle: 'dct_exhibition_cases_in_full',
+		properties: { sourceForm: casesFid, elementsInHeading: [parseInt(elementId('dct_case_name'), 10)], fullFormMode: 'not_collapsable' },
+	});
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	// an earlier test set the list of exhibitions to open its entries in the drawer
+	const [[listSid]] = dbQuery(`SELECT defaultlist FROM ${dbPrefix()}_formulize_id WHERE id_form = ${exhibitionsFid}`);
+	expect(editDestination(listSid)).toBe('drawer');
+	await openFromList(page, listSid, EXHIBITION);
+
+	const displayCase = drawer(page).locator(`#subform-${casesFid}-${caseEntryId}`);
+	await expect(displayCase.locator('.formulize-label-dct_case_name')).toBeVisible();
+	await expect(drawer(page).locator('.formulize-drawer-form')).toHaveCount(1);
+	await expect(displayCase.locator('.formulize-drawer-form')).toHaveCount(0);
+
+	await closeDrawer(page);
+	await leavePage(page, `/modules/formulize/index.php?sid=${listSid}`);
+	await expect(page.getByText(/Showing entries:/).first()).toBeVisible({ timeout: 30000 });
 });

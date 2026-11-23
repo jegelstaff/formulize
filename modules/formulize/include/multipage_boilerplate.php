@@ -80,7 +80,7 @@ if($currentPage == $thanksPage) {
             $go_back_page = $_POST['go_back_page'];
             $go_back_entry = intval($_POST['go_back_entry']);
             $go_back_form = intval($_POST['go_back_form']);
-        } elseif(isset($GLOBALS['formulize_displayingSubform'])) { // if we land on the thanks page of a subform because all pages fail conditions, then we'll be here and we should set things to go back to the prior screen and page and entry
+        } elseif(is_array($GLOBALS['formulize_displayingSubform'] ?? null)) { // if we land on the thanks page of a subform because all pages fail conditions, then we'll be here and we should set things to go back to the prior screen and page and entry
             $go_back_page = $_POST['formulize_prevPage'];
             $go_back_entry = intval($GLOBALS['formulize_displayingSubform']['originalEntry']);
             $go_back_form = intval($GLOBALS['formulize_displayingSubform']['originalFid']);
