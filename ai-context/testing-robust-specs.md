@@ -118,7 +118,7 @@ A test that opens an entry must leave the page the way a person would, then chec
 
 ## Concurrency
 
-CI runs the whole suite in several environments at once, each a job on its own runner with its own containers: MariaDB and MySQL in Chromium on Anari, Firefox and WebKit on MariaDB and Anari, and Chromium on MariaDB and Lyris. `E2E_BROWSER`, `E2E_THEME` and `E2E_DB_CLIENT` tell the specs which. Only the MariaDB, Chromium, Anari job decides whether the run passes until the others are green. See [docs/ci.md](../docs/ci.md).
+CI runs the whole suite in several environments at once, each a job on its own runner with its own containers: MariaDB and MySQL in Chromium on Anari, Firefox and WebKit on MariaDB and Anari, and Chromium on MariaDB and Lyris. `E2E_BROWSER`, `E2E_THEME` and `E2E_DB_CLIENT` tell the specs which. A failure in any of them fails the run. See [docs/ci.md](../docs/ci.md).
 
 A browser feature only one browser has, such as clearing the cache over a DevTools session or emulating a phone, is skipped in the others with `test.skip()` and the reason. `aDayPassesForTheWorker()` does this itself.
 

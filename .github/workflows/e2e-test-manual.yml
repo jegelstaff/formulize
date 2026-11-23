@@ -86,8 +86,10 @@ jobs:
   # php: the PHP logic and integrity tests run in this job. They depend on the database, not on the browser or the
   # theme, so they run once on each database.
   # coverage: this job measures coverage when the run asks for it. One report is enough.
-  # decides: this job's result is the run's result. The others can fail without failing the run, until they're
-  # green, first time, every time. Then set decides to true.
+  #
+  # Every job runs to the end, whatever happens in the others, and carries on after a failure: past a PHP logic test
+  # that fails, and past anything once the setup tests have passed, running all of 02-validate. So one run shows
+  # everything that's wrong in every environment. The run passes only if every job passes.
   environments:
     name: Choose the environments
     runs-on: ubuntu-latest
@@ -99,11 +101,11 @@ jobs:
         CHOSEN: ${{ inputs.environments || 'all' }}
       run: |
         ALL='[
-          {"id": "mariadb-chromium-anari", "name": "MariaDB, Chromium, Anari", "database": "mariadb", "browser": "chromium", "theme": "Anari", "php": true,  "coverage": true,  "decides": true},
-          {"id": "mysql-chromium-anari",   "name": "MySQL, Chromium, Anari",   "database": "mysql",   "browser": "chromium", "theme": "Anari", "php": true,  "coverage": false, "decides": false},
-          {"id": "mariadb-firefox-anari",  "name": "MariaDB, Firefox, Anari",  "database": "mariadb", "browser": "firefox",  "theme": "Anari", "php": false, "coverage": false, "decides": false},
-          {"id": "mariadb-webkit-anari",   "name": "MariaDB, WebKit, Anari",   "database": "mariadb", "browser": "webkit",   "theme": "Anari", "php": false, "coverage": false, "decides": false},
-          {"id": "mariadb-chromium-lyris", "name": "MariaDB, Chromium, Lyris", "database": "mariadb", "browser": "chromium", "theme": "Lyris", "php": false, "coverage": false, "decides": false}
+          {"id": "mariadb-chromium-anari", "name": "MariaDB, Chromium, Anari", "database": "mariadb", "browser": "chromium", "theme": "Anari", "php": true,  "coverage": true},
+          {"id": "mysql-chromium-anari",   "name": "MySQL, Chromium, Anari",   "database": "mysql",   "browser": "chromium", "theme": "Anari", "php": true,  "coverage": false},
+          {"id": "mariadb-firefox-anari",  "name": "MariaDB, Firefox, Anari",  "database": "mariadb", "browser": "firefox",  "theme": "Anari", "php": false, "coverage": false},
+          {"id": "mariadb-webkit-anari",   "name": "MariaDB, WebKit, Anari",   "database": "mariadb", "browser": "webkit",   "theme": "Anari", "php": false, "coverage": false},
+          {"id": "mariadb-chromium-lyris", "name": "MariaDB, Chromium, Lyris", "database": "mariadb", "browser": "chromium", "theme": "Lyris", "php": false, "coverage": false}
         ]'
         if [ "$CHOSEN" = "all" ]; then
           MATRIX=$(jq -c . <<< "$ALL")
@@ -125,7 +127,6 @@ jobs:
       fail-fast: false # one environment failing must not cancel the others
       matrix:
         include: ${{ fromJSON(needs.environments.outputs.matrix) }}
-    continue-on-error: ${{ !matrix.decides }}
     env:
       # Read by playwright.config.js, the specs and tests/e2e/utils.js
       E2E_BROWSER: ${{ matrix.browser }}
@@ -212,62 +213,62 @@ jobs:
     # In the jobs that don't decide the run, a logic test that fails doesn't stop the others, or the specs: they only
     # need the containers. The job still fails.
     - name: PHP logic tests (A4 password hashing)
-      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/password_hashing_test.php
 
     - name: PHP logic tests ({element_handle} reference binding)
-      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/reference_binding_test.php
 
     - name: PHP logic tests (T3.1' normalize-then-escape form sinks)
-      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/normalize_then_escape_test.php
 
     - name: PHP logic tests (EMPTYSET searches and search term prefixes)
-      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/empty_set_search_test.php
 
     - name: PHP logic tests (partial date searches)
-      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/date_search_test.php
 
     - name: PHP logic tests (partial date searches, as a site that shows dates as d/m/Y)
-      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/date_search_test.php --date-format=d/m/Y
 
     - name: PHP logic tests (the formats time elements show times in)
-      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/time_format_test.php
 
     - name: PHP logic tests (blocked file-extension lists in step)
-      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/blocked_extensions_sync_test.php
 
     - name: PHP logic tests (the text of Other options in element values)
-      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/other_text_values_test.php
 
     - name: PHP logic tests (every theme's screen defaults are complete)
-      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/screen_defaults_test.php
 
     - name: PHP logic tests (what a screen's templates take along to another theme)
-      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/screen_template_copy_test.php
 
     - name: PHP logic tests (what the update clears out of the screens' own templates, and deleting a screen's)
-      if: ${{ matrix.php && !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/screen_template_cleanup_test.php
 
     - name: Install dependencies
       id: dependencies
-      if: ${{ !cancelled() && (success() || (!matrix.decides && steps.containers.outcome == 'success')) }}
+      if: ${{ !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: npm ci
       working-directory: tests/e2e
 
     - name: Install Playwright Browsers
       id: browsers
-      if: ${{ !cancelled() && (success() || (!matrix.decides && steps.dependencies.outcome == 'success')) }}
+      if: ${{ !cancelled() && (success() || steps.dependencies.outcome == 'success') }}
       run: npx playwright install ${{ matrix.browser }} --with-deps
       working-directory: tests/e2e
 
@@ -281,7 +282,7 @@ jobs:
     # sequential and appearance specs stop at theirs too, since they change what the specs after them stand on.
     - name: Run Playwright setup tests (sequential)
       id: setup
-      if: ${{ !cancelled() && (success() || (!matrix.decides && steps.browsers.outcome == 'success')) }}
+      if: ${{ !cancelled() && (success() || steps.browsers.outcome == 'success') }}
       env:
         E2E_REPORT_DIR: test-report/${{ inputs.test_filter && 'filtered' || '01-setup' }}
       run: |
@@ -297,20 +298,20 @@ jobs:
       working-directory: tests/e2e
 
     - name: Run Playwright validation tests (concurrent)
-      if: ${{ !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
+      if: ${{ !inputs.test_filter && !cancelled() && (success() || steps.setup.outcome == 'success') }}
       env:
         E2E_REPORT_DIR: test-report/02-validate
       run: |
         if [ "$MEASURE_COVERAGE" = "true" ]; then
           echo 02-validate > "$FORMULIZE_COVERAGE_DIR/phase"
         fi
-        npx playwright test formulize-core/02-validate --workers=4 --fully-parallel ${{ !matrix.decides && '--max-failures=0' || '' }}
+        npx playwright test formulize-core/02-validate --workers=4 --fully-parallel --max-failures=0
       working-directory: tests/e2e
 
     # After the validate specs, and on one worker: these change things the museum system shares - renaming the
     # elements its screens, views and notifications use - check the system still works, and put them back.
     - name: Run Playwright validation tests that change the system (sequential)
-      if: ${{ !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
+      if: ${{ !inputs.test_filter && !cancelled() && (success() || steps.setup.outcome == 'success') }}
       env:
         E2E_REPORT_DIR: test-report/03-validate-sequential
       run: |
@@ -323,7 +324,7 @@ jobs:
     # After the validate specs, and on one worker: the appearance specs switch the whole site's theme while
     # they run, and put it back when they're done.
     - name: Run Playwright appearance tests (sequential)
-      if: ${{ !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
+      if: ${{ !inputs.test_filter && !cancelled() && (success() || steps.setup.outcome == 'success') }}
       env:
         E2E_REPORT_DIR: test-report/04-appearance
       run: |
@@ -340,7 +341,7 @@ jobs:
     # dump taken in the next step is unaffected. Skipped alongside the validate suite when a filter is in
     # use, because a partly built system is not the system it is asking about.
     - name: PHP integrity tests (element reference scan, against the built system)
-      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
+      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || steps.setup.outcome == 'success') }}
       run: |
         if [ "$MEASURE_COVERAGE" = "true" ]; then
           echo php-integrity > "$FORMULIZE_COVERAGE_DIR/phase"
@@ -350,15 +351,15 @@ jobs:
     # What a rename rewrites in a piece of code. It reads nothing of the system and writes nothing, but it needs the
     # application booted, which needs the install the setup specs do.
     - name: PHP integrity tests (what a rename rewrites in code)
-      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
+      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || steps.setup.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/element_handle_code_test.php
 
     - name: PHP integrity tests (saved views round trip)
-      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
+      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || steps.setup.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/saved_views_test.php
 
     - name: PHP integrity tests (menu item groups and the menu block)
-      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
+      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || steps.setup.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/menu_permissions_test.php
 
     # Also after the suite rather than before it, but for a different reason than the two above: it needs
@@ -366,7 +367,7 @@ jobs:
     # objects at all, and the install happens in the setup specs. It reads and writes no data - every
     # element is in memory, and the only files it touches are its own, which it removes again.
     - name: PHP integrity tests (element code files, setVar/getVar)
-      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
+      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || steps.setup.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/element_code_files_test.php
 
     # Before the containers come down, since the report is made in the web container, with the PHP the tests ran on. Also

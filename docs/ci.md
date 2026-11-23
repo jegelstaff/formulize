@@ -22,17 +22,19 @@ There are four workflows.
 
 Every run tests the whole suite in five environments at the same time. Each one is a job of its own, with its own runner, containers and database, so they can't get in each other's way, and a run takes about as long as one of them.
 
-| Environment | Database | Browser | Theme | PHP tests | Decides the run |
-|---|---|---|---|---|---|
-| `mariadb-chromium-anari` | MariaDB | Chromium | Anari | Yes | Yes |
-| `mysql-chromium-anari` | MySQL 8.4 | Chromium | Anari | Yes | Not yet |
-| `mariadb-firefox-anari` | MariaDB | Firefox | Anari | No | Not yet |
-| `mariadb-webkit-anari` | MariaDB | WebKit | Anari | No | Not yet |
-| `mariadb-chromium-lyris` | MariaDB | Chromium | Lyris | No | Not yet |
+| Environment | Database | Browser | Theme | PHP tests |
+|---|---|---|---|---|
+| `mariadb-chromium-anari` | MariaDB | Chromium | Anari | Yes |
+| `mysql-chromium-anari` | MySQL 8.4 | Chromium | Anari | Yes |
+| `mariadb-firefox-anari` | MariaDB | Firefox | Anari | No |
+| `mariadb-webkit-anari` | MariaDB | WebKit | Anari | No |
+| `mariadb-chromium-lyris` | MariaDB | Chromium | Lyris | No |
 
 A difference between databases doesn't depend on the browser, and a difference between browsers doesn't depend on the database, so the other browsers run on MariaDB only. The PHP tests depend on the database and nothing else, so they run once on each. The Lyris job runs the same specs as the first one, except that the site stays on Lyris after the install, so the museum system is built with Lyris's screen settings: its lists open entries in the drawer, show 20 entries a page, and keep their search boxes hidden until they're opened.
 
-Only `mariadb-chromium-anari` decides whether the run passes. The others are allowed to fail while they're new, so a red mark on one of them sits under a green run. Look at each job in the Actions tab. Once an environment passes first time, every time, set its `decides` to `true` in the workflow's list of environments.
+The run passes only if every environment passes. A failure in one of them is a problem for the people using Formulize that way, so it fails the run. Each job still runs to its end, whatever happens in the others, so a run shows what's wrong in every environment. Look at each job in the Actions tab to see which failed.
+
+A job also carries on after a failure of its own. It goes past a PHP logic test that fails, and once the setup tests have passed, it runs every set of tests after them, and all of `02-validate`. Within the setup tests, `03-validate-sequential` and `04-appearance`, the first failure still stops that set, because what comes after it depends on what came before. If the setup tests fail, nothing that needs the museum system runs.
 
 To run some of the environments by hand, choose one under **environments**, or `all`. From another workflow, pass ids separated by commas.
 
