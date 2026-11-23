@@ -519,8 +519,9 @@ $drawerTemplatesJs = "<script type=\"application/json\" class=\"formulize-drawer
 // Rich text editors, set up by the same code as full screen (formulize_richTextEditorJs() in formdisplay.php), which
 // can run again for every form the drawer shows, over a page that has editors of its own. Full screen gets the editor
 // library from the theme's head, which this request never draws, so it's loaded here, as a script of its own that the
-// drawer's injectFragment() waits for before it runs the next one. Over a form screen with a rich text field the page
-// has it already, and CKEditor refuses the second copy with an error in the console, keeping the first.
+// drawer's injectFragment() waits for before it runs the next one, and skips if the page has it already, as a form screen
+// with a rich text field does. The address has to be the one the theme's head has, or it would be loaded twice, which
+// CKEditor refuses.
 $editorJs = '';
 if(!empty($GLOBALS['formulize_CKEditors'])) {
     $editorJs = "<script type='text/javascript' src='".XOOPS_URL."/editors/CKEditor/ckeditor.js'></script>\n"

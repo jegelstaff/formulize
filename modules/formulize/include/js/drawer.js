@@ -766,11 +766,21 @@
     // dependencies like conditional.js are defined before the inline init code that
     // populates their globals runs — the ordering a real document gives for free,
     // but which jQuery .load() / innerHTML do not.
-    // External libraries already executed for an earlier fragment (e.g. ckeditor.js
-    // when descending through several rich-text forms) must not run twice — CKEditor
-    // hard-errors on duplicate module registration — so remember executed srcs and
-    // skip them; their globals persist even though the old script node was wiped.
+    // A script file must not run twice — CKEditor hard-errors on duplicate module
+    // registration — so one that an earlier fragment ran (e.g. ckeditor.js when descending
+    // through several rich-text forms), or that the page itself has, is skipped. Its globals
+    // persist, even where the old script node was wiped. So a script file can't be what sets
+    // up the form it comes with: the inline scripts do that. And the page's load event has
+    // long gone, so an inline script that has to wait uses jQuery's ready, which runs at once.
     var executedFragmentScripts = {};
+
+    // Does the page have this script file, outside the fragment being injected?
+    function pageHasScript(src, container) {
+        return Array.prototype.some.call(document.scripts, function (script) {
+            return script.src === src && !container.contains(script);
+        });
+    }
+
 
     function injectFragment(container, html) {
         container.innerHTML = html;
@@ -778,7 +788,7 @@
         return scripts.reduce(function (chain, oldScript) {
             return chain.then(function () {
                 return new Promise(function (resolve) {
-                    if (oldScript.src && executedFragmentScripts[oldScript.src]) {
+                    if (oldScript.src && (executedFragmentScripts[oldScript.src] || pageHasScript(oldScript.src, container))) {
                         oldScript.parentNode.removeChild(oldScript);
                         resolve();
                         return;

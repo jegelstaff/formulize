@@ -47,7 +47,7 @@ Drawing a form in elements-only mode skips `drawJavascript()`, so the endpoint h
 
 **Functions that an element's markup calls go in `formulize_elementScripts()`,** in `include/functions/element_scripts.php`, such as the date element's `check_date_limits()`. Full screen forms, lists (for editing in the list) and the endpoint all print it, so the element works whichever drew it, and over any page. Don't define them in `drawJavascript()` alone.
 
-**Fragments are put in the page with `injectFragment()`,** which recreates script tags so they run in order. Scripts run again for every form shown, so anything they set up has to cope with that. Each form replaces `removeDrawerEntryLocks()`, for example, while the `pagehide` listener is added once.
+**Fragments are put in the page with `injectFragment()`,** which recreates script tags so they run in order. Inline scripts run again for every form shown, so anything they set up has to cope with that. Each form replaces `removeDrawerEntryLocks()`, for example, while the `pagehide` listener is added once. A script file runs once in a page, so one the page already has, or an earlier form brought, is skipped: don't rely on a file, or a library's callback when it loads, to set up the form it comes with. The page's `load` event has already happened, so a script that has to wait uses `jQuery(document).ready()`, which runs at once.
 
 **Subform buttons call functions the page may already define.** The endpoint wraps `add_sub`, `goSub`, `goSubModal`, `sub_del` and `sub_clone`. While the drawer is open they go to the drawer, and otherwise to the page's own function, so a form screen with a drawer over it keeps working.
 
