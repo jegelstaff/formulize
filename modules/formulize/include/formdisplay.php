@@ -3405,51 +3405,6 @@ drawXhrJavascript();
 
 ?>
 
-function check_date_limits(element_id) {
-    var date_input = jQuery("#"+element_id);
-	var min_date = date_input.attr('min');
-	var max_date = date_input.attr('max');
-	var selected_date = new Date(date_input.val());
-    <?php
-        // if the selected_date is not valid then getTime() returns NaN (not-a-number)
-        // NaN is NOT equal to NaN, so the comparison ensures the date is valid
-    ?>
-    if (selected_date.getTime() === selected_date.getTime()) {
-        if (min_date && min_date.length > 0) {
-            min_date = new Date(min_date);
-            <?php
-            // adjust the time zone before displaying the date, otherwise it could show the wrong day if
-            //  the user and server are in different time zones
-             ?>
-            if (selected_date < min_date) {
-                // date is too far in the past
-                selected_date = null;
-                date_input.val('');
-							min_date.setTime(min_date.getTime() + (min_date.getTimezoneOffset() * 60 * 1000));
-                alert("The date you selected is too far in the past.\n\n"+
-                    "Please select a date on or after "+min_date.toDateString()+".");
-            }
-        }
-        if (null != selected_date && max_date && max_date.length > 0) {
-            max_date = new Date(max_date);
-            <?php
-            // adjust the time zone before displaying the date, otherwise it could show the wrong day if
-            //  the user and server are in different time zones
-             ?>
-            if (selected_date > max_date) {
-                // date is too far in the future
-                date_input.val('');
-							max_date.setTime(max_date.getTime() + (max_date.getTimezoneOffset() * 60 * 1000));
-                alert("The date you selected is too far in the future.\n\n"+
-                    "Please select a date on or before "+max_date.toDateString()+".");
-            }
-        }
-    } else {
-        // not a valid date
-        date_input.val('');
-    }
-}
-
 <?php
 // replace the history and URL with a more canonical URL that is human readable, if alternate URLs are in effect
 if($code = updateAlternateURLIdentifierCode($screen, $entryId, $settings)) {
@@ -3507,10 +3462,7 @@ function removeTags(html) {
     print formulize_formChangedJs();
     print formulize_otherBoxFocusJs();
 
-    $autocompleteJsVersion = formulize_get_file_version('/modules/formulize/include/js/autocomplete.js');
-    print "</script>
-		<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js?v=".$autocompleteJsVersion."'></script>
-		";
+    print "</script>\n".formulize_elementScripts();
     $drawnJavascript = true;
 }
 

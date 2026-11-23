@@ -45,6 +45,8 @@ If `readelements.php` refuses a save, its message is printed first in the respon
 
 Drawing a form in elements-only mode skips `drawJavascript()`, so the endpoint has to supply what a form needs itself: the rich text editor setup, the office use toggle, validation, and removing entry locks. If something works full screen and not in the drawer, look there first. Check what the endpoint prints against what `drawJavascript()` prints.
 
+**Functions that an element's markup calls go in `formulize_elementScripts()`,** in `functions.php`, such as the date element's `check_date_limits()`. Full screen forms, lists (for editing in the list) and the endpoint all print it, so the element works whichever drew it, and over any page. Don't define them in `drawJavascript()` alone.
+
 **Fragments are put in the page with `injectFragment()`,** which recreates script tags so they run in order. Scripts run again for every form shown, so anything they set up has to cope with that. Each form replaces `removeDrawerEntryLocks()`, for example, while the `pagehide` listener is added once.
 
 **Subform buttons call functions the page may already define.** The endpoint wraps `add_sub`, `goSub`, `goSubModal`, `sub_del` and `sub_clone`. While the drawer is open they go to the drawer, and otherwise to the page's own function, so a form screen with a drawer over it keeps working.

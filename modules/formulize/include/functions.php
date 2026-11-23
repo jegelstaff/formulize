@@ -15028,6 +15028,66 @@ function formulize_textScriptPath() {
 }
 
 /**
+ * The scripts that elements' markup calls. Every page that draws elements prints them: a full screen form
+ * (drawJavascript() in formdisplay.php), a list, for editing in the list (interfaceJavascript() in
+ * entriesdisplay.php), and the drawer, with each form it shows (formdisplay-elementsonly.php). So an element
+ * works the same whichever of these drew it, and whatever page the drawer is over. A page can print them more
+ * than once, harmlessly, which happens when the drawer is over a form or a list.
+ *
+ * - autocomplete.js, for autocomplete lists
+ * - check_date_limits(), which a date element with an earliest or latest date calls (dateElement.php), with
+ *   its words from the language file, the constants starting _formulize_JS_DATE_LIMIT_
+ *
+ * @return string HTML: the script tags
+ */
+function formulize_elementScripts() {
+	$dateLimitText = json_encode(formulize_scriptText('_formulize_JS_DATE_LIMIT_'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	return "<script type='text/javascript' src='".XOOPS_URL.formulize_textScriptPath()."'></script>\n"
+		."<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js?v=".formulize_get_file_version('/modules/formulize/include/js/autocomplete.js')."'></script>\n"
+		."<script type='text/javascript'>\nwindow.formulizeDateLimitText = $dateLimitText;\n"
+		.<<<'JS'
+// Empties a date element whose date is before its earliest date or after its latest one, and says why. Those are the
+// field's min and max. A date that isn't valid is emptied too.
+function check_date_limits(element_id) {
+    var date_input = jQuery("#"+element_id);
+    var min_date = date_input.attr('min');
+    var max_date = date_input.attr('max');
+    var selected_date = new Date(date_input.val());
+    // a date that isn't valid has no time, and NaN isn't equal to itself
+    if (selected_date.getTime() !== selected_date.getTime()) {
+        date_input.val('');
+        return;
+    }
+    var problem = '';
+    var limit = null;
+    if (min_date && selected_date < new Date(min_date)) {
+        problem = 'TOO_EARLY';
+        limit = new Date(min_date);
+    } else if (max_date && selected_date > new Date(max_date)) {
+        problem = 'TOO_LATE';
+        limit = new Date(max_date);
+    }
+    if (problem) {
+        date_input.val('');
+        // the limit is read as midnight UTC, so it's shown in UTC, or west of UTC it would be the day before
+        var options = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
+        // in the page's language, like the words around it. Some themes give it as xml:lang.
+        var language = document.documentElement.getAttribute('lang') || document.documentElement.getAttribute('xml:lang') || undefined;
+        var shownLimit;
+        try {
+            shownLimit = limit.toLocaleDateString(language, options);
+        } catch (e) { // a page language the browser doesn't recognise
+            shownLimit = limit.toLocaleDateString(undefined, options);
+        }
+        alert(formulizeText(window.formulizeDateLimitText).text(problem, shownLimit));
+    }
+}
+
+JS
+		."</script>\n";
+}
+
+/**
  * The URL of Formulize's "saving" animation, in the site's language where there is one.
  *
  * Full screen this is what showSavingGraphic() reveals over the dimmed form while a save

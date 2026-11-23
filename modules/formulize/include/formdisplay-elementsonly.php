@@ -426,6 +426,11 @@ $tokenJs = "<script type='text/javascript'>
 })();
 </script>\n";
 
+// The scripts that elements' markup calls, such as a date element's check of its earliest and latest dates. Full screen
+// forms and lists print the same ones, so the drawer has them over any page. They go ahead of the form, because a
+// script in the form that waits for the page to be ready runs as soon as the drawer puts it in the page.
+$elementScripts = formulize_elementScripts();
+
 // the rendered elements, with the security token, and token for deleting entry locks
 $formHtml = "<form id='".htmlspecialchars($formname)."' data-fid='".intval($fid)."' data-frid='".intval($frid)."'"
     ." action='".$honeypotAddress."' data-save-action='".$honeypotAddress."' method='post' enctype='multipart/form-data'>\n"
@@ -585,6 +590,7 @@ print $saveMessages
     .$bootstrapJs
     .$drawerMeta
     .$subformStubsJs
+    .$elementScripts
     .$formHtml
     .$buttonMeta
     .$drawerTemplatesJs

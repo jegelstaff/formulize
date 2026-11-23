@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 import { saveDrawerForm } from '../../utils';
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, leavePage, conditionalElementReady, waitForJQueryAnimations, saveFormulizeForm, saveAdminForm, openElementSettings, dbQuery, dbPrefix, sqlEscape, deleteMuseumFormsTitled } from '../../utils';
+import { login, leavePage, conditionalElementReady, waitForJQueryAnimations, waitForAdminPageReady, saveFormulizeForm, saveAdminForm, openElementSettings, dbQuery, dbPrefix, sqlEscape, deleteMuseumFormsTitled } from '../../utils';
 
 // A sub entry opened in the drawer, over a form screen. The drawer's form runs its scripts in the same page as the form
 // behind it, and each has conditional elements and a rich text field.
@@ -19,6 +19,9 @@ import { login, leavePage, conditionalElementReady, waitForJQueryAnimations, sav
 //    server, and its answer tries the save again. The drawer's validation used to throw on the check's code, which was
 //    written for full screen's, so the save did nothing. And the drawer saves without reloading, so an answer for a
 //    value checked before one save must not count for a value typed after it.
+//  - A date field's earliest and latest dates are kept in a drawer opened from a list. The field calls a function that
+//    only full screen forms used to define, so opened from a list, every change to the date threw, and any date was
+//    accepted.
 //
 // The forms are made here with MCP, in the Museum application, and deleted at the end, so nothing the other specs use
 // changes. MCP is part of the application, and 040 turns it on and makes an API key, which this reads from the admin UI.
@@ -45,6 +48,10 @@ const CASE_NUMBER = 'C-001';
 const OTHER_CASE = 'Case Two';
 const OTHER_CASE_NUMBER = 'C-002';
 const NEW_CASE_NUMBER = 'C-003';
+// a display case can be installed in 2026, and no other year
+const EARLIEST_INSTALLATION = '2026-01-01';
+const LATEST_INSTALLATION = '2026-12-31';
+const INSTALLED_ON = '2026-06-15';
 
 let api;
 let apiKey;
@@ -273,4 +280,64 @@ test('A value that has to be unique is checked in the drawer, each time it chang
 
 	await closeDrawer(page);
 	await leaveForExhibitionsList(page);
+});
+
+test('A date field keeps to its earliest and latest dates in a drawer opened from a list', async ({ page }) => {
+	await tool('create_selector_element', {
+		form_id: casesFid, type: 'date', caption: 'Installed on', handle: 'dct_case_installed',
+		properties: { minDate: EARLIEST_INSTALLATION, maxDate: LATEST_INSTALLATION },
+	});
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	const pageErrors = [];
+	page.on('pageerror', error => pageErrors.push(error.message));
+
+	// the list of display cases opens its entries in the drawer, which is set on the list screen's Interface tab
+	const [[listSid]] = dbQuery(`SELECT defaultlist FROM ${dbPrefix()}_formulize_id WHERE id_form = ${casesFid}`);
+	await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${casesFid}&sid=${listSid}&tab=interface`);
+	await waitForAdminPageReady(page);
+	await page.locator('input[name="screens-editdestination"][value="drawer"]').check();
+	await saveAdminForm(page);
+	expect(dbQuery(`SELECT editdestination FROM ${dbPrefix()}_formulize_screen_listofentries WHERE sid = ${listSid}`)[0][0], 'the list should open entries in the drawer').toBe('drawer');
+
+	// a list drawn on the server shows no working message, so wait for its footer
+	await page.goto(`/modules/formulize/index.php?sid=${listSid}`);
+	await expect(page.getByText(/Showing entries:/).first()).toBeVisible({ timeout: 30000 });
+	await page.getByRole('row', { name: new RegExp(DISPLAY_CASE) }).locator('a[onclick^="javascript:goDetails"]').click();
+	await expect(drawer(page)).toBeVisible();
+	await expect(drawer(page).locator('.formulize-drawer__foot input[type="button"]').first()).toBeVisible();
+	const installedOn = drawer(page).locator('input[type="date"]');
+	await expect(installedOn).toBeVisible();
+	await expect(installedOn).toHaveAttribute('min', EARLIEST_INSTALLATION);
+	await expect(installedOn).toHaveAttribute('max', LATEST_INSTALLATION);
+
+	// The field checks the date as soon as it changes, and says why it has emptied it. The message comes while the
+	// change is still happening, so it's answered as it comes.
+	const chooseAndExpectRefusal = async (date, reason) => {
+		let message = '';
+		await Promise.all([
+			page.waitForEvent('dialog').then(dialog => { message = dialog.message(); return dialog.accept(); }),
+			installedOn.fill(date),
+		]);
+		expect(message).toContain(reason);
+		await expect(installedOn).toHaveValue('');
+	};
+
+	await chooseAndExpectRefusal('2025-12-31', 'too far in the past');
+	await chooseAndExpectRefusal('2027-01-01', 'too far in the future');
+
+	// a date in 2026 is kept, and saved
+	await installedOn.fill(INSTALLED_ON);
+	await expect(installedOn).toHaveValue(INSTALLED_ON);
+	await drawer(page).locator('.formulize-drawer__foot input[name="save"]').click();
+	await expect.poll(() => storedValue(casesFid, caseEntryId, 'dct_case_installed'), { message: 'the date should be saved' }).toBe(INSTALLED_ON);
+	// the form drawn again after the save is in place, and its field still keeps to the limits
+	await expect(drawer(page)).not.toHaveClass(/formulize-drawer--busy/);
+	await expect(installedOn).toHaveValue(INSTALLED_ON);
+	await chooseAndExpectRefusal('2027-01-01', 'too far in the future');
+
+	expect(pageErrors, 'nothing in the page should have thrown').toEqual([]);
+
+	await closeDrawer(page);
+	await leavePage(page, `/modules/formulize/index.php?sid=${listSid}`);
+	await expect(page.getByText(/Showing entries:/).first()).toBeVisible({ timeout: 30000 });
 });

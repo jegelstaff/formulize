@@ -685,6 +685,11 @@ define("_formulize_ENTRY", "entrée");
 
 define("_formulize_REQUIRED_UNIQUE", "Le champ '%s' exige une valeur unique. Entrer une valeur différente.");
 
+// A date element's earliest and latest dates (check_date_limits(), in formulize_elementScripts() in include/functions.php).
+// Every constant starting _formulize_JS_DATE_LIMIT_ goes to the script, which knows it by the rest of its name. %s is the date.
+define("_formulize_JS_DATE_LIMIT_TOO_EARLY", "La date choisie est trop loin dans le passé.\n\nVeuillez choisir le %s ou une date ultérieure.");
+define("_formulize_JS_DATE_LIMIT_TOO_LATE", "La date choisie est trop loin dans l'avenir.\n\nVeuillez choisir le %s ou une date antérieure.");
+
 define("_formulize_USER_ACCOUNT_FR", "Compte utilisateur");
 define("_formulize_USER_ACCOUNT_EN", "User Account");
 define("_formulize_USERACCOUNTUID", "ID de l'utilisateur");
