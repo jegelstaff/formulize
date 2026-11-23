@@ -824,6 +824,11 @@ define("_formulize_REQUIRED_UNIQUE", "The value you entered for '%s' has been en
 define("_formulize_JS_DATE_LIMIT_TOO_EARLY", "The date you selected is too far in the past.\n\nPlease select a date on or after %s.");
 define("_formulize_JS_DATE_LIMIT_TOO_LATE", "The date you selected is too far in the future.\n\nPlease select a date on or before %s.");
 
+// The checks before a form is submitted (formulize_submitStepJs() in include/functions/element_scripts.php).
+// Every constant starting _formulize_JS_SUBMIT_ goes to the script, which knows it by the rest of its name. %s is what was typed.
+define("_formulize_JS_SUBMIT_NUMBERS_ONLY", "You have entered %s in a box that is supposed to have numbers only.  The letters will be removed if you save.  Is this OK?");
+define("_formulize_JS_SUBMIT_CONDITIONAL_ERROR", "Error: something unexpected happened when trying to display conditional elements. Please contact the webmaster for assistance.");
+
 define("_formulize_NO_MATCH_FOUND", "No match found");
 define("_formulize_NEW_VALUE", "New Value: ");
 

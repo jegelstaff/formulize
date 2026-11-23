@@ -690,6 +690,11 @@ define("_formulize_REQUIRED_UNIQUE", "Le champ '%s' exige une valeur unique. Ent
 define("_formulize_JS_DATE_LIMIT_TOO_EARLY", "La date choisie est trop loin dans le passé.\n\nVeuillez choisir le %s ou une date ultérieure.");
 define("_formulize_JS_DATE_LIMIT_TOO_LATE", "La date choisie est trop loin dans l'avenir.\n\nVeuillez choisir le %s ou une date antérieure.");
 
+// The checks before a form is submitted (formulize_submitStepJs() in include/functions/element_scripts.php).
+// Every constant starting _formulize_JS_SUBMIT_ goes to the script, which knows it by the rest of its name. %s is what was typed.
+define("_formulize_JS_SUBMIT_NUMBERS_ONLY", "Vous avez entré %s dans un champ qui n'accepte que des chiffres. Les lettres seront supprimées si vous enregistrez. Voulez-vous continuer ?");
+define("_formulize_JS_SUBMIT_CONDITIONAL_ERROR", "Erreur : un problème inattendu est survenu lors de l'affichage des éléments conditionnels. Veuillez communiquer avec l'administrateur du site pour obtenir de l'aide.");
+
 define("_formulize_USER_ACCOUNT_FR", "Compte utilisateur");
 define("_formulize_USER_ACCOUNT_EN", "User Account");
 define("_formulize_USERACCOUNTUID", "ID de l'utilisateur");

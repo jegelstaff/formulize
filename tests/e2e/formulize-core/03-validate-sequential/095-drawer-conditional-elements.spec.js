@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 import { saveDrawerForm } from '../../utils';
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, leavePage, conditionalElementReady, waitForJQueryAnimations, waitForAdminPageReady, saveFormulizeForm, saveAdminForm, openElementSettings, dbQuery, dbPrefix, sqlEscape, deleteMuseumFormsTitled } from '../../utils';
+import { login, leavePage, conditionalElementReady, conditionalChecksFinished, waitForJQueryAnimations, waitForAdminPageReady, saveFormulizeForm, saveAdminForm, openElementSettings, dbQuery, dbPrefix, sqlEscape, deleteMuseumFormsTitled } from '../../utils';
 
 // A sub entry opened in the drawer, over a form screen. The drawer's form runs its scripts in the same page as the form
 // behind it, and each has conditional elements and a rich text field.
@@ -25,10 +25,13 @@ import { login, leavePage, conditionalElementReady, waitForJQueryAnimations, wai
 //  - The form behind keeps its own screen and relationship after the drawer closes, for the conditional elements it
 //    fetches. The drawer replaced them with its own, so checkboxes were drawn with none of the screen's settings, and
 //    the elements of a form whose relationship wasn't the drawer's were fetched with the wrong one.
+//  - The drawer makes the checks full screen makes before it submits: it waits for conditional elements that are still
+//    on their way, asks about letters in a number box, and runs a form's extra validation function. It used to make none
+//    of them. Deleting a sub entry made no checks at all, and saved the form's rich text fields empty.
 //
 // The forms are made here with MCP, in the Museum application, and deleted at the end, so nothing the other specs use
 // changes. MCP is part of the application, and 040 turns it on and makes an API key, which this reads from the admin UI.
-// The entries are made with MCP. The last test saves the exhibition, and the others leave their changes unsaved.
+// The entries are made with MCP. The tests run in order, and some rely on what an earlier one saved.
 
 test.describe.configure({ mode: 'serial' });
 
@@ -55,6 +58,9 @@ const NEW_CASE_NUMBER = 'C-003';
 const EARLIEST_INSTALLATION = '2026-01-01';
 const LATEST_INSTALLATION = '2026-12-31';
 const INSTALLED_ON = '2026-06-15';
+// what the display cases' extra validation function refuses to have in a field, and what it says
+const REFUSED_NAME = 'Broken case';
+const REFUSAL = 'A broken case cannot be shown';
 
 let api;
 let apiKey;
@@ -63,6 +69,7 @@ let exhibitionsFid;
 let casesFid;
 let exhibitionEntryId;
 let caseEntryId;
+let otherCaseEntryId;
 
 async function tool(name, args) {
 	const response = await api.post(MCP, {
@@ -127,15 +134,15 @@ const radioIn = (container, handle, option) =>
 // Open the exhibition full screen, and its display case in the drawer. The drawer's footer controls are put in after the
 // fragment's scripts have run, and the form then fades in, so once both have happened the conditional elements' code
 // has done what it does when a form loads.
-async function openDisplayCaseInDrawer(page) {
+async function openDisplayCaseInDrawer(page, entryId = caseEntryId, handleItShows = 'dct_case_spotlight') {
 	await page.goto(`/modules/formulize/index.php?fid=${exhibitionsFid}&ve=${exhibitionEntryId}`);
 	await page.waitForLoadState('load');
 	await waitForJQueryAnimations(page);
-	await page.locator(`a#view${caseEntryId}`).click();
+	await page.locator(`a#view${entryId}`).click();
 	await expect(drawer(page)).toBeVisible();
 	await expect(drawer(page).locator('.formulize-drawer__foot input[type="button"]').first()).toBeVisible();
 	await expect(drawer(page).locator('.formulize-drawer__body').first()).not.toHaveClass(/formulize-drawer__body--entering/);
-	await expect(drawer(page).locator('.formulize-label-dct_case_spotlight')).toBeVisible();
+	await expect(drawer(page).locator(`.formulize-label-${handleItShows}`)).toBeVisible();
 }
 
 // Close the drawer with its X. A change in the drawer asks whether to discard it first.
@@ -194,11 +201,18 @@ test('Make an exhibition with a display case, each with a conditional element an
 	const caseName = await tool('create_text_box_element', { form_id: casesFid, type: 'text', caption: 'Name', handle: 'dct_case_name', properties: {}, principal_identifier: true });
 	await tool('create_list_element', { form_id: casesFid, type: 'radio', caption: 'Lighting', handle: 'dct_case_lighting', properties: { options: ['Natural', 'Spotlit'] } });
 	await tool('create_list_element', {
-		form_id: casesFid, type: 'radio', caption: 'Spotlight colour', handle: 'dct_case_spotlight', properties: { options: ['Warm', 'Cool'] },
+		form_id: casesFid, type: 'radio', caption: 'Spotlight colour', handle: 'dct_case_spotlight', properties: { options: ['Warm', 'Cool'] }, required: true,
 		display_conditions: [{ element: 'dct_case_lighting', operator: '=', value: 'Spotlit', type: 'match-all' }],
 	});
 	await tool('create_text_box_element', { form_id: casesFid, type: 'textarea', caption: 'Notes', handle: 'dct_case_notes', properties: { useRichTextEditor: 1 } });
 	await tool('create_text_box_element', { form_id: casesFid, type: 'text', caption: 'Catalogue number', handle: 'dct_case_catalogue', properties: {} });
+	await tool('create_text_box_element', { form_id: casesFid, type: 'number', caption: 'Shelves', handle: 'dct_case_shelves', properties: {} });
+	// a script in a form's static content can give the form an extra validation function. Static content puts values in
+	// place of curly brackets, so this does without them.
+	await tool('create_static_content_element', {
+		form_id: casesFid, type: 'fullWidthContent', caption: 'Case rules',
+		properties: { content: `<script>window.formulizeExtraFormValidation = (valid, form) => valid && (Array.from(form.elements).every(field => field.value !== '${REFUSED_NAME}') || Boolean(alert('${REFUSAL}')));</script>` },
+	});
 
 	// The subform makes a linked element in the display cases form, pointing at the exhibition's Name
 	await tool('create_subform_interface', {
@@ -218,6 +232,7 @@ test('Make an exhibition with a display case, each with a conditional element an
 	});
 	exhibitionEntryId = entryIdWhere(exhibitionsFid, 'dct_exhibition_name', EXHIBITION);
 	caseEntryId = entryIdWhere(casesFid, 'dct_case_name', DISPLAY_CASE);
+	otherCaseEntryId = entryIdWhere(casesFid, 'dct_case_name', OTHER_CASE);
 	// the values the drawer and the exhibition have to show, and keep, are the ones that were stored
 	expect(storedValue(casesFid, caseEntryId, 'dct_case_spotlight')).toBe(SAVED_SPOTLIGHT);
 	expect(storedValue(exhibitionsFid, exhibitionEntryId, 'dct_exhibition_description')).toContain(DESCRIPTION);
@@ -404,6 +419,111 @@ test('The form behind the drawer keeps its own screen and relationship after the
 	const secondColumn = handle => exhibition.locator(`.form-row:has(.formulize-label-${handle}) .col2`);
 	await expect(secondColumn('dct_exhibition_name').getByRole('textbox')).toBeVisible();
 	await expect(secondColumn('dct_exhibition_languages').getByRole('checkbox', { name: 'French', exact: true })).toBeVisible();
+
+	await leaveForExhibitionsList(page);
+});
+
+// Do something that makes the drawer or the page ask or say something, and return what it was. It's answered as it comes.
+async function dialogFrom(page, action, answer = 'accept') {
+	let message = '';
+	await Promise.all([
+		page.waitForEvent('dialog').then(dialog => { message = dialog.message(); return dialog[answer](); }),
+		action(),
+	]);
+	return message;
+}
+
+const drawerSave = page => drawer(page).locator('.formulize-drawer__foot input[name="save"]');
+
+test('The drawer waits for conditional elements before it saves', async ({ page }) => {
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	await openDisplayCaseInDrawer(page, otherCaseEntryId, 'dct_case_lighting');
+
+	// Spotlit brings in the Spotlight colour, which is required. Saving straight away has to wait for it, and then say so.
+	const refusal = await dialogFrom(page, async () => {
+		await radioIn(drawer(page), 'dct_case_lighting', 'Spotlit').check();
+		await drawerSave(page).click();
+	});
+	expect(refusal).toContain('Spotlight colour');
+	expect(storedValue(casesFid, otherCaseEntryId, 'dct_case_lighting'), 'nothing should be saved yet').toBe('Natural');
+
+	await conditionalChecksFinished(page);
+	await radioIn(drawer(page), 'dct_case_spotlight', 'Warm').check();
+	await drawerSave(page).click();
+	await expect.poll(() => storedValue(casesFid, otherCaseEntryId, 'dct_case_spotlight'), { message: 'the colour should be saved' }).toBe('Warm');
+	expect(storedValue(casesFid, otherCaseEntryId, 'dct_case_lighting')).toBe('Spotlit');
+	await expect(drawer(page)).not.toHaveClass(/formulize-drawer--busy/);
+
+	await closeDrawer(page);
+	await leaveForExhibitionsList(page);
+});
+
+test('Deleting a sub entry in the drawer keeps the rich text of the form it is in', async ({ page }) => {
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	// the list of exhibitions opens its entries in the drawer, which is set on the list screen's Interface tab
+	const [[listSid]] = dbQuery(`SELECT defaultlist FROM ${dbPrefix()}_formulize_id WHERE id_form = ${exhibitionsFid}`);
+	await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${exhibitionsFid}&sid=${listSid}&tab=interface`);
+	await waitForAdminPageReady(page);
+	await page.locator('input[name="screens-editdestination"][value="drawer"]').check();
+	await saveAdminForm(page);
+
+	await page.goto(`/modules/formulize/index.php?sid=${listSid}`);
+	await expect(page.getByText(/Showing entries:/).first()).toBeVisible({ timeout: 30000 });
+	await page.getByRole('row', { name: new RegExp(EXHIBITION) }).locator('a[onclick^="javascript:goDetails"]').click();
+	await expect(drawer(page)).toBeVisible();
+	await expect(drawer(page).locator('.formulize-drawer__foot input[type="button"]').first()).toBeVisible();
+	await expect(drawer(page).locator('.ck-editor__editable')).toContainText(DESCRIPTION);
+
+	// a change somewhere else in the form, so that it's saved along with the delete. The Description isn't touched.
+	await radioIn(drawer(page), 'dct_exhibition_travelling', 'No').check();
+	await expect(drawer(page).locator('.formulize-label-dct_exhibition_venue')).not.toBeVisible();
+	await conditionalChecksFinished(page);
+	await drawer(page).locator(`input.delbox[name="delbox${otherCaseEntryId}"]`).check();
+	await dialogFrom(page, () => drawer(page).locator('input[name="deletesubs"]').click());
+
+	await expect.poll(() => dbQuery(`SELECT entry_id FROM ${dataTable(casesFid)} WHERE entry_id = ${otherCaseEntryId}`).length, { message: 'the display case should be deleted' }).toBe(0);
+	await expect(drawer(page)).not.toHaveClass(/formulize-drawer--busy/);
+	expect(storedValue(exhibitionsFid, exhibitionEntryId, 'dct_exhibition_travelling'), 'the change should be saved').toBe('No');
+	expect(storedValue(exhibitionsFid, exhibitionEntryId, 'dct_exhibition_description'), 'the Description should be kept').toContain(DESCRIPTION);
+
+	await closeDrawer(page);
+	await leavePage(page, `/modules/formulize/index.php?sid=${listSid}`);
+	await expect(page.getByText(/Showing entries:/).first()).toBeVisible({ timeout: 30000 });
+});
+
+test('The drawer asks about letters in a number box, and runs its own form\'s extra validation', async ({ page }) => {
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	await openDisplayCaseInDrawer(page);
+	const name = drawer(page).locator('.form-row:has(.formulize-label-dct_case_name)').getByRole('textbox');
+	const shelves = drawer(page).getByRole('spinbutton', { name: 'Shelves' });
+
+	// the display cases' extra validation refuses the name
+	await name.fill(REFUSED_NAME);
+	await name.press('Tab');
+	expect(await dialogFrom(page, () => drawerSave(page).click())).toBe(REFUSAL);
+	expect(storedValue(casesFid, caseEntryId, 'dct_case_name')).toBe(DISPLAY_CASE);
+	await name.fill(DISPLAY_CASE);
+	await name.press('Tab');
+
+	// a number box can have letters as part of a number, and no means nothing is saved
+	await shelves.fill('1e5');
+	await shelves.press('Tab');
+	expect(await dialogFrom(page, () => drawerSave(page).click(), 'dismiss')).toContain('1e5');
+	expect(storedValue(casesFid, caseEntryId, 'dct_case_shelves'), 'nothing should be saved').not.toMatch(/\d/);
+
+	await shelves.fill('12');
+	await shelves.press('Tab');
+	await drawerSave(page).click();
+	await expect.poll(() => Number(storedValue(casesFid, caseEntryId, 'dct_case_shelves')), { message: 'the number should be saved' }).toBe(12);
+	await expect(drawer(page)).not.toHaveClass(/formulize-drawer--busy/);
+	await closeDrawer(page);
+
+	// the exhibition behind has no extra validation, so what the display cases refuse is fine there
+	const exhibition = page.locator('#formulizeform');
+	await exhibition.locator('.form-row:has(.formulize-label-dct_exhibition_name)').getByRole('textbox').fill(REFUSED_NAME);
+	await exhibition.locator('.form-row:has(.formulize-label-dct_exhibition_name)').getByRole('textbox').press('Tab');
+	await saveFormulizeForm(page, 'Save');
+	expect(storedValue(exhibitionsFid, exhibitionEntryId, 'dct_exhibition_name')).toBe(REFUSED_NAME);
 
 	await leaveForExhibitionsList(page);
 });

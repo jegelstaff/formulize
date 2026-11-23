@@ -210,7 +210,8 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 		</script>";
 			}
 
-			$dialogHtml = "
+			// the script with the auto-reopen vars goes first, because in the drawer the page is ready already, so the code that reads them runs straight away
+			$dialogHtml = $autoReopenScript . "
 		<div id='tfa-dialog-{$safeId}'></div>
 		<div id='tfa-loading-{$safeId}' style='display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1100;'><center>{$workingGif}</center></div>
 		<input type='hidden' name='formulize_tfa_code' id='tfa-code-{$safeId}' value=''>
@@ -249,8 +250,15 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 		jQuery(document).ready(function() {
 			window['tfa_form_{$safeId}'] = jQuery('input[name=\"{$markupName}\"]').first().closest('form');
 
+			// A form drawn again in the same page, in the drawer, makes a dialog of its own in place of the last one
+			jQuery('.ui-dialog-content').filter(function() { return this.id === 'tfa-dialog-{$safeId}'; }).dialog('destroy').remove();
+
+			// In the drawer, what was submitted has to be sent by the drawer, or the page goes off to the form's address, or the
+			// page's own form is submitted. Save it and stay, as full screen does, so a wrong code can be reported and tried again.
 			function tfa_submitAfterCode_{$safeId}() {
-				if(typeof validateAndSubmit === 'function') {
+				if(window['tfa_form_{$safeId}'].closest('.formulize-drawer').length) {
+					window.formulize.drawer.save();
+				} else if(typeof validateAndSubmit === 'function') {
 					validateAndSubmit();
 				} else {
 					window['tfa_form_{$safeId}'][0].submit();
@@ -347,6 +355,7 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 
 		// Auto-reopen with error message if previous submission had invalid 2FA code/token
 		if(typeof tfa_auto_reopen !== 'undefined' && tfa_auto_reopen) {
+			tfa_auto_reopen = false; // once, in case the drawer draws the form again in this page
 			setTimeout(function() {
 				var tfa_dlg_ro = jQuery('#tfa-dialog-' + tfa_auto_safeId);
 				var tfa_newMethod_ro = parseInt(jQuery('input[name=\"' + tfa_auto_markupName + '\"]:checked').val()) || 0;
@@ -357,6 +366,8 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 					(tfa_auto_currentMethod == tfa_auto_TFA_SMS   && tfa_newMethod_ro == tfa_auto_TFA_SMS   && tfa_newPhone_ro != tfa_auto_currentPhone && tfa_auto_currentPhone != '') ||
 					(tfa_auto_currentMethod != tfa_auto_TFA_OFF   && tfa_newMethod_ro != tfa_auto_TFA_OFF   && tfa_newMethod_ro != tfa_auto_currentMethod)
 				);
+				// what was typed is still to be saved, but the drawer counts a form as unchanged when it draws it
+				if(window['tfa_form_' + tfa_auto_safeId].closest('.formulize-drawer').length) { window.formulizechanged = 1; }
 				tfa_dlg_ro.dialog('open');
 				jQuery('#tfa-loading-' + tfa_auto_safeId).show();
 				if(tfa_needsTwoPhase_ro) {
@@ -372,7 +383,7 @@ class formulizeUserAccount2FAElementHandler extends formulizeUserAccountElementH
 			}, 400);
 		}
 		});
-		</script>" . $autoReopenScript;
+		</script>";
 		}
 
 		return new XoopsFormLabel($caption, $radioHtml . $dialogHtml . $forgetDevicesHtml, $markupName);
