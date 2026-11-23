@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, showPermissionsFor, leavePage, dbQuery, dbPrefix, sqlEscape, elementId } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, showPermissionsFor, leavePage, dbQuery, dbPrefix, sqlEscape, elementId, showListSearches, openEntry, goToEntryPage, entryArea } from '../../utils';
 import { formId, museumAppId, saveAndClose } from '../01-setup/museum-forms';
 
 // Which entries in a subform get a checkbox, and which of them can really be deleted.
@@ -181,6 +181,7 @@ async function removeUser(page, user) {
 	if (userExists(user)) {
 		// the list is paged, so search for the user first
 		await page.goto('/modules/formulize/users.php');
+		await showListSearches(page);
 		const search = page.locator('input[name^="search_formulize_user_account_username_"]');
 		await search.fill(user.login);
 		await Promise.all([
@@ -218,6 +219,7 @@ async function removeThrowaway(page) {
 	// the list is paged, so search for it first, as museum-checks.js does
 	await page.goto(`/modules/formulize/index.php?fid=${formId('Artifacts')}`);
 	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
+	await showListSearches(page);
 	await page.locator('input[name="search_artifacts_short_name"]').fill(THROWAWAY);
 	await page.getByRole('link', { name: 'Short name' }).click();
 	await expect(page.getByText(/ of 1\./).first()).toBeVisible();
@@ -370,16 +372,16 @@ test('deleting checks each entry, whatever was posted', async ({ page }) => {
 	// An artifact of the overseer's own, which they can delete, in Main Vault
 	await login(page, OVERSEER.login);
 	await page.goto(`/modules/formulize/index.php?fid=${formId('Artifacts')}`);
-	await page.getByRole('button', { name: 'Add Artifact', exact: true }).click();
-	await page.getByRole('textbox', { name: 'Short name *' }).fill(THROWAWAY);
-	await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('1');
-	await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('1');
-	await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('1');
-	await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1900');
-	await page.getByRole('radio', { name: 'CE', exact: true }).check();
+	await openEntry(page, page.getByRole('button', { name: 'Add Artifact', exact: true }));
+	await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill(THROWAWAY);
+	await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill('1');
+	await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill('1');
+	await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill('1');
+	await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill('1900');
+	await entryArea(page).getByRole('radio', { name: 'CE', exact: true }).check();
 	await saveFormulizeForm(page);
-	await page.getByRole('link', { name: 'Location and loans', exact: true }).click();
-	const location = page.locator('.form-row:has(.formulize-label-artifacts_location) select');
+	await goToEntryPage(page, 'Location and loans');
+	const location = entryArea(page).locator('.form-row:has(.formulize-label-artifacts_location) select');
 	await expect(location).toBeVisible();
 	await location.selectOption({ label: 'Main Vault' });
 	await saveFormulizeForm(page);

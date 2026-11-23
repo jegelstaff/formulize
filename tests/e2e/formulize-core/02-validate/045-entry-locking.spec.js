@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, ensureMainMenuOpen, leavePage, reloadPage, dbQuery, dbPrefix } from '../../utils';
+import { login, ensureMainMenuOpen, leavePage, reloadPage, dbQuery, dbPrefix, openEntry } from '../../utils';
 import { E2E_TEST_BASE_URL, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
 
 // Entry locking: while someone has an entry open in a form, anyone else who opens it gets a message
@@ -27,7 +27,8 @@ async function openRomanCoin(page) {
 	await ensureMainMenuOpen(page);
 	await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
 	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
-	await page.getByRole('row', { name: 'M001' }).getByRole('link').first().click();
+	// on its form screen, or in the drawer, as the list's settings say
+	await openEntry(page, page.getByRole('row', { name: 'M001' }).getByRole('link').first());
 	await expect(page.locator('.formulize-label-artifacts_short_name')).toBeVisible();
 	// the lock message is added when the document is ready
 	await page.waitForLoadState('load');
@@ -48,11 +49,13 @@ async function leave(page) {
 }
 
 const lockMessage = page => page.locator('.formulize-entry-lock-message');
-const shortNameRow = page => page.locator('#formulizeform .form-row:has(.formulize-label-artifacts_short_name)');
+// the entry's form, on its form screen or in the drawer
+const entryForm = page => page.locator('#formulizeform, .formulize-drawer:not([hidden]) #formulize_drawer');
+const shortNameRow = page => entryForm(page).locator('.form-row:has(.formulize-label-artifacts_short_name)');
 const shortNameBox = page => shortNameRow(page).getByRole('textbox');
 // Fields for the entry's values. Not the Save and Close buttons, which are still there, or the
 // Change entry owner list, which is hidden in the Office Use Only section and isn't one of the form's elements.
-const editableFields = page => page.locator('#formulizeform').locator(
+const editableFields = page => entryForm(page).locator(
 	'input:not([type="hidden"]):not([type="button"]):not([type="submit"]):not([disabled]), textarea:not([disabled]), select:not([disabled]), [contenteditable="true"]'
 ).filter({ visible: true });
 
@@ -94,8 +97,12 @@ test.describe('Entry locking', () => {
 
 		await openRomanCoin(curator2);
 		await expectLockedBy(curator2, 'Curator One');
-		// directly above the form, since the entry isn't in a drawer
-		await expect(curator2.locator('.formulize-entry-lock-message + #formulizeform')).toHaveCount(1);
+		// at the top of the drawer, when the list opens its entries there, and otherwise directly above the form
+		if (await curator2.locator('.formulize-drawer:not([hidden])').count()) {
+			await expect(curator2.locator('.formulize-drawer__body > .formulize-entry-lock-message:first-child')).toHaveCount(1);
+		} else {
+			await expect(curator2.locator('.formulize-entry-lock-message + #formulizeform')).toHaveCount(1);
+		}
 	});
 
 	test('when the curator who has the entry leaves, the other curator can edit it', async ({ browser }) => {

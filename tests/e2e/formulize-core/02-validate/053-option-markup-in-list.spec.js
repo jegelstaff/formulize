@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled, applyColumnChanges, leavePage, autocompleteBox, dbQuery, dbPrefix } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled, applyColumnChanges, leavePage, autocompleteBox, dbQuery, dbPrefix, openEntry, entryArea, openChangeColumns } from '../../utils';
 
 /**
  * Markup in the options of radio buttons, checkboxes and selects shows in a list the way the form shows it.
@@ -88,9 +88,9 @@ test.describe.serial('Markup in options shows in lists', () => {
 	test('the form draws the radio and checkbox options as markup', async ({ page }) => {
 		await login(page, 'admin');
 		await page.goto(`/modules/formulize/index.php?fid=${testFid}`);
-		await page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }).click();
-		await expect(page.locator(`span.${RADIO_CLASS}`)).toHaveCount(1);
-		await expect(page.locator(`i.${CHECK_CLASS}`)).toHaveCount(1);
+		await openEntry(page, page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }));
+		await expect(entryArea(page).locator(`span.${RADIO_CLASS}`)).toHaveCount(1);
+		await expect(entryArea(page).locator(`i.${CHECK_CLASS}`)).toHaveCount(1);
 		await leavePage(page, `/modules/formulize/index.php?fid=${testFid}`);
 		await expect(page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true })).toBeVisible();
 	});
@@ -106,25 +106,25 @@ test.describe.serial('Markup in options shows in lists', () => {
 		};
 
 		await page.goto(listUrl);
-		await page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }).click();
-		await page.getByRole('textbox', { name: 'ID *' }).fill('OM053A');
-		await page.getByRole('radio', { name: RADIO_MARKER }).check();
-		await page.getByRole('checkbox', { name: CHECK_MARKER }).check();
-		await page.getByRole('checkbox', { name: PLAIN_OPTION }).check();
-		await page.getByLabel('Opt Select').selectOption({ label: SELECT_MARKER });
+		await openEntry(page, page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'ID *' }).fill('OM053A');
+		await entryArea(page).getByRole('radio', { name: RADIO_MARKER }).check();
+		await entryArea(page).getByRole('checkbox', { name: CHECK_MARKER }).check();
+		await entryArea(page).getByRole('checkbox', { name: PLAIN_OPTION }).check();
+		await entryArea(page).getByLabel('Opt Select').selectOption({ label: SELECT_MARKER });
 		await saveFormulizeForm(page);
 		await leavePage(page, listUrl);
 
-		await page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }).click();
-		await page.getByRole('textbox', { name: 'ID *' }).fill('OM053B');
-		await page.getByRole('radio', { name: /^Other/ }).check();
-		await page.locator('input[name^="other["]').fill(OTHER_PAYLOAD);
+		await openEntry(page, page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'ID *' }).fill('OM053B');
+		await entryArea(page).getByRole('radio', { name: /^Other/ }).check();
+		await entryArea(page).locator('input[name^="other["]').fill(OTHER_PAYLOAD);
 		await typeNewAutocompleteValue(AUTO_PAYLOAD);
 		await saveFormulizeForm(page);
 		await leavePage(page, listUrl);
 
-		await page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }).click();
-		await page.getByRole('textbox', { name: 'ID *' }).fill('OM053C');
+		await openEntry(page, page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'ID *' }).fill('OM053C');
 		await typeNewAutocompleteValue(ENCODED_PAYLOAD);
 		await saveFormulizeForm(page);
 		await leavePage(page, listUrl);
@@ -168,10 +168,7 @@ test.describe.serial('Markup in options shows in lists', () => {
 		await page.goto(`/modules/formulize/index.php?fid=${testFid}`);
 
 		// the elements are not columns by default
-		const popupPromise = page.context().waitForEvent('page');
-		await page.getByRole('button', { name: 'Change columns' }).click();
-		const popup = await popupPromise;
-		await popup.bringToFront();
+		const popup = await openChangeColumns(page);
 		for (const caption of ['Opt Radio', 'Opt Check', 'Opt Select', 'Opt Auto']) {
 			await popup.getByRole('checkbox', { name: caption }).check();
 		}

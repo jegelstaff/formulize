@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, editScreenPage, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape, showPermissionsFor, openApplicationAccordion, waitForJQueryAnimations } from '../../utils';
+import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, editScreenPage, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape, showPermissionsFor, openApplicationAccordion, waitForJQueryAnimations, signOutLink } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -191,7 +191,7 @@ test.describe('Set Permissions', () => {
 	  await page.getByText('No, only permission to view').click();
 		await saveAdminForm(page);
 		await page.goto('/');
-		await page.getByRole('link', { name: 'Logout' }).click();
+		await signOutLink(page).click();
 		// The Survey multipage screen is sid=16 now: the 4 forms 005 creates
 		// (Departments, System Groups, Staff, System Users) consume screen ids
 		// 1-6, shifting the museum screens up by 6 (was sid=10 pre-005-rewrite).

@@ -71,4 +71,4 @@ Offers        -> Visits
 - Ids depend on the order setup makes things. Specs look forms and screens up by title or handle, with helpers like `formId()` in `01-setup/museum-forms.js`, rather than relying on fixed ids.
 - A validate spec that needs to change a form makes its own with `createMuseumForm` and deletes it afterwards. The specs in `03-validate-sequential/` change shared things and put them back.
 - 002 rewrites the admin's password hash during the bcrypt upgrade check.
-- A new install starts on Lyris, and `01-setup/001` switches the site to Anari straight after the installer, before anything is made. `04-appearance/` switches it to Lyris and back. See [themes-anari-and-lyris](themes-anari-and-lyris.md).
+- A new install starts on Lyris, and `01-setup/001` switches the site to Anari straight after the installer, before anything is made, unless the run is on Lyris (`E2E_THEME`). The museum then has that theme's screen settings: on Lyris its lists open entries in the drawer and show 20 a page. `04-appearance/` switches it to Lyris and back. See [Which theme the suite covers](testing-robust-specs.md#which-theme-the-suite-covers).

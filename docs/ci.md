@@ -18,21 +18,47 @@ There are four workflows.
 
 **`e2e-test-manual.yml`** — the actual suite. It can also be run by hand from the Actions tab (**Manual E2E Test Suite**), against any branch, which is how you check a branch before merging it.
 
-What a run does, in order:
+### Where the suite runs
+
+Every run tests the whole suite in five environments at the same time. Each one is a job of its own, with its own runner, containers and database, so they can't get in each other's way, and a run takes about as long as one of them.
+
+| Environment | Database | Browser | Theme | PHP tests | Decides the run |
+|---|---|---|---|---|---|
+| `mariadb-chromium-anari` | MariaDB | Chromium | Anari | Yes | Yes |
+| `mysql-chromium-anari` | MySQL 8.4 | Chromium | Anari | Yes | Not yet |
+| `mariadb-firefox-anari` | MariaDB | Firefox | Anari | No | Not yet |
+| `mariadb-webkit-anari` | MariaDB | WebKit | Anari | No | Not yet |
+| `mariadb-chromium-lyris` | MariaDB | Chromium | Lyris | No | Not yet |
+
+A difference between databases doesn't depend on the browser, and a difference between browsers doesn't depend on the database, so the other browsers run on MariaDB only. The PHP tests depend on the database and nothing else, so they run once on each. The Lyris job runs the same specs as the first one, except that the site stays on Lyris after the install, so the museum system is built with Lyris's screen settings: its lists open entries in the drawer, show 20 entries a page, and keep their search boxes hidden until they're opened.
+
+Only `mariadb-chromium-anari` decides whether the run passes. The others are allowed to fail while they're new, so a red mark on one of them sits under a green run. Look at each job in the Actions tab. Once an environment passes first time, every time, set its `decides` to `true` in the workflow's list of environments.
+
+To run some of the environments by hand, choose one under **environments**, or `all`. From another workflow, pass ids separated by commas.
+
+WebKit here is Playwright's own build on Linux, not Safari, so a pass there isn't proof that Safari works.
+
+### What each job does
+
+In order:
 
 1. Checks out the repository and sets up Node 20.
 2. Sets the file and directory permissions Formulize needs to be writable.
-3. Brings up the application with `docker compose up -d --build` — a real Apache, PHP and MariaDB, exactly the same [Docker setup](../deploying_locally) used for local development. The database starts genuinely empty; nothing is seeded.
-4. Runs the **standalone PHP logic tests** — password hashing, `{element_handle}` reference binding, normalize-then-escape form sinks, `EMPTYSET` searches and search-term prefixes, partial date searches. These need nothing but PHP, so they run first and fail fast.
-5. Installs the Playwright dependencies and the Chromium browser.
+3. Brings up the application with `docker compose up -d --build` — a real Apache, PHP and MariaDB, exactly the same [Docker setup](../deploying_locally) used for local development. The MySQL job adds `docker-compose.mysql.yaml`, which runs MySQL 8.4 in place of MariaDB. The database starts genuinely empty; nothing is seeded.
+4. Runs the **standalone PHP logic tests** — password hashing, `{element_handle}` reference binding, normalize-then-escape form sinks, `EMPTYSET` searches and search-term prefixes, partial date searches. These need nothing but PHP, so they run first and fail fast. Only the two Chromium, Anari jobs run them, one on each database.
+5. Installs the Playwright dependencies and the job's browser.
 6. Runs the **setup specs** — `npx playwright test formulize-core/01-setup --workers=1`. These install Formulize from scratch and build the museum sample system. One worker, in file-name order, because each depends on the last.
 7. Runs the **validate specs** — `npx playwright test formulize-core/02-validate --workers=4 --fully-parallel`. These interrogate the system the setup specs built. This step is why a spec whose tests depend on each other has to say `test.describe.configure({ mode: 'serial' })` — see [Creating Tests](../version_control/testing/creating_tests).
 8. Runs the **sequential validate specs** - `npx playwright test formulize-core/03-validate-sequential --workers=1`. These change things the museum system shares, such as element handles, check that what depends on them still works, and put them back, so they run after the validate specs, on one worker.
 9. Runs the **appearance specs** — `npx playwright test formulize-core/04-appearance --workers=1`. These test the Lyris theme's looks and the appearance editor, switching the whole site to Lyris and back, so they run after the validate specs, on one worker, not alongside anything else.
-10. Runs the **PHP integrity tests** — element reference scan, saved views round trip, element code files. These need the finished system, so they come last.
+10. Runs the **PHP integrity tests** — element reference scan, saved views round trip, element code files. These need the finished system, so they come last. Like the logic tests, they run only in the two Chromium, Anari jobs.
 11. Dumps the database and collects the files the run produced, then tears the containers down.
 
 Steps 7 to 9 are skipped when the manual run is given a test filter, because a partly built system is not the system they are asking about.
+
+In `mariadb-chromium-anari`, the first failure stops the job, and the steps after it are skipped. The other jobs go on as far as they can, so one run shows more of what's wrong in an environment that's new. Once their setup specs pass, every later step runs, even after one that failed, and the validate specs in step 7 run to the end rather than stopping at their first failure. Their setup, sequential and appearance specs still stop at their first failure, because each of those specs builds on or changes what the ones after it use.
+
+A few tests use something only one browser has, such as emulating a phone or clearing the browser's cache, and they're skipped in the others, with the reason in the report.
 
 ### Skipping a run
 
@@ -40,10 +66,10 @@ Include `[SKIP TEST]` (or `[SKIP TESTS]`) in a commit message to skip the suite 
 
 ### Reading the results
 
-Every run uploads two artifacts, kept for seven days:
+Every job uploads two artifacts, kept for seven days, named for its environment, such as `playwright-report-mariadb-chromium-lyris`:
 
-* **playwright-report** — the HTML report. Download it and open `index.html`, or run `npx playwright show-report` against it. Failures carry a trace and a video, because `playwright.config.js` sets `trace: 'retain-on-failure'` and `video: 'retain-on-failure'`. The trace viewer shows the DOM, the network and the console at each step of the failing test.
-* **final-state** — the state of the system when the run ended: a database dump, `mainfile.php`, `install.lock`, and the contents of `trust/`, `logs/`, `modules/formulize/code/` and `modules/formulize/templates/screens/`. This is collected `if: always()`, so it is there for a failed run too, which is when it is worth having: you can restore the dump locally and look at the system the test was actually standing in.
+* **playwright-report-&lt;environment&gt;** — the HTML reports, one folder for each set of specs that ran: `01-setup`, `02-validate`, `03-validate-sequential` and `04-appearance`, or `filtered` for a run given a test filter. Download it and open `index.html` in a folder, or run `npx playwright show-report` against the folder. Failures carry a trace and a video, because `playwright.config.js` sets `trace: 'retain-on-failure'` and `video: 'retain-on-failure'`. The trace viewer shows the DOM, the network and the console at each step of the failing test.
+* **final-state-&lt;environment&gt;** — the state of the system when the run ended: a database dump, `mainfile.php`, `install.lock`, and the contents of `trust/`, `logs/`, `modules/formulize/code/` and `modules/formulize/templates/screens/`. This is collected `if: always()`, so it is there for a failed run too, which is when it is worth having: you can restore the dump locally and look at the system the test was actually standing in.
 
 The run also uses a PHP error reporter (`tests/e2e/php-error-reporter.js`), so PHP notices and warnings raised during the tests surface in the report rather than only in the container log.
 
@@ -51,7 +77,7 @@ Because the suite runs on `master`, a red build means master is broken, and that
 
 ### Measuring coverage
 
-Run the workflow by hand with **coverage** ticked to find out which lines of PHP the suite runs. It counts every PHP test and every request the Playwright specs make, so the numbers are for the whole suite. The option is in the workflow on branches that have `tests/coverage/`, so choose one of those under **Use workflow from**, as well as the branch to test.
+Run the workflow by hand with **coverage** ticked to find out which lines of PHP the suite runs. It counts every PHP test and every request the Playwright specs make, so the numbers are for the whole suite. Only the `mariadb-chromium-anari` job measures it, since one report is enough. The option is in the workflow on branches that have `tests/coverage/`, so choose one of those under **Use workflow from**, as well as the branch to test.
 
 The run's summary page shows:
 

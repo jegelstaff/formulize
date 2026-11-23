@@ -1,13 +1,20 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveFormulizeForm, conditionalElementReady, openElementAccordion, saveAdminForm, applyColumnChanges, openAllColumnSections, leavePage, autocompleteBox, dbQuery, dbPrefix } from '../../utils';
+import { login, saveFormulizeForm, conditionalElementReady, openElementAccordion, saveAdminForm, applyColumnChanges, openAllColumnSections, leavePage, autocompleteBox, dbQuery, dbPrefix,
+	openMainMenu, ensureMainMenuOpen, saveAndCloseEntry, showListSearches, clickListAction, openChangeColumns, currentViewName, entryArea, entryButton,
+	autocompleteSuggestion, goToEntryPage, openEntry, LIST_PAGE_SIZE } from '../../utils';
 
 // the list of a form's entries
 const listOf = formTitle => `/modules/formulize/index.php?fid=${dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = '${formTitle}'`)[0][0]}`;
 
+// What the first page of a list says it shows, in a list the setup specs made, which shows as many entries a page as
+// new lists do in the theme the run is on
+const firstPageOf = total => `Showing entries: 1 to ${Math.min(LIST_PAGE_SIZE, total)} of ${total}.`;
+
 test.describe('Validate menu entries', () => {
 	test('Validate menu entries for ahstaff', async ({ page }) => {
 		await login(page, 'ahstaff', '12345');
+		await ensureMainMenuOpen(page);
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
@@ -17,6 +24,7 @@ test.describe('Validate menu entries', () => {
 	})
 	test('Validate menu entries for mhstaff', async ({ page }) => {
 		await login(page, 'mhstaff', '12345');
+		await ensureMainMenuOpen(page);
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
@@ -26,6 +34,7 @@ test.describe('Validate menu entries', () => {
 	})
 	test('Validate menu entries for curator1', async ({ page }) => {
 		await login(page, 'curator1', '12345');
+		await ensureMainMenuOpen(page);
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true })).toBeVisible();
 		await expect(page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true })).toBeVisible();
@@ -38,49 +47,49 @@ test.describe('Validate menu entries', () => {
 test.describe('Data Entry for Collections', () => {
 	test('Create Ancient History collection', async ({ page }) => {
 		await login(page, 'ahstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Collections', exact: true }).click();
-  	await page.getByRole('textbox', { name: 'Name *' }).fill('Ancient History');
-	  await page.getByRole('checkbox', { name: 'Children' }).check();
-  	await page.getByRole('checkbox', { name: 'Adults' }).check();
+		await openEntry(page, page.getByRole('button', { name: 'Add Collections', exact: true }));
+  	await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('Ancient History');
+	  await entryArea(page).getByRole('checkbox', { name: 'Children' }).check();
+  	await entryArea(page).getByRole('checkbox', { name: 'Adults' }).check();
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Modern History collection', async ({ page }) => {
 		await login(page, 'mhstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Collections', exact: true }).click();
-  	await page.getByRole('textbox', { name: 'Name *' }).fill('Modern History');
-	  await page.getByRole('checkbox', { name: 'Children' }).check();
-  	await page.getByRole('checkbox', { name: 'Adults' }).check();
+		await openEntry(page, page.getByRole('button', { name: 'Add Collections', exact: true }));
+  	await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('Modern History');
+	  await entryArea(page).getByRole('checkbox', { name: 'Children' }).check();
+  	await entryArea(page).getByRole('checkbox', { name: 'Adults' }).check();
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Coins collection', async ({ page }) => {
 		await login(page, 'curator1', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Collections' }).click();
-  	await page.getByRole('textbox', { name: 'Name *' }).fill('Coins');
-   	await page.getByRole('checkbox', { name: 'Adults' }).check();
+		await openEntry(page, page.getByRole('button', { name: 'Add Collections' }));
+  	await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('Coins');
+   	await entryArea(page).getByRole('checkbox', { name: 'Adults' }).check();
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Weapons collection', async ({ page }) => {
 		await login(page, 'curator1', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Collections' }).click();
-		await page.getByRole('textbox', { name: 'Name *' }).fill('Weapons');
-		await page.getByRole('checkbox', { name: 'Children' }).check();
-   	await page.getByRole('checkbox', { name: 'Adults' }).check();
+		await openEntry(page, page.getByRole('button', { name: 'Add Collections' }));
+		await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('Weapons');
+		await entryArea(page).getByRole('checkbox', { name: 'Children' }).check();
+   	await entryArea(page).getByRole('checkbox', { name: 'Adults' }).check();
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 })
 
@@ -88,175 +97,175 @@ test.describe('Data Entry for Donors', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await login(page, 'curator1', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Donor', exact: true }).click();
+		await openEntry(page, page.getByRole('button', { name: 'Add Donor', exact: true }));
 	})
 
 	test('Create François-Marie donor', async ({ page }) => {
-		await page.getByText('Individual').click();
-		await expect(page.getByText('First name')).toBeVisible();
-	  await page.getByRole('textbox', { name: 'First name' }).fill('François-Marie');
-	  await page.getByRole('textbox', { name: 'Last name' }).fill('Arouet');
-		await page.getByRole('textbox', { name: 'Email address' }).fill('voltaire@enlightenment.org');
-	  await page.getByRole('textbox', { name: 'Favourite colour' }).fill('#6c2d2d');
-  	await page.getByRole('textbox', { name: 'Phone number' }).fill('1694221778');
-		await page.locator('.form-row:has(.formulize-label-donors_street_address) textarea').fill('Château de Cirey\nCirey-sur-Blaise\nFrance');
-  	await page.getByRole('combobox', { name: 'Province', exact: true }).selectOption('Quebec');
-  	await page.getByRole('textbox', { name: 'Postal code', exact: true }).fill('G1A 0A2');
+		await entryArea(page).getByText('Individual').click();
+		await expect(entryArea(page).getByText('First name')).toBeVisible();
+	  await entryArea(page).getByRole('textbox', { name: 'First name' }).fill('François-Marie');
+	  await entryArea(page).getByRole('textbox', { name: 'Last name' }).fill('Arouet');
+		await entryArea(page).getByRole('textbox', { name: 'Email address' }).fill('voltaire@enlightenment.org');
+	  await entryArea(page).getByRole('textbox', { name: 'Favourite colour' }).fill('#6c2d2d');
+  	await entryArea(page).getByRole('textbox', { name: 'Phone number' }).fill('1694221778');
+		await entryArea(page).locator('.form-row:has(.formulize-label-donors_street_address) textarea').fill('Château de Cirey\nCirey-sur-Blaise\nFrance');
+  	await entryArea(page).getByRole('combobox', { name: 'Province', exact: true }).selectOption('Quebec');
+  	await entryArea(page).getByRole('textbox', { name: 'Postal code', exact: true }).fill('G1A 0A2');
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Emilie donor', async ({ page }) => {
-		await page.getByText('Individual').click();
-	  await expect(page.getByText('First name')).toBeVisible();
-	  await page.getByRole('textbox', { name: 'First name' }).fill('Emilie');
-	  await page.getByRole('textbox', { name: 'Last name' }).fill('Du Châtelet');
-		await page.getByRole('textbox', { name: 'Email address' }).fill('duchatelet@enlightenment.org');
-	 	await page.getByRole('textbox', { name: 'Favourite colour' }).fill('#3b96c4');
-  	await page.getByRole('textbox', { name: 'Phone number' }).fill('1706221749');
-  	await page.locator('.form-row:has(.formulize-label-donors_street_address) textarea').fill('Château de Cirey\nCirey-sur-Blaise\nFrance');
-  	await page.getByRole('combobox', { name: 'Province', exact: true }).selectOption('Quebec');
-  	await page.getByRole('textbox', { name: 'Postal code', exact: true }).fill('G1A 0A2');
+		await entryArea(page).getByText('Individual').click();
+	  await expect(entryArea(page).getByText('First name')).toBeVisible();
+	  await entryArea(page).getByRole('textbox', { name: 'First name' }).fill('Emilie');
+	  await entryArea(page).getByRole('textbox', { name: 'Last name' }).fill('Du Châtelet');
+		await entryArea(page).getByRole('textbox', { name: 'Email address' }).fill('duchatelet@enlightenment.org');
+	 	await entryArea(page).getByRole('textbox', { name: 'Favourite colour' }).fill('#3b96c4');
+  	await entryArea(page).getByRole('textbox', { name: 'Phone number' }).fill('1706221749');
+  	await entryArea(page).locator('.form-row:has(.formulize-label-donors_street_address) textarea').fill('Château de Cirey\nCirey-sur-Blaise\nFrance');
+  	await entryArea(page).getByRole('combobox', { name: 'Province', exact: true }).selectOption('Quebec');
+  	await entryArea(page).getByRole('textbox', { name: 'Postal code', exact: true }).fill('G1A 0A2');
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Freeform donor', async ({ page }) => {
-	  await page.getByText('Organization').click();
-	  await expect(page.getByText('First name')).not.toBeVisible();
-		await page.getByRole('textbox', { name: 'Organization name' }).fill('Freeform Solutions');
-		await page.getByRole('textbox', { name: 'Email address' }).fill('formulize@freeform.ca');
-  	await page.getByRole('textbox', { name: 'Phone number' }).fill('4166863766');
-  	await page.locator('.form-row:has(.formulize-label-donors_street_address) textarea').fill('17 Crossovers St\nToronto');
-  	await page.getByRole('combobox', { name: 'Province', exact: true }).selectOption('Ontario');
-  	await page.getByRole('textbox', { name: 'Postal code', exact: true }).fill('M4E 3X2');
+	  await entryArea(page).getByText('Organization').click();
+	  await expect(entryArea(page).getByText('First name')).not.toBeVisible();
+		await entryArea(page).getByRole('textbox', { name: 'Organization name' }).fill('Freeform Solutions');
+		await entryArea(page).getByRole('textbox', { name: 'Email address' }).fill('formulize@freeform.ca');
+  	await entryArea(page).getByRole('textbox', { name: 'Phone number' }).fill('4166863766');
+  	await entryArea(page).locator('.form-row:has(.formulize-label-donors_street_address) textarea').fill('17 Crossovers St\nToronto');
+  	await entryArea(page).getByRole('combobox', { name: 'Province', exact: true }).selectOption('Ontario');
+  	await entryArea(page).getByRole('textbox', { name: 'Postal code', exact: true }).fill('M4E 3X2');
   	await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 })
 
 // Where an artifact comes from, which the Artifact origins map screen plots
 async function fillOrigin(page, latitude, longitude) {
-	await page.locator('.form-row:has(.formulize-label-artifacts_latitude) input[type="number"]').fill(latitude);
-	await page.locator('.form-row:has(.formulize-label-artifacts_longitude) input[type="number"]').fill(longitude);
+	await entryArea(page).locator('.form-row:has(.formulize-label-artifacts_latitude) input[type="number"]').fill(latitude);
+	await entryArea(page).locator('.form-row:has(.formulize-label-artifacts_longitude) input[type="number"]').fill(longitude);
 }
 
 test.describe('Data entry for Artifacts as ahstaff', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await login(page, 'ahstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Artifact', exact: true }).click();
+		await openEntry(page, page.getByRole('button', { name: 'Add Artifact', exact: true }));
 	})
 
 	test('Create Roman Coin', async ({ page }) => {
-		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A very lovely Roman Coin.');
-		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('150'); // year
-		await page.getByRole('radio', { name: 'BCE', exact: true }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A very lovely Roman Coin.');
+		await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill('150'); // year
+		await entryArea(page).getByRole('radio', { name: 'BCE', exact: true }).check();
 		page.once('dialog', dialog => {
 			console.log(`Dialog message: ${dialog.message()}`);
 			dialog.dismiss().catch(() => {});
 		});
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.locator('.form-row:has(.formulize-label-artifacts_short_name) input[type="text"]')).toBeFocused();
-		await page.getByRole('textbox', { name: 'Short name *' }).fill('Roman Coin');
+		await entryButton(page, 'Save').click();
+		await expect(entryArea(page).locator('.form-row:has(.formulize-label-artifacts_short_name) input[type="text"]')).toBeFocused();
+		await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill('Roman Coin');
 		page.once('dialog', dialog => {
 			console.log(`Dialog message: ${dialog.message()}`);
 			dialog.dismiss().catch(() => {});
 		});
-		await page.getByRole('button', { name: 'Save' }).click();
-		await expect(page.getByRole('spinbutton', { name: 'Height', exact: true })).toBeFocused();
-		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('0.2'); // height
-		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('1.5'); // width
-		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('1.5'); // depth
+		await entryButton(page, 'Save').click();
+		await expect(entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true })).toBeFocused();
+		await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill('0.2'); // height
+		await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill('1.5'); // width
+		await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill('1.5'); // depth
 		await saveFormulizeForm(page);
-		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2020-08-21');
-		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
-		await page.getByLabel('Donor').selectOption({ label: 'François-Marie Arouet' });
-		await page.getByRole('slider', { name: 'Condition' }).fill('8');
-		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
-		await page.getByRole('checkbox', { name: 'Coins' }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Date of acquisition' }).fill('2020-08-21');
+		await entryArea(page).getByRole('radio', { name: 'Yes' }).check(); // donated
+		await entryArea(page).getByLabel('Donor').selectOption({ label: 'François-Marie Arouet' });
+		await entryArea(page).getByRole('slider', { name: 'Condition' }).fill('8');
+		await entryArea(page).getByRole('checkbox', { name: 'Ancient History' }).check();
+		await entryArea(page).getByRole('checkbox', { name: 'Coins' }).check();
 		await fillOrigin(page, '41.9028', '12.4964');
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Persian necklace', async ({ page }) => {
-		await page.getByRole('textbox', { name: 'Short name *' }).fill('Persian necklace');
-		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A beautiful Persian necklace.');
-		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('1.0'); // height
-		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('25.0'); // width
-		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('35.0'); // depth
-		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('350'); // year
-		await page.getByRole('radio', { name: 'BCE', exact: true }).check();
-		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2002-12-02');
-		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
-		await page.getByLabel('Donor').selectOption({label: 'Emilie Du Châtelet'});
-		await page.getByRole('slider', { name: 'Condition' }).fill('9');
-		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill('Persian necklace');
+		await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A beautiful Persian necklace.');
+		await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill('1.0'); // height
+		await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill('25.0'); // width
+		await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill('35.0'); // depth
+		await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill('350'); // year
+		await entryArea(page).getByRole('radio', { name: 'BCE', exact: true }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Date of acquisition' }).fill('2002-12-02');
+		await entryArea(page).getByRole('radio', { name: 'Yes' }).check(); // donated
+		await entryArea(page).getByLabel('Donor').selectOption({label: 'Emilie Du Châtelet'});
+		await entryArea(page).getByRole('slider', { name: 'Condition' }).fill('9');
+		await entryArea(page).getByRole('checkbox', { name: 'Ancient History' }).check();
 		await fillOrigin(page, '29.9355', '52.8916');
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Chinese Sword', async ({ page }) => {
-		await page.getByRole('textbox', { name: 'Short name *' }).fill('Chinese Sword');
-		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('An engraved ceremonial sword.');
-		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('135.0'); // height
-		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('10.0'); // width
-		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('4.5'); // depth
-		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('198'); // year
-		await page.getByRole('radio', { name: 'CE', exact: true }).check();
-		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('1993-08-10');
-		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
-		await page.getByLabel('Donor').selectOption({ label: 'Freeform Solutions' });
-		await page.getByRole('slider', { name: 'Condition' }).fill('7');
-		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
-		await page.getByRole('checkbox', { name: 'Weapons' }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill('Chinese Sword');
+		await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('An engraved ceremonial sword.');
+		await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill('135.0'); // height
+		await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill('10.0'); // width
+		await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill('4.5'); // depth
+		await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill('198'); // year
+		await entryArea(page).getByRole('radio', { name: 'CE', exact: true }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Date of acquisition' }).fill('1993-08-10');
+		await entryArea(page).getByRole('radio', { name: 'Yes' }).check(); // donated
+		await entryArea(page).getByLabel('Donor').selectOption({ label: 'Freeform Solutions' });
+		await entryArea(page).getByRole('slider', { name: 'Condition' }).fill('7');
+		await entryArea(page).getByRole('checkbox', { name: 'Ancient History' }).check();
+		await entryArea(page).getByRole('checkbox', { name: 'Weapons' }).check();
 		await fillOrigin(page, '34.3416', '108.9398');
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Egyptian Chariot', async ({ page }) => {
-		await page.getByRole('textbox', { name: 'Short name *' }).fill('Egyptian Chariot');
-		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('An Egyptian Chariot that is partially damaged, but overall excellent condition.');
-		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('250.0'); // height
-		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('200.0'); // width
-		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('475.0'); // depth
-		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1850'); // year
-		await page.getByRole('radio', { name: 'BCE', exact: true }).check();
-		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2011-09-19');
-		await page.getByRole('slider', { name: 'Condition' }).fill('6');
-		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
-		await page.getByRole('checkbox', { name: 'Weapons' }).check();
-		await expect(page.getByRole('radio', { name: 'No' })).toBeChecked(); // default should be selected already
+		await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill('Egyptian Chariot');
+		await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('An Egyptian Chariot that is partially damaged, but overall excellent condition.');
+		await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill('250.0'); // height
+		await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill('200.0'); // width
+		await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill('475.0'); // depth
+		await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill('1850'); // year
+		await entryArea(page).getByRole('radio', { name: 'BCE', exact: true }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Date of acquisition' }).fill('2011-09-19');
+		await entryArea(page).getByRole('slider', { name: 'Condition' }).fill('6');
+		await entryArea(page).getByRole('checkbox', { name: 'Ancient History' }).check();
+		await entryArea(page).getByRole('checkbox', { name: 'Weapons' }).check();
+		await expect(entryArea(page).getByRole('radio', { name: 'No' })).toBeChecked(); // default should be selected already
 		await fillOrigin(page, '25.6872', '32.6396');
 		await saveFormulizeForm(page);
-		await expect(page.getByRole('radio', { name: 'No' })).toBeChecked(); // default should have been saved
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await expect(entryArea(page).getByRole('radio', { name: 'No' })).toBeChecked(); // default should have been saved
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Babylonian Spoon', async ({ page }) => {
-		await page.getByRole('textbox', { name: 'Short name *' }).fill('Babylonian Spoon');
-		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A small Babylonian spoon, probably for a child.');
-		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('5.0'); // height
-		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('1.5'); // width
-		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('8.0'); // depth
-		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1500'); // year
-		await page.getByRole('radio', { name: 'BCE', exact: true }).check();
-		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2015-09-26');
-		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
-		await page.getByLabel('Donor').selectOption({ label: 'François-Marie Arouet' });
-		await page.getByRole('slider', { name: 'Condition' }).fill('8');
-		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill('Babylonian Spoon');
+		await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A small Babylonian spoon, probably for a child.');
+		await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill('5.0'); // height
+		await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill('1.5'); // width
+		await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill('8.0'); // depth
+		await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill('1500'); // year
+		await entryArea(page).getByRole('radio', { name: 'BCE', exact: true }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Date of acquisition' }).fill('2015-09-26');
+		await entryArea(page).getByRole('radio', { name: 'Yes' }).check(); // donated
+		await entryArea(page).getByLabel('Donor').selectOption({ label: 'François-Marie Arouet' });
+		await entryArea(page).getByRole('slider', { name: 'Condition' }).fill('8');
+		await entryArea(page).getByRole('checkbox', { name: 'Ancient History' }).check();
 		await fillOrigin(page, '32.5422', '44.4209');
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 })
 
@@ -264,146 +273,148 @@ test.describe('Data entry for Artifacts as mhstaff', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await login(page, 'mhstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Artifact', exact: true }).click();
+		await openEntry(page, page.getByRole('button', { name: 'Add Artifact', exact: true }));
 	})
 
 	test('Create Florentine Book', async ({ page }) => {
-		await page.getByRole('textbox', { name: 'Short name *' }).fill('Florentine Book');
-		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A book of Latin poetry from medieval Florence.');
-		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('22.0'); // height
-		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('12.0'); // width
-		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('3.0'); // depth
-		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1588'); // year
-		await page.getByRole('radio', { name: 'CE', exact: true }).check();
-		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('1988-02-29');
-		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
-		await page.getByLabel('Donor').selectOption({label: 'Emilie Du Châtelet' });
-		await page.getByRole('slider', { name: 'Condition' }).fill('9');
-		await page.getByRole('checkbox', { name: 'Modern History' }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill('Florentine Book');
+		await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A book of Latin poetry from medieval Florence.');
+		await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill('22.0'); // height
+		await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill('12.0'); // width
+		await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill('3.0'); // depth
+		await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill('1588'); // year
+		await entryArea(page).getByRole('radio', { name: 'CE', exact: true }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Date of acquisition' }).fill('1988-02-29');
+		await entryArea(page).getByRole('radio', { name: 'Yes' }).check(); // donated
+		await entryArea(page).getByLabel('Donor').selectOption({label: 'Emilie Du Châtelet' });
+		await entryArea(page).getByRole('slider', { name: 'Condition' }).fill('9');
+		await entryArea(page).getByRole('checkbox', { name: 'Modern History' }).check();
 		await fillOrigin(page, '43.7696', '11.2558');
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create French Musket', async ({ page }) => {
-		await page.getByRole('textbox', { name: 'Short name *' }).fill('French Musket');
-		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A musket from the Napoleonic wars.');
-		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('150.0'); // height
-		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('6.7'); // width
-		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('7.1'); // depth
-		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1804'); // year
-		await page.getByRole('radio', { name: 'CE', exact: true }).check();
-		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('1927-03-04');
-		await page.getByRole('slider', { name: 'Condition' }).fill('7');
-		await page.getByRole('checkbox', { name: 'Modern History' }).check();
-		await page.getByRole('checkbox', { name: 'Weapons' }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill('French Musket');
+		await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A musket from the Napoleonic wars.');
+		await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill('150.0'); // height
+		await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill('6.7'); // width
+		await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill('7.1'); // depth
+		await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill('1804'); // year
+		await entryArea(page).getByRole('radio', { name: 'CE', exact: true }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Date of acquisition' }).fill('1927-03-04');
+		await entryArea(page).getByRole('slider', { name: 'Condition' }).fill('7');
+		await entryArea(page).getByRole('checkbox', { name: 'Modern History' }).check();
+		await entryArea(page).getByRole('checkbox', { name: 'Weapons' }).check();
 		await fillOrigin(page, '48.8566', '2.3522');
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Japanese Coin', async ({ page }) => {
-		await page.getByRole('textbox', { name: 'Short name *' }).fill('Japanese Coin');
-		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A rare Meiji coin.');
-		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('0.2'); // height
-		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('25.0'); // width
-		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('25.0'); // depth
-		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1880'); // year
-		await page.getByRole('radio', { name: 'CE', exact: true }).check();
-		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('1955-11-25');
-		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
-		await page.getByLabel('Donor').selectOption({ label: 'Freeform Solutions' });
-		await page.getByRole('slider', { name: 'Condition' }).fill('10');
-		await page.getByRole('checkbox', { name: 'Modern History' }).check();
-		await page.getByRole('checkbox', { name: 'Coins' }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill('Japanese Coin');
+		await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A rare Meiji coin.');
+		await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill('0.2'); // height
+		await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill('25.0'); // width
+		await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill('25.0'); // depth
+		await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill('1880'); // year
+		await entryArea(page).getByRole('radio', { name: 'CE', exact: true }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Date of acquisition' }).fill('1955-11-25');
+		await entryArea(page).getByRole('radio', { name: 'Yes' }).check(); // donated
+		await entryArea(page).getByLabel('Donor').selectOption({ label: 'Freeform Solutions' });
+		await entryArea(page).getByRole('slider', { name: 'Condition' }).fill('10');
+		await entryArea(page).getByRole('checkbox', { name: 'Modern History' }).check();
+		await entryArea(page).getByRole('checkbox', { name: 'Coins' }).check();
 		await fillOrigin(page, '35.6762', '139.6503');
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create American Bicycle', async ({ page }) => {
-		await page.getByRole('textbox', { name: 'Short name *' }).fill('American Bicycle');
-		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('An early bicycle. Paint is coming off.');
-		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('75.0'); // height
-		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('220.0'); // width
-		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('35.0'); // depth
-		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1884'); // year
-		await page.getByRole('radio', { name: 'CE', exact: true }).check();
-		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2007-05-09');
-		await page.getByRole('slider', { name: 'Condition' }).fill('4');
-		await page.getByRole('checkbox', { name: 'Modern History' }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill('American Bicycle');
+		await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('An early bicycle. Paint is coming off.');
+		await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill('75.0'); // height
+		await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill('220.0'); // width
+		await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill('35.0'); // depth
+		await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill('1884'); // year
+		await entryArea(page).getByRole('radio', { name: 'CE', exact: true }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Date of acquisition' }).fill('2007-05-09');
+		await entryArea(page).getByRole('slider', { name: 'Condition' }).fill('4');
+		await entryArea(page).getByRole('checkbox', { name: 'Modern History' }).check();
 		await fillOrigin(page, '42.3601', '-71.0589');
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Polynesian Canoe', async ({ page }) => {
-		await page.getByRole('textbox', { name: 'Short name *' }).fill('Polynesian Canoe');
-		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A well preserved canoe used between islands.');
-		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('65.0'); // height
-		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('388.0'); // width
-		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('75.0'); // depth
-		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1701'); // year
-		await page.getByRole('radio', { name: 'CE', exact: true }).check();
-		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('1977-06-14');
-		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
-		await page.getByLabel('Donor').selectOption({ label: 'François-Marie Arouet' });
-		await page.getByRole('slider', { name: 'Condition' }).fill('8');
-		await page.getByRole('checkbox', { name: 'Modern History' }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill('Polynesian Canoe');
+		await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A well preserved canoe used between islands.');
+		await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill('65.0'); // height
+		await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill('388.0'); // width
+		await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill('75.0'); // depth
+		await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill('1701'); // year
+		await entryArea(page).getByRole('radio', { name: 'CE', exact: true }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Date of acquisition' }).fill('1977-06-14');
+		await entryArea(page).getByRole('radio', { name: 'Yes' }).check(); // donated
+		await entryArea(page).getByLabel('Donor').selectOption({ label: 'François-Marie Arouet' });
+		await entryArea(page).getByRole('slider', { name: 'Condition' }).fill('8');
+		await entryArea(page).getByRole('checkbox', { name: 'Modern History' }).check();
 		await fillOrigin(page, '-17.5516', '-149.5585');
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Viking Silver Armband', async ({ page }) => {
-		await page.getByRole('textbox', { name: 'Short name *' }).fill('Viking Silver Armband');
-		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A twisted silver armband with runic inscriptions, likely used as currency or status symbol in 9th century Scandinavia. Shows intricate craftsmanship with geometric patterns.');
-		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('8.5'); // height
-		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('12.0'); // width
-		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('1.2'); // depth
-		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('875'); // year
-		await page.getByRole('radio', { name: 'CE', exact: true }).check();
-		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2025-07-10');
-		await page.getByRole('radio', { name: 'Yes' }).check(); // donated
-		await page.getByLabel('Donor').selectOption({ label: 'Emilie Du Châtelet' });
-		await page.getByRole('slider', { name: 'Condition' }).fill('9');
-		await page.getByRole('checkbox', { name: 'Modern History' }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill('Viking Silver Armband');
+		await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A twisted silver armband with runic inscriptions, likely used as currency or status symbol in 9th century Scandinavia. Shows intricate craftsmanship with geometric patterns.');
+		await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill('8.5'); // height
+		await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill('12.0'); // width
+		await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill('1.2'); // depth
+		await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill('875'); // year
+		await entryArea(page).getByRole('radio', { name: 'CE', exact: true }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Date of acquisition' }).fill('2025-07-10');
+		await entryArea(page).getByRole('radio', { name: 'Yes' }).check(); // donated
+		await entryArea(page).getByLabel('Donor').selectOption({ label: 'Emilie Du Châtelet' });
+		await entryArea(page).getByRole('slider', { name: 'Condition' }).fill('9');
+		await entryArea(page).getByRole('checkbox', { name: 'Modern History' }).check();
 		await fillOrigin(page, '59.8586', '17.6389');
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 })
 
 test('Clear data', async ({ page }) => {
 	await login(page, 'curator1', '12345');
 	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
-	await page.getByRole('row', { name: 'M001' }).getByRole('link').click();
-	await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).click();
- 	await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).press('ControlOrMeta+a');
-	await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('');
+	await openEntry(page, page.getByRole('row', { name: 'M001' }).getByRole('link'));
+	await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).click();
+ 	await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).press('ControlOrMeta+a');
+	await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('');
 	await saveFormulizeForm(page);
-	await expect(page.getByRole('textbox', { name: 'Rich Text Editor, main' })).not.toHaveText('A very lovely Roman Coin.');
-	await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A very lovely Roman Coin.');
+	await expect(entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' })).not.toHaveText('A very lovely Roman Coin.');
+	await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A very lovely Roman Coin.');
 	await saveFormulizeForm(page);
 })
 
 test('Test \'Close\' button functionality', async ({ page }) => {
 	await login(page, 'curator1', '12345');
 	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
-	await page.getByRole('row', { name: 'M001' }).getByRole('link').click();
-	await expect(page.getByText('Ancient History', { exact: true })).toBeVisible();
-	await page.getByRole('textbox', { name: 'Short Name' }).fill('Testdfgfdg');
+	await openEntry(page, page.getByRole('row', { name: 'M001' }).getByRole('link'));
+	await expect(entryArea(page).getByText('Ancient History', { exact: true })).toBeVisible();
+	await entryArea(page).getByRole('textbox', { name: 'Short Name' }).fill('Testdfgfdg');
 	page.on('dialog', dialog => dialog.accept());
-	await page.getByRole('button', { name: 'Close' }).click();
-	await expect(page.getByText('Showing entries: 1 to 10 of 11.')).toBeVisible();
-	await expect(page.getByText('Roman Coin')).toBeVisible();
+	await entryButton(page, 'Close').click();
+	await expect(page.getByText(firstPageOf(11))).toBeVisible();
+	// in the list, by role, which leaves out what's hidden: a drawer that's closed still has the form it showed
+	await expect(page.getByRole('cell', { name: 'Roman Coin' })).toBeVisible();
 })
 
 test('Validate number of artifacts', async ({ page }) => {
 	await login(page, 'curator1', '12345');
-	await expect(page.getByText('Showing entries: 1 to 10 of 11.')).toBeVisible();
+	await expect(page.getByText(firstPageOf(11))).toBeVisible();
+	await showListSearches(page);
 	await page.locator('input[name="search_artifacts_short_name"]').fill('coin');
 	await page.getByRole('link', { name: 'Short name' }).click();
 	await expect(page.getByRole('row', { name: 'Check this box to select/unselect this entry.' }).getByRole('link')).toHaveCount(2);
@@ -417,19 +428,19 @@ test.describe('Data entry for Exhibits', () => {
 
 	test('Create History through the Ages Exhibit', async ({ page }) => {
 		await login(page, 'curator1', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
 		await expect(page.getByText('No entries were found in the')).toBeVisible();
-		await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
-		await page.getByRole('textbox', { name: 'Name *' }).fill('History through the Ages');
-		await page.getByLabel('Curator').selectOption('Curator One');
+		await openEntry(page, page.getByRole('button', { name: 'Add Exhibit', exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('History through the Ages');
+		await entryArea(page).getByLabel('Curator').selectOption('Curator One');
 		await autocompleteBox(page, 'exhibits_collections').fill('modern');
 		// handle the conditional behaviour that happens when Modern History is selected
 		await conditionalElementReady(
 			page,
 			'exhibits_artifacts',
 			async () => {
-				await page.getByText('Modern History', { exact: true }).click();
+				await autocompleteSuggestion(page, 'Modern History', { exact: true }).click();
 			}
 		);
 		// handle the conditional behaviour that happens when Ancient History is selected
@@ -437,142 +448,142 @@ test.describe('Data entry for Exhibits', () => {
 		await conditionalElementReady(
 			page,
 			'exhibits_artifacts',
-			() => page.getByText('Ancient History', { exact: true }).click()
+			() => autocompleteSuggestion(page, 'Ancient History', { exact: true }).click()
 		);
 		await autocompleteBox(page, 'exhibits_artifacts').fill('roman');
-  	await page.getByText('Roman Coin').click();
+  	await autocompleteSuggestion(page, 'Roman Coin').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('per');
-		await page.getByText('Persian necklace').click();
+		await autocompleteSuggestion(page, 'Persian necklace').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('chin');
-		await page.getByText('Chinese Sword').click();
+		await autocompleteSuggestion(page, 'Chinese Sword').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('egyptian');
-		await page.getByText('Egyptian Chariot').click();
+		await autocompleteSuggestion(page, 'Egyptian Chariot').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('bab');
-		await page.getByText('Babylonian Spoon').click();
+		await autocompleteSuggestion(page, 'Babylonian Spoon').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('flor');
-		await page.getByText('Florentine Book').click();
+		await autocompleteSuggestion(page, 'Florentine Book').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('fren');
-		await page.getByText('French Musket').click();
+		await autocompleteSuggestion(page, 'French Musket').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('japa');
-		await page.getByText('Japanese Coin').click();
+		await autocompleteSuggestion(page, 'Japanese Coin').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('amer');
-		await page.getByText('American Bicycle').click();
+		await autocompleteSuggestion(page, 'American Bicycle').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('poly');
-		await page.getByText('Polynesian Canoe').click();
+		await autocompleteSuggestion(page, 'Polynesian Canoe').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('vik');
-		await page.getByText('Viking Silver Armband').click();
+		await autocompleteSuggestion(page, 'Viking Silver Armband').click();
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Ancient Wonders Exhibit', async ({ page }) => {
 		await login(page, 'ahstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
-		await page.getByRole('textbox', { name: 'Name *' }).fill('Ancient Wonders');
-		await page.getByLabel('Curator').selectOption('Curator One');
+		await openEntry(page, page.getByRole('button', { name: 'Add Exhibit', exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('Ancient Wonders');
+		await entryArea(page).getByLabel('Curator').selectOption('Curator One');
 		// handle the conditional behaviour that happens when Ancient History is selected
 		await autocompleteBox(page, 'exhibits_collections').fill('an');
 		await conditionalElementReady(
 			page,
 			'exhibits_artifacts',
-			() => page.getByText('Ancient History', { exact: true }).click()
+			() => autocompleteSuggestion(page, 'Ancient History', { exact: true }).click()
 		);
 		await autocompleteBox(page, 'exhibits_artifacts').fill('roman');
-  	await page.getByText('Roman Coin').click();
+  	await autocompleteSuggestion(page, 'Roman Coin').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('per');
-		await page.getByText('Persian necklace').click();
+		await autocompleteSuggestion(page, 'Persian necklace').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('chin');
-		await page.getByText('Chinese Sword').click();
+		await autocompleteSuggestion(page, 'Chinese Sword').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('egyptian');
-		await page.getByText('Egyptian Chariot').click();
+		await autocompleteSuggestion(page, 'Egyptian Chariot').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('bab');
-		await page.getByText('Babylonian Spoon').click();
+		await autocompleteSuggestion(page, 'Babylonian Spoon').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('M');
-		await expect(page.getByText('No match found')).toBeVisible();
+		await expect(autocompleteSuggestion(page, 'No match found')).toBeVisible();
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Modern Amazements Exhibit', async ({ page }) => {
 		await login(page, 'mhstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
-		await page.getByRole('textbox', { name: 'Name *' }).fill('Modern Amazements');
-		await page.getByLabel('Curator').selectOption('Curator One');
+		await openEntry(page, page.getByRole('button', { name: 'Add Exhibit', exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('Modern Amazements');
+		await entryArea(page).getByLabel('Curator').selectOption('Curator One');
 		// handle the conditional behaviour that happens when Modern History is selected
 		await autocompleteBox(page, 'exhibits_collections').fill('mo');
 		await conditionalElementReady(
 			page,
 			'exhibits_artifacts',
-			() => page.getByText('Modern History', { exact: true }).click()
+			() => autocompleteSuggestion(page, 'Modern History', { exact: true }).click()
 		);
 		await autocompleteBox(page, 'exhibits_artifacts').fill('flor');
-		await page.getByText('Florentine Book').click();
+		await autocompleteSuggestion(page, 'Florentine Book').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('fren');
-		await page.getByText('French Musket').click();
+		await autocompleteSuggestion(page, 'French Musket').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('japa');
-		await page.getByText('Japanese Coin').click();
+		await autocompleteSuggestion(page, 'Japanese Coin').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('amer');
-		await page.getByText('American Bicycle').click();
+		await autocompleteSuggestion(page, 'American Bicycle').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('poly');
-		await page.getByText('Polynesian Canoe').click();
+		await autocompleteSuggestion(page, 'Polynesian Canoe').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('vik');
-		await page.getByText('Viking Silver Armband').click();
+		await autocompleteSuggestion(page, 'Viking Silver Armband').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('M');
-		await expect(page.getByText('No match found')).toBeVisible();
+		await expect(autocompleteSuggestion(page, 'No match found')).toBeVisible();
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Heroic and Horrible Hand Weapons Exhibit', async ({ page }) => {
 		await login(page, 'curator2', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
-		await page.getByRole('textbox', { name: 'Name *' }).fill('Heroic and Horrible Hand Weapons');
-		await page.getByLabel('Curator').selectOption('Curator Two');
+		await openEntry(page, page.getByRole('button', { name: 'Add Exhibit', exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('Heroic and Horrible Hand Weapons');
+		await entryArea(page).getByLabel('Curator').selectOption('Curator Two');
 		// handle the conditional behaviour that happens when Weapons is selected
 		await autocompleteBox(page, 'exhibits_collections').fill('weapons');
 		await conditionalElementReady(
 			page,
 			'exhibits_artifacts',
-			() => page.getByText('Weapons').click()
+			() => autocompleteSuggestion(page, 'Weapons').click()
 		);
 		await autocompleteBox(page, 'exhibits_artifacts').fill('chin');
-		await page.getByText('Chinese Sword').click();
+		await autocompleteSuggestion(page, 'Chinese Sword').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('fren');
-		await page.getByText('French Musket').click();
+		await autocompleteSuggestion(page, 'French Musket').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('M');
-		await expect(page.getByText('Egyptian Chariot')).toBeVisible();
+		await expect(autocompleteSuggestion(page, 'Egyptian Chariot')).toBeVisible();
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 
 	test('Create Pennies from the Past Exhibit', async ({ page }) => {
 		await login(page, 'curator2', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
-		await page.getByRole('textbox', { name: 'Name *' }).fill('Pennies from the Past');
-		await page.getByLabel('Curator').selectOption('Curator Two');
+		await openEntry(page, page.getByRole('button', { name: 'Add Exhibit', exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('Pennies from the Past');
+		await entryArea(page).getByLabel('Curator').selectOption('Curator Two');
 		// handle the conditional behaviour that happens when Coins is selected
 		await autocompleteBox(page, 'exhibits_collections').fill('coins');
 		await conditionalElementReady(
 			page,
 			'exhibits_artifacts',
-			() => page.getByText('Coins').click()
+			() => autocompleteSuggestion(page, 'Coins').click()
 		);
 		await autocompleteBox(page, 'exhibits_artifacts').fill('roman');
-  	await page.getByText('Roman Coin').click();
+  	await autocompleteSuggestion(page, 'Roman Coin').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('japa');
-		await page.getByText('Japanese Coin').click();
+		await autocompleteSuggestion(page, 'Japanese Coin').click();
 		await autocompleteBox(page, 'exhibits_artifacts').fill('M');
-		await expect(page.getByText('No match found')).toBeVisible();
+		await expect(autocompleteSuggestion(page, 'No match found')).toBeVisible();
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	})
 })
 
@@ -632,59 +643,59 @@ test.describe('Staff Comments for Surveys', () => {
 
 		test('Staff see no comments by default' , async ({ page }) => {
 			await login(page, 'mhstaff', '12345');
-			await page.locator('#burger-and-logo').getByRole('link').first().click();
+			await openMainMenu(page);
 			await page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true }).click();
 			await expect(page.getByText('No entries were found in the current view that match the current search terms.')).toBeVisible();
 		}),
 		test('Flag Ancient Wonders Survey' , async ({ page }) => {
 			await login(page, 'curator1', '12345');
-			await page.locator('#burger-and-logo').getByRole('link').first().click();
+			await openMainMenu(page);
 			await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
 			await expect(page.getByText('Showing entries: 1 to 5')).toBeVisible();
-			await page.getByRole('row', { name: 'Check this box to select/unselect this entry.   History through the Ages Curator' }).getByRole('link').click();
-			await page.getByRole('radio', { name: 'Yes' }).check();
-   		await page.locator('td.subform-textarea-element textarea').first().fill('Great Job -c1');
+			await openEntry(page, page.getByRole('row', { name: 'Check this box to select/unselect this entry.   History through the Ages Curator' }).getByRole('link'));
+			await entryArea(page).getByRole('radio', { name: 'Yes' }).check();
+   		await entryArea(page).locator('td.subform-textarea-element textarea').first().fill('Great Job -c1');
 			await saveFormulizeForm(page);
-			await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+			await saveAndCloseEntry(page); // necessary to clear entry locks
 		}),
 		test('Flag Modern Amazements Survey' , async ({ page }) => {
 			await login(page, 'curator2', '12345');
-			await page.locator('#burger-and-logo').getByRole('link').first().click();
+			await openMainMenu(page);
 			await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
 			await expect(page.getByText('Showing entries: 1 to 5')).toBeVisible();
-			await page.getByRole('row', { name: 'Check this box to select/unselect this entry.   Pennies from the Past Curator' }).getByRole('link').click();
-			await page.getByRole('radio', { name: 'Yes' }).check();
-   		await page.locator('td.subform-textarea-element textarea').first().fill('Can we do better? -c2');
+			await openEntry(page, page.getByRole('row', { name: 'Check this box to select/unselect this entry.   Pennies from the Past Curator' }).getByRole('link'));
+			await entryArea(page).getByRole('radio', { name: 'Yes' }).check();
+   		await entryArea(page).locator('td.subform-textarea-element textarea').first().fill('Can we do better? -c2');
 			await saveFormulizeForm(page);
-			await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+			await saveAndCloseEntry(page); // necessary to clear entry locks
 
 		}),
 		test('AH Staff Comment' , async ({ page }) => {
 			await login(page, 'ahstaff', '12345');
-			await page.locator('#burger-and-logo').getByRole('link').first().click();
+			await openMainMenu(page);
 			await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
 			await expect(page.getByText('Showing entries: 1 to 4')).toBeVisible();
-			await page.getByRole('row', { name: 'Check this box to select/unselect this entry.   History through the Ages Curator' }).getByRole('link').click();
-			const currentValue = await page.locator('td.subform-textarea-element textarea').first().inputValue();
-			await page.locator('td.subform-textarea-element textarea').first().fill(currentValue + "\nThanks! -ahstaff");
-			await expect(page.getByText('Flagged')).not.toBeVisible();
+			await openEntry(page, page.getByRole('row', { name: 'Check this box to select/unselect this entry.   History through the Ages Curator' }).getByRole('link'));
+			const currentValue = await entryArea(page).locator('td.subform-textarea-element textarea').first().inputValue();
+			await entryArea(page).locator('td.subform-textarea-element textarea').first().fill(currentValue + "\nThanks! -ahstaff");
+			await expect(entryArea(page).getByText('Flagged')).not.toBeVisible();
 			await saveFormulizeForm(page);
-			await expect(page.getByText('Great Job -c1 Thanks! -ahstaff')).toHaveValue('Great Job -c1\nThanks! -ahstaff');
-			await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+			await expect(entryArea(page).getByText('Great Job -c1 Thanks! -ahstaff')).toHaveValue('Great Job -c1\nThanks! -ahstaff');
+			await saveAndCloseEntry(page); // necessary to clear entry locks
 		}),
 		test('MH Staff Comment' , async ({ page }) => {
 			await login(page, 'mhstaff', '12345');
-			await page.locator('#burger-and-logo').getByRole('link').first().click();
+			await openMainMenu(page);
 			await page.locator('#mainmenu').getByRole('link', { name: 'Surveys', exact: true }).click();
 			await expect(page.getByText('Showing entries: 1 to 2')).toBeVisible();
-			await page.getByRole('row', { name: 'Ebanezer Scrooge' }).getByRole('link').click();
-			await expect(page.getByText('Which was your favourite artifact?')).toBeVisible();
-			const currentValue = await page.locator('.form-row:has(.formulize-label-surveys_staff_comments) textarea').inputValue();
-			await page.locator('.form-row:has(.formulize-label-surveys_staff_comments) textarea').fill(currentValue + "\nBah Humbug -mhstaff");
-			await expect(page.getByText('Flagged to the staff')).not.toBeVisible();
+			await openEntry(page, page.getByRole('row', { name: 'Ebanezer Scrooge' }).getByRole('link'));
+			await expect(entryArea(page).getByText('Which was your favourite artifact?')).toBeVisible();
+			const currentValue = await entryArea(page).locator('.form-row:has(.formulize-label-surveys_staff_comments) textarea').inputValue();
+			await entryArea(page).locator('.form-row:has(.formulize-label-surveys_staff_comments) textarea').fill(currentValue + "\nBah Humbug -mhstaff");
+			await expect(entryArea(page).getByText('Flagged to the staff')).not.toBeVisible();
 			await saveFormulizeForm(page);
-			await expect(page.getByText('Can we do better? -c2 Bah Humbug -mhstaff')).toHaveValue('Can we do better? -c2\nBah Humbug -mhstaff');
-			await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+			await expect(entryArea(page).getByText('Can we do better? -c2 Bah Humbug -mhstaff')).toHaveValue('Can we do better? -c2\nBah Humbug -mhstaff');
+			await saveAndCloseEntry(page); // necessary to clear entry locks
 		})
 
 })
@@ -692,34 +703,36 @@ test.describe('Staff Comments for Surveys', () => {
 test.describe('New donation inside Donor record', () => {
 	test('Create donation from Voltaire', async ({ page }) => {
 		await login(page, 'mhstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
-		await page.getByRole('row', { name: 'François-Marie Arouet' }).getByRole('link').first().click();
-	  await page.getByRole('link', { name: 'Donated Artifacts', exact: true }).click();
-		await page.getByRole('button', { name: 'Add new artifact' }).click();
-		await page.getByRole('tab').first().click(); // BUG - new entry showing up at top of list, sorting order is by aquisition date, no acquisition date yet so this is first in list, and by default UI opens the last entry in list because when sorted by creation order (which is default) the last entry in list would be the new one. Yuck.
-		await page.getByRole('textbox', { name: 'Short name *' }).fill('Candide - first edition');
-		await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('Pristine copy, signed by the author');
-		await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('25'); // height
-		await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('10'); // width
-		await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('3'); // depth
-		await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1759'); // year
-		await page.getByRole('radio', { name: 'CE', exact: true }).check();
-		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2025-11-29');
-		await page.getByRole('slider', { name: 'Condition' }).fill('10');
-		await page.getByRole('checkbox', { name: 'Modern History' }).check();
+		await openEntry(page, page.getByRole('row', { name: 'François-Marie Arouet' }).getByRole('link').first());
+		await goToEntryPage(page, 'Donated Artifacts');
+		// the subform's own Add, which saves the donor and draws the form again with a new artifact in it
+		await openEntry(page, entryArea(page).getByRole('button', { name: 'Add new artifact' }));
+		await entryArea(page).getByRole('tab').first().click(); // BUG - new entry showing up at top of list, sorting order is by aquisition date, no acquisition date yet so this is first in list, and by default UI opens the last entry in list because when sorted by creation order (which is default) the last entry in list would be the new one. Yuck.
+		await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill('Candide - first edition');
+		await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('Pristine copy, signed by the author');
+		await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill('25'); // height
+		await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill('10'); // width
+		await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill('3'); // depth
+		await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill('1759'); // year
+		await entryArea(page).getByRole('radio', { name: 'CE', exact: true }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Date of acquisition' }).fill('2025-11-29');
+		await entryArea(page).getByRole('slider', { name: 'Condition' }).fill('10');
+		await entryArea(page).getByRole('checkbox', { name: 'Modern History' }).check();
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // necessary to clear entry locks
+		await saveAndCloseEntry(page); // necessary to clear entry locks
 	}),
 	test('Verify artifact shows as from Voltaire', async ({ page }) => {
 		await login(page, 'curator1', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
+		await showListSearches(page);
 		await page.locator('input[name="search_artifacts_short_name"]').fill('Candide');
 		await page.getByRole('link', { name: 'Short name' }).click();
-		await page.getByRole('row', { name: 'Candide - first edition' }).getByRole('link').click();
-		await expect(page.getByRole('radio', { name: 'Yes' })).toBeChecked();
-		await expect(page.locator('.form-row:has(.formulize-label-artifacts_donor) select option[selected]')).toContainText('François-Marie Arouet');
+		await openEntry(page, page.getByRole('row', { name: 'Candide - first edition' }).getByRole('link'));
+		await expect(entryArea(page).getByRole('radio', { name: 'Yes' })).toBeChecked();
+		await expect(entryArea(page).locator('.form-row:has(.formulize-label-artifacts_donor) select option[selected]')).toContainText('François-Marie Arouet');
 		// leave the entry, which releases the lock on it
 		await leavePage(page, listOf('Artifacts'));
 		await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
@@ -735,12 +748,12 @@ test.describe('New donation inside Donor record', () => {
 		await page.locator('[id="elements-ele_value[addButtonLimit]"]').fill('1');
 		await saveAdminForm(page);
 		await page.goto('/');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
-		await page.getByRole('row', { name: 'François-Marie Arouet' }).getByRole('link').first().click();
-	  await page.getByRole('link', { name: 'Donated Artifacts', exact: true }).click();
-		await expect(page.getByText('Candide')).toBeVisible(); // check for something that is in the page, to make sure that the page has actually loaded... the not.toBeVisible() check below is not sufficient, because it will pass if the page hasn't totally finished loading yet and it's not visible just because of timing issues
-		await expect(page.getByText('Add new artifact')).not.toBeVisible();
+		await openEntry(page, page.getByRole('row', { name: 'François-Marie Arouet' }).getByRole('link').first());
+		await goToEntryPage(page, 'Donated Artifacts');
+		await expect(entryArea(page).getByText('Candide')).toBeVisible(); // check for something that is in the page, to make sure that the page has actually loaded... the not.toBeVisible() check below is not sufficient, because it will pass if the page hasn't totally finished loading yet and it's not visible just because of timing issues
+		await expect(entryArea(page).getByText('Add new artifact')).not.toBeVisible();
 		// The subform draws the donor's artifacts as forms the webmaster can edit, which locks them, Roman Coin among them,
 		// and leaving the page releases them. The front page has the Admin link the test started from.
 		await leavePage(page, '/');
@@ -753,11 +766,11 @@ test.describe('New donation inside Donor record', () => {
 		await page.locator('[id="elements-ele_value[addButtonLimit]"]').fill('0');
 		await saveAdminForm(page);
 		await page.goto('/');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
-		await page.getByRole('row', { name: 'François-Marie Arouet' }).getByRole('link').first().click();
-	  await page.getByRole('link', { name: 'Donated Artifacts', exact: true }).click();
-		await expect(page.getByText('Add new artifact')).toBeVisible();
+		await openEntry(page, page.getByRole('row', { name: 'François-Marie Arouet' }).getByRole('link').first());
+		await goToEntryPage(page, 'Donated Artifacts');
+		await expect(entryArea(page).getByText('Add new artifact')).toBeVisible();
 		// leave, as above, or 022 and 045 find Roman Coin locked by the webmaster
 		await leavePage(page, listOf('Donors'));
 		await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
@@ -767,8 +780,9 @@ test.describe('New donation inside Donor record', () => {
 test.describe('Cloning entries', () => {
 	test('Clone Persian necklace', async ({ page }) => {
 		await login(page, 'ahstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
+		await showListSearches(page);
 		await page.locator('input[name="search_artifacts_short_name"]').fill('Persian necklace');
 		await page.getByRole('link', { name: 'Short name' }).click();
 		await expect(page.getByText('1 to 1 of 1.')).toBeVisible();
@@ -780,11 +794,12 @@ test.describe('Cloning entries', () => {
 		await page.getByRole('button', { name: 'Clone', exact: true }).click();
 		await expect(page.getByText('1 to 2 of 2.')).toBeVisible();
 		await expect(page.getByText('M013')).toBeVisible();
-		await page.getByRole('row', { name: 'Check this box to select/unselect this entry.   M013 Persian necklace' }).getByRole('link').click();
-	  await page.getByRole('textbox', { name: 'Short name *' }).fill('Persian necklace - number 2');
-	  await page.getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A beautiful Persian necklace. Very similar to the original one in the collection.');
-  	await saveFormulizeForm(page);
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openEntry(page, page.getByRole('row', { name: 'Check this box to select/unselect this entry.   M013 Persian necklace' }).getByRole('link'));
+	  await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill('Persian necklace - number 2');
+	  await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A beautiful Persian necklace. Very similar to the original one in the collection.');
+		// and back to the list, where the menu is: the drawer covers it while it's open
+		await saveAndCloseEntry(page);
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
 		await expect(page.getByText('1 to 3 of 3.')).toBeVisible();
 	})
@@ -793,18 +808,16 @@ test.describe('Cloning entries', () => {
 test.describe('Change entry owner', () => {
 	test('Make Freeform Solutions owned by curator2', async ({ page }) => {
 		await login(page, 'curator1', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
-		await expect(page.getByText('Change columns')).toBeVisible();
-		const popupPromise = page.context().waitForEvent('page');
-		await page.getByRole('button', { name: 'Change columns' }).click();
-		const page2 = await popupPromise;
-		await page2.bringToFront();
+		await expect(page.getByText(/Showing entries:/)).toBeVisible();
+		const page2 = await openChangeColumns(page);
 		await openAllColumnSections(page2);
 		await page2.getByRole('checkbox', { name: 'User who made entry' }).check();
 		await applyColumnChanges(page2);
 		await expect(page.getByText('Curator One')).not.toHaveCount(0);
 		await expect(page.getByText('Curator Two')).not.toBeVisible();
+		await showListSearches(page);
 		await page.locator('input[name="search_donors_name"]').fill('Freeform Solutions');
 		await page.getByRole('link', { name: 'Name' }).click();
 		await expect(page.getByText('1 to 1 of 1.')).toBeVisible();
@@ -825,9 +838,8 @@ test.describe('Change entry owner', () => {
 // Save the list as it is as a new view, the way a person does: "Save view" opens a window that asks for a name in a
 // dialog, then closes itself and has the list save the view.
 async function saveCurrentViewAs(page, name) {
-	await page.getByRole('button', { name: '...' }).click();
 	const popupPromise = page.context().waitForEvent('page');
-	await page.getByRole('button', { name: 'Save view' }).click();
+	await clickListAction(page, 'Save view');
 	const popup = await popupPromise;
 	await popup.waitForLoadState();
 	popup.once('dialog', dialog => dialog.accept(name));
@@ -840,7 +852,7 @@ async function saveCurrentViewAs(page, name) {
 	}
 	await closed;
 	// the view is saved when the list reloads, which it then shows the view in
-	await expect(page.locator('select[name="currentview"] option:checked')).toHaveText(new RegExp(name));
+	await expect(currentViewName(page)).toHaveText(new RegExp(name));
 }
 
 test.describe('Saved views', () => {
@@ -850,6 +862,7 @@ test.describe('Saved views', () => {
 	test('Save a view of the coins, by name', async ({ page }) => {
 		await login(page, 'curator1', '12345');
 		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
+		await showListSearches(page);
 		await page.locator('input[name="search_artifacts_short_name"]').fill('coin');
 		await page.getByRole('link', { name: 'Short name' }).click();
 		await expect(page.getByRole('row', { name: 'Check this box to select/unselect this entry.' })).toHaveCount(2);
@@ -864,10 +877,7 @@ test.describe('Saved views', () => {
 	test('Save a view of where the artifacts come from', async ({ page }) => {
 		await login(page, 'curator1', '12345');
 		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
-		const popupPromise = page.context().waitForEvent('page');
-		await page.getByRole('button', { name: 'Change columns' }).click();
-		const popup = await popupPromise;
-		await popup.bringToFront();
+		const popup = await openChangeColumns(page);
 		await openAllColumnSections(popup);
 		await popup.getByRole('group', { name: 'Artifacts', exact: true }).getByLabel('Latitude', { exact: true }).check();
 		await popup.getByRole('group', { name: 'Artifacts', exact: true }).getByLabel('Longitude', { exact: true }).check();
@@ -888,9 +898,8 @@ test.describe('Notifications', () => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 		const fid = dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = 'Artifacts'`)[0][0];
 		await page.goto(`/modules/formulize/index.php?fid=${fid}`);
-		await page.getByRole('button', { name: '...' }).click();
 		const popupPromise = page.context().waitForEvent('page');
-		await page.getByRole('button', { name: 'Notifications' }).click();
+		await clickListAction(page, 'Notifications');
 		const popup = await popupPromise;
 		await popup.waitForLoadState();
 		await popup.locator('input[name="setwhen"][value="update_entry"]').check();

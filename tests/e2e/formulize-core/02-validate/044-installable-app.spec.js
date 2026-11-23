@@ -107,7 +107,8 @@ test.describe('Installing the site as an app', () => {
 		expect(contents[names[0]]).toContain(OFFLINE_PAGE);
 	});
 
-	test('offline, a page load shows the offline page, drawn with its stylesheets', async ({ page, context }) => {
+	test('offline, a page load shows the offline page, drawn with its stylesheets', async ({ page, context, browserName }) => {
+		test.skip(browserName === 'firefox', "Playwright can't take Firefox offline for the service worker's own requests, so offline is tested in Chromium (see ai-context/installable-app.md)");
 		await page.goto('/');
 		await waitForWorker(page);
 		await page.reload();
@@ -134,7 +135,8 @@ test.describe('Installing the site as an app', () => {
 		}
 	});
 
-	test('signed in on an iPhone, the last item in the menu shows the steps, and is not in the installed app', async ({ browser }) => {
+	test('signed in on an iPhone, the last item in the menu shows the steps, and is not in the installed app', async ({ browser, browserName }) => {
+		test.skip(browserName === 'firefox', 'Playwright has no mobile emulation in Firefox, so an iPhone is tested in Chromium and WebKit');
 		// the iPhone's user agent and size, in Chromium: the item is chosen by user agent, and on an
 		// iPhone it shows the steps rather than waiting for an event Chromium won't fire in a test
 		const { defaultBrowserType, ...iPhone } = devices['iPhone 13'];

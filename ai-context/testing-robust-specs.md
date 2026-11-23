@@ -118,7 +118,11 @@ A test that opens an entry must leave the page the way a person would, then chec
 
 ## Concurrency
 
-CI runs the suite in four passes, in `.github/workflows/e2e-test-manual.yml`:
+CI runs the whole suite in several environments at once, each a job on its own runner with its own containers: MariaDB and MySQL in Chromium on Anari, Firefox and WebKit on MariaDB and Anari, and Chromium on MariaDB and Lyris. `E2E_BROWSER`, `E2E_THEME` and `E2E_DB_CLIENT` tell the specs which. Only the MariaDB, Chromium, Anari job decides whether the run passes until the others are green. See [docs/ci.md](../docs/ci.md).
+
+A browser feature only one browser has, such as clearing the cache over a DevTools session or emulating a phone, is skipped in the others with `test.skip()` and the reason. `aDayPassesForTheWorker()` does this itself.
+
+Each job runs the suite in four passes, in `.github/workflows/e2e-test-manual.yml`:
 
 | Folder | Flags |
 |---|---|
@@ -147,13 +151,31 @@ Use it when one test toggles a setting the others depend on, one test consumes s
 
 ## Which theme the suite covers
 
-Most of the suite is written for the **Anari** theme, even though a new install uses Lyris. The site is switched to Anari right after the install. In `01-setup/`, `02-validate/` and `03-validate-sequential/`, the selectors, menu structure and page chrome assume Anari's markup, because the suite predates Lyris.
+The whole suite runs on either theme. `E2E_THEME` says which, and it's `Anari` unless it says `Lyris`. On Anari, `01-setup/001` switches the new site to Anari straight after the install. On Lyris, the site stays on the theme it was installed with. Either way every screen the setup specs make starts with that theme's settings (its `screen-defaults.json`), so on Lyris the museum's lists open entries in the drawer, show 20 entries a page and keep their row of search boxes hidden until it's opened. CI runs both: see [Concurrency](#concurrency) and [docs/ci.md](../docs/ci.md). `04-appearance/` switches the site to Lyris and back in either run, and the two wizard specs there, 100 and 110, skip on Lyris, since a museum built on Lyris has nothing to move to it.
 
-Only `04-appearance/` runs on **Lyris**. Those specs switch the site to Lyris, test its looks and the Appearance editor, and put the site back.
+A spec is written once, for both. Do what a person does through the helpers in the "The site's theme" section of `utils.js`, rather than with one theme's markup:
 
-- A passing suite says little about Lyris's UI, apart from looks and the Appearance editor. Verify other Lyris work by driving the running app directly. A throwaway Playwright script against the dev instance works well.
-- Put new Lyris tests in `04-appearance/`, and don't add Lyris assertions to the other specs.
-- When a change branches on the theme, confirm the Anari path is genuinely untouched, rather than relying on the suite to catch a regression.
+| To | Use | Why there's a helper |
+|---|---|---|
+| Follow a menu link | `openMainMenu()`, `goToMenuLink()`, `ensureMainMenuOpen()` | Lyris's sidebar is closed on most pages, and closed it has no width, so its links count as visible to Playwright and a click can't reach them |
+| Open an entry from a list, by its row's link or the Add button | `openEntry(page, trigger)` | It opens on the form screen or in the drawer, as the list's `editdestination` says, and it waits for whichever |
+| Look for an entry's elements | `entryArea(page)` | It's the drawer's body while the drawer is open, and the page otherwise. Over a list, `page.getByText()` and `page.getByLabel()` also match the list's cells and its "Search …" boxes, and they count hidden matches too |
+| Click an entry's own button without saving, such as Close | `entryButton(page, name)` | In the drawer they're in its footer, outside `entryArea` |
+| Save | `saveFormulizeForm()`, `saveAndCloseEntry()` | They save in the drawer when it's open. Save and Close is a link on a form screen and a button in the drawer |
+| Go to another page of an entry | `goToEntryPage()` | Tabs are links on a form screen and buttons in the drawer |
+| Pick an autocomplete's suggestion | `autocompleteSuggestion()` | The suggestions' menu is at the end of the page, outside the drawer, and the list behind can have the same names |
+| Type in a list's search boxes | `showListSearches()` first | Lyris lists start with the row hidden |
+| Change columns, Save view, Export, Notifications and the like | `clickListAction()`, `openChangeColumns()` | Anari keeps some behind "...", and Lyris keeps all of them in More actions |
+| Page through a list, or change its page size | `goToListPage()`, `goToNextListPage()`, `showEntriesPerPage()`, `LIST_PAGE_SIZE` | The controls differ, and 16 artifacts fit on one Lyris page |
+| Read or choose the current view | `currentViewName()`, `loadSavedView()` | Anari has a select, and Lyris a view switcher |
+| Sign out, or find the account link | `signOutLink()`, `accountLink()` | Logout and Edit Account in Anari, Sign out and Account in Lyris's header |
+
+Which of a form screen and the drawer an entry opens in is the list's setting, not the theme, so the helpers look at what's on the page. `users.php`, `groups.php` and `master.php` open entries full screen in both themes, and an entry opened by its address (`&ve=`) is always full screen. A spec about form screens, like `02-validate/049`, sets its own list to open entries there.
+
+The drawer keeps the last form it showed when it closes, hidden, and the list only reloads after a close if something was saved. So after closing without saving, look at the list by role, which leaves out what's hidden, rather than with `page.getByText()`.
+
+- When a change branches on the theme, the Lyris run checks the Lyris path, but confirm the Anari path is genuinely untouched too.
 - Switch themes through the page with `chooseSiteThemes()` in `utils.js`, as `01-setup/001` and `04-appearance/020` do. Saving a new site theme there also moves every screen's theme, which decides the folder its Templates tab edits. `setSiteThemeInDb()` and `restoreSiteTheme()` leave the screens where they were, so a spec that uses them mustn't touch screen templates.
+- A spec that switches the theme puts back the run's theme, `E2E_THEME`, not Anari.
 
 See [themes-anari-and-lyris](themes-anari-and-lyris.md).

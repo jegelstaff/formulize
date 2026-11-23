@@ -1,7 +1,9 @@
 const { test, expect } = require('@playwright/test');
 import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, addElementForm, ElementType, applyColumnChanges,
 	createMuseumForm, deleteMuseumFormsTitled, leavePage, dbQuery, dbPrefix, waitForWorkingMessage, entryIsLocked,
-	entriesThePageWillRelease } from '../../utils';
+	entriesThePageWillRelease,
+	openChangeColumns, openEntry, entryArea, saveAndCloseEntry,
+} from '../../utils';
 
 // A list screen can show a column as a form element, so a person edits a value right in the list: they click the
 // pen beside the value, change it, and click the tick. Clicking the pen asks formulize_xhr_responder.php for the
@@ -45,10 +47,7 @@ const cellsOf = (page, handle) => page.locator(`[id^="deDiv_${handle}_"]`);
 // The list, with columns added through the "Change columns" popup, since a new form doesn't show them
 async function openListWithColumns(page, captions) {
 	await page.goto(listUrl());
-	const popupPromise = page.context().waitForEvent('page');
-	await page.getByRole('button', { name: 'Change columns' }).click();
-	const popup = await popupPromise;
-	await popup.bringToFront();
+	const popup = await openChangeColumns(page);
 	for (const caption of captions) {
 		await popup.getByRole('checkbox', { name: caption }).check();
 	}
@@ -117,12 +116,13 @@ test('make two entries to edit', async ({ page }) => {
 	await login(page, 'admin');
 	for (const [name, note, amount] of [['Entry051', BEFORE, '250'], ['Entry051b', 'Other051', '5']]) {
 		await page.goto(listUrl());
-		await page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }).click();
-		await page.getByRole('textbox', { name: /^Name/ }).fill(name);
-		await page.getByLabel('Note').fill(note);
-		await page.getByLabel('Amount').fill(amount);
+		await openEntry(page, page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }));
+		// in the entry, since the list's search boxes for its columns are labelled Search Note and so on
+		await entryArea(page).getByRole('textbox', { name: /^Name/ }).fill(name);
+		await entryArea(page).getByLabel('Note').fill(note);
+		await entryArea(page).getByLabel('Amount').fill(amount);
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+		await saveAndCloseEntry(page); // clears the entry lock
 		await expect(page.getByText(name, { exact: true })).toBeVisible();
 	}
 });

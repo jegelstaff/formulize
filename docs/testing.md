@@ -79,6 +79,18 @@ npx playwright test -g "Check the Romain Coin record is complete"
 
 Playwright writes an HTML report to `tests/e2e/test-report/`. Open it with `npx playwright show-report test-report`. Failures keep a trace and a video — `trace: 'retain-on-failure'` and `video: 'retain-on-failure'` in `playwright.config.js` — and the trace viewer is usually the fastest way to see what the browser was actually looking at when an assertion failed.
 
+The suite runs in Chromium, on MariaDB, with the site on the Anari theme, unless you say otherwise:
+
+* `E2E_THEME=Lyris` keeps the site on Lyris after the install. The museum system is then built with Lyris's screen settings, so its lists open entries in the side drawer. Run the rest of the suite with the same setting, since a system built on one theme only suits the specs for that theme.
+* `E2E_BROWSER=firefox` or `E2E_BROWSER=webkit` uses that browser. Install it first with `npx playwright install firefox`.
+* `E2E_DB_CLIENT=mysql` is for a database running MySQL, which `docker compose -f docker-compose.yaml -f docker-compose.mysql.yaml up -d` gives you.
+
+```
+E2E_THEME=Lyris npx playwright test formulize-core/01-setup
+```
+
+[Continuous Integration](../../ci) runs all of these at once, on every merge to master.
+
 Note that the local config runs with `maxFailures: 1`: the first failure stops the run. That is deliberate. Because the setup specs build on each other, everything after the first failure would be testing a system that was never finished, and a hundred cascading failures tell you less than the first one does.
 
 ### Running the PHP tests

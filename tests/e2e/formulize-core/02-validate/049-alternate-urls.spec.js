@@ -81,6 +81,20 @@ test.describe('Alternate URLs', () => {
 		await page.locator('input[name="elements-ele_caption"]').fill('Notes');
 		await page.locator('input[name="elements-ele_handle"]').fill('alternate_url_test_notes');
 		await saveAdminForm(page);
+
+		// These are the addresses of form screens, so the list opens its entries on the form screen, which a new list
+		// doesn't do in every theme (Lyris's open in the drawer). Set on the list's Interface tab, as an administrator would.
+		const interfaceTab = `/modules/formulize/admin/ui.php?page=screen&aid=${aid}&fid=${fid}&sid=${listSid}&tab=interface`;
+		const onTheFormScreen = page.locator('input[name="screens-editdestination"][value="screen"]');
+		await page.goto(interfaceTab);
+		await waitForAdminPageReady(page);
+		if (!(await onTheFormScreen.isChecked())) {
+			await onTheFormScreen.check();
+			await saveAdminForm(page);
+			await page.goto(interfaceTab);
+			await waitForAdminPageReady(page);
+		}
+		await expect(onTheFormScreen).toBeChecked();
 	});
 
 	test('give the form screen two pages, Name on the first and Notes on the second', async ({ page }) => {

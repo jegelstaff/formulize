@@ -10,6 +10,7 @@ import {
 	saveFormulizeForm, saveAdminForm, waitForAdminPageReady, dbQuery, dbPrefix, renameElementHandle, elementId,
 	openArtifactOriginsMap, expectArtifactOriginsMap, loadSavedView, expectCoinsByName, expectArtifactOriginsList,
 	conditionalElementReady, setCodeMirrorValue, autocompleteBox,
+	openMainMenu, openEntry, autocompleteSuggestion, entryArea, saveAndCloseEntry,
 } from '../../utils';
 
 /**
@@ -160,15 +161,16 @@ test.describe.serial('Renaming element handles', () => {
 		// The Collections box is found by its element's handle, which is whatever it has been renamed to at the time.
 		const expectExhibitToOfferItsCollectionsArtifacts = async collectionsHandle => {
 			await asCurator(page);
-			await page.locator('#burger-and-logo').getByRole('link').first().click();
+			await openMainMenu(page);
 			await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
-			await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
+			await openEntry(page, page.getByRole('button', { name: 'Add Exhibit', exact: true }));
+			// suggestions in the autocomplete's menu: a list behind the drawer has these names in it too
 			await autocompleteBox(page, collectionsHandle).fill('an');
-			await conditionalElementReady(page, 'exhibits_artifacts', () => page.getByText('Ancient History', { exact: true }).click());
+			await conditionalElementReady(page, 'exhibits_artifacts', () => autocompleteSuggestion(page, 'Ancient History', { exact: true }).click());
 			await autocompleteBox(page, 'exhibits_artifacts').fill('roman');
-			await expect(page.getByText('Roman Coin')).toBeVisible();
+			await expect(autocompleteSuggestion(page, 'Roman Coin')).toBeVisible();
 			await autocompleteBox(page, 'exhibits_artifacts').fill('flor');
-			await expect(page.getByText('No match found')).toBeVisible();
+			await expect(autocompleteSuggestion(page, 'No match found')).toBeVisible();
 			await leaveWithoutSaving(page);
 		};
 		await asAdmin(page);
@@ -233,8 +235,8 @@ test.describe.serial('Renaming element handles', () => {
 		await expectArtifactOriginsList(page);
 		await page.goto('/modules/formulize/');
 		await openArtifact(page, 'M001');
-		await expect(page.getByText('Describe the Roman Coin')).toBeVisible();
-		await page.getByRole('link', { name: 'Save and Close' }).click();
+		await expect(entryArea(page).getByText('Describe the Roman Coin')).toBeVisible();
+		await saveAndCloseEntry(page);
 		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 
 		// and back
@@ -302,10 +304,10 @@ test.describe.serial('Renaming element handles', () => {
 			// the spoon's condition as it was, in its form
 			await asCurator(page);
 			await openArtifact(page, 'Babylonian Spoon');
-			await page.getByRole('slider', { name: 'Condition' }).fill(spoon[1]);
+			await entryArea(page).getByRole('slider', { name: 'Condition' }).fill(spoon[1]);
 			await saveFormulizeForm(page);
 			await expect.poll(() => dbQuery(`SELECT artifacts_condition FROM ${dbPrefix()}_formulize_artifacts WHERE entry_id = ${spoon[0]}`)[0][0]).toBe(spoon[1]);
-			await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+			await saveAndCloseEntry(page); // clears the entry lock
 			await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 		} finally {
 			// as it was: on the default templates again if this test gave the list its own, or else with its own

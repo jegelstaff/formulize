@@ -3,6 +3,7 @@ import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } f
 import {
 	login, leavePage, saveAdminForm, waitForAdminPageReady, conditionalChecksFinished, elementId, dbQuery, dbPrefix, sqlEscape, ensureMainMenuOpen,
 	applyColumnChanges, openAllColumnSections, showPermissionsFor, getUserByLogin, openElementSettings, removeConditions,
+	openChangeColumns, showListSearches, openEntry as openEntryFromList,
 } from '../../utils';
 import {
 	casesFor, howToCheck, namesIn, conditionsFor, conditionsWithCaptionsFor, expectedNames, namesOnPage, namesWhereShown, searchesFor, searchList,
@@ -251,7 +252,7 @@ async function openArtifactTab(page, artifact, tab = 'Location and loans', eleme
 
 async function openNewLoanRequest(page) {
 	await leavePage(page, `/modules/formulize/index.php?fid=${formId('Loan Requests')}`);
-	await page.getByRole('button', { name: /^Add Loan Requests?$/ }).click();
+	await openEntryFromList(page, page.getByRole('button', { name: /^Add Loan Requests?$/ }));
 	await expect(page.locator('.form-row:has(.formulize-label-loans_borrower) input[type="text"]')).toBeVisible();
 	await page.waitForLoadState('load');
 }
@@ -385,13 +386,11 @@ async function openArtifactsListWithDates(page) {
 	await page.goto('/modules/formulize/');
 	await ensureMainMenuOpen(page);
 	await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
-	const popupPromise = page.context().waitForEvent('page');
-	await page.getByRole('button', { name: 'Change columns' }).click();
-	const columns = await popupPromise;
-	await columns.bringToFront();
+	const columns = await openChangeColumns(page);
 	await openAllColumnSections(columns);
 	await columns.getByRole('checkbox', { name: 'Date of acquisition' }).check();
 	await applyColumnChanges(columns);
+	await showListSearches(page);
 	await expect(page.locator('input[name="search_artifacts_date_of_acquisition"]')).toBeVisible();
 }
 
@@ -1032,6 +1031,7 @@ test('Section 12: what = conditions give a new entry', async ({ page }) => {
 async function valuesOffered(page, selector) {
 	await openList(page, LISTS['Catalogue']);
 	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
+	await showListSearches(page);
 	await page.locator(`input[name="search_${DONOR_COLUMN}"]`).click();
 	const choices = page.locator(selector);
 	await expect(choices.first()).toHaveText('Show all');
@@ -1043,7 +1043,7 @@ async function valuesOffered(page, selector) {
 // one of the names counts, since the list also has an option that offers no donor.
 async function donorOptionsInForm(page, selector, everything) {
 	await leavePage(page, `/modules/formulize/index.php?fid=${formId('Artifacts')}`);
-	await page.getByRole('button', { name: 'Add Artifact', exact: true }).click();
+	await openEntryFromList(page, page.getByRole('button', { name: 'Add Artifact', exact: true }));
 	await page.locator('.form-row:has(.formulize-label-artifacts_donated_to_museum)').getByRole('radio', { name: 'Yes', exact: true }).check();
 	await expect(page.locator('.form-row:has(.formulize-label-artifacts_donor) select')).toBeVisible();
 	await conditionalChecksFinished(page);

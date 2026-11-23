@@ -1,13 +1,10 @@
 const { test, expect } = require('@playwright/test');
-import { login, waitForWorkingMessage, applyColumnChanges, openAllColumnSections } from '../../utils';
+import { login, waitForWorkingMessage, applyColumnChanges, openAllColumnSections, openMainMenu, openChangeColumns, showListSearches, showEntriesPerPage, goToListPage, openEntry, goToEntryPage, entryArea, LIST_PAGE_SIZE } from '../../utils';
 
 test.describe('Validate Data', () => {
 	test('Check the Romain Coin record is complete', async ({ page }) => {
 		await login(page, 'curator1', '12345');
-		const popupPromise = page.context().waitForEvent('page');
-		await page.getByRole('button', { name: 'Change columns' }).click();
-		const page3 = await popupPromise;
-		await page3.bringToFront();
+		const page3 = await openChangeColumns(page);
 		await openAllColumnSections(page3);
 
   	await page3.getByText('Entry ID').click();
@@ -97,12 +94,9 @@ test.describe('Validate Data', () => {
 	}),
 	test('Search for specific collection data', async ({ page }) => {
 		await login(page, 'curator1', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
-		const popupPromise = page.context().waitForEvent('page');
-		await page.getByRole('button', { name: 'Change columns' }).click();
-		const page3 = await popupPromise;
-		await page3.bringToFront();
+		const page3 = await openChangeColumns(page);
 		await openAllColumnSections(page3);
 
   	await page3.getByRole('checkbox', { name: 'Full description' }).check();
@@ -110,6 +104,7 @@ test.describe('Validate Data', () => {
 		await page3.getByRole('group', { name: 'Collections', exact: true }).getByLabel('Name').check();
 		await applyColumnChanges(page3);
 
+		await showListSearches(page);
 		await page.locator('input[name="search_artifacts_full_description"]').fill('canoe');
 		await page.getByRole('link', { name: 'Full description' }).click();
 		await expect(page.locator('#celladdress_2_2')).toContainText('A well preserved canoe used between islands.');
@@ -128,8 +123,9 @@ test.describe('Validate Data', () => {
 
 	test('Search for specific artifact data as ahstaff', async ({ page }) => {
 		await login(page, 'ahstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
+		await showListSearches(page);
 		await page.locator('input[name="search_exhibits_artifacts"]').fill('x');
 		await page.getByRole('columnheader', { name: 'Artifacts' }).getByRole('link').click();
 		await expect(page.getByText('No entries were found in the')).toBeVisible();
@@ -142,24 +138,29 @@ test.describe('Validate Data', () => {
 	})
 	test('Search for specific artifact data as mhstaff', async ({ page }) => {
 		await login(page, 'mhstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
+		await showListSearches(page);
 		await page.locator('input[name="search_exhibits_artifacts"]').fill('11');
 		await page.getByRole('columnheader', { name: 'Artifacts' }).getByRole('link').click();
 		await expect(page.getByText('Showing entries: 1 to 2 of')).toBeVisible();
 	}),
 	test('Check that we can get to page 2 of entries', async ({ page }) => {
 		await login(page, 'curator1', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
-		await page.getByRole('link', { name: '2', exact: true }).click();
+		if (LIST_PAGE_SIZE > 10) {
+			// there are fewer artifacts than a page of this list holds, so there's no page 2 until it shows fewer a page
+			await showEntriesPerPage(page, 10);
+		}
+		await goToListPage(page, 2);
 		await expect(page.getByText('Showing entries: 11 to')).toBeVisible();
 	}),
 	test('Verify Printable View page is complete', async ({ page }) => {
 		await login(page, 'curator1', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
-		await page.getByRole('row', { name: 'Freeform Solutions' }).getByRole('link').first().click();
+		await openEntry(page, page.getByRole('row', { name: 'Freeform Solutions' }).getByRole('link').first());
 		const page2Promise = page.waitForEvent('popup');
 		await page.getByRole('button', { name: 'Printable Version' }).click();
 		const page2 = await page2Promise;
@@ -179,8 +180,8 @@ test.describe('Validate Data', () => {
 		await expect(page2.getByText('M4E 3X2')).toBeVisible();
 		await expect(page2.getByText('Favourite colour')).toBeVisible();
 		await expect(page2.getByText('Backgrounder / Resume')).toBeVisible();
-		await page.getByRole('link', { name: 'Donated Artifacts' }).click();
-		await expect(page.getByText('Add new artifact')).toBeVisible();
+		await goToEntryPage(page, 'Donated Artifacts');
+		await expect(entryArea(page).getByText('Add new artifact')).toBeVisible();
 		const page3Promise = page.waitForEvent('popup');
 		await page.getByRole('button', { name: 'Printable Version' }).click();
 		const page3 = await page3Promise;
@@ -230,12 +231,9 @@ test.describe('Validate Data', () => {
 	});
 	test('Verify Sorting works correctly', async ({ page }) => {
 		await login(page, 'curator1', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
-		const popupPromise = page.context().waitForEvent('page');
-		await page.getByRole('button', { name: 'Change columns' }).click();
-		const page3 = await popupPromise;
-		await page3.bringToFront();
+		const page3 = await openChangeColumns(page);
 		await openAllColumnSections(page3);
 		await page3.getByRole('checkbox', { name: 'ID Number' }).check();
 		await page3.getByRole('checkbox', { name: 'Short name' }).check();

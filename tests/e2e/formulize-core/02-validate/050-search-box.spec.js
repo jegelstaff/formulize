@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, waitForAdminPageReady, waitForWorkingMessage, openAllColumnSections, applyColumnChanges, createMuseumForm, deleteMuseumFormsTitled, dbQuery, dbPrefix, sqlEscape } from '../../utils';
+import { login, saveAdminForm, waitForAdminPageReady, waitForWorkingMessage, openAllColumnSections, applyColumnChanges, createMuseumForm, deleteMuseumFormsTitled, dbQuery, dbPrefix, sqlEscape, openChangeColumns, showListSearches } from '../../utils';
 import { formId, museumAppId } from '../01-setup/museum-forms';
 
 // The Search box, and the search interface each element uses in lists.
@@ -43,14 +43,13 @@ async function offeredSearchTypes(page) {
 async function artifactsListWithEraAndDonor(page) {
 	await login(page, 'curator1', '12345');
 	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
-	const popupPromise = page.context().waitForEvent('page');
-	await page.getByRole('button', { name: 'Change columns' }).click();
-	const popup = await popupPromise;
+	const popup = await openChangeColumns(page);
 	await openAllColumnSections(popup);
 	await popup.getByRole('checkbox', { name: 'Era', exact: true }).check();
 	await popup.getByRole('checkbox', { name: 'Donor', exact: true }).check();
 	await applyColumnChanges(popup);
 	await waitForWorkingMessage(page);
+	await showListSearches(page);
 	await expect(page.locator('input[name="search_artifacts_donor"]')).toBeVisible();
 }
 

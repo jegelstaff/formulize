@@ -3,7 +3,13 @@ import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } f
 import {
 	login, dbQuery, dbPrefix, getSiteTheme, waitForAdminPageReady, saveAdminForm,
 	chooseSiteThemes, expectSiteTheme, themeHasBeenActivated, forgetThemeActivated,
+	ON_LYRIS,
 } from '../../utils';
+
+// What this checks is a site built on Anari moving to Lyris: the screens it offers to change, and what it does to them. A
+// run on Lyris builds the museum on Lyris, so its screens have Lyris's settings already and there's nothing to move. The
+// run on Anari covers it.
+test.skip(ON_LYRIS, 'The museum was built on Lyris, so there is no site on Anari to move to Lyris');
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 

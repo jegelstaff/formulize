@@ -20,7 +20,8 @@ import {
 	leavePage,
 	ensureMainMenuOpen,
 	showPermissionsFor,
-	openApplicationAccordion
+	openApplicationAccordion,
+	showListSearches,
 } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
@@ -619,6 +620,7 @@ test.describe('I. New Users admin page UI', () => {
 
 	test('Search by username filters the user list', async ({ page }) => {
 		const fid = await getFidFromListPage(page);
+		await showListSearches(page);
 		const searchInput = page.locator(`input[name="search_formulize_user_account_username_${fid}"]`);
 		await searchInput.fill('curator');
 		// Press Enter to submit the controls form. Use Promise.all to start
@@ -633,6 +635,7 @@ test.describe('I. New Users admin page UI', () => {
 	});
 
 	test('EAU type filter narrows to Staff users only', async ({ page }) => {
+		await showListSearches(page);
 		// The dropdown onchange calls showLoading() which submits the controls form.
 		// Use Promise.all so waitForNavigation is registered before the change event fires.
 		await Promise.all([

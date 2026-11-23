@@ -1,6 +1,8 @@
 const { test, expect } = require('@playwright/test');
 import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled,
-	showPermissionsFor, openElementSettings, openApplicationAccordion, openMenuAccordion, dbQuery, dbPrefix, sqlEscape } from '../../utils';
+	showPermissionsFor, openElementSettings, openApplicationAccordion, openMenuAccordion, dbQuery, dbPrefix, sqlEscape,
+	openEntry, entryArea, saveAndCloseEntry,
+} from '../../utils';
 
 // Template groups in the admin's lists of groups, and in a group's scope.
 //
@@ -46,10 +48,10 @@ async function addEntry(browser, user, name) {
 	try {
 		await login(page, user);
 		await page.goto(`/modules/formulize/index.php?sid=${listSid}`);
-		await page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }).click();
-		await page.getByRole('textbox', { name: 'Name *' }).fill(name);
+		await openEntry(page, page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill(name);
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+		await saveAndCloseEntry(page); // clears the entry lock
 		await expect(page.getByText(name)).toBeVisible();
 	} finally {
 		await context.close();

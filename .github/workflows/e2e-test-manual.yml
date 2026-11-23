@@ -8,6 +8,18 @@ on:
         required: true
         default: 'master'
         type: string
+      environments:
+        description: 'Where to run the suite. "all" runs every environment at once, each in its own job'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - mariadb-chromium-anari
+          - mysql-chromium-anari
+          - mariadb-firefox-anari
+          - mariadb-webkit-anari
+          - mariadb-chromium-lyris
       skip_docker_build:
         description: 'Skip Docker rebuild (use existing containers)'
         required: false
@@ -19,7 +31,7 @@ on:
         default: ''
         type: string
       coverage:
-        description: 'Measure which lines of PHP the tests run (slower)'
+        description: 'Measure which lines of PHP the tests run (slower). Only in the MariaDB, Chromium, Anari job'
         required: false
         default: false
         type: boolean
@@ -34,6 +46,11 @@ on:
         description: 'What to checkout'
         required: true
         type: string
+      environments:
+        description: 'Where to run the suite: all, or environment ids separated by commas, such as mariadb-chromium-anari,mysql-chromium-anari'
+        required: false
+        default: 'all'
+        type: string
       skip_docker_build:
         description: 'Skip Docker rebuild (use existing containers)'
         required: false
@@ -45,7 +62,7 @@ on:
         default: ''
         type: string
       coverage:
-        description: 'Measure which lines of PHP the tests run (slower)'
+        description: 'Measure which lines of PHP the tests run (slower). Only in the MariaDB, Chromium, Anari job'
         required: false
         default: false
         type: boolean
@@ -61,8 +78,60 @@ env:
   FORMULIZE_COVERAGE_DIR: /tmp/formulize-coverage
 
 jobs:
+  # The environments the suite runs in. Each one is a job of its own below, on its own runner with its own containers,
+  # and they all run at the same time. A database difference doesn't depend on the browser, and a browser difference
+  # doesn't depend on the database, so the other browsers run on MariaDB only. Lyris runs everything the Anari run
+  # does, from a site that stays on Lyris after the install.
+  #
+  # php: the PHP logic and integrity tests run in this job. They depend on the database, not on the browser or the
+  # theme, so they run once on each database.
+  # coverage: this job measures coverage when the run asks for it. One report is enough.
+  # decides: this job's result is the run's result. The others can fail without failing the run, until they're
+  # green, first time, every time. Then set decides to true.
+  environments:
+    name: Choose the environments
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.choose.outputs.matrix }}
+    steps:
+    - id: choose
+      env:
+        CHOSEN: ${{ inputs.environments || 'all' }}
+      run: |
+        ALL='[
+          {"id": "mariadb-chromium-anari", "name": "MariaDB, Chromium, Anari", "database": "mariadb", "browser": "chromium", "theme": "Anari", "php": true,  "coverage": true,  "decides": true},
+          {"id": "mysql-chromium-anari",   "name": "MySQL, Chromium, Anari",   "database": "mysql",   "browser": "chromium", "theme": "Anari", "php": true,  "coverage": false, "decides": false},
+          {"id": "mariadb-firefox-anari",  "name": "MariaDB, Firefox, Anari",  "database": "mariadb", "browser": "firefox",  "theme": "Anari", "php": false, "coverage": false, "decides": false},
+          {"id": "mariadb-webkit-anari",   "name": "MariaDB, WebKit, Anari",   "database": "mariadb", "browser": "webkit",   "theme": "Anari", "php": false, "coverage": false, "decides": false},
+          {"id": "mariadb-chromium-lyris", "name": "MariaDB, Chromium, Lyris", "database": "mariadb", "browser": "chromium", "theme": "Lyris", "php": false, "coverage": false, "decides": false}
+        ]'
+        if [ "$CHOSEN" = "all" ]; then
+          MATRIX=$(jq -c . <<< "$ALL")
+        else
+          MATRIX=$(jq -c --arg chosen "$CHOSEN" '[.[] | select(.id as $id | ($chosen | gsub(" "; "") | split(",") | index($id)))]' <<< "$ALL")
+        fi
+        if [ "$(jq length <<< "$MATRIX")" = "0" ]; then
+          echo "::error::There's no environment called $CHOSEN. Use all, or ids from: $(jq -r '[.[].id] | join(", ")' <<< "$ALL")"
+          exit 1
+        fi
+        echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+        jq -r '.[] | "- " + .name' <<< "$MATRIX" >> "$GITHUB_STEP_SUMMARY"
+
   manual-e2e-test-run:
+    needs: environments
+    name: e2e (${{ matrix.name }})
     runs-on: ubuntu-26.04 # Not ubuntu-latest: Playwright only installs browser deps on the OS releases it knows, so move this up together with Playwright
+    strategy:
+      fail-fast: false # one environment failing must not cancel the others
+      matrix:
+        include: ${{ fromJSON(needs.environments.outputs.matrix) }}
+    continue-on-error: ${{ !matrix.decides }}
+    env:
+      # Read by playwright.config.js, the specs and tests/e2e/utils.js
+      E2E_BROWSER: ${{ matrix.browser }}
+      E2E_THEME: ${{ matrix.theme }}
+      E2E_DB_CLIENT: ${{ matrix.database == 'mysql' && 'mysql' || 'mariadb' }}
+      MEASURE_COVERAGE: ${{ inputs.coverage && matrix.coverage && 'true' || 'false' }}
 
     steps:
     - name: Checkout repository
@@ -99,7 +168,7 @@ jobs:
     # Both the web server and the command line write the coverage data, as different users, and the phase file says which
     # set of tests is running. Each set's step writes its name there as it starts.
     - name: Prepare for coverage
-      if: ${{ inputs.coverage }}
+      if: env.MEASURE_COVERAGE == 'true'
       run: |
         # PHP runs this file before every request, so without it every page would fail
         if [ ! -f tests/coverage/prepend.php ]; then
@@ -110,58 +179,81 @@ jobs:
         chmod -R 777 "$FORMULIZE_COVERAGE_DIR"
         echo php-logic > "$FORMULIZE_COVERAGE_DIR/phase"
 
+    # COMPOSE_FILE is read by every docker compose command after this one, including the one tests/e2e/docker-containers.js
+    # runs to find the containers. The MySQL file runs the mariadb service on MySQL, under the same name, so the container
+    # names and the installer's database host are the same in every job.
+    - name: Choose the Docker Compose files
+      run: |
+        FILES=docker-compose.yaml
+        if [ "${{ matrix.database }}" = "mysql" ]; then
+          FILES="$FILES:docker-compose.mysql.yaml"
+        fi
+        if [ "$MEASURE_COVERAGE" = "true" ]; then
+          FILES="$FILES:tests/coverage/docker-compose.coverage.yaml"
+        fi
+        echo "COMPOSE_FILE=$FILES" >> "$GITHUB_ENV"
+        echo "Docker Compose files: $FILES"
+
     - name: Stop existing containers (if any)
       run: |
         docker compose down --remove-orphans || true
 
     - name: Run Docker Compose up
       run: |
-        COMPOSE_FILES="-f docker-compose.yaml"
-        if [ "${{ inputs.coverage }}" == "true" ]; then
-          COMPOSE_FILES="$COMPOSE_FILES -f tests/coverage/docker-compose.coverage.yaml"
-        fi
         if [ "${{ inputs.skip_docker_build }}" == "false" ]; then
           echo "Building and starting containers..."
-          docker compose $COMPOSE_FILES up -d --build
+          docker compose up -d --build
         else
           echo "Starting existing containers..."
-          docker compose $COMPOSE_FILES up -d
+          docker compose up -d
         fi
 
     - name: PHP logic tests (A4 password hashing)
+      if: ${{ matrix.php }}
       run: docker exec formulize-web-1 php /var/www/html/tests/password_hashing_test.php
 
     - name: PHP logic tests ({element_handle} reference binding)
+      if: ${{ matrix.php }}
       run: docker exec formulize-web-1 php /var/www/html/tests/reference_binding_test.php
 
     - name: PHP logic tests (T3.1' normalize-then-escape form sinks)
+      if: ${{ matrix.php }}
       run: docker exec formulize-web-1 php /var/www/html/tests/normalize_then_escape_test.php
 
     - name: PHP logic tests (EMPTYSET searches and search term prefixes)
+      if: ${{ matrix.php }}
       run: docker exec formulize-web-1 php /var/www/html/tests/empty_set_search_test.php
 
     - name: PHP logic tests (partial date searches)
+      if: ${{ matrix.php }}
       run: docker exec formulize-web-1 php /var/www/html/tests/date_search_test.php
 
     - name: PHP logic tests (partial date searches, as a site that shows dates as d/m/Y)
+      if: ${{ matrix.php }}
       run: docker exec formulize-web-1 php /var/www/html/tests/date_search_test.php --date-format=d/m/Y
 
     - name: PHP logic tests (the formats time elements show times in)
+      if: ${{ matrix.php }}
       run: docker exec formulize-web-1 php /var/www/html/tests/time_format_test.php
 
     - name: PHP logic tests (blocked file-extension lists in step)
+      if: ${{ matrix.php }}
       run: docker exec formulize-web-1 php /var/www/html/tests/blocked_extensions_sync_test.php
 
     - name: PHP logic tests (the text of Other options in element values)
+      if: ${{ matrix.php }}
       run: docker exec formulize-web-1 php /var/www/html/tests/other_text_values_test.php
 
     - name: PHP logic tests (every theme's screen defaults are complete)
+      if: ${{ matrix.php }}
       run: docker exec formulize-web-1 php /var/www/html/tests/screen_defaults_test.php
 
     - name: PHP logic tests (what a screen's templates take along to another theme)
+      if: ${{ matrix.php }}
       run: docker exec formulize-web-1 php /var/www/html/tests/screen_template_copy_test.php
 
     - name: PHP logic tests (what the update clears out of the screens' own templates, and deleting a screen's)
+      if: ${{ matrix.php }}
       run: docker exec formulize-web-1 php /var/www/html/tests/screen_template_cleanup_test.php
 
     - name: Install dependencies
@@ -169,12 +261,23 @@ jobs:
       working-directory: tests/e2e
 
     - name: Install Playwright Browsers
-      run: npx playwright install chromium --with-deps
+      run: npx playwright install ${{ matrix.browser }} --with-deps
       working-directory: tests/e2e
 
+    # Each Playwright run writes its HTML report to a folder of its own under test-report/, because a run empties its
+    # report folder when it starts, and would otherwise take away the report of the run before it.
+    #
+    # The jobs that don't decide the run go on as far as they can, so one run shows more of what's wrong in a new
+    # environment. Once the setup specs have passed, the system is built, so the later steps run even when one before
+    # them failed, and the validate specs run to the end rather than stopping at their first failure. Setup still
+    # stops at its first failure, since everything after it would be testing a system that was never finished. The
+    # sequential and appearance specs stop at theirs too, since they change what the specs after them stand on.
     - name: Run Playwright setup tests (sequential)
+      id: setup
+      env:
+        E2E_REPORT_DIR: test-report/${{ inputs.test_filter && 'filtered' || '01-setup' }}
       run: |
-        if [ "${{ inputs.coverage }}" == "true" ]; then
+        if [ "$MEASURE_COVERAGE" = "true" ]; then
           echo "${{ inputs.test_filter && 'filtered' || '01-setup' }}" > "$FORMULIZE_COVERAGE_DIR/phase"
         fi
         if [ -n "${{ inputs.test_filter }}" ]; then
@@ -187,30 +290,36 @@ jobs:
 
     - name: Run Playwright validation tests (concurrent)
       if: ${{ !inputs.test_filter }}
+      env:
+        E2E_REPORT_DIR: test-report/02-validate
       run: |
-        if [ "${{ inputs.coverage }}" == "true" ]; then
+        if [ "$MEASURE_COVERAGE" = "true" ]; then
           echo 02-validate > "$FORMULIZE_COVERAGE_DIR/phase"
         fi
-        npx playwright test formulize-core/02-validate --workers=4 --fully-parallel
+        npx playwright test formulize-core/02-validate --workers=4 --fully-parallel ${{ !matrix.decides && '--max-failures=0' || '' }}
       working-directory: tests/e2e
 
     # After the validate specs, and on one worker: these change things the museum system shares - renaming the
     # elements its screens, views and notifications use - check the system still works, and put them back.
     - name: Run Playwright validation tests that change the system (sequential)
-      if: ${{ !inputs.test_filter }}
+      if: ${{ !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
+      env:
+        E2E_REPORT_DIR: test-report/03-validate-sequential
       run: |
-        if [ "${{ inputs.coverage }}" == "true" ]; then
+        if [ "$MEASURE_COVERAGE" = "true" ]; then
           echo 03-validate-sequential > "$FORMULIZE_COVERAGE_DIR/phase"
         fi
         npx playwright test formulize-core/03-validate-sequential --workers=1
       working-directory: tests/e2e
 
-    # After the validate specs, and on one worker: the appearance specs switch the whole site to Lyris while
+    # After the validate specs, and on one worker: the appearance specs switch the whole site's theme while
     # they run, and put it back when they're done.
     - name: Run Playwright appearance tests (sequential)
-      if: ${{ !inputs.test_filter }}
+      if: ${{ !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
+      env:
+        E2E_REPORT_DIR: test-report/04-appearance
       run: |
-        if [ "${{ inputs.coverage }}" == "true" ]; then
+        if [ "$MEASURE_COVERAGE" = "true" ]; then
           echo 04-appearance > "$FORMULIZE_COVERAGE_DIR/phase"
         fi
         npx playwright test formulize-core/04-appearance --workers=1
@@ -223,9 +332,9 @@ jobs:
     # dump taken in the next step is unaffected. Skipped alongside the validate suite when a filter is in
     # use, because a partly built system is not the system it is asking about.
     - name: PHP integrity tests (element reference scan, against the built system)
-      if: ${{ !inputs.test_filter }}
+      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
       run: |
-        if [ "${{ inputs.coverage }}" == "true" ]; then
+        if [ "$MEASURE_COVERAGE" = "true" ]; then
           echo php-integrity > "$FORMULIZE_COVERAGE_DIR/phase"
         fi
         docker exec formulize-web-1 php /var/www/html/tests/element_reference_integrity_test.php
@@ -233,15 +342,15 @@ jobs:
     # What a rename rewrites in a piece of code. It reads nothing of the system and writes nothing, but it needs the
     # application booted, which needs the install the setup specs do.
     - name: PHP integrity tests (what a rename rewrites in code)
-      if: ${{ !inputs.test_filter }}
+      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/element_handle_code_test.php
 
     - name: PHP integrity tests (saved views round trip)
-      if: ${{ !inputs.test_filter }}
+      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/saved_views_test.php
 
     - name: PHP integrity tests (menu item groups and the menu block)
-      if: ${{ !inputs.test_filter }}
+      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/menu_permissions_test.php
 
     # Also after the suite rather than before it, but for a different reason than the two above: it needs
@@ -249,14 +358,14 @@ jobs:
     # objects at all, and the install happens in the setup specs. It reads and writes no data - every
     # element is in memory, and the only files it touches are its own, which it removes again.
     - name: PHP integrity tests (element code files, setVar/getVar)
-      if: ${{ !inputs.test_filter }}
+      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || (!matrix.decides && steps.setup.outcome == 'success')) }}
       run: docker exec formulize-web-1 php /var/www/html/tests/element_code_files_test.php
 
     # Before the containers come down, since the report is made in the web container, with the PHP the tests ran on. Also
     # after a failure, for the tests that did run. The run has only the commit it tests, so the lines that changed come from
     # the commit where this branch left the base branch, which GitHub finds, and which is fetched on its own.
     - name: Build the coverage report
-      if: ${{ always() && inputs.coverage }}
+      if: ${{ always() && env.MEASURE_COVERAGE == 'true' }}
       env:
         COVERAGE_BASE: ${{ inputs.coverage_base || 'master' }}
       run: |
@@ -289,8 +398,15 @@ jobs:
         mkdir -p tests/e2e/final-state/modules/formulize/code
         mkdir -p tests/e2e/final-state/modules/formulize/templates/screens
 
-        # Dump the database
-        docker exec formulize-mariadb-1 mariadb-dump --user user --password=password --default-character-set=utf8mb4 --databases formulize > tests/e2e/final-state/docker/mariadb/seed/formulize.sql
+        # Dump the database. The dump is for looking into a failure, so a dump that fails says so and doesn't fail the
+        # run. MySQL's dump needs --no-tablespaces, since the user doesn't have the PROCESS privilege that dumping them needs
+        if [ "$E2E_DB_CLIENT" = "mysql" ]; then
+          DUMP="mysqldump --no-tablespaces"
+        else
+          DUMP="mariadb-dump"
+        fi
+        docker exec formulize-mariadb-1 $DUMP --user user --password=password --default-character-set=utf8mb4 --databases formulize > tests/e2e/final-state/docker/mariadb/seed/formulize.sql \
+          || echo "::warning::The database couldn't be dumped"
         # Copy mainfile.php and install.lock
         cp mainfile.php tests/e2e/final-state/ || echo "mainfile.php not found"
         cp install.lock tests/e2e/final-state/ || echo "install.lock not found"
@@ -324,11 +440,12 @@ jobs:
       run: |
         docker compose down --remove-orphans
 
+    # Each job's artifacts are named for its environment, because two jobs in a run can't upload the same name
     - name: Upload Playwright Report
       if: always()
       uses: actions/upload-artifact@v7
       with:
-        name: playwright-report
+        name: playwright-report-${{ matrix.id }}
         path: tests/e2e/test-report/
         retention-days: 7
 
@@ -336,12 +453,12 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v7
       with:
-        name: final-state
+        name: final-state-${{ matrix.id }}
         path: tests/e2e/final-state/
         retention-days: 7
 
     - name: Upload Coverage Report
-      if: ${{ always() && inputs.coverage }}
+      if: ${{ always() && env.MEASURE_COVERAGE == 'true' }}
       uses: actions/upload-artifact@v7
       with:
         name: coverage-report

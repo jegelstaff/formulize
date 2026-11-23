@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled, dbQuery, dbPrefix } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled, dbQuery, dbPrefix, openEntry, entryArea, saveAndCloseEntry } from '../../utils';
 
 /**
  * T3.5 - eval-OUTPUT purification: admin-authored PHP that INTERPOLATES a referenced value.
@@ -88,11 +88,11 @@ test.describe.serial('T3.5 - PHP interpolation of referenced values', () => {
 	test('create an entry whose source field carries the payload', async ({ page }) => {
 		await login(page, 'admin');
 		await page.goto(`/modules/formulize/index.php?fid=${testFid}`);
-		await page.getByRole('button', { name: 'Add XSS PHP Interp Test', exact: true }).click();
-		await page.getByRole('textbox', { name: 'ID *' }).fill('IDPHP040');
-		await page.getByLabel('Interp Source').fill(PAYLOAD);
+		await openEntry(page, page.getByRole('button', { name: 'Add XSS PHP Interp Test', exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'ID *' }).fill('IDPHP040');
+		await entryArea(page).getByLabel('Interp Source').fill(PAYLOAD);
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+		await saveAndCloseEntry(page); // clears the entry lock
 
 		// The form view has to be opened by id (?ve=), and a reference only resolves against a SAVED entry.
 		// dbQuery returns rows as arrays of column values (mariadb -N), not objects.

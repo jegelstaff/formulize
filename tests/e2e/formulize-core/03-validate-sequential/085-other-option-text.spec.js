@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
-import { login, saveFormulizeForm, saveAdminForm, leavePage, waitForWorkingMessage, openAllColumnSections, applyColumnChanges, dbQuery, dbPrefix, sqlEscape } from '../../utils';
+import { login, saveFormulizeForm, saveAdminForm, leavePage, waitForWorkingMessage, openAllColumnSections, applyColumnChanges, dbQuery, dbPrefix, sqlEscape, goToNextListPage, openChangeColumns, showListSearches } from '../../utils';
 
 /**
  * What people type into the box of an Other option saves with the element's value.
@@ -83,8 +83,7 @@ async function showInList(page, sid, entryId) {
 		if (await page.locator(`#delete_${entryId}`).count() > 0) {
 			return;
 		}
-		await page.getByRole('link', { name: 'Next', exact: true }).click();
-		await waitForWorkingMessage(page);
+		await goToNextListPage(page);
 	}
 	throw new Error(`Entry ${entryId} is not in the list`);
 }
@@ -94,16 +93,14 @@ async function showInList(page, sid, entryId) {
 async function searchSuitableFor(page, term) {
 	await page.goto(`/modules/formulize/index.php?sid=${collectionListSid}`);
 	await expect(page.getByText(/Showing entries/).first()).toBeVisible();
-	const popupPromise = page.context().waitForEvent('page');
-	await page.getByRole('button', { name: 'Change columns' }).click();
-	const popup = await popupPromise;
-	await popup.bringToFront();
+	const popup = await openChangeColumns(page);
 	await openAllColumnSections(popup);
 	await popup.getByRole('group', { name: 'Collections', exact: true }).getByLabel('Suitable audience', { exact: true }).check();
 	await applyColumnChanges(popup);
 	await expect(page.getByRole('link', { name: 'Suitable audience', exact: true })).toBeVisible();
 	// the values the column's Search box lists, which are drawn with the page
 	const offered = JSON.parse(await page.locator('.formulize-searchbox[data-name="search_collections_suitable_audience"]').getAttribute('data-options')).map(option => option.label);
+	await showListSearches(page);
 	const searchBox = page.locator('input[name="search_collections_suitable_audience"]');
 	await searchBox.fill(term);
 	await searchBox.press('Enter');

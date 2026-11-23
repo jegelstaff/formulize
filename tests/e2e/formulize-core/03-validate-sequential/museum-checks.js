@@ -1,6 +1,6 @@
 const { expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
-import { login, saveFormulizeForm, dbQuery, dbPrefix, leavePage } from '../../utils';
+import { login, saveFormulizeForm, dbQuery, dbPrefix, leavePage, openEntry, entryArea, entryButton, saveAndCloseEntry, showListSearches } from '../../utils';
 
 /**
  * What a person does with the museum system to see that it works, for the specs that change something the system
@@ -25,25 +25,26 @@ export async function asCurator(page) {
 	await login(page, 'curator1', '12345');
 }
 
-// Open an artifact from the Artifacts list, as curator1 sees it
+// Open an artifact from the Artifacts list, as curator1 sees it: on its form screen, or in the drawer, as the list's
+// settings say
 export async function openArtifact(page, idNumber) {
 	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
-	await page.getByRole('row', { name: idNumber }).getByRole('link').first().click();
-	await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeVisible();
+	await openEntry(page, page.getByRole('row', { name: idNumber }).getByRole('link').first());
+	await expect(entryButton(page, 'Save')).toBeVisible();
 }
 
 // Change the Roman coin's year and back, as curator1, and check Year-Era follows each time
 export async function expectYearEraToFollowTheYear(page) {
 	await asCurator(page);
 	await openArtifact(page, 'M001');
-	const year = page.getByRole('spinbutton', { name: 'Year', exact: true });
+	const year = entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true });
 	await year.fill('151');
 	await saveFormulizeForm(page);
 	await expect.poll(() => rowOf('formulize_artifacts', 'entry_id', 1, 'artifacts_year_era')[0]).toBe('151BCE');
 	await year.fill('150');
 	await saveFormulizeForm(page);
 	await expect.poll(() => rowOf('formulize_artifacts', 'entry_id', 1, 'artifacts_year_era')[0]).toBe('150BCE');
-	await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+	await saveAndCloseEntry(page); // clears the entry lock
 	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 }
 
@@ -55,17 +56,18 @@ export async function expectANewArtifactToGetItsIdNumber(page, handle) {
 	const added = () => dbQuery(`SELECT entry_id, ${handle} FROM ${dbPrefix()}_formulize_artifacts WHERE artifacts_short_name = '${shortName}'`);
 	await asCurator(page);
 	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
-	await page.getByRole('button', { name: 'Add Artifact', exact: true }).click();
-	await page.getByRole('textbox', { name: 'Short name *' }).fill(shortName);
-	await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill('1.0');
-	await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill('1.0');
-	await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill('1.0');
-	await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill('1900');
-	await page.getByRole('radio', { name: 'CE', exact: true }).check();
+	await openEntry(page, page.getByRole('button', { name: 'Add Artifact', exact: true }));
+	await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill(shortName);
+	await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill('1.0');
+	await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill('1.0');
+	await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill('1.0');
+	await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill('1900');
+	await entryArea(page).getByRole('radio', { name: 'CE', exact: true }).check();
 	await saveFormulizeForm(page);
 	await expect.poll(() => added().map(([entryId, idNumber]) => idNumber === 'M' + entryId.padStart(3, '0'))).toEqual([true]);
-	await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+	await saveAndCloseEntry(page); // clears the entry lock
 	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
+	await showListSearches(page);
 	await page.locator('input[name="search_artifacts_short_name"]').fill(shortName);
 	await page.getByRole('link', { name: 'Short name' }).click();
 	await expect(page.getByText('1 to 1 of 1.')).toBeVisible();
@@ -87,9 +89,9 @@ export async function leaveWithoutSaving(page) {
 export async function expectTheDonorListToWork(page) {
 	await asCurator(page);
 	await openArtifact(page, 'M001');
-	await expect(page.getByLabel('Donor').locator('option', { hasText: 'François-Marie Arouet' })).toHaveCount(1);
-	await expect(page.getByLabel('Donor').locator('option:checked')).toHaveText('François-Marie Arouet');
-	await page.getByRole('link', { name: 'Save and Close' }).click();
+	await expect(entryArea(page).getByLabel('Donor').locator('option', { hasText: 'François-Marie Arouet' })).toHaveCount(1);
+	await expect(entryArea(page).getByLabel('Donor').locator('option:checked')).toHaveText('François-Marie Arouet');
+	await saveAndCloseEntry(page);
 	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 }
 

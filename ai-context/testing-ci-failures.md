@@ -6,8 +6,9 @@ For how CI runs the suite, see [Concurrency](testing-robust-specs.md#concurrency
 
 - **Failure annotations are public.** `GET /repos/jegelstaff/formulize/commits/{sha}/check-runs` lists the checks. The annotations URL of the failed one has the Playwright error and call log for the test that failed. The same API walks back through runs, to find the last good one and where each one stopped.
 - **Job logs and artifacts need admin rights.** Ask a maintainer to download them.
-- **`playwright-report`** has the HTML report and the traces.
-- **`final-state`** has the database dump, `logs/`, the `code/` folder and the screen templates, as they were at the end of the run. `logs/formulize_log_active.log` gives a timeline of every request, and it can show that a click never produced a request. `logs/web-server.log` is Apache's access and error log, and the only record of requests that don't load Formulize, such as the release of entry locks.
+- **Each environment is a job of its own,** with its own artifacts, named for it, such as `playwright-report-mariadb-chromium-lyris`. Check which job failed before downloading. Only MariaDB, Chromium, Anari fails the run, so a red mark on another job can sit under a green run.
+- **`playwright-report-<environment>`** has the HTML reports and the traces, in a folder for each Playwright step: `01-setup`, `02-validate`, `03-validate-sequential`, `04-appearance`, or `filtered`. Each run empties its report folder when it starts, which is why each step has its own.
+- **`final-state-<environment>`** has the database dump, `logs/`, the `code/` folder and the screen templates, as they were at the end of the run. `logs/formulize_log_active.log` gives a timeline of every request, and it can show that a click never produced a request. `logs/web-server.log` is Apache's access and error log, and the only record of requests that don't load Formulize, such as the release of entry locks.
 
 ## Reading the evidence
 
@@ -17,7 +18,7 @@ For how CI runs the suite, see [Concurrency](testing-robust-specs.md#concurrency
 
 **`page.goto: net::ERR_ABORTED` next to a test timeout means the navigation hung.** Teardown aborted it. In the trace, the `goto` has a `before` and no `after` until the After Hooks.
 
-**A red run can hide what's behind it.** With `maxFailures: 1`, a failing spec stops everything after it, so breakage in a later spec can stay hidden for days. When a later spec suddenly fails, find the last run that reached it, not the last commit.
+**A red run can hide what's behind it.** With `maxFailures: 1`, a failing spec stops everything after it, so breakage in a later spec can stay hidden for days. When a later spec suddenly fails, find the last run that reached it, not the last commit. That's how the job that decides the run behaves. The other environments' jobs carry on once setup has passed, and run all of `02-validate`, so they can show several failures at once. A failure in `03-validate-sequential` or `04-appearance` there may come from an earlier step that failed and left the system changed.
 
 **Consecutive red runs may be different failures.** Compare their annotations. A downloaded report belongs to the run it came from, so check that it's the one you're looking at.
 

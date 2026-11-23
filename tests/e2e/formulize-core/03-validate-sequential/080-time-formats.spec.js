@@ -2,6 +2,7 @@ const { test, expect } = require('@playwright/test');
 import {
 	login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, waitForWorkingMessage, applyColumnChanges, createMuseumForm, deleteMuseumFormsTitled,
 	leavePage, elementRow, dbQuery, dbPrefix, sqlEscape,
+	openChangeColumns, showListSearches, openEntry, entryArea, saveAndCloseEntry,
 } from '../../utils';
 import { museumAppId } from '../01-setup/museum-forms';
 
@@ -87,14 +88,12 @@ async function setDisplayFormat(page, label) {
 async function openList(page, { timeRange = false } = {}) {
 	await page.goto(listUrl());
 	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
-	const popupPromise = page.context().waitForEvent('page');
-	await page.getByRole('button', { name: 'Change columns' }).click();
-	const popup = await popupPromise;
-	await popup.bringToFront();
+	const popup = await openChangeColumns(page);
 	await popup.getByRole('checkbox', { name: 'Event', exact: true }).check();
 	await popup.getByRole('checkbox', { name: 'Starts at', exact: true }).check();
 	await applyColumnChanges(popup);
 	await waitForWorkingMessage(page);
+	await showListSearches(page);
 	if (timeRange) {
 		await expect(timeRangeButton(page)).toBeVisible();
 	} else {
@@ -208,11 +207,11 @@ test('add a morning and an afternoon event, then make the time one that can\'t b
 	await login(page);
 	for (const [name, time] of [[MORNING, '09:05'], [AFTERNOON, '13:30']]) {
 		await page.goto(listUrl());
-		await page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }).click();
-		await page.getByRole('textbox', { name: /^Event/ }).fill(name);
-		await page.getByLabel('Starts at').fill(time);
+		await openEntry(page, page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }));
+		await entryArea(page).getByRole('textbox', { name: /^Event/ }).fill(name);
+		await entryArea(page).getByLabel('Starts at').fill(time);
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // back to the list, which clears the entry lock
+		await saveAndCloseEntry(page); // back to the list, which clears the entry lock
 		await expect(page.getByText(name, { exact: true }).first()).toBeVisible();
 	}
 

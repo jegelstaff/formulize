@@ -2,6 +2,7 @@ const { test, expect } = require('@playwright/test');
 import {
 	login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, waitForWorkingMessage, createMuseumForm, deleteMuseumFormsTitled,
 	openAllColumnSections, applyColumnChanges, dbQuery, dbPrefix, leavePage,
+	openEntry, entryArea, saveAndCloseEntry, openChangeColumns, showListSearches,
 } from '../../utils';
 
 // An element whose values are encrypted in the database.
@@ -37,25 +38,24 @@ const hex = text => Buffer.from(text, 'utf8').toString('hex').toUpperCase();
 
 async function addEntry(page, id, secret) {
 	await page.goto(`/modules/formulize/index.php?fid=${fid}`);
-	await page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }).click();
-	await page.getByRole('textbox', { name: 'ID *' }).fill(id);
-	await page.getByLabel('Secret').fill(secret);
+	await openEntry(page, page.getByRole('button', { name: `Add ${FORM_TITLE}`, exact: true }));
+	await entryArea(page).getByRole('textbox', { name: 'ID *' }).fill(id);
+	await entryArea(page).getByLabel('Secret').fill(secret);
 	await saveFormulizeForm(page);
-	await page.getByRole('link', { name: 'Save and Close' }).click();
+	await saveAndCloseEntry(page);
 	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
 }
 
 // the form's list, with the Secret column added
 async function listWithSecret(page) {
 	await page.goto(`/modules/formulize/index.php?fid=${fid}`);
-	await expect(page.getByRole('button', { name: 'Change columns' })).toBeVisible();
-	const popupPromise = page.context().waitForEvent('page');
-	await page.getByRole('button', { name: 'Change columns' }).click();
-	const popup = await popupPromise;
+	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
+	const popup = await openChangeColumns(page);
 	await openAllColumnSections(popup);
 	await popup.getByRole('checkbox', { name: 'Secret', exact: true }).check();
 	await applyColumnChanges(popup);
 	await waitForWorkingMessage(page);
+	await showListSearches(page);
 	await expect(page.locator(`input[name="search_${HANDLE}"]`)).toBeVisible();
 }
 
@@ -145,11 +145,12 @@ test('The list, its Search box and searching all work with the values people typ
 test('A value changed in the form is shown in the form, saved encrypted, and shown in the list', async ({ page }) => {
 	await login(page);
 	await listWithSecret(page);
-	await page.getByRole('row', { name: /beta/ }).getByRole('link').first().click();
-	await expect(page.getByLabel('Secret')).toHaveValue('beta');
-	await page.getByLabel('Secret').fill('gamma');
+	await openEntry(page, page.getByRole('row', { name: /beta/ }).getByRole('link').first());
+	// in the entry, since the list's search box for the column is labelled Search Secret
+	await expect(entryArea(page).getByLabel('Secret')).toHaveValue('beta');
+	await entryArea(page).getByLabel('Secret').fill('gamma');
 	await saveFormulizeForm(page);
-	await expect(page.getByLabel('Secret')).toHaveValue('gamma');
+	await expect(entryArea(page).getByLabel('Secret')).toHaveValue('gamma');
 	await leavePage(page, `/modules/formulize/index.php?fid=${fid}`);
 
 	const stored = storedValues();
@@ -176,18 +177,16 @@ test('A linked element offers the encrypted values as they were typed, and a lis
 
 	// the form offers the values as they were typed: alpha, which E1 and E3 hold, and gamma, which E2 now holds
 	await page.goto(`/modules/formulize/index.php?fid=${linkFid}`);
-	await page.getByRole('button', { name: /^Add Encryption Test Links?$/ }).click(); // the button names one entry
-	await page.getByRole('textbox', { name: 'Name *' }).fill('L1');
-	await expect(page.getByRole('checkbox', { name: 'alpha', exact: true }).first()).toBeVisible();
-	await page.getByRole('checkbox', { name: 'gamma', exact: true }).check();
+	await openEntry(page, page.getByRole('button', { name: /^Add Encryption Test Links?$/ })); // the button names one entry
+	await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('L1');
+	await expect(entryArea(page).getByRole('checkbox', { name: 'alpha', exact: true }).first()).toBeVisible();
+	await entryArea(page).getByRole('checkbox', { name: 'gamma', exact: true }).check();
 	await saveFormulizeForm(page);
-	await page.getByRole('link', { name: 'Save and Close' }).click();
+	await saveAndCloseEntry(page);
 	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
 
 	// the list shows the value the entry points to, as it was typed
-	const popupPromise = page.context().waitForEvent('page');
-	await page.getByRole('button', { name: 'Change columns' }).click();
-	const popup = await popupPromise;
+	const popup = await openChangeColumns(page);
 	await openAllColumnSections(popup);
 	await popup.getByRole('checkbox', { name: 'Secret choice', exact: true }).check();
 	await applyColumnChanges(popup);

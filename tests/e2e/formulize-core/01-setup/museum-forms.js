@@ -1,5 +1,5 @@
 const { expect } = require('@playwright/test');
-import { saveAdminForm, waitForAdminPageReady, editScreenPage, dbQuery, dbPrefix, sqlEscape, openApplicationAccordion } from '../../utils';
+import { saveAdminForm, waitForAdminPageReady, editScreenPage, dbQuery, dbPrefix, sqlEscape, openApplicationAccordion, saveAndCloseEntry } from '../../utils';
 
 // What the setup specs that add forms to the museum share: 022 adds Locations and Loan Requests, and 023 adds Visits and Offers.
 
@@ -95,5 +95,5 @@ export async function expectElementsOnPage(page, screenUrl, pageTitle, elements)
 // The page has to have finished loading, or it can't release the lock on the entry as it goes
 export async function saveAndClose(page) {
 	await page.waitForLoadState('load');
-	await page.getByRole('link', { name: 'Save and Close' }).click();
+	await saveAndCloseEntry(page);
 }
