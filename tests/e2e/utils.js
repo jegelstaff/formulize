@@ -279,20 +279,12 @@ export async function saveFormulizeForm(page, buttonText = 'Save', timeout = 120
 	// Wait for the formulize page token
   await page.locator('div#formulizeform').click();
 	await waitForFormulizeFormToken(page);
+	// Save sends the whole page, and the entry comes back on a new one, so the new page loading says the save went out.
+	// The saving message is shown just before the page goes, and WebKit can leave before a check sees it.
 	await Promise.all([
-    page.waitForFunction(() => {
-      const element = document.getElementById('savingmessage');
-      return element &&
-             window.getComputedStyle(element).display === 'flex' &&
-             window.getComputedStyle(element).opacity === '1';
-    }),
-    page.getByRole('button', { name: buttonText }).click()
-  ]);
-	// await saving animation dissapear
-  await page.waitForFunction(() => {
-    const element = document.getElementById('savingmessage');
-    return element && window.getComputedStyle(element).display === 'none';
-  }, { timeout: 120000 });
+		page.waitForEvent('load', { timeout }),
+		page.getByRole('button', { name: buttonText }).click(),
+	]);
 	// Ensure the save was not refused
 	await expect(page.getByText('Your changes were not saved.')).not.toBeVisible({ timeout: 10000 });
 }
@@ -1896,9 +1888,11 @@ const DB_CLIENT = process.env.E2E_DB_CLIENT || 'mariadb';
 export function dbQuery(sql) {
 	// -N: skip column-name header. The SQL is passed as a single argv entry, never through a shell:
 	// a shell would treat backticks (MySQL identifier quotes, e.g. `groups`) as command substitution.
+	// The character set is named, because the mysql client in the MySQL image talks latin1 unless told otherwise, and Node
+	// reads what comes back as UTF-8.
 	const out = execFileSync(
 		'docker',
-		['exec', dbContainer(), DB_CLIENT, '-uroot', `-p${DB_ROOT_PASS}`, '-N', '-e', sql, DB_NAME],
+		['exec', dbContainer(), DB_CLIENT, '-uroot', `-p${DB_ROOT_PASS}`, '--default-character-set=utf8mb4', '-N', '-e', sql, DB_NAME],
 		{ encoding: 'utf8' }
 	);
 	const trimmed = out.replace(/\n$/, '');

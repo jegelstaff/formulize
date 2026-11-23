@@ -245,6 +245,8 @@ test.describe('Set columns and elements for screens', () => {
 	test('Artifacts form screen', async ({ page }) => {
 		await page.locator('div[id^=form-details-box-]').nth(0).getByRole('link', { name: 'Screens' }).click();
 		await page.getByRole('link', { name: 'Artifact', exact: true }).click();
+		// the tabs and the page settings popup work once the page is ready
+		await waitForAdminPageReady(page);
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
   	await page.getByLabel('Form elements to display on').selectOption([
@@ -290,6 +292,8 @@ test.describe('Set columns and elements for screens', () => {
 		// By name and value, not by '#form-N': the number is the tab's position, which moves whenever a tab is added
 		await page.locator('input[name="screens-printall"][value="0"]').check();
 		await saveAdminForm(page);
+		// the tabs and the page settings popup work once the page is ready
+		await waitForAdminPageReady(page);
   	await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
 		await page.getByRole('textbox', { name: 'Title for page number' }).fill('Profile');
@@ -351,6 +355,8 @@ test.describe('Set columns and elements for screens', () => {
 	test('Collections form screen', async ({ page }) => {
 		await page.locator('div[id^=form-details-box-]').nth(1).getByRole('link', { name: 'Screens' }).click();
 		await page.getByRole('link', { name: 'Collection', exact: true }).click();
+		// the tabs and the page settings popup work once the page is ready
+		await waitForAdminPageReady(page);
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
 		await expect(page.getByText('Title for page number')).toBeVisible();
@@ -373,6 +379,8 @@ test.describe('Set columns and elements for screens', () => {
 	test('Exhibits form screen', async ({ page }) => {
 		await page.locator('div[id^=form-details-box-]').nth(3).getByRole('link', { name: 'Screens' }).click();
 		await page.getByRole('link', { name: 'Exhibit', exact: true }).click();
+		// the tabs and the page settings popup work once the page is ready
+		await waitForAdminPageReady(page);
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
 		await expect(page.getByText('Title for page number')).toBeVisible();
@@ -422,6 +430,8 @@ test.describe('Set columns and elements for screens', () => {
 	test('Surveys form screen', async ({ page }) => {
 		await page.locator('div[id^=form-details-box-]').nth(4).getByRole('link', { name: 'Screens' }).click();
   	await page.getByRole('link', { name: 'Survey', exact: true }).click();
+		// the tabs and the page settings popup work once the page is ready
+		await waitForAdminPageReady(page);
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
 		await expect(page.getByText('Title for page number')).toBeVisible();

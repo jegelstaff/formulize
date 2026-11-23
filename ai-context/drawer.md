@@ -43,7 +43,7 @@ If `readelements.php` refuses a save, its message is printed first in the respon
 
 ## Why it needs its own code
 
-Drawing a form in elements-only mode skips `drawJavascript()`, so the endpoint has to supply what a form needs itself: the rich text editor setup, the office use toggle, validation, and removing entry locks. If something works full screen and not in the drawer, look there first. Check what the endpoint prints against what `drawJavascript()` prints.
+Drawing a form in elements-only mode skips `drawJavascript()`, so the endpoint has to supply what a form needs itself: the rich text editor setup, the office use toggle, validation, and removing entry locks. If something works full screen and not in the drawer, look there first. Check what the endpoint prints against what `drawJavascript()` prints. A function the endpoint defines stays defined after the drawer closes, so the next form, which may not print it, still gets the last one.
 
 **Functions that an element's markup calls go in `formulize_elementScripts()`,** in `include/functions/element_scripts.php`, such as the date element's `check_date_limits()`. Full screen forms, lists (for editing in the list) and the endpoint all print it, so the element works whichever drew it, and over any page. Don't define them in `drawJavascript()` alone.
 
