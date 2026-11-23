@@ -1201,11 +1201,9 @@
     // Drop CKEditor instances whose textarea was removed with a previous fragment, or is
     // about to be: this runs as a new fragment arrives, while the form it replaces is still
     // in the drawer body (fetchIntoDrawer keeps it on screen through the load), so every
-    // editor in the body is on its way out too. The endpoint's init code skips ids already
-    // present in window.CKEditors, so a dead instance would otherwise block the editor from
-    // initialising when the same entry is rendered again: after a save that stays, the rich
-    // text field came back as a bare textarea; or descend into a sub entry, go back, descend
-    // again.
+    // editor in the body is on its way out too. A new fragment's textareas get editors of
+    // their own whatever is left in window.CKEditors, so this is so the old editors are
+    // destroyed, and so updateCKEditors() goes through the editors that are in the page.
     function pruneDeadEditors() {
         if (!window.CKEditors) { return; }
         Object.keys(window.CKEditors).forEach(function (id) {

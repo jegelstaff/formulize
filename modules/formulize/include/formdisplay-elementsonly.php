@@ -505,61 +505,15 @@ $drawerTemplates = array(
 );
 $drawerTemplatesJs = "<script type=\"application/json\" class=\"formulize-drawer-templates\">".json_encode($drawerTemplates)."</script>\n";
 
-// Rich-text (CKEditor) bootstrap. In a full page load formdisplay.php's drawJavascript()
-// loads the CKEditor library (via $xoTheme->addScript) and emits the initializeCKEditor /
-// updateCKEditors JS. In elements-only mode drawJavascript() is skipped and $xoTheme->addScript
-// only mutates the (never-rendered) theme head, so a rich-text textarea arrives in the drawer as
-// a plain <textarea> that never becomes an editor. Re-emit that bootstrap here so any rich-text
-// fields registered during render (in $GLOBALS['formulize_CKEditors']) initialise after injection.
-//
-// The library is emitted as a separate <script src> node so the host's fragment injector (see
-// themes/Lyris/js/script.js injectFragment) loads it before the following inline init runs — the
-// ordering a normal document gives for free but innerHTML/.load() do not.
+// Rich text editors, set up by the same code as full screen (formulize_richTextEditorJs() in formdisplay.php), which
+// can run again for every form the drawer shows, over a page that has editors of its own. Full screen gets the editor
+// library from the theme's head, which this request never draws, so it's loaded here, as a script of its own that the
+// drawer's injectFragment() waits for before it runs the next one. Over a form screen with a rich text field the page
+// has it already, and CKEditor refuses the second copy with an error in the console, keeping the first.
 $editorJs = '';
 if(!empty($GLOBALS['formulize_CKEditors'])) {
-    $editorIds = array_values(array_unique((array) $GLOBALS['formulize_CKEditors']));
-
-    $editorJs .= "<script type='text/javascript' src='".XOOPS_URL."/editors/CKEditor/ckeditor.js'></script>\n";
-
-    $initCalls = '';
-    $updateBody = '';
-    foreach($editorIds as $editorID) {
-        $safeId = htmlspecialchars($editorID, ENT_QUOTES);
-        $initCalls  .= "        initializeCKEditor('".$safeId."');\n";
-        $updateBody .= "        if(jQuery('#".$safeId."').length > 0 && window.CKEditors['".$safeId."']) {\n";
-        $updateBody .= "            jQuery('#hidden_".$safeId."').val(window.CKEditors['".$safeId."'].getData().replace(\"'\", '&#039;'));\n";
-        $updateBody .= "        }\n";
-    }
-
-    $editorJs .= "<script type='text/javascript'>
-    // Guarded so repeated drawer opens (or a host page that already has editors) do not clobber
-    // existing instances. updateCKEditors() is redefined each open to target the current fields;
-    // the drawer's save/validate path calls it before submitting to flush editor content back into
-    // the hidden inputs Formulize reads.
-    window.CKEditors = window.CKEditors || {};
-    function initializeCKEditor(editorID) {
-        if(typeof ClassicEditor === 'undefined') { return; }
-        if(jQuery('#'+editorID).length > 0 && !window.CKEditors[editorID]) {
-            ClassicEditor
-                .create( document.querySelector( '#'+editorID ) )
-                .then( editor => {
-                    window.CKEditors[editorID] = editor;
-                    window.CKEditors[editorID].model.document.on('change:data', function() {
-                        window.formulizechanged = 1;
-                    });
-                    jQuery('#'+editorID).attr('name', 'useCKEditor');
-                    jQuery(\"<input type='hidden' value='' name='\"+editorID.replace('_tarea', '')+\"' id='hidden_\"+editorID+\"' />\").appendTo(jQuery('#'+editorID).parent());
-                })
-                .catch( error => {
-                    console.error( error );
-                } );
-        }
-    }
-    jQuery(document).ready(function () {
-".$initCalls."    });
-    window.updateCKEditors = function() {
-".$updateBody."    };
-</script>\n";
+    $editorJs = "<script type='text/javascript' src='".XOOPS_URL."/editors/CKEditor/ckeditor.js'></script>\n"
+        ."<script type='text/javascript'>\n".formulize_richTextEditorJs($GLOBALS['formulize_CKEditors'])."</script>\n";
 }
 
 // "Office Use Only" toggle. On a full page load this function is defined by formdisplay.php's
