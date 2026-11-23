@@ -2351,6 +2351,11 @@ h1 + .band {
    border. Only here: the cards on the home page and the news index, and the
    images on documentation pages, keep the light .prose img border. */
 .post-body .prose img { border-color: var(--color-text); }
+/* A screenshot of the application on a documentation page. Its own edges are
+   white or pale grey, and the light .prose img border disappears against the
+   page, so a screenshot gets the same black border as a news story's images.
+   In Markdown: ![...](...){: .screenshot} */
+.prose img.screenshot { border-color: var(--color-text); }
 @media (max-width: 600px) {
   .prose .news-entry-image { float: none; width: 100%; max-width: none; margin: 0 0 var(--space-4); }
   .prose .news-float { float: none; max-width: 100%; margin: 0 0 var(--space-4); }

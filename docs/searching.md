@@ -16,8 +16,14 @@ Most columns have a search box at the top. Type a search term and press Enter, a
 
 As you type, the values in that column that match what you've typed appear in a list under the box. To see the entries with particular values, tick them and click **Apply**, or press Enter. You can tick as many as you like, and the list shows the entries that have any of them.
 
+![The list of values that opens under a search box, with Show all and Show Blanks at the top](../../images/search-box-values.png){: .screenshot width="294"}
+
+Tick **Harbour Gallery** and **Town Hall**, and the box shows **Harbour Gallery +1**, the first value you ticked and how many more there are:
+
+![Two values ticked, shown as Harbour Gallery +1 in the box](../../images/search-box-picked.png){: .screenshot width="294"}
+
 - Once you've ticked a value, the ticks are your search. Typing after that only narrows the list of values to tick.
-- The values you've ticked show under the box. Click the **×** beside them to clear them.
+- The values you've ticked show in the box. Click the **×** beside them to clear them.
 - Tick **Show Blanks** to include the entries that have nothing in that column.
 - If two values in the list look the same, each has a number in brackets after it, so you can tell them apart. They're different entries that happen to have the same name.
 - If a column has a lot of values, only the first 50 that match are listed. Type more to narrow them down.
@@ -52,6 +58,27 @@ Some columns have a different search instead, such as a dropdown list to choose 
 
 ## Dates
 
+### The Date range search
+
+A column can have a **Date range** search instead of a box. It starts out showing **Any date**. Click it to choose a **From** date and a **To** date, then click **Apply**. When it opens with no search in effect, both dates are today.
+
+![The Date range search open, with From set to Jan 1 this year and To set to today](../../images/search-date-range-chosen.png){: .screenshot width="417"}
+
+- Type a date into either box, or click the calendar icon beside it to pick one.
+- The shortcuts under each date set that date. The ones under **From** set the From date, and the ones under **To** set the To date. **Today** is today. **Last Monday** and **Next Friday** are the nearest one before or after today. Then come the first and last days of this month, and **Jan 1 this year** and **Dec 31 this year**. The box with a number sets the date that many days before or after today.
+- **Clear** under a date leaves that side open, so the search has no start or no end.
+- The shortcut that matches the date in a box is highlighted.
+- If you choose a **From** date after the **To** date, or the other way round, the other date moves to the same day, so the range is never backwards.
+- Choices made from today keep their meaning. If you save the list, **30 days ago** is 30 days before whenever the list is opened, not 30 days before the day you saved it. **Today** works the same way. The other shortcuts, like **Last Monday**, are saved as the date they were when you chose them.
+
+After you click **Apply**, the button shows the range, such as **Jan 1 – Nov 23**, and the list shows the entries with a date from the first day to the last day, including both. If only one side is set, it shows **From Jan 1** or **Until Nov 23**.
+
+![A list after applying a date range, with the button showing Jan 1 – Nov 23 and only the entry dated within it](../../images/search-date-range-applied.png){: .screenshot width="548"}
+
+To close the Date range search without changing anything, click **Cancel**, press Esc, or click somewhere else on the page. To remove a date search, open it, click **Clear** under both dates, and click **Apply**.
+
+### Typing a date
+
  **This search term:** 			| **Means this:** 																	| **It will find:**
 :-------------------------------|:----------------------------------------------------------------------------------|:-------------------------------------------------------------------------
  2009-01-01 					| find January 1, 2009 																| 2009-01-01
@@ -63,7 +90,22 @@ Some columns have a different search instead, such as a dropdown list to choose 
 
 ## Times
 
-Search for a time the way the list shows it. If the list shows 1:30pm, you can type 1:30pm, and you can also type 13:30.
+### The Time range search
+
+A column can have a **Time range** search instead of a box. It starts out showing **Any time**. Click it to choose a **From** time and a **To** time, then click **Apply**.
+
+![The Time range search open, with the Afternoon shortcut chosen, from 12:00 to 16:59](../../images/search-time-range-afternoon.png){: .screenshot width="415"}
+
+- **Morning**, **Afternoon** and **Evening** choose both times for you: midnight to noon, noon to 5pm, and 5pm to midnight.
+- **In the last hour** and **In the next hour** choose the hour before or after now.
+- Under each time, **Now** sets that time to now. - The box with a number sets it to that many minutes before or after now.
+- **Clear** leaves that side open, so the search has no start or no end.
+- Choices made from now keep their meaning. If you save the list, **In the next hour** is the hour after whenever the list is opened, not the hour after you saved it.
+- A **From** time later than the **To** time goes past midnight. From 10:00pm to 2:00am finds the times overnight.
+
+### Typing a time
+
+Search for a time, using 12 or 24 hour format; you can type 1:30pm, and you can also type 13:30.
 
  **This search term:** 		| **Means this:** 														| **It will find:**
 :---------------------------|:----------------------------------------------------------------------|:------------------------------------------------
@@ -77,18 +119,10 @@ Search for a time the way the list shows it. If the list shows 1:30pm, you can t
 
 Whether a column shows 12-hour times, like 1:30pm, or 24-hour times, like 13:30, is set for each time element, and for the whole site under **Date & time formats** in the settings.
 
-### The Time range search
 
-A column can have a **Time range** search instead of a box. Click it to choose a **From** time and a **To** time, then click **Apply**.
+## Duration columns
 
-- **Morning**, **Afternoon** and **Evening** choose both times for you: midnight to noon, noon to 5pm, and 5pm to midnight.
-- **In the last hour** and **In the next hour** choose the hour before or after now.
-- Under each time, **Now** sets that time to now, and the box with a number sets it that many minutes before or after now. **Clear** leaves that side open, so the search has no start or no end.
-- Choices made from now keep their meaning. If you save the list, **In the next hour** is the hour after whenever the list is opened, not the hour after you saved it.
-- A **From** time later than the **To** time goes past midnight. From 10:00pm to 2:00am finds the times overnight.
-
-
-## Duration
+If a form has specific _Duration_ elements, you can use special search terms in them:
 
  **This search term:** 				| **Means this:** 														| **It will find:**
 :-----------------------------------|:----------------------------------------------------------------------|:--------------------------------------------------------------
