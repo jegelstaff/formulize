@@ -9939,6 +9939,47 @@ function createNullForComparisonValueIfNecessary($conditionsFilterComparisonValu
 }
 
 /**
+ * Validation code for an element whose values have to be unique. It asks the server whether the value is in use already,
+ * and validation stops until the answer comes. formulize_xhr_return() stores the answer and tries again what was being
+ * done (full screen's validateAndSubmit(), or in the drawer the action the person took), and then this finds it. An
+ * answer is only for the value that was checked, so a value changed since then is checked again: the drawer saves
+ * without reloading the page, and a value checked before a save must not count for one typed after it.
+ * @param string $markupName The element's markup name, which the server files its answer under
+ * @param string $valueJs JavaScript for the value that has to be unique
+ * @param int $elementId The element's id
+ * @param int|string $entryId The entry being saved, or 'new'
+ * @param string $message What to tell the person when the value is in use already
+ * @param string $fieldJs JavaScript for the field to put the cursor in then
+ * @param string $checkedValueJs JavaScript for the value as the server checks it, when that's not $valueJs, such as a phone number's digits
+ * @return array Lines of validation code, for the validation function full screen and the drawer call with leave and myform
+ */
+function formulize_uniqueValueValidationCode($markupName, $valueJs, $elementId, $entryId, $message, $fieldJs, $checkedValueJs = null) {
+	$checkedValueJs = $checkedValueJs ? $checkedValueJs : $valueJs;
+	$entryJs = json_encode(is_numeric($entryId) ? intval($entryId) : (string) $entryId);
+	return array(
+		"if($valueJs != '') {",
+		"    var formulize_uniqueKey = ".json_encode($markupName).";",
+		"    window.formulize_uniqueValueChecked = window.formulize_uniqueValueChecked || {};",
+		"    var formulize_uniqueAnswer = formulize_xhr_returned_check_for_unique_value[formulize_uniqueKey];",
+		"    if(formulize_uniqueAnswer && formulize_uniqueAnswer != 'notreturned' && formulize_uniqueValueChecked[formulize_uniqueKey] === $valueJs) {",
+		"        if(formulize_uniqueAnswer != 'valuenotfound') {",
+		"            window.alert(".json_encode($message).");",
+		"            if(typeof hideSavingGraphic === 'function') { hideSavingGraphic(); }",
+		"            delete formulize_xhr_returned_check_for_unique_value[formulize_uniqueKey];",
+		"            $fieldJs.focus();",
+		"            return false;",
+		"        }",
+		"    } else {",
+		"        formulize_xhr_returned_check_for_unique_value[formulize_uniqueKey] = 'notreturned';",
+		"        formulize_uniqueValueChecked[formulize_uniqueKey] = $valueJs;",
+		"        formulize_xhr_send('check_for_unique_value', [$checkedValueJs, ".intval($elementId).", $entryJs, leave]);",
+		"        return false;",
+		"    }",
+		"}",
+	);
+}
+
+/**
  * This function draws JavaScript for XMLHttpRequest functionality. Certain defined Formulize operations will in turn trigger certain js functions when an XMLHttpRequest response of the given kind is returned. See the formulize_xhr_return function for more details on this.
  * @return void
  */
@@ -9957,7 +9998,13 @@ function formulize_xhr_return(op,params,response) {
     if (op == 'check_for_unique_value') {
         response = JSON.parse(response);
         window.formulize_xhr_returned_check_for_unique_value[response.key] = response.val;
-        validateAndSubmit(response.leave);
+        // try again what was being done when the value was checked: in the drawer, which validates with leave set to
+        // 'drawer', the action the person took, and otherwise full screen's save. See formulize_uniqueValueValidationCode().
+        if (response.leave == 'drawer' && window.formulize && window.formulize.drawer) {
+            window.formulize.drawer.retryAfterValueCheck();
+        } else {
+            validateAndSubmit(response.leave);
+        }
     } else if (op == 'get_element_html') {
         return renderElementHtml(response,params);
     } else if (op == 'get_element_value') {

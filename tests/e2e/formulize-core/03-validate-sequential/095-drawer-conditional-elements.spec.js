@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, leavePage, conditionalElementReady, waitForJQueryAnimations, saveFormulizeForm, dbQuery, dbPrefix, sqlEscape, deleteMuseumFormsTitled } from '../../utils';
+import { login, leavePage, conditionalElementReady, waitForJQueryAnimations, saveFormulizeForm, saveAdminForm, openElementSettings, dbQuery, dbPrefix, sqlEscape, deleteMuseumFormsTitled } from '../../utils';
 
 // A sub entry opened in the drawer, over a form screen. The drawer's form runs its scripts in the same page as the form
 // behind it, and each has conditional elements and a rich text field.
@@ -14,6 +14,10 @@ import { login, leavePage, conditionalElementReady, waitForJQueryAnimations, sav
 //  - The form behind keeps its rich text when it's saved after the drawer closes. A rich text field is saved from a
 //    hidden field that updateCKEditors() fills from the editor. The drawer replaced that function with one that knew only
 //    its own editors, so the form behind saved its rich text fields empty.
+//  - A value that has to be unique is checked in the drawer, and checked again whenever it changes. The check asks the
+//    server, and its answer tries the save again. The drawer's validation used to throw on the check's code, which was
+//    written for full screen's, so the save did nothing. And the drawer saves without reloading, so an answer for a
+//    value checked before one save must not count for a value typed after it.
 //
 // The forms are made here with MCP, in the Museum application, and deleted at the end, so nothing the other specs use
 // changes. MCP is part of the application, and 040 turns it on and makes an API key, which this reads from the admin UI.
@@ -35,6 +39,11 @@ const DISPLAY_CASE = 'Case One';
 const SAVED_SPOTLIGHT = 'Cool';
 // what the exhibition's rich text Description says, which a save of the exhibition has to keep
 const DESCRIPTION = 'Photographs of the aurora borealis';
+// Each display case has a catalogue number, and no two can have the same one. Case Two is there to have one to clash with.
+const CASE_NUMBER = 'C-001';
+const OTHER_CASE = 'Case Two';
+const OTHER_CASE_NUMBER = 'C-002';
+const NEW_CASE_NUMBER = 'C-003';
 
 let api;
 let apiKey;
@@ -149,6 +158,7 @@ test('Make an exhibition with a display case, each with a conditional element an
 		display_conditions: [{ element: 'dct_case_lighting', operator: '=', value: 'Spotlit', type: 'match-all' }],
 	});
 	await tool('create_text_box_element', { form_id: casesFid, type: 'textarea', caption: 'Notes', handle: 'dct_case_notes', properties: { useRichTextEditor: 1 } });
+	await tool('create_text_box_element', { form_id: casesFid, type: 'text', caption: 'Catalogue number', handle: 'dct_case_catalogue', properties: {} });
 
 	// The subform makes a linked element in the display cases form, pointing at the exhibition's Name
 	await tool('create_subform_interface', {
@@ -161,7 +171,10 @@ test('Make an exhibition with a display case, each with a conditional element an
 	await tool('create_entries', { form_id: exhibitionsFid, data: [{ dct_exhibition_name: EXHIBITION, dct_exhibition_travelling: 'No', dct_exhibition_description: DESCRIPTION }] });
 	await tool('create_entries', {
 		form_id: casesFid,
-		data: [{ dct_case_name: DISPLAY_CASE, dct_case_lighting: 'Spotlit', dct_case_spotlight: SAVED_SPOTLIGHT, [linked[0][0]]: EXHIBITION }],
+		data: [
+			{ dct_case_name: DISPLAY_CASE, dct_case_lighting: 'Spotlit', dct_case_spotlight: SAVED_SPOTLIGHT, dct_case_catalogue: CASE_NUMBER, [linked[0][0]]: EXHIBITION },
+			{ dct_case_name: OTHER_CASE, dct_case_lighting: 'Natural', dct_case_catalogue: OTHER_CASE_NUMBER, [linked[0][0]]: EXHIBITION },
+		],
 	});
 	exhibitionEntryId = entryIdWhere(exhibitionsFid, 'dct_exhibition_name', EXHIBITION);
 	caseEntryId = entryIdWhere(casesFid, 'dct_case_name', DISPLAY_CASE);
@@ -213,5 +226,53 @@ test('The form behind the drawer keeps its rich text when it is saved after the 
 	expect(storedValue(exhibitionsFid, exhibitionEntryId, 'dct_exhibition_travelling'), 'the save should have happened').toBe('Yes');
 	expect(storedValue(exhibitionsFid, exhibitionEntryId, 'dct_exhibition_description'), 'the Description should be kept').toContain(DESCRIPTION);
 
+	await leaveForExhibitionsList(page);
+});
+
+test('A value that has to be unique is checked in the drawer, each time it changes', async ({ page }) => {
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	// a text box's values are made unique on its Options tab, which MCP has no setting for
+	await openElementSettings(page, 'dct_case_catalogue', 'Options');
+	await page.locator('input[name="elements-ele_value[9]"]').check();
+	await saveAdminForm(page);
+	expect(dbQuery(`SELECT ele_value FROM ${dbPrefix()}_formulize WHERE ele_handle = 'dct_case_catalogue'`)[0][0], 'the catalogue number should have to be unique').toMatch(/i:9;(?:i:1|s:1:"1");/);
+
+	await openDisplayCaseInDrawer(page);
+	const catalogue = drawer(page).getByRole('textbox', { name: 'Catalogue number' });
+	const save = drawer(page).locator('.formulize-drawer__foot input[name="save"]');
+	// the server's answer comes after the click, and tries the save again, which says the number is in use
+	const saveAndExpectRefusal = async () => {
+		const refusal = page.waitForEvent('dialog');
+		await save.click();
+		const dialog = await refusal;
+		expect(dialog.message()).toContain('has been entered already');
+		await dialog.accept();
+	};
+	// a text box marks the form changed when it loses focus
+	const typeNumber = async number => {
+		await catalogue.fill(number);
+		await catalogue.press('Tab');
+	};
+
+	// Case Two's number is refused
+	await typeNumber(OTHER_CASE_NUMBER);
+	await saveAndExpectRefusal();
+	expect(storedValue(casesFid, caseEntryId, 'dct_case_catalogue')).toBe(CASE_NUMBER);
+
+	// a number no case has is saved
+	await typeNumber(NEW_CASE_NUMBER);
+	await save.click();
+	await expect.poll(() => storedValue(casesFid, caseEntryId, 'dct_case_catalogue'), { message: 'the new number should be saved' }).toBe(NEW_CASE_NUMBER);
+	// The drawer is busy from when it sends the save, which is before the number is stored, until the form drawn again
+	// after it is in place, so this waits for that form, and the field below is the new one.
+	await expect(drawer(page)).not.toHaveClass(/formulize-drawer--busy/);
+	await expect(catalogue).toHaveValue(NEW_CASE_NUMBER);
+
+	// the drawer has saved without reloading the page, and Case Two's number is still refused after that
+	await typeNumber(OTHER_CASE_NUMBER);
+	await saveAndExpectRefusal();
+	expect(storedValue(casesFid, caseEntryId, 'dct_case_catalogue')).toBe(NEW_CASE_NUMBER);
+
+	await closeDrawer(page);
 	await leaveForExhibitionsList(page);
 });

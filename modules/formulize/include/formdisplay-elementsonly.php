@@ -530,14 +530,21 @@ window.officeUseOnlyToggle = function() {
 };
 </script>\n";
 
+// The functions that send a request to formulize_xhr_responder.php and act on its answer, which a unique value check
+// needs. Lists and form screens print them too, and these are the same ones, so printing them again for each form
+// the drawer shows changes nothing over those pages, and gives the drawer them over any other page.
+ob_start();
+drawXhrJavascript();
+$xhrJs = "<script type='text/javascript'>\n".ob_get_clean()."\nif(typeof formulize_xhr === 'undefined') { initialize_formulize_xhr(); }\n</script>\n";
+
 // validation + entry-lock cleanup helpers, keyed to this form's name so multiple
 // elements-only forms can coexist on a page.
-// NOTE: the element validation code collected here is written for full screen's xoopsFormValidate_<form>(leave, myform),
-// and this function takes only myform. The unique value checks in the text and user account elements use leave, so here
-// they throw and the save does nothing, and their answer from the server calls full screen's validateAndSubmit().
-// See ai-context/drawer.md.
+// The element validation code collected here is written for full screen's validation function, so this one takes the
+// same arguments. The drawer calls it with leave set to 'drawer', and a check the server has to answer, like a unique
+// value check, sends that with its request: formulize_xhr_return() then hands the answer back to the drawer, which
+// tries the action again, rather than to full screen's validateAndSubmit(). See formulize_uniqueValueValidationCode().
 $validationJs = "<script type='text/javascript'>
-function xoopsFormValidate_".$formname."(myform) {
+function xoopsFormValidate_".$formname."(leave, myform) {
 "
 .trim(implode("\n\r", (array) $GLOBALS['formulize_elementsOnlyForm_validationCode']))
 ."\n\r return true;
@@ -583,5 +590,6 @@ print $saveMessages
     .$drawerTemplatesJs
     .$editorJs
     .$officeUseOnlyJs
+    .$xhrJs
     .$validationJs
     .$activityLogJs;

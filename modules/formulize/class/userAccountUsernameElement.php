@@ -79,26 +79,7 @@ class formulizeUserAccountUsernameElementHandler extends formulizeUserAccountFir
 		// Todo - add error message to language files
 		$validationCode[] = "if(myform.{$markupName}.value =='') {\n alert('Please enter a username.'); \n myform.{$markupName}.focus();\n return false;\n }";
 		$eltmsgUnique = empty($caption) ? sprintf( _formulize_REQUIRED_UNIQUE, $markupName ) : sprintf( _formulize_REQUIRED_UNIQUE, $caption );
-		$validationCode[] = "if ( myform.{$markupName}.value != '' ) {\n";
-		$validationCode[] = "if(\"{$markupName}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$markupName}\"] != 'notreturned') {\n"; // a value has already been returned from xhr, so let's check that out...
-		$validationCode[] = "if(\"{$markupName}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$markupName}\"] != 'valuenotfound') {\n"; // request has come back, form has been resubmitted, but the check turned up postive, ie: value is not unique, so we have to halt submission, and reset the check for unique flag so we can check again when the user has typed again and is ready to submit
-		$validationCode[] = "window.alert(\"{$eltmsgUnique}\");\n";
-		$validationCode[] = "hideSavingGraphic();\n";
-		$validationCode[] = "delete formulize_xhr_returned_check_for_unique_value.{$markupName};\n"; // unset this key
-		$validationCode[] = "myform.{$markupName}.focus();\n return false;\n";
-		$validationCode[] = "}\n";
-		$validationCode[] = "} else {\n";	 // do not submit the form, just send off the request, which will trigger a resubmission after setting the returned flag above to true so that we won't send again on resubmission
-		$validationCode[] = "\nvar formulize_xhr_params = []\n";
-		$validationCode[] = "formulize_xhr_params[0] = myform.{$markupName}.value;\n";
-		$validationCode[] = "formulize_xhr_params[1] = ".$element->getVar('ele_id').";\n";
-		$xhr_entry_to_send = is_numeric($entry_id) ? $entry_id : "'".$entry_id."'";
-		$validationCode[] = "formulize_xhr_params[2] = ".$xhr_entry_to_send.";\n";
-		$validationCode[] = "formulize_xhr_params[4] = leave;\n"; // will have been passed in to the main function and we need to preserve it after xhr is done
-		$validationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";
-		$validationCode[] = "return false;\n";
-		$validationCode[] = "}\n";
-		$validationCode[] = "}\n";
-		return $validationCode;
+		return array_merge($validationCode, formulize_uniqueValueValidationCode($markupName, "myform.{$markupName}.value", $element->getVar('ele_id'), $entry_id, $eltmsgUnique, "myform.{$markupName}"));
 	}
 
 }

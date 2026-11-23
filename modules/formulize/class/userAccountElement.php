@@ -1232,8 +1232,6 @@ function formulizeGenerateUserAccountEmailPhoneValidation($element, $entry_id) {
 	}
 	$numberOfXs = substr_count($phoneFormat, 'X');
 
-	$xhr_entry_to_send = is_numeric($entry_id) ? $entry_id : "'".$entry_id."'";
-
 	$eltmsgUniqueEmail = sprintf(_formulize_REQUIRED_UNIQUE, strtolower(_formulize_USERACCOUNTEMAIL));
 	$eltmsgUniquePhone = sprintf(_formulize_REQUIRED_UNIQUE, strtolower(_formulize_USERACCOUNTPHONE));
 
@@ -1276,46 +1274,12 @@ function formulizeGenerateUserAccountEmailPhoneValidation($element, $entry_id) {
 
 	// Email uniqueness check via XHR (only if email element is in the DOM and has a value)
 	if($emailElement) {
-		$validationCode[] = "if(formulize_emailVal != '') {";
-		$validationCode[] = "if(\"{$emailMarkupName}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$emailMarkupName}\"] != 'notreturned') {";
-		$validationCode[] = "if(\"{$emailMarkupName}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$emailMarkupName}\"] != 'valuenotfound') {";
-		$validationCode[] = "window.alert(\"{$eltmsgUniqueEmail}\");";
-		$validationCode[] = "hideSavingGraphic();";
-		$validationCode[] = "delete formulize_xhr_returned_check_for_unique_value.{$emailMarkupName};";
-		$validationCode[] = "formulize_emailEl.focus();\n return false;";
-		$validationCode[] = "}";
-		$validationCode[] = "} else {";
-		$validationCode[] = "var formulize_xhr_params = [];";
-		$validationCode[] = "formulize_xhr_params[0] = formulize_emailVal;";
-		$validationCode[] = "formulize_xhr_params[1] = {$emailElementId};";
-		$validationCode[] = "formulize_xhr_params[2] = {$xhr_entry_to_send};";
-		$validationCode[] = "formulize_xhr_params[4] = leave;";
-		$validationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);";
-		$validationCode[] = "return false;";
-		$validationCode[] = "}";
-		$validationCode[] = "}";
+		$validationCode = array_merge($validationCode, formulize_uniqueValueValidationCode($emailMarkupName, 'formulize_emailVal', $emailElementId, $entry_id, $eltmsgUniqueEmail, 'formulize_emailEl'));
 	}
 
 	// Phone uniqueness check via XHR (only if phone element is in the DOM and has a value)
 	if($phoneElement) {
-		$validationCode[] = "if(formulize_phoneVal != '') {";
-		$validationCode[] = "if(\"{$phoneMarkupName}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$phoneMarkupName}\"] != 'notreturned') {";
-		$validationCode[] = "if(\"{$phoneMarkupName}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$phoneMarkupName}\"] != 'valuenotfound') {";
-		$validationCode[] = "window.alert(\"{$eltmsgUniquePhone}\");";
-		$validationCode[] = "hideSavingGraphic();";
-		$validationCode[] = "delete formulize_xhr_returned_check_for_unique_value.{$phoneMarkupName};";
-		$validationCode[] = "formulize_phoneEl.focus();\n return false;";
-		$validationCode[] = "}";
-		$validationCode[] = "} else {";
-		$validationCode[] = "var formulize_xhr_params = [];";
-		$validationCode[] = "formulize_xhr_params[0] = formulize_phoneVal.replace(/[^0-9]/g,'');";
-		$validationCode[] = "formulize_xhr_params[1] = {$phoneElementId};";
-		$validationCode[] = "formulize_xhr_params[2] = {$xhr_entry_to_send};";
-		$validationCode[] = "formulize_xhr_params[4] = leave;";
-		$validationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);";
-		$validationCode[] = "return false;";
-		$validationCode[] = "}";
-		$validationCode[] = "}";
+		$validationCode = array_merge($validationCode, formulize_uniqueValueValidationCode($phoneMarkupName, 'formulize_phoneVal', $phoneElementId, $entry_id, $eltmsgUniquePhone, 'formulize_phoneEl', "formulize_phoneVal.replace(/[^0-9]/g,'')"));
 	}
 
 	return $validationCode;
