@@ -253,12 +253,18 @@ if(typeof formulizechanged === 'undefined') { window.formulizechanged = 0; }
 ".formulize_formChangedJs()."
 if(typeof formulize_javascriptFileIncluded === 'undefined') { window.formulize_javascriptFileIncluded = []; }
 if(typeof formulize_xhr_returned_check_for_unique_value === 'undefined') { window.formulize_xhr_returned_check_for_unique_value = []; }
-var FORMULIZE = {
-    XOOPS_URL : '".XOOPS_URL."',
-    XOOPS_UID : ".$bootstrapUid.",
-    SCREEN_ID : ".intval($sid).",
-    FRID : ".intval($frid)."
-};
+// The screen and relationship in FORMULIZE are the page's, so a form screen's own are left alone. A page with none gets
+// those of the form the drawer is showing. Conditional elements in the drawer don't depend on it, because each one has
+// its own form's (see drawJavascriptForConditionalElements()).
+if(typeof FORMULIZE === 'undefined' || FORMULIZE.SET_BY_DRAWER) {
+    window.FORMULIZE = {
+        XOOPS_URL : '".XOOPS_URL."',
+        XOOPS_UID : ".$bootstrapUid.",
+        SCREEN_ID : ".intval($sid).",
+        FRID : ".intval($frid).",
+        SET_BY_DRAWER : true
+    };
+}
 ".formulize_otherBoxFocusJs()."</script>\n";
 
 // Wrap the rendered elements in the active theme's drawer container (see

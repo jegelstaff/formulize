@@ -22,6 +22,9 @@ import { login, leavePage, conditionalElementReady, waitForJQueryAnimations, wai
 //  - A date field's earliest and latest dates are kept in a drawer opened from a list. The field calls a function that
 //    only full screen forms used to define, so opened from a list, every change to the date threw, and any date was
 //    accepted.
+//  - The form behind keeps its own screen and relationship after the drawer closes, for the conditional elements it
+//    fetches. The drawer replaced them with its own, so checkboxes were drawn with none of the screen's settings, and
+//    the elements of a form whose relationship wasn't the drawer's were fetched with the wrong one.
 //
 // The forms are made here with MCP, in the Museum application, and deleted at the end, so nothing the other specs use
 // changes. MCP is part of the application, and 040 turns it on and makes an API key, which this reads from the admin UI.
@@ -82,6 +85,22 @@ function entryIdWhere(fid, handle, value) {
 
 function storedValue(fid, entryId, handle) {
 	return dbQuery(`SELECT ${handle} FROM ${dataTable(fid)} WHERE entry_id = ${entryId}`)[0][0];
+}
+
+// the screen a form opens in, and that screen's relationship
+function formScreen(fid) {
+	const [[sid, frid]] = dbQuery(`SELECT s.sid, s.frid FROM ${dbPrefix()}_formulize_screen AS s INNER JOIN ${dbPrefix()}_formulize_id AS f ON f.defaultform = s.sid WHERE f.id_form = ${fid}`);
+	return { sid, frid };
+}
+
+// Do something that makes a form fetch its conditional elements, and return the screen and relationship it fetched them with
+async function fetchedWith(page, fid, action) {
+	const parameters = request => new URL(request.url()).searchParams;
+	const [request] = await Promise.all([
+		page.waitForRequest(request => parameters(request).get('op') === 'get_element_row_html' && parameters(request).get('fid') === String(fid)),
+		action(),
+	]);
+	return { sid: parameters(request).get('sid'), frid: parameters(request).get('frid') };
 }
 
 async function deleteTheForms(browser) {
@@ -157,6 +176,12 @@ test('Make an exhibition with a display case, each with a conditional element an
 		display_conditions: [{ element: 'dct_exhibition_travelling', operator: '=', value: 'Yes', type: 'match-all' }],
 	});
 	await tool('create_text_box_element', { form_id: exhibitionsFid, type: 'textarea', caption: 'Description', handle: 'dct_exhibition_description', properties: { useRichTextEditor: 1 } });
+	// checkboxes can hold several values, and nothing else depends on the audio guide, so they're fetched by themselves
+	await tool('create_list_element', { form_id: exhibitionsFid, type: 'radio', caption: 'Audio guide', handle: 'dct_exhibition_audio', properties: { options: ['Yes', 'No'] } });
+	await tool('create_list_element', {
+		form_id: exhibitionsFid, type: 'checkbox', caption: 'Audio guide languages', handle: 'dct_exhibition_languages', properties: { options: ['English', 'French'] },
+		display_conditions: [{ element: 'dct_exhibition_audio', operator: '=', value: 'Yes', type: 'match-all' }],
+	});
 
 	casesFid = parseInt((await tool('create_form', { title: CASES_FORM, application_id_or_name: 'Museum' })).form_id, 10);
 	const caseName = await tool('create_text_box_element', { form_id: casesFid, type: 'text', caption: 'Name', handle: 'dct_case_name', properties: {}, principal_identifier: true });
@@ -339,4 +364,39 @@ test('A date field keeps to its earliest and latest dates in a drawer opened fro
 	await closeDrawer(page);
 	await leavePage(page, `/modules/formulize/index.php?sid=${listSid}`);
 	await expect(page.getByText(/Showing entries:/).first()).toBeVisible({ timeout: 30000 });
+});
+
+test('The form behind the drawer keeps its own screen and relationship after the drawer closes', async ({ page }) => {
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+
+	// The display cases' screen shows the form alone, so its relationship isn't the exhibitions' one
+	const caseScreen = formScreen(casesFid);
+	await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${casesFid}&sid=${caseScreen.sid}&tab=relationships`);
+	await waitForAdminPageReady(page);
+	await page.locator('#screens-frid').selectOption('0');
+	await saveAdminForm(page);
+	caseScreen.frid = formScreen(casesFid).frid;
+	expect(caseScreen.frid, 'the display cases should have no relationship').toBe('0');
+	const exhibitionScreen = formScreen(exhibitionsFid);
+	expect(exhibitionScreen.frid, 'the exhibitions should have one').not.toBe('0');
+
+	// in the drawer, the display case's conditional elements are fetched with its own
+	await openDisplayCaseInDrawer(page);
+	expect(await fetchedWith(page, casesFid, () => radioIn(drawer(page), 'dct_case_lighting', 'Natural').check())).toEqual(caseScreen);
+	await expect(drawer(page).locator('.formulize-label-dct_case_spotlight')).not.toBeVisible();
+	await closeDrawer(page);
+
+	// and behind it, the exhibition's are fetched with the exhibition's
+	const exhibition = page.locator('#formulizeform');
+	expect(await fetchedWith(page, exhibitionsFid, () =>
+		conditionalElementReady(page, 'dct_exhibition_languages', () => radioIn(exhibition, 'dct_exhibition_audio', 'Yes').check())
+	)).toEqual(exhibitionScreen);
+
+	// The exhibition's screen has two columns, so the checkboxes are in the second one, the same as the Name is. Without
+	// the screen they would be drawn in one column.
+	const secondColumn = handle => exhibition.locator(`.form-row:has(.formulize-label-${handle}) .col2`);
+	await expect(secondColumn('dct_exhibition_name').getByRole('textbox')).toBeVisible();
+	await expect(secondColumn('dct_exhibition_languages').getByRole('checkbox', { name: 'French', exact: true })).toBeVisible();
+
+	await leaveForExhibitionsList(page);
 });

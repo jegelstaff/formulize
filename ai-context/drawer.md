@@ -57,6 +57,6 @@ Drawing a form in elements-only mode skips `drawJavascript()`, so the endpoint h
 
 **`window.formulizechanged` is shared with the page behind.** The drawer resets it for each form, so a host that opens the drawer has to put its own value back, as `goSubModal()` does with `onDrawerClosed`.
 
-**Conditional elements** are drawn by the outermost form, which here is the drawer's. See [conditions](conditions.md#which-form-draws-the-javascript).
+**Conditional elements** are drawn by the outermost form, which here is the drawer's. See [conditions](conditions.md#which-form-draws-the-javascript). Each one comes with the screen and relationship of the form it's in, because the page's `FORMULIZE` object has only the page's. Don't read `FORMULIZE.SCREEN_ID` or `FORMULIZE.FRID` for something in a form, and don't replace the object for the drawer.
 
 **Validation is full screen's code.** Elements write their validation for `xoopsFormValidate_<form>(leave, myform)`, and the endpoint's function takes the same arguments. The drawer passes `'drawer'` as `leave`. A check the server has to answer, such as a unique value check (`formulize_uniqueValueValidationCode()`), sends `leave` with its request and fails validation until the answer comes. `formulize_xhr_return()` then calls `window.formulize.drawer.retryAfterValueCheck()` rather than full screen's `validateAndSubmit()`, and the drawer does the action again. So every drawer action that validates passes itself to `validateCurrentForm()` as the action to retry.
