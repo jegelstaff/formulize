@@ -36,7 +36,7 @@ Only `mariadb-chromium-anari` decides whether the run passes. The others are all
 
 To run some of the environments by hand, choose one under **environments**, or `all`. From another workflow, pass ids separated by commas.
 
-WebKit here is Playwright's own build on Linux, not Safari, so a pass there isn't proof that Safari works.
+WebKit here is Playwright's own build on Linux, not Safari, so a pass there isn't proof that Safari works. It runs with service workers blocked. With the site's worker running, WebKit on Linux sent form posts without the session cookie, so nothing could be saved after signing in. Whether the worker is the cause isn't known: the same WebKit on Windows kept the cookie with the worker running. The tests of the worker itself skip in this job, and the Chromium and Firefox jobs run them.
 
 ### What each job does
 

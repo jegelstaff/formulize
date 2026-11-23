@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, getSiteTheme, aDayPassesForTheWorker, chooseSiteThemes, expectSiteTheme, dbQuery, dbPrefix, waitForAdminPageReady } from '../../utils';
+import { login, getSiteTheme, aDayPassesForTheWorker, chooseSiteThemes, expectSiteTheme, dbQuery, dbPrefix, waitForAdminPageReady, NO_SERVICE_WORKERS } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -117,7 +117,8 @@ test.describe('Switching the site to Lyris and back', () => {
 	// A change of theme makes a new service worker, which a browser finds within a day, and which waits until
 	// the site has been closed. Pages come from the server all the while, so someone with the site open sees
 	// the new theme as soon as they load a page. Only the offline page is out of date until then.
-	test('A person with the site open gets the new theme at once, and the new offline page once they close the site', async ({ browser }) => {
+	test('A person with the site open gets the new theme at once, and the new offline page once they close the site', async ({ browser, serviceWorkers }) => {
+		test.skip(serviceWorkers === 'block', NO_SERVICE_WORKERS);
 		test.setTimeout(300000);
 		const context = await browser.newContext({ baseURL: E2E_TEST_BASE_URL });
 		const admin = await context.newPage();

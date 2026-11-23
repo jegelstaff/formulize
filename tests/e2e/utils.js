@@ -225,6 +225,11 @@ export async function login(page, username, password = '12345') {
   ]);
 }
 
+// Why a test of the site's service worker skips in a run that blocks service workers, as the WebKit run does (see
+// playwright.config.js). Skip with test.skip(serviceWorkers === 'block', NO_SERVICE_WORKERS), serviceWorkers being the test's
+// own option.
+export const NO_SERVICE_WORKERS = 'Service workers are blocked in this browser, so the worker is tested in Chromium and Firefox (see docs/ci.md)';
+
 /**
  * A day passing, as far as the site's service worker goes. sw.php may be kept for a day, so a browser only
  * finds a new worker, such as one with a new theme or one that removes itself, once its copy is a day old.
@@ -1758,11 +1763,22 @@ async function saveInDrawer(page, buttonText, timeout) {
 		sent.catch(() => {});
 		unchanged.catch(() => {});
 		await button.click();
-		await Promise.race([sent, unchanged]);
+		// A Save that sends nothing hasn't saved what the test filled in, so the test mustn't carry on as if it had
+		if (await Promise.race([sent.then(() => 'sent'), unchanged.then(() => 'unchanged')]) === 'unchanged') {
+			throw new Error(`The drawer sent nothing when ${buttonText} was clicked, and said: ${await drawer.locator('.formulize-drawer__notice').textContent()}`);
+		}
 		await expect(drawer).not.toHaveClass(/formulize-drawer--busy/, { timeout });
 		await expect(drawer.locator('form#formulize_drawer')).toBeAttached({ timeout });
 	} else {
+		// The drawer closes when the entry is saved. When the save is refused, it stays open and says why.
 		await button.click();
+		const notice = drawer.locator('.formulize-drawer__notice', { hasText: /\S/ });
+		const closed = drawer.waitFor({ state: 'hidden', timeout }).then(() => 'closed');
+		const refused = notice.waitFor({ timeout }).then(() => 'notice', () => 'closed');
+		closed.catch(() => {});
+		if (await Promise.race([closed, refused]) === 'notice' && await drawer.isVisible()) {
+			throw new Error(`The drawer didn't save the entry when ${buttonText} was clicked, and said: ${await notice.textContent()}`);
+		}
 		await expect(drawer).toBeHidden({ timeout });
 		await listReloadedAfterDrawer(page, timeout);
 	}
@@ -1796,6 +1812,14 @@ export async function saveAndCloseEntry(page, buttonText = 'Save and Close', tim
 	if (await drawerIsOpen(page)) {
 		await saveInDrawer(page, buttonText, timeout);
 	} else {
+		// A form that's been touched fills in its security token a moment later, and a save sent before then is refused.
+		// A person can't click that fast. A form that hasn't been touched has nothing to save, so it needs no token.
+		await page.waitForFunction(() => {
+			const token = document.querySelector('#formulize_mainform input[name="XOOPS_TOKEN_REQUEST"]');
+			const form = document.getElementById('formulize_mainform');
+			const touched = window.formulizechanged || (form && form.contains(document.activeElement));
+			return !token || !touched || token.value.length > 0;
+		}, null, { timeout: 5000 }).catch(() => {}); // if it isn't filled, the check below says the save was refused
 		// The link saves, releases the entry's lock over AJAX, and then sends the page back to the list, so the page is
 		// still the entry's when the click is over. Waiting for the list means the save went out, and that something
 		// done next isn't done to the entry, or cut short by the list arriving.
@@ -1803,6 +1827,8 @@ export async function saveAndCloseEntry(page, buttonText = 'Save and Close', tim
 			page.waitForNavigation({ waitUntil: 'load', timeout }),
 			page.getByRole('link', { name: buttonText }).click(),
 		]);
+		// the list says so if the save was refused
+		await expect(page.getByText('Your changes were not saved.')).not.toBeVisible({ timeout: 10000 });
 	}
 }
 

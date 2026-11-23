@@ -17,6 +17,12 @@ const device = { ...devices[BROWSER_DEVICES[E2E_BROWSER]] };
 if (E2E_BROWSER === 'firefox') {
   delete device.userAgent;
 }
+/* WebKit runs with service workers blocked. In CI, WebKit on Linux sent form posts without the session cookie once the
+   site's worker was running, so every save after signing in failed. Without the worker, the rest of the suite can be
+   tested there. The specs about the worker skip themselves, and Chromium and Firefox test it. See docs/ci.md. */
+if (E2E_BROWSER === 'webkit') {
+  device.serviceWorkers = 'block';
+}
 
 /* Where the HTML report goes. Each run empties the folder first, so CI gives each of its runs a folder of its own. */
 const REPORT_DIR = process.env.E2E_REPORT_DIR || './test-report';

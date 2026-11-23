@@ -124,6 +124,8 @@ A browser feature only one browser has, such as clearing the cache over a DevToo
 
 Firefox runs with its own user agent, not the one in Playwright's profile. Playwright gives an overridden user agent to a Firefox page and not to its service worker. Our [worker](installable-app.md) makes the page loads and the page makes the POSTs, so with an override each [security token](security-tokens.md) is made for one user agent and checked against another, and every save is refused. Don't set `userAgent` in a spec that runs in Firefox.
 
+WebKit runs with service workers blocked, for the reason in [installable-app](installable-app.md#testing). A test that needs the worker running skips itself with `test.skip(serviceWorkers === 'block', NO_SERVICE_WORKERS)`.
+
 Each job runs the suite in four passes, in `.github/workflows/e2e-test-manual.yml`:
 
 | Folder | Flags |

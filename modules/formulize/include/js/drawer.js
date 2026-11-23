@@ -1153,13 +1153,31 @@
         return btn;
     }
 
-    // Briefly surface a message in the drawer footer (e.g. "No changes to save").
-    function showDrawerNotice(message) {
+    // Briefly surface a message in the drawer footer (e.g. "No changes to save"). One that
+    // matters more, such as a save that was refused, stays until the next message.
+    function showDrawerNotice(message, keep) {
         var el = footEl ? footEl.querySelector('.formulize-drawer__notice') : null;
         if (!el) { return; }
         el.textContent = message;
         clearTimeout(showDrawerNotice._timer);
-        showDrawerNotice._timer = setTimeout(function () { el.textContent = ''; }, 3000);
+        if (!keep) {
+            showDrawerNotice._timer = setTimeout(function () { el.textContent = ''; }, 3000);
+        }
+    }
+
+    // What to do once saveCurrentPage's write comes back. readelements.php says nothing when
+    // the save worked, so anything it does say means it didn't, such as a refused security
+    // token. Then the person stays on the entry, with their changes and the reason, rather
+    // than being taken off it as if it had been saved.
+    function unlessSaveRefused(next) {
+        return function (response) {
+            var said = String(response || '').replace(/^\s+|\s+$/g, '');
+            if (said) {
+                showDrawerNotice(said, true);
+                return;
+            }
+            next();
+        };
     }
 
     // ---- Validation / save -----------------------------------------------------
@@ -1320,6 +1338,7 @@
             '?fid='  + encodeURIComponent(form.getAttribute('data-fid') || '') +
             '&frid=' + encodeURIComponent(form.getAttribute('data-frid') || 0);
         var xhr = null;
+        showDrawerNotice('', true); // a refusal from an earlier try no longer applies
         return whileSaving(function () {
             xhr = jQuery.post({
                 url: saveUrl,
@@ -1430,7 +1449,7 @@
             return;
         }
         if (!validateCurrentForm(form, saveEntryFromDrawer)) { return; }
-        saveCurrentPage(form).then(drawerStack.length ? popToParent : closeAndRefresh);
+        saveCurrentPage(form).then(unlessSaveRefused(drawerStack.length ? popToParent : closeAndRefresh));
     }
 
     // Navigate to another page of a multi-page entry form. Navigation (forwards or
@@ -1482,7 +1501,7 @@
         var form = bodyEl ? bodyEl.querySelector('form') : null;
         if (!form || !formHasChanges()) { leaveFinishedEntry(); return; }
         if (!validateCurrentForm(form, finishDrawer)) { return; }
-        saveCurrentPage(form).then(leaveFinishedEntry);
+        saveCurrentPage(form).then(unlessSaveRefused(leaveFinishedEntry));
     }
 
     // The leave control of a multi-page screen: page one's Save and Go Back slot, or the
@@ -1526,7 +1545,7 @@
             // changes aren't lost, but skip the round trip when nothing changed
             if (formHasChanges()) {
                 if (!validateCurrentForm(form, function () { subformAction(action, args); })) { return; }
-                saveCurrentPage(form).then(function () { descendToSub(args); });
+                saveCurrentPage(form).then(unlessSaveRefused(function () { descendToSub(args); }));
             } else {
                 descendToSub(args);
             }

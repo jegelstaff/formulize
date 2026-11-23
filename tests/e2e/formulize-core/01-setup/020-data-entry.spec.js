@@ -797,6 +797,8 @@ test.describe('Cloning entries', () => {
 		await openEntry(page, page.getByRole('row', { name: 'Check this box to select/unselect this entry.   M013 Persian necklace' }).getByRole('link'));
 	  await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill('Persian necklace - number 2');
 	  await entryArea(page).getByRole('textbox', { name: 'Rich Text Editor, main' }).fill('A beautiful Persian necklace. Very similar to the original one in the collection.');
+		await saveFormulizeForm(page);
+		await expect(entryArea(page).getByRole('textbox', { name: 'Short name *' })).toHaveValue('Persian necklace - number 2');
 		// and back to the list, where the menu is: the drawer covers it while it's open
 		await saveAndCloseEntry(page);
 		await openMainMenu(page);
