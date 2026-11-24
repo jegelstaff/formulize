@@ -427,9 +427,12 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 		// look as if it had started, and finished when the fade did. The save's own fade waits behind it, and so does the save itself
 		// when the code is checked first.
 		await waitForJQueryAnimations(page);
+		// First wait for the save to be in progress: the opacity drops, or the first tab's save comes back, which it does with the page
+		// still faded. A quick save can be over, and the page reloaded, between two checks of the opacity, so either will do.
+		const answered = page.waitForResponse(response => response.request().method() === 'POST' && response.url().includes('/admin/save.php'), { timeout });
+		answered.catch(() => {}); // a click that fails leaves it waiting
 		await page.getByRole('button', { name: 'Save your changes' }).click();
-		// First wait for opacity to drop (save in progress)
-		await page.waitForFunction(
+		await Promise.any([answered, page.waitForFunction(
 			(selector) => {
 				const element = document.querySelector(selector);
 				if (!element) return false;
@@ -438,7 +441,7 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 			},
 			opacityTarget, // Pass the selector as an argument
 			{ timeout }
-		);
+		)]);
 	} else {
 		// The page settings popup fades to 0.25 while it saves, and back when the save has come back. Custom code on the page is
 		// checked before the fade starts, and a quick save can be over between two checks of the opacity, so wait for the save
@@ -1522,6 +1525,32 @@ async function openLyrisSidebar(page) {
 		window._e2eSidebarWidth = width;
 		return width > 0 && width === before;
 	}, null, { polling: 100 });
+}
+
+/**
+ * Wait for the message a page shows after a redirect, such as "Thank you for logging in", to go, the way a person does
+ * when it's over something they want. It's at the top right, over the header's links in Lyris, and goes after five
+ * seconds. If there isn't one, this doesn't wait.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function waitForMessageToGo(page) {
+	await page.waitForLoadState('load');
+	// It stays as long as the pointer is on it
+	await page.mouse.move(0, 0);
+	// It's queued when the page is ready and shown up to a quarter of a second later, so one in the queue counts
+	await page.waitForFunction(() => {
+		const queue = window.jQuery ? window.jQuery('#jGrowl').data('jGrowl.instance') : null;
+		return !(queue && queue.notifications.length > 0) && document.querySelector('#jGrowl .message') === null;
+	}, null, { timeout: 30000 });
+}
+
+/**
+ * Follow the Admin link, in the page's header or menu, once nothing is over it
+ * @param {import('@playwright/test').Page} page
+ */
+export async function goToAdmin(page) {
+	await waitForMessageToGo(page);
+	await page.getByRole('link', { name: 'Admin' }).click();
 }
 
 /**

@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import { login, saveFormulizeForm, conditionalElementReady, openElementAccordion, saveAdminForm, applyColumnChanges, openAllColumnSections, leavePage, autocompleteBox, dbQuery, dbPrefix,
 	openMainMenu, ensureMainMenuOpen, saveAndCloseEntry, showListSearches, clickListAction, openChangeColumns, currentViewName, entryArea, entryButton,
-	autocompleteSuggestion, goToEntryPage, openEntry, LIST_PAGE_SIZE } from '../../utils';
+	autocompleteSuggestion, goToEntryPage, openEntry, goToAdmin, LIST_PAGE_SIZE } from '../../utils';
 
 // the list of a form's entries
 const listOf = formTitle => `/modules/formulize/index.php?fid=${dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_title = '${formTitle}'`)[0][0]}`;
@@ -722,7 +722,7 @@ test.describe('New donation inside Donor record', () => {
 	}),
 	test('Verify Add button limitation setting works as expected', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-		await page.getByRole('link', { name: 'Admin' }).click();
+		await goToAdmin(page);
 		await page.getByRole('link', { name: 'Museum' }).click();
 	  await page.getByRole('link', { name: 'Elements' }).nth(2).click();
 		await openElementAccordion(page, 'Donated artifacts');
@@ -740,7 +740,7 @@ test.describe('New donation inside Donor record', () => {
 		// The subform draws the donor's artifacts as forms the webmaster can edit, which locks them, Roman Coin among them,
 		// and leaving the page releases them. The front page has the Admin link the test started from.
 		await leavePage(page, '/');
-		await page.getByRole('link', { name: 'Admin' }).click();
+		await goToAdmin(page);
 		await page.getByRole('link', { name: 'Museum' }).click();
 	  await page.getByRole('link', { name: 'Elements' }).nth(2).click();
 		await openElementAccordion(page, 'Donated artifacts');
