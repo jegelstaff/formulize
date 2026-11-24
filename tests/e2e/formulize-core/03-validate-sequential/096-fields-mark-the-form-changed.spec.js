@@ -48,6 +48,8 @@ const FIELDS = [
 FIELDS.forEach((field, i) => { field.handle = `fct_field_${i}`; });
 const field = kind => FIELDS.find(f => f.kind === kind);
 const RADIO_WITH_VALUE = 'fct_radio_with_value';
+// The last element's label, which shows that the form is there. Not its row, which has no height in Anari (see elementRow() in utils.js).
+const lastLabel = container => container.locator(`.formulize-label-${RADIO_WITH_VALUE}`);
 
 let api;
 let apiKey;
@@ -96,7 +98,7 @@ async function openFromList(page) {
 
 async function openFullScreen(page) {
 	await openFromList(page);
-	await expect(elementRow(page, RADIO_WITH_VALUE)).toBeVisible();
+	await expect(lastLabel(page)).toBeVisible();
 	await page.waitForLoadState('load');
 	await waitForJQueryAnimations(page);
 }
@@ -110,7 +112,7 @@ async function openInDrawer(page) {
 	await expect(drawer(page)).toBeVisible();
 	await expect(drawer(page).locator('.formulize-drawer__foot input[type="button"]').first()).toBeVisible();
 	await expect(drawer(page).locator('.formulize-drawer__body').first()).not.toHaveClass(/formulize-drawer__body--entering/);
-	await expect(drawerRow(page, RADIO_WITH_VALUE)).toBeVisible();
+	await expect(lastLabel(drawer(page))).toBeVisible();
 }
 
 // Do something, accept whatever the page asks while it happens, and return what it asked

@@ -1021,7 +1021,10 @@ class formulizeFormsHandler {
 		$allFidsRes = $this->db->query($allFidsQuery);
 		$foundFormObjects = array();
 		while($allFidsArray = $this->db->fetchArray($allFidsRes)) {
-			$foundFormObjects[$allFidsArray['id_form']] = $this->get($allFidsArray['id_form'],$includeAllElements);
+			// leave out a form that someone has deleted since the ids were read
+			if($formObject = $this->get($allFidsArray['id_form'],$includeAllElements)) {
+				$foundFormObjects[$allFidsArray['id_form']] = $formObject;
+			}
 		}
 		return $foundFormObjects;
 	}
@@ -1057,10 +1060,9 @@ class formulizeFormsHandler {
 			if(get_class($application_object_or_id) == 'formulizeApplication') {
 				$applicationObject = $application_object_or_id;
 				foreach($applicationObject->getVar('forms') as $thisFid) {
-					if($returnIds) {
-						$fids[] = $thisFid;
-					} else {
-						$fids[] = $this->get($thisFid);
+					// when getting objects, leave out a form that someone has deleted since the ids were read
+					if($form = $returnIds ? $thisFid : $this->get($thisFid)) {
+						$fids[] = $form;
 					}
 				}
 			} else {
@@ -1072,12 +1074,10 @@ class formulizeFormsHandler {
 			if($res = $this->db->query($sql)) {
 				$sortArray = array();
 				while($array = $this->db->fetchArray($res)) {
-					if($returnIds) {
-						$fids[] = $array['id_form'];
-					} else {
-						$fids[] = $this->get($array['id_form']);
+					if($form = $returnIds ? $array['id_form'] : $this->get($array['id_form'])) {
+						$fids[] = $form;
+						$sortArray[] = trans($array['form_title']);
 					}
-					$sortArray[] = trans($array['form_title']);
 				}
 				array_multisort($sortArray, SORT_NATURAL, $fids);
 			}

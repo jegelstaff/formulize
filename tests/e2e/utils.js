@@ -1208,7 +1208,9 @@ export async function setMenuEntryGroups(page, appName, accordionName, groupsSel
 }
 
 /**
- * An element's row on a form, found by its handle, so a field can be found inside it rather than by counting fields on the page
+ * An element's row on a form, found by its handle, so a field can be found inside it rather than by counting fields on the page.
+ * To check that the element is showing, check a field or the label inside the row, not the row. In a two-column form, a row in
+ * Anari holds only floated columns, so the row itself has no height, and Playwright counts that as not visible.
  * @param {import('@playwright/test').Page} page
  * @param {string} handle - The element's handle
  */

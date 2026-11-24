@@ -38,7 +38,7 @@ $apps = array();
 $foundForms = array();
 
 foreach($appObjects as $thisAppObject) {
-    $apps = readApplicationData($thisAppObject->getVar('appid'), $apps);
+    $apps = readApplicationData($thisAppObject, $apps);
 }
 $apps = readApplicationData(0,$apps); // lastly, get forms that don't have an application
 $showBigFormButton = false;
@@ -58,20 +58,28 @@ $adminPage['pagetitle'] = "Home";
 $adminPage['needsave'] = true;
 
 
-function readApplicationData($aid, $apps) {
+/**
+ * Add an application to the list of applications on the page
+ * @param formulizeApplication|int $thisAppObject The application. Zero for 'forms with no application'. It's the object, and not its
+ * id, because reading the application again by its id finds nothing if someone deletes it after the list of applications was read.
+ * @param array $apps The applications added so far
+ * @return array The applications, with this one added
+ */
+function readApplicationData($thisAppObject, $apps) {
     static $i = 1;
     global $form_handler, $application_handler, $gperm_handler, $screen_handler, $xoopsUser;
     $groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-    if ($aid == 0) {
+    if (!$thisAppObject) {
+        $aid = 0;
         $apps[$i]['name'] = _AM_APP_FORMWITHNOAPP;
         $apps[$i]['content']['description'] = "";
     } else {
-        $thisAppObject = $application_handler->get($aid);
+        $aid = $thisAppObject->getVar('appid');
         $apps[$i]['name'] = "Application: ".$thisAppObject->getVar('name');
         $apps[$i]['content']['description'] = $thisAppObject->getVar('description');
     }
     $apps[$i]['content']['aid'] = $aid;
-		$apps[$i]['content']['forms'] = $application_handler->getFormMetadataForAdminUI($aid);
+		$apps[$i]['content']['forms'] = $application_handler->getFormMetadataForAdminUI($thisAppObject);
     $apps[$i]['header'] = '<span class="formulize-toolbar right-toolbar">';
     if ($aid>0) {
         $apps[$i]['header'] .= '<a href="'.XOOPS_URL.'/modules/formulize/admin/ui.php?page=application&aid='.$aid.'&tab=settings"><i class="icon-config"></i> Settings</a>';

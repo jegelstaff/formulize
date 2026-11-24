@@ -1144,19 +1144,19 @@ class formulizeApplicationsHandler {
 
 	/**
 	 * Get the admin UI metadata necessary to display the form listings for the application
-	 * @param int aid The application id of the application we're working with. Zero for 'forms with no application'.
+	 * @param formulizeApplication|int application_object_or_id The application we're working with, or its id. Zero for 'forms with no application'.
 	 * @return array formsInApp An array of the metadata necessary for the form listings
 	 */
-	function getFormMetadataForAdminUI($aid) {
+	function getFormMetadataForAdminUI($application_object_or_id) {
 		global $xoopsUser;
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$gperm_handler = xoops_gethandler('groupperm');
 		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 		$framework_handler = xoops_getmodulehandler('frameworks', 'formulize');
-		$aid = intval($aid);
+		$aid = intval(is_object($application_object_or_id) ? $application_object_or_id->getVar('appid') : $application_object_or_id);
 		$formsInApp = array();
 		$adminLayoutTopAndLeftForForms = $this->getAdminLayoutTopAndLeftForForms($aid);
-		$formObjects = $form_handler->getFormsByApplication($aid);
+		$formObjects = $form_handler->getFormsByApplication(is_object($application_object_or_id) ? $application_object_or_id : $aid);
 		if(is_array($formObjects)) {
 			foreach($formObjects as $thisFormObject) {
 				if (!$gperm_handler->checkRight("edit_form", $thisFormObject->getVar('id_form'), $xoopsUser->getGroups(), getFormulizeModId())) {

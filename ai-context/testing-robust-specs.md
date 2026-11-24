@@ -59,6 +59,10 @@ await conditionalElementReady(
 - **Only use it when the element will change.** If the action leaves the element's HTML as it was, the wait for a change times out.
 - **It doesn't work for an element that disappears.** For that, use `await expect(locator).not.toBeVisible()`, which retries through the fade.
 
+### Form rows
+
+Don't check that an element is showing with its `.form-row`, which is what `elementRow()` returns. In a two-column form, which is what Anari starts with, the row holds only floated columns. So the row has no height, and Playwright counts it as hidden, on a form screen and in the drawer. And `not.toBeVisible()` passes whether the element is there or not. Check a field in the row, or the element's label, `.formulize-label-<handle>`. Lyris's rows have a height, so a check like this can pass there and fail in CI.
+
 ### Reads that don't wait
 
 `count()`, `isVisible()`, `isHidden()`, `all()`, `allTextContents()`, `allInnerTexts()` and `evaluateAll()` answer at once with what's on the page at that moment. Right after an action, nothing there can just mean it hasn't arrived yet. `textContent()`, `inputValue()` and `getAttribute()` wait for their element, and assertions like `toHaveText()` retry.
