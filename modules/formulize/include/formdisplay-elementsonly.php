@@ -548,6 +548,10 @@ ob_start();
 drawXhrJavascript();
 $xhrJs = "<script type='text/javascript'>\n".ob_get_clean()."\nif(typeof formulize_xhr === 'undefined') { initialize_formulize_xhr(); }\n</script>\n";
 
+// The checks the drawer makes before it submits the form, which are full screen's, and the form's validation function,
+// which is one of them.
+$submitStepJs = "<script type='text/javascript'>\n".formulize_submitStepJs()."</script>\n";
+
 // validation + entry-lock cleanup helpers, keyed to this form's name so multiple
 // elements-only forms can coexist on a page.
 // The element validation code collected here is written for full screen's validation function, so this one takes the
@@ -555,6 +559,7 @@ $xhrJs = "<script type='text/javascript'>\n".ob_get_clean()."\nif(typeof formuli
 // value check, sends that with its request: formulize_xhr_return() then hands the answer back to the drawer, which
 // tries the action again, rather than to full screen's validateAndSubmit(). See formulize_uniqueValueValidationCode().
 $validationJs = "<script type='text/javascript'>
+".icms_form_Base::safeFocusJS()."
 function xoopsFormValidate_".$formname."(leave, myform) {
 "
 .trim(implode("\n\r", (array) $GLOBALS['formulize_elementsOnlyForm_validationCode']))
@@ -603,5 +608,6 @@ print $saveMessages
     .$editorJs
     .$officeUseOnlyJs
     .$xhrJs
+    .$submitStepJs
     .$validationJs
     .$activityLogJs;

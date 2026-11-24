@@ -78,6 +78,80 @@ JS
 }
 
 /**
+ * The checks a form has to pass before it's submitted. Full screen's validateAndSubmit() and submitForm(), and the drawer's
+ * validateCurrentForm() in drawer.js, all call these, so a form is checked the same way wherever it's shown. What happens
+ * once it passes is up to each of them. drawJavascript() prints this, and the drawer's endpoint does with each form it
+ * shows, so a page can have it more than once, harmlessly. Its words are the constants starting _formulize_JS_SUBMIT_, and
+ * it needs formulize_elementScripts(), which loads the script that gives them.
+ * @return string The JavaScript, without script tags
+ */
+function formulize_submitStepJs() {
+	$text = json_encode(formulize_scriptText('_formulize_JS_SUBMIT_'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	return "window.formulizeSubmitText = $text;\n".<<<'JS'
+// Are conditional elements still on their way? If it's been too long, something has gone wrong, so say so.
+window.needWaitForConditionalAlert = window.needWaitForConditionalAlert || false;
+function conditionalCheckIsInProgress() {
+    if(typeof conditionalCheckInProgress !== 'undefined' && conditionalCheckInProgress > 0) {
+        if(!needWaitForConditionalAlert) {
+            needWaitForConditionalAlert = setTimeout(function() {
+                if(typeof conditionalCheckInProgress !== 'undefined' && conditionalCheckInProgress > 0) {
+                    alert(formulizeText(window.formulizeSubmitText).text('CONDITIONAL_ERROR'));
+                }
+            }, 10000);
+        }
+        return true;
+    } else {
+        clearTimeout(needWaitForConditionalAlert);
+        needWaitForConditionalAlert = false;
+        return false;
+    }
+}
+
+// If conditional elements are still on their way, try again in a second, and return true
+function formulize_waitForConditionalElements(tryAgain) {
+    if(!conditionalCheckIsInProgress()) {
+        return false;
+    }
+    setTimeout(tryAgain, 1000);
+    return true;
+}
+
+// Letters in a numbers only box are removed when it's saved, so ask first. Returns false if any of the answers is no.
+// A browser's number box can only hold letters as part of a number, such as 1e5.
+function formulize_lettersInNumberBoxesAreOK(form) {
+    var answersAreYes = true;
+    jQuery('.numbers-only-textbox').filter(function() { return this.form === form; }).each(function() {
+        var value = jQuery(this).val();
+        if(value.match(/[a-z]/i) !== null && value != '{ID}' && value != '{SEQUENCE}') {
+            if(!confirm(formulizeText(window.formulizeSubmitText).text('NUMBERS_ONLY', value))) {
+                jQuery(this).focus();
+                answersAreYes = false;
+            }
+        }
+    });
+    return answersAreYes;
+}
+
+// Run the form's validation, and then the form's optional extra validation function, formulizeExtraFormValidation, which a
+// screen template or a form text element can provide. It gets what the validation came to, and the form, and what it
+// returns is the answer. The page's is on window. The drawer keeps its form's with the form, because the two share a page.
+// When the form passes, its rich text is copied into the fields that are saved.
+function formulize_validateForm(form, leave) {
+    var valid = window['xoopsFormValidate_'+form.getAttribute('id')](leave, form);
+    var extraValidation = typeof form.formulizeExtraFormValidation !== 'undefined' ? form.formulizeExtraFormValidation : window.formulizeExtraFormValidation;
+    if(typeof extraValidation === 'function') {
+        valid = extraValidation(valid, form);
+    }
+    if(valid && typeof updateCKEditors === 'function') {
+        updateCKEditors();
+    }
+    return valid;
+}
+
+JS;
+}
+
+/**
  * Validation code for an element whose values have to be unique. It asks the server whether the value is in use already,
  * and validation stops until the answer comes. formulize_xhr_return() stores the answer and tries again what was being
  * done (full screen's validateAndSubmit(), or in the drawer the action the person took), and then this finds it. An

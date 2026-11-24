@@ -580,7 +580,8 @@ class formulize_themeForm extends XoopsThemeForm {
                     foreach($linkedEntries['entries'] as $fid=>$theseEntries) {
                         foreach($theseEntries as $entry_id) {
                             if(!$entry_id) { continue; }
-                            $condition = "(jQuery('#formulize_mainform').length && parseInt(document.formulize_mainform.deletesubsflag.value) == ".$fid." && jQuery(\"input[name='delbox" . $entry_id . "']\").length && jQuery(\"input[name='delbox" . $entry_id . "']\").prop('checked'))";
+                            // in the form being validated, which in the drawer isn't the page's form
+                            $condition = "(!!myform.deletesubsflag && parseInt(myform.deletesubsflag.value) == ".$fid." && jQuery(myform).find(\"input[name='delbox" . $entry_id . "']\").prop('checked') === true)";
                             if($js) {
                                 $js .= " || $condition";
                             } else {
@@ -3096,49 +3097,17 @@ function showPop(url) {
 }
 
 <?php
-// check if conditional elements have yet to appear, and return true if so
+// the checks before submitting, which the drawer makes too
+print formulize_submitStepJs();
 ?>
-
-var needWaitForConditionalAlert = false;
-
-function conditionalCheckIsInProgress() {
-    if(typeof conditionalCheckInProgress !== 'undefined' && conditionalCheckInProgress > 0) {
-        if(!needWaitForConditionalAlert) {
-            needWaitForConditionalAlert = setTimeout(function() {
-                if(typeof conditionalCheckInProgress !== 'undefined' && conditionalCheckInProgress > 0) {
-                    alert('Error: something unexpected happened when trying to display conditional elements. Please contact the webmaster for assistance.');
-                }
-            }, 10000);
-        }
-        return true;
-    } else {
-        clearTimeout(needWaitForConditionalAlert);
-        needWaitForConditionalAlert = false;
-        return false;
-    }
-}
 
 function validateAndSubmit(leave) {
 
-    if(conditionalCheckIsInProgress()) {
-        setTimeout(function() {
-            validateAndSubmit(leave);
-            }, 1000);
+    if(formulize_waitForConditionalElements(function() { validateAndSubmit(leave); })) {
         return false;
     }
 
-    var formulize_numbersonly_found= false;
-    jQuery(".numbers-only-textbox").each(function() {
-        if(jQuery(this).val().match(/[a-z]/i) !== null && jQuery(this).val() != '{ID}' && jQuery(this).val() != '{SEQUENCE}') {
-            var answer = confirm ("You have entered "+jQuery(this).val()+" in a box that is supposed to have numbers only.  The letters will be removed if you save.  Is this OK?" );
-            if (!answer){
-                jQuery(this).focus();
-                formulize_numbersonly_found = true;
-            }
-        }
-    });
-
-    if (formulize_numbersonly_found){
+    if(!formulize_lettersInNumberBoxesAreOK(window.document.formulize_mainform)) {
         return false;
     }
 
@@ -3146,13 +3115,7 @@ function validateAndSubmit(leave) {
 if(!$nosave) { // need to check for add or update permissions on the current user and this entry before we include this javascript, otherwise they should not be able to save the form
 ?>
 
-	var validate = xoopsFormValidate_formulize_mainform(leave, window.document.formulize_mainform);
-	// this is an optional form validation function which can be provided by a screen template or form text element
-	if (window.formulizeExtraFormValidation && typeof(window.formulizeExtraFormValidation) === 'function') {
-		validate = window.formulizeExtraFormValidation(validate);
-	}
-	if(validate) {
-        if(typeof updateCKEditors === 'function') { updateCKEditors(); }
+	if(formulize_validateForm(window.document.formulize_mainform, leave)) {
 		if(typeof savedPage != 'undefined' && savedPage && savedPrevPage) { // set in submitForm and will have values if we're on the second time around of a two step validation, like a uniqueness check with the server
 			multipageSetHiddenFields(savedPage, savedPrevPage);
 		}

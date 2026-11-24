@@ -29,6 +29,9 @@
  *   saveEntry()                        - save the loaded entry form and leave it
  *   subformAction(action, args)        - called by the elements-only endpoint's
  *                                        subform stubs (add/edit/delete/clone)
+ *   save()                             - save the form and stay on it, as its Save button does.
+ *                                        For an element that submits the form itself, as the 2FA
+ *                                        element does.
  *   retryAfterValueCheck()             - called by formulize_xhr_return() when the server
  *                                        answers a check validation was waiting on
  *   initListView({ fid, frid, editDestination })
@@ -333,6 +336,7 @@
         if (!drawer) { return; }
         hideDrawerBusy();
         stopHoldingScroll();
+        forgetWaitingAction();
         drawer.hidden = true;
         scrim.hidden = true;
         document.documentElement.style.overflow = '';
@@ -637,14 +641,17 @@
         var scrollTop = bodyEl.scrollTop;
         var scrollTo = keepScroll ? scrollTop : 0;
         stopHoldingScroll(); // the form a previous load was holding in place is on its way out
+        forgetWaitingAction();
         var saving = !!(fetchOpts && String(fetchOpts.method || '').toUpperCase() === 'POST');
         showDrawerBusy(saving);
         var arrive = function () {
             holdBodyForFadeIn();
             pruneDeadEditors(); // only now: the form being left keeps its editors while it waits, faded
+            setAsidePagesExtraValidation();
         };
         return loadFragmentInto(bodyEl, url, fetchOpts, S().loadFailed, { keepContent: true, onArrive: arrive })
             .then(function () {
+                keepFormsExtraValidation();
                 // Each freshly loaded form starts as unchanged. The endpoint only defines
                 // formulizechanged when it is undefined, so reset it here to clear any value
                 // left over from a previous drawer session.
@@ -702,6 +709,7 @@
             .catch(function () {
                 // loadFragmentInto has already put the failure message in the panel;
                 // callers just need the null.
+                keepFormsExtraValidation(); // puts the page's back
                 fadeInBody();
                 return null;
             });
@@ -1194,25 +1202,67 @@
     // carries that, and formulize_xhr_return() hands the answer back to retryAfterValueCheck(),
     // which does the action again, and so validates again, finding the answer this time.
     // Full screen does the same with its save, through validateAndSubmit().
+    //
+    // The same goes for conditional elements that are still on their way, which have to arrive
+    // before the form can be validated or saved: the action is done again when they have. A
+    // later action takes over from one that is waiting.
+    //
+    // The checks are full screen's own (formulize_submitStepJs() in
+    // include/functions/element_scripts.php). movingOnly is for a page move that sends
+    // nothing, because the page is unchanged: full screen runs the form's validation for that,
+    // and the rest only when it submits.
     var actionAwaitingValueCheck = null;
+    var waitForConditionalElements = null;
 
-    function validateCurrentForm(form, retry) {
-        var validateFn = window['xoopsFormValidate_' + form.id];
-        var ok = true;
-        actionAwaitingValueCheck = retry || null;
-        if (typeof validateFn === 'function') { ok = !!validateFn('drawer', form); }
-        if (ok) {
-            actionAwaitingValueCheck = null;
-            if (typeof updateCKEditors === 'function') { updateCKEditors(); }
-        }
+    function validateCurrentForm(form, retry, movingOnly) {
+        var thisWait = {};
+        actionAwaitingValueCheck = null;
+        waitForConditionalElements = thisWait;
+        if (formulize_waitForConditionalElements(function () {
+            if (waitForConditionalElements !== thisWait) { return; }
+            waitForConditionalElements = null;
+            if (drawerIsOpen() && drawerMode === 'entry' && bodyEl.contains(form)) { retry(); }
+        })) { return false; }
+        waitForConditionalElements = null;
+        if (!movingOnly && !formulize_lettersInNumberBoxesAreOK(form)) { return false; }
+        actionAwaitingValueCheck = retry;
+        var ok = movingOnly ? !!window['xoopsFormValidate_' + form.getAttribute('id')]('drawer', form) : !!formulize_validateForm(form, 'drawer');
+        if (ok) { actionAwaitingValueCheck = null; }
         return ok;
     }
 
-    // Is validation waiting on the server's answer to a check? Then a refused move isn't the
-    // person's to fix yet.
-    function valueCheckIsWaiting() {
+    // Is the action waiting for something to arrive: the server's answer to a check, or
+    // conditional elements? Then a refused move isn't the person's to fix yet.
+    function actionIsWaiting() {
         var answers = window.formulize_xhr_returned_check_for_unique_value || {};
-        return Object.keys(answers).some(function (key) { return answers[key] === 'notreturned'; });
+        return !!waitForConditionalElements || Object.keys(answers).some(function (key) { return answers[key] === 'notreturned'; });
+    }
+
+    // Whatever was waiting is moot, because the form it was for is going.
+    function forgetWaitingAction() {
+        actionAwaitingValueCheck = null;
+        waitForConditionalElements = null;
+    }
+
+    // The extra validation function a screen template or form text element can provide
+    // (formulizeExtraFormValidation) is on window, where a form in the page behind can have its
+    // own. So the page's is set aside while a fragment's scripts run, what they leave is kept
+    // with the drawer's form, where formulize_validateForm() looks for it, and then the page's
+    // is put back. A form with none has null, so the page's isn't run for it.
+    var pagesExtraValidation = null;
+
+    function setAsidePagesExtraValidation() {
+        if (pagesExtraValidation) { return; }
+        pagesExtraValidation = { fn: window.formulizeExtraFormValidation };
+        window.formulizeExtraFormValidation = undefined;
+    }
+
+    function keepFormsExtraValidation() {
+        if (!pagesExtraValidation) { return; }
+        var form = bodyEl ? bodyEl.querySelector('form') : null;
+        if (form) { form.formulizeExtraFormValidation = window.formulizeExtraFormValidation || null; }
+        window.formulizeExtraFormValidation = pagesExtraValidation.fn;
+        pagesExtraValidation = null;
     }
 
     // The server has answered a check that validation was waiting on: do again what was
@@ -1345,8 +1395,7 @@
         var form = bodyEl ? bodyEl.querySelector('form') : null;
         if (!form || !currentFrame) { return; }
         if (currentEntryNav) {
-            if (!validateCurrentForm(form, saveAndStay)) { return; }
-            goToPage(currentEntryNav.currentPage);
+            goToPage(currentEntryNav.currentPage); // which validates
             return;
         }
         if (!formHasChanges()) { showDrawerNotice(S().noChanges); return; }
@@ -1388,9 +1437,9 @@
         if (typeof jQuery === 'undefined' || !currentEntryNav) { return false; }
         var form = bodyEl ? bodyEl.querySelector('form') : null;
         if (!form) { return false; }
-        if (!validateCurrentForm(form, function () { goToPage(targetPage); })) { return valueCheckIsWaiting(); }
-
         var changed = formHasChanges();
+        if (!validateCurrentForm(form, function () { goToPage(targetPage); }, !changed)) { return actionIsWaiting(); }
+
         var url = buildEntryUrl({
             sid:     currentEntryNav.screenId,
             fid:     form.getAttribute('data-fid') || '',
@@ -1484,7 +1533,23 @@
             if (!bodyEl.querySelectorAll('.delbox:checked').length) { return; }
             var msg = action === 'delete' ? S().confirmDelete : S().confirmDuplicate;
             if (!window.confirm(msg)) { return; }
-            subDeleteClone(form, action, args);
+            var deleteOrClone = function () {
+                // Full screen puts the flag in the form before it validates, so that entries about to
+                // be deleted aren't validated (see _drawValidationJS in formdisplay.php). It's only
+                // here for that: subDeleteClone sends its own.
+                var flag = null;
+                if (action === 'delete') {
+                    flag = document.createElement('input');
+                    flag.type = 'hidden';
+                    flag.name = 'deletesubsflag';
+                    flag.value = args.subFid;
+                    form.appendChild(flag);
+                }
+                var ok = validateCurrentForm(form, deleteOrClone);
+                if (flag) { form.removeChild(flag); }
+                if (ok) { subDeleteClone(form, action, args); }
+            };
+            deleteOrClone();
         }
     }
 
@@ -1668,6 +1733,7 @@
         saveEntry: saveEntryFromDrawer,
         subformAction: subformAction,
         retryAfterValueCheck: retryAfterValueCheck,
+        save: saveAndStay,
         initListView: initListView,
         isOpen: drawerIsOpen
     };

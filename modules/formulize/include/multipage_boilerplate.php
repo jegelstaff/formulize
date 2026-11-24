@@ -9,10 +9,7 @@
 var savedPage;
 var savedPrevPage;
 function submitForm(page, prevpage) {
-    if(conditionalCheckIsInProgress()) {
-       setTimeout(function() {
-            submitForm(page, prevpage);
-            }, 1000);
+    if(formulize_waitForConditionalElements(function() { submitForm(page, prevpage); })) {
        return false;
     }
     var validate = xoopsFormValidate_formulize_mainform('', window.document.formulize_mainform);
