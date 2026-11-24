@@ -350,9 +350,17 @@ export async function openAllColumnSections(popup) {
  * but cannot eliminate it, so: swallow that rejection whenever the popup did close, and only
  * rethrow if the popup stayed open (a genuine click failure).
  *
+ * Before it closes, the popup submits the list behind it, which reloads with the new columns. So
+ * this then waits for that page to load. Until it has, the page is the old list, and a check of it
+ * can pass or act on what's about to go, as showListSearches() once did on Lyris, finding the old
+ * list's search row and not opening the new one's.
+ *
  * @param {import('@playwright/test').Page} popup The "Change columns" popup page
  */
 export async function applyColumnChanges(popup) {
+	const list = await popup.opener();
+	const reloaded = list ? list.waitForEvent('load') : Promise.resolve();
+	reloaded.catch(() => {}); // awaited below, after the popup has closed
 	const closed = popup.waitForEvent('close');
 	closed.catch(() => {}); // never let this reject unhandled if we rethrow below
 	try {
@@ -361,6 +369,7 @@ export async function applyColumnChanges(popup) {
 		if (!popup.isClosed()) throw error;
 	}
 	await closed; // popup closing is the signal that the column change was submitted
+	await reloaded;
 }
 
 /**
@@ -565,8 +574,10 @@ export async function openMenuAccordion(page, accordionHeaderText, timeout = 200
 
 
 export async function waitForAdminPageReady(page) {
-  // Wait for network to be idle first
-  await page.waitForLoadState('networkidle');
+  // Let the network go idle first. Firefox now and then never reports it, about once in 800 pages, with the page
+  // loaded and every request answered. So that doesn't fail the test: the checks below are what say the page is ready.
+  await page.waitForLoadState('load');
+  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
 
   // Wait for jQuery and jQuery UI to be fully loaded and ready
   return page.waitForFunction(() => {
@@ -994,9 +1005,10 @@ export async function addConditionToPerGroupPanel(page, groupId, elementCaption,
 	// page navigation.  waitForNavigation reliably catches the form-submit navigation
 	// regardless of how long the AJAX round-trip takes.
 	await Promise.all([
-		page.waitForNavigation({ waitUntil: 'networkidle', timeout: 120000 }),
+		page.waitForNavigation({ waitUntil: 'load', timeout: 120000 }),
 		panel.locator('input[name="addcon"]').click()
 	]);
+	await waitForAdminPageReady(page);
 	// After navigation the window.load handler sets admin-ui opacity 0 → 1 (250 ms).
 	// Wait until that animation completes before returning.
 	await page.waitForFunction(() => {
@@ -1724,9 +1736,12 @@ async function drawerTokenReady(page) {
 	}
 	// nothing in the form has been touched yet, so go into it the way a person tabbing to the first box does
 	const first = entryDrawer(page).locator('form#formulize_drawer').locator('input:not([type="hidden"]):visible, textarea:visible, select:visible').first();
-	if (await first.count()) {
-		await first.focus();
+	if (await first.count() === 0) {
+		// Nothing to change, such as an entry the user may add but not edit, drawn again after its first save. There's
+		// nothing to save either, so the save needs no token, as on a form screen that hasn't been touched.
+		return;
 	}
+	await first.focus();
 	await page.waitForFunction(() => {
 		const input = document.querySelector('#formulize_drawer input[name="XOOPS_TOKEN_REQUEST"]');
 		return !input || input.value.length > 0;
@@ -2544,9 +2559,10 @@ export async function removeConditions(page, open, deleteLinks) {
 		// The click has its own timeout, shorter than the navigation's, so a click that can't land fails with the reason
 		// Playwright gives, ie: another element intercepts it, rather than with the navigation that never came
 		await Promise.all([
-			page.waitForNavigation({ waitUntil: 'networkidle', timeout: 120000 }),
+			page.waitForNavigation({ waitUntil: 'load', timeout: 120000 }),
 			page.locator(deleteLinks).first().click({ timeout: 30000 }),
 		]);
+		await waitForAdminPageReady(page);
 		await open(page);
 	}
 }

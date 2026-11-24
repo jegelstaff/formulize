@@ -54,6 +54,8 @@ With the conditions the suite builds, every automatically assigned membership is
 
 To test a removable member, create a membership that isn't enforced: add `ahstaff` by hand to All Curators through the "Add Members" tab. `ahstaff` then has a Remove button and `curator1` doesn't. Remove `ahstaff` afterwards to restore the state.
 
+The Add and Remove buttons take clicks only while their row is hovered, so `hover()` the row, click without `force`, and check that the row in `.gmm-pending-row` appeared. A forced click moves the mouse and clicks at once. In WebKit that lands on the row, and the save then goes through with nothing to add or remove.
+
 ## Save buttons on form screens
 
 `formulize_multipageButtonSet()` decides the buttons. These are the default labels for a single-page screen, and a screen can set its own:

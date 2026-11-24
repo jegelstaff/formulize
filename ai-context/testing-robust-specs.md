@@ -30,6 +30,8 @@ The Formulize admin UI does a lot of asynchronous work: AJAX saves, fades, accor
 
 Playwright's `networkidle` fires once per document and stays set. A `click` or `press` that navigates waits for the new document, so a wait after it is real. A wait after something that happens later, on the same document, passes at once and proves nothing. Wait for what a person would see.
 
+Firefox sometimes never reports it, with the page loaded and every request answered: twice in about 1,600 waits in run 45260223721, and never in Chromium. So `waitForAdminPageReady()` and `saveAdminForm()` give it a limited time and carry on, and rely on other checks to say the page is ready. Don't add a bare wait for it, and don't pass it to `waitForNavigation()`.
+
 ### Hidden tabs and autocompletes
 
 The form admin tabs keep all their content in the DOM, `display:none` until the tab is shown. jQuery UI's autocomplete only draws its dropdown for a visible input, so an autocomplete in a tab that hasn't been shown yet gives no dropdown, and the test times out waiting for a suggestion that never appears.
@@ -96,7 +98,7 @@ Anything that slides, fades or grows open is visible from its first frame. So `t
 
 ### Controls that close their own window
 
-The "Change columns" popup hands its selection to the opener and closes itself, so Playwright's bookkeeping after the click can race the window closing, and fail with *Target page, context or browser has been closed*. `applyColumnChanges(popup)` handles that one. For any other control like it, treat the close as the completion signal:
+The "Change columns" popup hands its selection to the opener and closes itself, so Playwright's bookkeeping after the click can race the window closing, and fail with *Target page, context or browser has been closed*. `applyColumnChanges(popup)` handles that one, and waits for the list behind to reload with the new columns, since until then the page is still the old list. For any other control like it, treat the close as the completion signal:
 
 ```js
 await Promise.all([
@@ -175,6 +177,8 @@ A spec is written once, for both. Do what a person does through the helpers in t
 | Sign out, or find the account link | `signOutLink()`, `accountLink()` | Logout and Edit Account in Anari, Sign out and Account in Lyris's header |
 
 Which of a form screen and the drawer an entry opens in is the list's setting, not the theme, so the helpers look at what's on the page. `users.php`, `groups.php` and `master.php` open entries full screen in both themes, and an entry opened by its address (`&ve=`) is always full screen. A spec about form screens, like `02-validate/049`, sets its own list to open entries there.
+
+While the drawer is open, its scrim (`.formulize-drawer-scrim`), the dimmed layer behind it, is over the rest of the page, including the main menu on the other side. A person who clicks there closes the drawer. Playwright won't click something that another element is over, so it waits until the test times out. A form screen has no scrim, so a test that clicks a menu link from an open entry passes on Anari and hangs on Lyris. Leave the entry first. After a test times out, whatever it was waiting on can still finish, and the rest of it can run alongside `afterEach`, which is how a lock can be left that the test seems not to have taken.
 
 The drawer keeps the last form it showed when it closes, hidden, and the list only reloads after a close if something was saved. So after closing without saving, look at the list by role, which leaves out what's hidden, rather than with `page.getByText()`.
 

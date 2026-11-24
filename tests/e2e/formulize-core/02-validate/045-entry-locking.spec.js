@@ -120,6 +120,9 @@ test.describe('Entry locking', () => {
 		await expectLockedBy(curator2, 'Curator One');
 
 		await leave(curator1);
+		// curator2 still has the read only copy on screen. When that's in the drawer, the dimmed layer behind the drawer is over
+		// the rest of the page, so openRomanCoin couldn't click the main menu
+		await leave(curator2);
 		await openRomanCoin(curator2);
 		await expectEditable(curator2);
 	});

@@ -10,7 +10,7 @@ import {
 	saveFormulizeForm, saveAdminForm, waitForAdminPageReady, dbQuery, dbPrefix, renameElementHandle, elementId,
 	openArtifactOriginsMap, expectArtifactOriginsMap, loadSavedView, expectCoinsByName, expectArtifactOriginsList,
 	conditionalElementReady, setCodeMirrorValue, autocompleteBox,
-	openMainMenu, openEntry, autocompleteSuggestion, entryArea, saveAndCloseEntry,
+	openMainMenu, openEntry, autocompleteSuggestion, entryArea, saveAndCloseEntry, screenTemplatesForm, emptyScreenTemplates,
 } from '../../utils';
 
 /**
@@ -43,7 +43,7 @@ async function openScreenTemplates(page, fid, sid) {
 	await waitForAdminPageReady(page);
 	const customize = page.getByRole('button', { name: 'Customize the Templates' });
 	// every tab is on the page, so only the editors in the templates tab's form count
-	const templateEditor = templatesForm(page).locator('.CodeMirror').first();
+	const templateEditor = screenTemplatesForm(page).locator('.CodeMirror').first();
 	await expect(customize.or(templateEditor)).toBeVisible();
 	const customized = await customize.isVisible();
 	if (customized) {
@@ -54,10 +54,6 @@ async function openScreenTemplates(page, fid, sid) {
 	await expect(templateEditor).toBeVisible();
 	return customized;
 }
-// The form in a screen's settings that holds its template boxes
-function templatesForm(page) {
-	return page.locator('form:has(input[name="formulize_admin_handler"][value$="_templates"])');
-}
 // Put code in one of a screen's template boxes, and save it, in the screen's settings
 async function setScreenTemplate(page, fid, sid, box, code) {
 	await openScreenTemplates(page, fid, sid);
@@ -67,22 +63,8 @@ async function setScreenTemplate(page, fid, sid, box, code) {
 // What one of a screen's template boxes shows, in the screen's settings
 async function shownScreenTemplate(page, fid, sid, box) {
 	await openScreenTemplates(page, fid, sid);
-	return templatesForm(page).locator(`textarea[name="screens-${box}"] + .CodeMirror`).evaluate(editor => editor.CodeMirror.getValue());
+	return screenTemplatesForm(page).locator(`textarea[name="screens-${box}"] + .CodeMirror`).evaluate(editor => editor.CodeMirror.getValue());
 }
-// Empty all of a screen's template boxes and save, in the screen's settings, which puts it back on the default
-// templates
-async function useDefaultScreenTemplates(page, fid, sid) {
-	await openScreenTemplates(page, fid, sid);
-	const templateBoxes = templatesForm(page).locator('textarea.code-textarea');
-	for (const name of await templateBoxes.evaluateAll(boxes => boxes.map(box => box.name))) {
-		await setCodeMirrorValue(page, `textarea[name="${name}"]`, '');
-	}
-	await saveAdminForm(page);
-	await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${fid}&sid=${sid}&tab=templates`);
-	await waitForAdminPageReady(page);
-	await expect(page.getByRole('button', { name: 'Customize the Templates' })).toBeVisible();
-}
-
 test.describe.serial('Renaming element handles', () => {
 
 	test('Year: the Year-Era formula follows the rename, and keeps working', async ({ page }) => {
@@ -314,7 +296,7 @@ test.describe.serial('Renaming element handles', () => {
 			// bottom template as it found it
 			await asAdmin(page);
 			if (customized) {
-				await useDefaultScreenTemplates(page, fid, listSid);
+				await emptyScreenTemplates(page, { sid: listSid, fid });
 			} else {
 				await setScreenTemplate(page, fid, listSid, 'bottomtemplate', asItWas);
 			}

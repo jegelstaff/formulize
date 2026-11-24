@@ -154,7 +154,10 @@ async function addMember(page, groupName, user) {
 	await search.press('Enter');
 	const addRow = page.locator('.gmm-add-row').filter({ hasText: uname(user) });
 	await expect(addRow).toBeVisible();
-	await addRow.getByRole('button', { name: /Add/i }).click({ force: true });
+	// the button takes clicks only while its row is hovered
+	await addRow.hover();
+	await addRow.getByRole('button', { name: /Add/i }).click();
+	await expect(page.locator('.gmm-pending-row').filter({ hasText: uname(user) })).toBeVisible();
 	await saveFormulizeForm(page, 'Save');
 	await expect.poll(() => groupsOf(user)).toContain(groupName);
 	await leavePage(page, '/modules/formulize/groups.php');
