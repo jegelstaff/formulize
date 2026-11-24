@@ -55,7 +55,8 @@ test.describe('The site installed as an app by its organization', () => {
 				try {
 					await login(phone, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 					await phone.goto('/modules/formulize/');
-					await expect(phone.locator('#mainmenu > li').first()).toBeAttached();
+					// the menu is there, so the item would be too. In Lyris it can hold only applications, which aren't li elements
+					await expect(phone.locator('#mainmenu > *').first()).toBeAttached();
 					expect(await phone.locator('[data-formulize-install-app]').count()).toBe(0);
 					// Chrome's own install banner on Android is held back
 					expect(await phone.evaluate(() => {

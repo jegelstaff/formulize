@@ -1165,21 +1165,6 @@
         }
     }
 
-    // What to do once saveCurrentPage's write comes back. readelements.php says nothing when
-    // the save worked, so anything it does say means it didn't, such as a refused security
-    // token. Then the person stays on the entry, with their changes and the reason, rather
-    // than being taken off it as if it had been saved.
-    function unlessSaveRefused(next) {
-        return function (response) {
-            var said = String(response || '').replace(/^\s+|\s+$/g, '');
-            if (said) {
-                showDrawerNotice(said, true);
-                return;
-            }
-            next();
-        };
-    }
-
     // ---- Validation / save -----------------------------------------------------
 
     // Formulize only flags a form as changed once a field is touched; mirror that so
@@ -1327,7 +1312,9 @@
     }
 
     // POST the current page's fields to readelements.php to persist them. Returns a
-    // promise so callers can chain. The entry id is carried in the field names, so this
+    // promise so callers can chain what they do next, such as leave the entry. It never
+    // resolves if the save is refused, so then the person stays on the entry, with their
+    // changes and the reason. The entry id is carried in the field names, so this
     // works for both new and existing entries. The saving animation is up for the round
     // trip, as it is full screen (PR #127 review) — this is the drawer's other write
     // path; the fragment endpoint's POSTs are covered in fetchIntoDrawer.
@@ -1366,7 +1353,13 @@
                     entry: frame.entryId || null
                 });
             }
-            return response;
+            // For the same reason, anything it does say means the save was refused, such as for a
+            // bad security token.
+            var refusal = String(response || '').trim();
+            if (refusal) {
+                showDrawerNotice(refusal, true);
+                return new Promise(function () {});
+            }
         });
     }
 
@@ -1449,7 +1442,7 @@
             return;
         }
         if (!validateCurrentForm(form, saveEntryFromDrawer)) { return; }
-        saveCurrentPage(form).then(unlessSaveRefused(drawerStack.length ? popToParent : closeAndRefresh));
+        saveCurrentPage(form).then(drawerStack.length ? popToParent : closeAndRefresh);
     }
 
     // Navigate to another page of a multi-page entry form. Navigation (forwards or
@@ -1501,7 +1494,7 @@
         var form = bodyEl ? bodyEl.querySelector('form') : null;
         if (!form || !formHasChanges()) { leaveFinishedEntry(); return; }
         if (!validateCurrentForm(form, finishDrawer)) { return; }
-        saveCurrentPage(form).then(unlessSaveRefused(leaveFinishedEntry));
+        saveCurrentPage(form).then(leaveFinishedEntry);
     }
 
     // The leave control of a multi-page screen: page one's Save and Go Back slot, or the
@@ -1545,7 +1538,7 @@
             // changes aren't lost, but skip the round trip when nothing changed
             if (formHasChanges()) {
                 if (!validateCurrentForm(form, function () { subformAction(action, args); })) { return; }
-                saveCurrentPage(form).then(unlessSaveRefused(function () { descendToSub(args); }));
+                saveCurrentPage(form).then(function () { descendToSub(args); });
             } else {
                 descendToSub(args);
             }

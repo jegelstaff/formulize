@@ -163,7 +163,7 @@ A spec is written once, for both. Do what a person does through the helpers in t
 
 | To | Use | Why there's a helper |
 |---|---|---|
-| Follow a menu link | `openMainMenu()`, `goToMenuLink()`, `ensureMainMenuOpen()` | Lyris's sidebar is closed on most pages, and closed it has no width, so its links count as visible to Playwright and a click can't reach them |
+| Follow a menu link | `openMainMenu()`, `goToMenuLink()`, `ensureMainMenuOpen()` | Lyris's sidebar is closed on most pages, and closed it has no width, so its links count as visible to Playwright and a click can't reach them. The AI and account links aren't in `#mainmenu` in Lyris, so it can hold only applications, which are `<details>`, and no `li` of its own |
 | Open an entry from a list, by its row's link or the Add button, or add one with a subform's Add button | `openEntry(page, trigger)` | It opens on the form screen or in the drawer, as the list's `editdestination` says, and it waits for whichever. The trigger can be a function, for a button `clickListAction()` has to find, such as a list's Add multiple entries |
 | Look for an entry's elements | `entryArea(page)` | It's the drawer's body while the drawer is open, and the page otherwise. Over a list, `page.getByText()` and `page.getByLabel()` also match the list's cells and its "Search …" boxes, and they count hidden matches too |
 | Click an entry's own button without saving, such as Close | `entryButton(page, name)` | In the drawer they're in its footer, outside `entryArea` |
