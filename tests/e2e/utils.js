@@ -183,24 +183,37 @@ const elementToContentMapping = {
 };
 
 /**
- * Wait for the Formulize form token to be valid before moving on
+ * Wait for the Formulize form token to be valid before moving on. For a form in the drawer, use waitForDrawerFormToken().
  * @param {*} page Playwright page object
- * @param {string} form Selector of the form. The drawer's is '#formulize_drawer', which waitForDrawerFormToken passes
  */
-export async function waitForFormulizeFormToken(page, form = '#formulize_mainform') {
-	await page.waitForFunction(
-		selector => document.querySelector(`${selector} input[name="XOOPS_TOKEN_REQUEST"]`).value.length > 0,
-		form
-	)
+export async function waitForFormulizeFormToken(page) {
+	await page.waitForFunction(() => document.querySelector('#formulize_mainform input[name="XOOPS_TOKEN_REQUEST"]').value.length > 0)
 }
 
 /**
  * Wait for the token of the form in the drawer, before something that sends the form. It's filled in a moment after the
- * first thing done in the form, and again after each save, since the drawer draws the form again.
- * @param {*} page Playwright page object
+ * first thing done in the form, and again after each save, since the drawer draws the form again. A person can't click
+ * Save that fast. See the token script in modules/formulize/include/formdisplay-elementsonly.php.
+ * @param {import('@playwright/test').Page} page
  */
 export async function waitForDrawerFormToken(page) {
-	await waitForFormulizeFormToken(page, '#formulize_drawer');
+	const form = entryDrawer(page).locator('form#formulize_drawer');
+	const token = form.locator('input[name="XOOPS_TOKEN_REQUEST"]');
+	if (await token.count() === 0 || (await token.inputValue()).length > 0) {
+		return;
+	}
+	// in case nothing in the form has been touched yet, go into it the way a person tabbing to the first box does
+	const first = form.locator('input:not([type="hidden"]):visible, textarea:visible, select:visible').first();
+	if (await first.count() === 0) {
+		// Nothing to change, such as an entry the user may add but not edit, drawn again after its first save. There's
+		// nothing to save either, so the save needs no token, as on a form screen that hasn't been touched.
+		return;
+	}
+	await first.focus();
+	await page.waitForFunction(() => {
+		const input = document.querySelector('#formulize_drawer input[name="XOOPS_TOKEN_REQUEST"]');
+		return !input || input.value.length > 0;
+	});
 }
 
 /**
@@ -247,22 +260,48 @@ export async function aDayPassesForTheWorker(page) {
 }
 
 /**
- * Save the form in the drawer, with its Save button, when the save should work. Something in the form has to have been
+ * Click one of the drawer's form buttons, by its words, when it should work, and wait for what it does. Save writes the
+ * entry and draws it again. Save and Close, Save and Finish and the like write it and close the drawer, and the list
+ * behind it reloads when anything was saved. Close leaves without saving. Save needs something in the form to have been
  * changed first. A save that should be refused before it's sent doesn't come back, so click the button for that.
- * @param {*} page Playwright page object
+ * @param {import('@playwright/test').Page} page
+ * @param {string} buttonText
  * @param {number} timeout - Maximum time to wait for the save to come back (default 120000ms)
  */
-export async function saveDrawerForm(page, timeout = 120000) {
-	const drawer = page.locator('.formulize-drawer[role="dialog"]');
+export async function saveDrawerForm(page, buttonText = 'Save', timeout = 120000) {
+	const drawer = entryDrawer(page);
+	await drawerEntryReady(page, timeout);
 	await waitForDrawerFormToken(page);
-	const saved = page.waitForResponse(response =>
-		response.request().method() === 'POST' && response.url().includes('/include/formdisplay-elementsonly.php'), { timeout });
-	await drawer.locator('.formulize-drawer__foot input[name="save"]').click();
-	await saved;
-	// The drawer is busy from when it sends the save until the form drawn again after it is in place
-	await expect(drawer).not.toHaveClass(/formulize-drawer--busy/);
-	// Ensure the save was not refused
-	await expect(drawer.getByText('Your changes were not saved.')).not.toBeVisible();
+	const button = drawer.locator('.formulize-drawer__foot').getByRole('button', { name: buttonText, exact: true });
+	await expect(button).toBeVisible();
+	if (await button.getAttribute('name') === 'save') {
+		// Save stays on the entry: the drawer sends the form, and draws what comes back. With nothing changed, it says so
+		// and sends nothing.
+		const sent = page.waitForResponse(response => response.url().includes('/include/formdisplay-elementsonly.php'), { timeout });
+		const unchanged = drawer.locator('.formulize-drawer__notice', { hasText: /\S/ }).waitFor({ timeout });
+		sent.catch(() => {});
+		unchanged.catch(() => {});
+		await button.click();
+		// A Save that sends nothing hasn't saved what the test filled in, so the test mustn't carry on as if it had
+		if (await Promise.race([sent.then(() => 'sent'), unchanged.then(() => 'unchanged')]) === 'unchanged') {
+			throw new Error(`The drawer sent nothing when ${buttonText} was clicked, and said: ${await drawer.locator('.formulize-drawer__notice').textContent()}`);
+		}
+		await expect(drawer).not.toHaveClass(/formulize-drawer--busy/, { timeout });
+		await expect(drawer.locator('form#formulize_drawer')).toBeAttached({ timeout });
+	} else {
+		// The drawer closes when the entry is saved. When the save is refused, it stays open and says why.
+		await button.click();
+		const notice = drawer.locator('.formulize-drawer__notice', { hasText: /\S/ });
+		const closed = drawer.waitFor({ state: 'hidden', timeout }).then(() => 'closed');
+		const refused = notice.waitFor({ timeout }).then(() => 'notice', () => 'closed');
+		closed.catch(() => {});
+		if (await Promise.race([closed, refused]) === 'notice' && await drawer.isVisible()) {
+			throw new Error(`The drawer didn't save the entry when ${buttonText} was clicked, and said: ${await notice.textContent()}`);
+		}
+		await expect(drawer).toBeHidden({ timeout });
+		await listReloadedAfterDrawer(page, timeout);
+	}
+	await expect(page.getByText('Your changes were not saved.')).not.toBeVisible({ timeout: 10000 });
 }
 
 /**
@@ -273,7 +312,7 @@ export async function saveDrawerForm(page, timeout = 120000) {
 export async function saveFormulizeForm(page, buttonText = 'Save', timeout = 120000) {
 	// An entry opened from a list that opens its entries in the drawer is saved there
 	if (await drawerIsOpen(page)) {
-		await saveInDrawer(page, buttonText, timeout);
+		await saveDrawerForm(page, buttonText, timeout);
 		return;
 	}
 	// Wait for the formulize page token
@@ -1727,71 +1766,6 @@ export async function openEntry(page, trigger) {
 	}
 }
 
-// The drawer's form fills in its security token a moment after the first interaction with it, as a form screen does
-// (see the token script in modules/formulize/include/formdisplay-elementsonly.php). A person can't click Save that fast.
-async function drawerTokenReady(page) {
-	const token = entryDrawer(page).locator('form#formulize_drawer input[name="XOOPS_TOKEN_REQUEST"]');
-	if (await token.count() === 0 || (await token.inputValue()).length > 0) {
-		return;
-	}
-	// nothing in the form has been touched yet, so go into it the way a person tabbing to the first box does
-	const first = entryDrawer(page).locator('form#formulize_drawer').locator('input:not([type="hidden"]):visible, textarea:visible, select:visible').first();
-	if (await first.count() === 0) {
-		// Nothing to change, such as an entry the user may add but not edit, drawn again after its first save. There's
-		// nothing to save either, so the save needs no token, as on a form screen that hasn't been touched.
-		return;
-	}
-	await first.focus();
-	await page.waitForFunction(() => {
-		const input = document.querySelector('#formulize_drawer input[name="XOOPS_TOKEN_REQUEST"]');
-		return !input || input.value.length > 0;
-	});
-}
-
-/**
- * Click one of the drawer's form buttons, by its words, and wait for what it does. Save writes the entry and draws
- * it again. Save and Close, Save and Finish and the like write it and close the drawer, and the list behind it
- * reloads when anything was saved. Close leaves without saving.
- * @param {import('@playwright/test').Page} page
- * @param {string} buttonText
- * @param {number} timeout
- */
-async function saveInDrawer(page, buttonText, timeout) {
-	const drawer = entryDrawer(page);
-	await drawerEntryReady(page, timeout);
-	await drawerTokenReady(page);
-	const button = drawer.locator('.formulize-drawer__foot').getByRole('button', { name: buttonText, exact: true });
-	await expect(button).toBeVisible();
-	if (await button.getAttribute('name') === 'save') {
-		// Save stays on the entry: the drawer sends the form, and draws what comes back. With nothing changed, it says so
-		// and sends nothing.
-		const sent = page.waitForResponse(response => response.url().includes('/include/formdisplay-elementsonly.php'), { timeout });
-		const unchanged = drawer.locator('.formulize-drawer__notice', { hasText: /\S/ }).waitFor({ timeout });
-		sent.catch(() => {});
-		unchanged.catch(() => {});
-		await button.click();
-		// A Save that sends nothing hasn't saved what the test filled in, so the test mustn't carry on as if it had
-		if (await Promise.race([sent.then(() => 'sent'), unchanged.then(() => 'unchanged')]) === 'unchanged') {
-			throw new Error(`The drawer sent nothing when ${buttonText} was clicked, and said: ${await drawer.locator('.formulize-drawer__notice').textContent()}`);
-		}
-		await expect(drawer).not.toHaveClass(/formulize-drawer--busy/, { timeout });
-		await expect(drawer.locator('form#formulize_drawer')).toBeAttached({ timeout });
-	} else {
-		// The drawer closes when the entry is saved. When the save is refused, it stays open and says why.
-		await button.click();
-		const notice = drawer.locator('.formulize-drawer__notice', { hasText: /\S/ });
-		const closed = drawer.waitFor({ state: 'hidden', timeout }).then(() => 'closed');
-		const refused = notice.waitFor({ timeout }).then(() => 'notice', () => 'closed');
-		closed.catch(() => {});
-		if (await Promise.race([closed, refused]) === 'notice' && await drawer.isVisible()) {
-			throw new Error(`The drawer didn't save the entry when ${buttonText} was clicked, and said: ${await notice.textContent()}`);
-		}
-		await expect(drawer).toBeHidden({ timeout });
-		await listReloadedAfterDrawer(page, timeout);
-	}
-	await expect(page.getByText('Your changes were not saved.')).not.toBeVisible({ timeout: 10000 });
-}
-
 // After the drawer closes, the list behind it reloads if anything was saved while it was open (onEntrySaved in
 // drawer.js calls the list's showLoading(), which shows the working message and sends the list's form)
 async function listReloadedAfterDrawer(page, timeout) {
@@ -1817,7 +1791,7 @@ async function listReloadedAfterDrawer(page, timeout) {
  */
 export async function saveAndCloseEntry(page, buttonText = 'Save and Close', timeout = 120000) {
 	if (await drawerIsOpen(page)) {
-		await saveInDrawer(page, buttonText, timeout);
+		await saveDrawerForm(page, buttonText, timeout);
 	} else {
 		// A form that's been touched fills in its security token a moment later, and a save sent before then is refused.
 		// A person can't click that fast. A form that hasn't been touched has nothing to save, so it needs no token.
@@ -1860,7 +1834,7 @@ export async function entryPageTab(page, title) {
 export async function goToEntryPage(page, title) {
 	if (await drawerIsOpen(page)) {
 		await drawerEntryReady(page);
-		await drawerTokenReady(page);
+		await waitForDrawerFormToken(page);
 		const tab = await entryPageTab(page, title);
 		await tab.click();
 		await expect(tab).toHaveAttribute('aria-current', 'page', { timeout: 60000 });
