@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { saveDrawerForm } from '../../utils';
+import { saveDrawerForm, waitForDrawerFormToken } from '../../utils';
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import { login, leavePage, conditionalElementReady, conditionalChecksFinished, waitForJQueryAnimations, waitForAdminPageReady, saveFormulizeForm, saveAdminForm, openElementSettings, dbQuery, dbPrefix, sqlEscape, deleteMuseumFormsTitled } from '../../utils';
 
@@ -453,10 +453,9 @@ test('The drawer waits for conditional elements before it saves', async ({ page 
 
 	await conditionalChecksFinished(page);
 	await radioIn(drawer(page), 'dct_case_spotlight', 'Warm').check();
-	await drawerSave(page).click();
-	await expect.poll(() => storedValue(casesFid, otherCaseEntryId, 'dct_case_spotlight'), { message: 'the colour should be saved' }).toBe('Warm');
+	await saveDrawerForm(page);
+	expect(storedValue(casesFid, otherCaseEntryId, 'dct_case_spotlight'), 'the colour should be saved').toBe('Warm');
 	expect(storedValue(casesFid, otherCaseEntryId, 'dct_case_lighting')).toBe('Spotlit');
-	await expect(drawer(page)).not.toHaveClass(/formulize-drawer--busy/);
 
 	await closeDrawer(page);
 	await leaveForExhibitionsList(page);
@@ -483,6 +482,7 @@ test('Deleting a sub entry in the drawer keeps the rich text of the form it is i
 	await expect(drawer(page).locator('.formulize-label-dct_exhibition_venue')).not.toBeVisible();
 	await conditionalChecksFinished(page);
 	await drawer(page).locator(`input.delbox[name="delbox${otherCaseEntryId}"]`).check();
+	await waitForDrawerFormToken(page);
 	await dialogFrom(page, () => drawer(page).locator('input[name="deletesubs"]').click());
 
 	await expect.poll(() => dbQuery(`SELECT entry_id FROM ${dataTable(casesFid)} WHERE entry_id = ${otherCaseEntryId}`).length, { message: 'the display case should be deleted' }).toBe(0);
@@ -517,9 +517,8 @@ test('The drawer asks about letters in a number box, and runs its own form\'s ex
 
 	await shelves.fill('12');
 	await shelves.press('Tab');
-	await drawerSave(page).click();
-	await expect.poll(() => Number(storedValue(casesFid, caseEntryId, 'dct_case_shelves')), { message: 'the number should be saved' }).toBe(12);
-	await expect(drawer(page)).not.toHaveClass(/formulize-drawer--busy/);
+	await saveDrawerForm(page);
+	expect(Number(storedValue(casesFid, caseEntryId, 'dct_case_shelves')), 'the number should be saved').toBe(12);
 	await closeDrawer(page);
 
 	// the exhibition behind has no extra validation, so what the display cases refuse is fine there
