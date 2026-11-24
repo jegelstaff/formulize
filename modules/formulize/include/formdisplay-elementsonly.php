@@ -267,22 +267,8 @@ if(typeof FORMULIZE === 'undefined' || FORMULIZE.SET_BY_DRAWER) {
 }
 ".formulize_otherBoxFocusJs()."</script>\n";
 
-// Wrap the rendered elements in the active theme's drawer container (see
-// modules/formulize/templates/screens/<Theme>/default/drawer/toptemplate.php).
-// Those templates emit the same container classes the theme's form and multiPage
-// screens emit, so a form rendered here is styled exactly as it is full screen and
-// no theme needs a parallel set of "form inside the drawer" CSS rules.
-$GLOBALS['formulize_elementsOnly_wrapperTemplateType'] = 'drawer';
-
-// Keep displayForm() out of its full page subform navigation: with this flag set it
-// does not reroute the render to a subform screen from posted goto_sfid/sub_fid, and
-// does not jump into a newly added sub entry's multipage screen (the drawer's Add flow
-// posts target_sub). Drilling into sub entries is the drawer's job here (see
-// subformAction in drawer.js). The bare true, rather than the array of the parent's
-// fid/entry that a real full page subform render carries, is what lets
-// formulizeMultipageSaveAndLeaveText tell the two apart.
-global $formulize_displayingSubform;
-$formulize_displayingSubform = true;
+// This request draws a form for the drawer. See formulize_renderingInDrawer() in formdisplay.php for what that changes.
+$GLOBALS['formulize_renderingInDrawer'] = true;
 
 // What was shown, for the activity log below: the screen's title, or the form's title when
 // rendering without a screen. The drawer header's title is decided after the render, because

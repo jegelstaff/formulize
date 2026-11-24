@@ -621,14 +621,9 @@ class formulize_elementsOnlyForm extends formulize_themeForm {
         $elementsInTable = stristr($this->getTemplate('elementcontainero'), '<tr') !== false ? true : false;
         $elementsInTable = (stristr($topTemplate, '<table') !== false AND $elementsInTable) ? true : false;
 
-        // A host that wants the elements wrapped in a theme container (the right
-        // slide-out drawer does, so a form is styled there exactly as it is full
-        // screen) names the screen-template type to take the wrapper from. Themes
-        // ship those templates at
-        // modules/formulize/templates/screens/<Theme>/default/<type>/{top,bottom}template.php.
-        // Opt-in, so every other elements-only consumer (the subform modal, API
-        // callers) renders bare elements exactly as before.
-        $wrapperType = isset($GLOBALS['formulize_elementsOnly_wrapperTemplateType']) ? $GLOBALS['formulize_elementsOnly_wrapperTemplateType'] : '';
+        // The drawer's form is wrapped in the theme's drawer container, so it's styled as it is full screen. A sub entry drawn
+        // inside it isn't, as it isn't full screen. Other elements-only forms render bare elements. See formulize_renderingInDrawer().
+        $wrapperType = (formulize_renderingInDrawer() AND !isset($GLOBALS['formulize_inlineSubformFrid'])) ? 'drawer' : '';
         $wrapperTop = $wrapperType ? getDefaultTemplate('toptemplate', $wrapperType) : '';
 
         $ret = '';
@@ -881,6 +876,22 @@ function getEntryValues($entryId, $fid, $elements = array(), $groupEntryWithUpda
 }
 
 
+/**
+ * Is this request drawing a form for the drawer? formdisplay-elementsonly.php says so. For the whole request, so it counts
+ * for every form drawn in it, including sub entries drawn inside the drawer's form. It changes three things:
+ * - The drawer's form, the outermost one, is wrapped in the theme's drawer container (templates/screens/<Theme>/default/drawer/),
+ *   which has the classes the theme's own form screens have, so the form looks the same as full screen. Not the sub entries
+ *   drawn inside it, since full screen doesn't wrap them either.
+ * - The drawer's form draws the conditional elements' code, since it's the outermost form, and the endpoint puts the div
+ *   conditional.js uses outside it.
+ * - displayForm() leaves subform navigation to the drawer, which opens a sub entry as a form of its own (subformAction() in
+ *   drawer.js). So it doesn't go to a subform's screen, or jump into a new sub entry's form screen.
+ * @return bool
+ */
+function formulize_renderingInDrawer() {
+	return !empty($GLOBALS['formulize_renderingInDrawer']);
+}
+
 function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button_text="", $settings=array(), $titleOverride="", $overrideValue="",
     $overrideMulti="", $overrideSubMulti="", $viewallforms=0, $printall=0, $screen=null)
 {
@@ -988,7 +999,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
     // note that camebackfromsubformalready is also set only once per page load
     global $formulize_displayingSubform;
     $formulize_displayingSubform = $formulize_displayingSubform ? $formulize_displayingSubform : false; // set to false unless there's an affirmative value already
-    if(!$formulize_displayingSubform AND ((isset($_POST['goto_sfid']) AND $_POST['goto_sfid']) OR (isset($_POST['sub_fid']) AND $_POST['sub_fid']) OR ($cameBackFromSubformAlready AND is_numeric($cameBackFromSubformAlready)))) {
+    if(!$formulize_displayingSubform AND !formulize_renderingInDrawer() AND ((isset($_POST['goto_sfid']) AND $_POST['goto_sfid']) OR (isset($_POST['sub_fid']) AND $_POST['sub_fid']) OR ($cameBackFromSubformAlready AND is_numeric($cameBackFromSubformAlready)))) {
         $subformElementIdToUse = isset($_POST['goto_subformElementId']) ? intval($_POST['goto_subformElementId']) : 0;
         if($subformElementObject = $element_handler->get($subformElementIdToUse)) {
             if($subformDisplayScreen = get_display_screen_for_subform($subformElementObject)) {
@@ -1540,7 +1551,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		// should it be any kind of screen??
 		// a multipage record is harder to represent as a row. A single page form could just be the more complete version of a row, so we show row and let people dive in.
 		// We could make a more complex series of view button options in the subform element controls
-		if(!$formulize_displayingSubform AND is_array($formulize_subformElementsWithNewEntries) AND is_array($formulize_newSubformEntries)) {
+		if(!$formulize_displayingSubform AND !formulize_renderingInDrawer() AND is_array($formulize_subformElementsWithNewEntries) AND is_array($formulize_newSubformEntries)) {
 				foreach($formulize_subformElementsWithNewEntries as $candidate) {
 						if($subformDisplayScreen = get_display_screen_for_subform($candidate)) {
 								$screenHandler = xoops_getmodulehandler('screen', 'formulize');
@@ -1744,8 +1755,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		// after the outer form's init code that needs it. Their governing elements accumulate in the globals above, so the outer form draws them too.
 		// Elements only forms are normally embedded in a page that handles this, except in the drawer, where the elements only form is the outermost form.
 		$renderingInlineSubformEntry = isset($GLOBALS['formulize_inlineSubformFrid']);
-		$renderingInDrawer = (isset($GLOBALS['formulize_elementsOnly_wrapperTemplateType']) AND $GLOBALS['formulize_elementsOnly_wrapperTemplateType'] === 'drawer');
-		if(count((array) $formulize_governingElements)> 0 AND !$renderingInlineSubformEntry AND (!$formElementsOnly OR $renderingInDrawer)) {
+		if(count((array) $formulize_governingElements)> 0 AND !$renderingInlineSubformEntry AND (!$formElementsOnly OR formulize_renderingInDrawer())) {
 			drawJavascriptForConditionalElements(array_keys($GLOBALS['formulize_renderedElementHasConditions']), $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData, $formulize_elementScreenIds, $formulize_elementIsSimpleDisplayCondition, intval($screen ? $screen->getVar('sid') : 0), intval(($screen AND !$frid) ? $screen->getVar('frid') : $frid)); // the same screen and relationship drawJavascript() puts in FORMULIZE
 		}
 
@@ -3542,7 +3552,7 @@ function _drawJavascriptForConditionalElements($initCode) {
 				<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/conditional.js?v=".$conditionalJsVersion."'></script>\n
 			";
 			// the drawer's endpoint puts everything printed here inside its form, so it writes the capture div itself, after the form
-			if(!isset($GLOBALS['formulize_elementsOnly_wrapperTemplateType']) OR $GLOBALS['formulize_elementsOnly_wrapperTemplateType'] !== 'drawer') {
+			if(!formulize_renderingInDrawer()) {
 				$code .= formulize_conditionalHTMLCaptureDiv();
 			}
 			$codeIncluded = true;
