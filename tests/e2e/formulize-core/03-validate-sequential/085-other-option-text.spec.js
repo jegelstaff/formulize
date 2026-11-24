@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
-import { login, saveFormulizeForm, saveAdminForm, leavePage, waitForWorkingMessage, openAllColumnSections, applyColumnChanges, dbQuery, dbPrefix, sqlEscape, goToNextListPage, openChangeColumns, showListSearches } from '../../utils';
+import { login, saveFormulizeForm, saveAdminForm, saveAdminSettings, leavePage, waitForWorkingMessage, openAllColumnSections, applyColumnChanges, dbQuery, dbPrefix, sqlEscape, goToNextListPage, openChangeColumns, showListSearches } from '../../utils';
 
 /**
  * What people type into the box of an Other option saves with the element's value.
@@ -155,7 +155,7 @@ async function setAIAssistant(page, on) {
 	await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 	const choice = page.locator(`input[name="formulizeAIAssistantEnabled"][value="${on ? 1 : 0}"]`);
 	await choice.check();
-	await page.getByRole('button', { name: 'Save your changes' }).click();
+	await saveAdminSettings(page);
 	await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 	await page.goto('/modules/formulize/admin/ui.php?page=settings&view=ai');
 	await expect(choice).toBeChecked();

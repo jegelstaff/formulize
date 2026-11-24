@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, editScreenPage, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape, showPermissionsFor, openApplicationAccordion, waitForJQueryAnimations, signOutLink } from '../../utils';
+import { login, saveAdminForm, saveAdminSettings, openMenuAccordion, openElementAccordion, waitForAdminPageReady, editScreenPage, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape, showPermissionsFor, openApplicationAccordion, waitForJQueryAnimations, signOutLink } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -415,7 +415,7 @@ test.describe('Set columns and elements for screens', () => {
 		const rewriteRulesEnabled = page.locator('input[name="formulizeRewriteRulesEnabled"][value="1"]');
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await rewriteRulesEnabled.check();
-		await page.getByRole('button', { name: 'Save your changes' }).click();
+		await saveAdminSettings(page);
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await expect(rewriteRulesEnabled).toBeChecked();
 		// Navigate back to the Apps tab to find the Museum application.
@@ -423,8 +423,14 @@ test.describe('Set columns and elements for screens', () => {
   	await openApplicationAccordion(page, 'Museum');
   	await page.locator('div[id^=form-details-box-]').nth(4).getByRole('link', { name: 'Screens' }).click();
   	await page.getByRole('link', { name: 'Survey', exact: true }).click();
-  	await page.locator('input[name="screens-rewriteruleAddress"]').fill('survey');
-  	await page.getByRole('button', { name: 'Save your changes' }).click();
+		const address = page.locator('input[name="screens-rewriteruleAddress"]');
+		await expect(address).toBeVisible();
+		await waitForAdminPageReady(page);
+		const surveyScreen = page.url();
+		await address.fill('survey');
+		await saveAdminForm(page);
+		await page.goto(surveyScreen);
+		await expect(address).toHaveValue('survey');
 	})
 
 	test('Surveys form screen', async ({ page }) => {

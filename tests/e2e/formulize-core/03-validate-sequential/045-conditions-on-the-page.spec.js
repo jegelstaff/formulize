@@ -1,9 +1,9 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import {
-	login, leavePage, saveAdminForm, waitForAdminPageReady, conditionalChecksFinished, elementId, dbQuery, dbPrefix, sqlEscape, ensureMainMenuOpen,
+	login, leavePage, saveAdminForm, saveAdminSettings, waitForAdminPageReady, conditionalChecksFinished, elementId, dbQuery, dbPrefix, sqlEscape, ensureMainMenuOpen,
 	applyColumnChanges, openAllColumnSections, showPermissionsFor, getUserByLogin, openElementSettings, removeConditions,
-	openChangeColumns, showListSearches, openEntry as openEntryFromList,
+	openChangeColumns, showListSearches, openEntry as openEntryFromList, openFormScreenTab,
 } from '../../utils';
 import {
 	casesFor, howToCheck, namesIn, conditionsFor, conditionsWithCaptionsFor, expectedNames, namesOnPage, namesWhereShown, searchesFor, searchList,
@@ -245,9 +245,8 @@ async function openEntry(page, fid, entry) {
 // Open an artifact on one of its tabs, and wait for an element on that tab
 async function openArtifactTab(page, artifact, tab = 'Location and loans', elementOnTab = 'artifacts_location') {
 	await openEntry(page, formId('Artifacts'), entryId('artifacts', 'artifacts_short_name', artifact));
-	await page.getByRole('link', { name: tab, exact: true }).click();
+	await openFormScreenTab(page, tab);
 	await expect(page.locator(`.form-row:has(.formulize-label-${elementOnTab}) select`)).toBeVisible();
-	await page.waitForLoadState('load');
 }
 
 async function openNewLoanRequest(page) {
@@ -309,7 +308,7 @@ async function currentShortDateFormat(page) {
 async function setShortDateFormat(page, format) {
 	const formatBefore = await currentShortDateFormat(page);
 	await shortDateFormatBox(page).fill(format);
-	await page.getByRole('button', { name: 'Save your changes' }).click();
+	await saveAdminSettings(page);
 	await expect(async () => {
 		await openSystemSettings(page);
 		await expect(shortDateFormatBox(page)).toHaveValue(format, { timeout: 5000 });

@@ -94,20 +94,8 @@ test('Static content saved as PHP code is kept, over two saves', async ({ page }
 });
 
 test('The survey form shows the value the static content code computes', async ({ page }) => {
-	// Anonymous, the same way 01-setup/020-data-entry.spec.js reaches the survey, including its fallback for
-	// when the rewrite rule is not in effect.
-	let loaded = false;
-	try {
-		await page.goto('/survey');
-		await page.waitForLoadState('networkidle');
-		loaded = await page.locator('.formulize-label-surveys_your_name').count() > 0;
-	} catch {
-		loaded = false;
-	}
-	if (!loaded) {
-		// Survey multipage screen is sid=16 after the 005 form/screen additions (see 020).
-		await page.goto('/modules/formulize/index.php?sid=16');
-	}
+	// Anonymous, the same way 01-setup/020-data-entry.spec.js reaches the survey
+	await page.goto('/survey');
 	await expect(page.getByRole('textbox', { name: 'Your name' })).toBeVisible();
 	// The heading is not asserted here on purpose - see the note at the top of this file about the caption
 	// fallback making that assertion pass even when the content has been lost.

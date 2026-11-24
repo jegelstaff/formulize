@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, editScreenPage, conditionalElementReady, createMuseumForm, leavePage, elementId, dbQuery, dbPrefix, sqlEscape,
-	openMainMenu, openEntry, entryArea, showListSearches } from '../../utils';
+	openMainMenu, openEntry, entryArea, showListSearches, openFormScreenTab } from '../../utils';
 import {
 	formId, museumAppId, startElement, finishElement, makeRequired, linkToSource, inheritPermissionsFromArtifacts, openFormScreens,
 	setElementsOnOnlyPage, expectElementsOnPage, saveAndClose,
@@ -591,7 +591,7 @@ test.describe('Catalogue every artifact', () => {
 			await page.goto(`/modules/formulize/index.php?fid=${artifactsFid}&ve=${artifactEntryId(artifact.name)}`);
 			await page.waitForLoadState('load');
 
-			await page.getByRole('link', { name: 'Location and loans', exact: true }).click();
+			await openFormScreenTab(page, 'Location and loans');
 			const location = page.locator('.form-row:has(.formulize-label-artifacts_location) select');
 			await expect(location).toBeVisible();
 			await location.selectOption({ label: 'Main Vault' });
@@ -610,7 +610,7 @@ test.describe('Catalogue every artifact', () => {
 			await saveFormulizeForm(page);
 
 			if (artifact.appraiser !== undefined) {
-				await page.getByRole('link', { name: 'Appraisal', exact: true }).click();
+				await openFormScreenTab(page, 'Appraisal');
 				const email = page.locator('.form-row:has(.formulize-label-artifacts_appraiser_email)').getByRole('textbox');
 				await expect(email).toBeVisible();
 				if (artifact.appraiser === '') {
@@ -624,7 +624,7 @@ test.describe('Catalogue every artifact', () => {
 			}
 
 			if (artifact.cataloguedBy || artifact.handling) {
-				await page.getByRole('link', { name: 'Cataloguing', exact: true }).click();
+				await openFormScreenTab(page, 'Cataloguing');
 				const cataloguedBy = page.locator('.form-row:has(.formulize-label-artifacts_catalogued_by) select');
 				await expect(cataloguedBy).toBeVisible();
 				if (artifact.cataloguedBy) {
@@ -740,7 +740,7 @@ test.describe('What was built', () => {
 		await login(page, 'curator1', '12345');
 		await page.goto(`/modules/formulize/index.php?fid=${artifactsFid}&ve=${artifactEntryId('Roman Coin')}`);
 		await page.waitForLoadState('load');
-		await page.getByRole('link', { name: 'Location and loans', exact: true }).click();
+		await openFormScreenTab(page, 'Location and loans');
 		const subform = page.locator('.formulize-subform-table');
 		await expect(subform).toBeVisible();
 		await expect(subform.getByText('City Museum', { exact: true })).toBeVisible();

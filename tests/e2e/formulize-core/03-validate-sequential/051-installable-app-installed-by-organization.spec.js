@@ -1,5 +1,5 @@
 const { test, expect, devices } = require('@playwright/test');
-import { login } from '../../utils';
+import { login, saveAdminSettings } from '../../utils';
 import { E2E_TEST_BASE_URL, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
 
 // The site installed as an app by its organization, through browser policy or device management, rather
@@ -23,7 +23,7 @@ async function chooseAppSetting(page, label) {
 	await openAdvancedSettings(page);
 	const before = await appSetting(page).evaluate(select => select.options[select.selectedIndex].text);
 	await appSetting(page).selectOption({ label });
-	await page.getByRole('button', { name: 'Save your changes' }).click();
+	await saveAdminSettings(page);
 	await expect(async () => {
 		await openAdvancedSettings(page);
 		expect(await appSetting(page).evaluate(select => select.options[select.selectedIndex].text)).toBe(label);

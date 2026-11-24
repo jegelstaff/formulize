@@ -13,8 +13,7 @@ module.exports = async () => {
   // pass either way, which is how this once went unnoticed. 042-public-api-read.spec.js now has
   // one test that requests the rewritten /formulize-public-api/ URL the setup instructions tell
   // administrators to configure, and fails without these rules. The survey specs in
-  // 020-data-entry.spec.js report whether /survey reached the survey through the alternate URL
-  // rule, or had to fall back to the screen's own address.
+  // 020-data-entry.spec.js go to /survey, and fail without the alternate URL rule.
   const htaccessContent = `
 RewriteEngine On
 

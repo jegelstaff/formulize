@@ -588,7 +588,6 @@ test.describe('Data entry for Exhibits', () => {
 })
 
 test.describe('Data entry for Survey', () => {
-	let rewriteWorks = true;
 	[
 		{ name: 'Ramesses II', exhibit: 'History through the Ages', favourite: 'Egyptian Chariot', rating: 'Mind blowing!' },
 		{ name: 'James Cook', exhibit: 'Modern Amazements', favourite: 'Polynesian Canoe', rating: 'Excellent' },
@@ -598,24 +597,8 @@ test.describe('Data entry for Survey', () => {
 		{ name: 'Darius the Great', exhibit: 'Ancient Wonders', favourite: 'Babylonian Spoon', rating: 'Excellent' }
 	].forEach(({ name, exhibit, favourite, rating }) => {
 		test(`Create survey for ${name}`, async ({ page }) => {
-			if(rewriteWorks) {
-				try {
-					await page.goto('/survey');
-					await page.waitForLoadState('networkidle');
-					rewriteWorks = await page.locator('.formulize-label-surveys_your_name').count() > 0;
-				} catch {
-					rewriteWorks = false;
-				}
-			}
-			if(!rewriteWorks) {
-				// Survey multipage screen is sid=16 after the 005 form/screen additions
-				// (the 4 005 forms shifted museum screen ids up by 6; was sid=10).
-				await page.goto('/modules/formulize/index.php?sid=16');
-			}
-			// say which way the survey was reached, so the run shows whether the .htaccess rewrite rules are in effect
-			const reachedBy = rewriteWorks ? '/survey (the .htaccess rewrite rule worked)' : 'index.php?sid=16 (FALLBACK: /survey did not load the survey, so the .htaccess rewrite rule is not in effect)';
-			console.log(`Survey for ${name} reached by ${reachedBy}`);
-			test.info().annotations.push({ type: 'survey address', description: reachedBy });
+			// the alternate URL 015 gave the screen, which needs the rules htaccess-setup.js puts in .htaccess
+			await page.goto('/survey');
 			await page.getByRole('textbox', { name: 'Your name' }).fill(name);
 			await expect(page.getByText('Thank you for visiting the Museum!')).toBeVisible();
 			await expect(page.getByText('Flagged to the staff')).not.toBeVisible();

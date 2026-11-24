@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, waitForAdminPageReady, chooseSiteThemes, expectSiteTheme, E2E_THEME, ON_LYRIS, accountLink } from '../../utils';
+import { login, waitForAdminPageReady, chooseSiteThemes, saveAdminSettings, expectSiteTheme, E2E_THEME, ON_LYRIS, accountLink } from '../../utils';
 
 test.describe('Installation of Formulize', () => {
 	test('Run the Installer', async ({ page }) => {
@@ -111,7 +111,7 @@ test.describe('Installation of Formulize', () => {
 		const loggingEnabled = page.locator('input[name="formulizeLoggingOnOff"][value="1"]');
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await loggingEnabled.check();
-		await page.getByRole('button', { name: 'Save your changes' }).click();
+		await saveAdminSettings(page);
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await expect(loggingEnabled).toBeChecked();
 	}),
@@ -126,7 +126,7 @@ test.describe('Installation of Formulize', () => {
 		const closeSiteNo = page.locator('input[name="closesite"][value="0"]');
 		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
 		await closeSiteYes.check();
-  	await page.getByRole('button', { name: 'Save your changes' }).click();
+		await saveAdminSettings(page);
 		await waitForAdminPageReady(page);
 		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
 		await expect(closeSiteYes).toBeChecked();
@@ -140,7 +140,7 @@ test.describe('Installation of Formulize', () => {
 		await page.goto('/modules/system/admin.php?fct=preferences&op=show&confcat_id=1');
 		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
 		await closeSiteNo.check();
-  	await page.getByRole('button', { name: 'Save your changes' }).click();
+		await saveAdminSettings(page);
 		await waitForAdminPageReady(page);
 		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
 		await expect(closeSiteNo).toBeChecked();

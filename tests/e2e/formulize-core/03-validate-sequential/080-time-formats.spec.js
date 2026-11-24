@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import {
-	login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, waitForWorkingMessage, applyColumnChanges, createMuseumForm, deleteMuseumFormsTitled,
+	login, saveAdminForm, saveAdminSettings, saveFormulizeForm, waitForAdminPageReady, waitForWorkingMessage, applyColumnChanges, createMuseumForm, deleteMuseumFormsTitled,
 	leavePage, elementRow, dbQuery, dbPrefix, sqlEscape,
 	openChangeColumns, showListSearches, openEntry, entryArea, saveAndCloseEntry,
 } from '../../utils';
@@ -60,7 +60,7 @@ async function setFormats(page, { twelve, twentyFour }) {
 	await openSystemSettings(page);
 	await formatBox(page, 'timeformat12h').fill(twelve);
 	await formatBox(page, 'timeformat24h').fill(twentyFour);
-	await page.getByRole('button', { name: 'Save your changes' }).click();
+	await saveAdminSettings(page);
 	await expect(async () => {
 		await openSystemSettings(page);
 		await expect(formatBox(page, 'timeformat12h')).toHaveValue(twelve, { timeout: 5000 });

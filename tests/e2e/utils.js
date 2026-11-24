@@ -1866,10 +1866,23 @@ export async function goToEntryPage(page, title) {
 		await expect(tab).toHaveAttribute('aria-current', 'page', { timeout: 60000 });
 		await drawerEntryReady(page);
 	} else {
-		await page.waitForLoadState('load');
-		await page.getByRole('link', { name: title, exact: true }).click();
-		await page.waitForLoadState('load');
+		await openFormScreenTab(page, title);
 	}
+}
+
+/**
+ * Click a tab on a form screen, and wait for that page of the entry. The tab releases the entry's locks by AJAX, and
+ * submits the form only when that's done. So after the click, the page being left is still there, loaded, with nothing
+ * to say it's about to go.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} title
+ */
+export async function openFormScreenTab(page, title) {
+	await page.waitForLoadState('load');
+	await Promise.all([
+		page.waitForEvent('load', { timeout: 60000 }),
+		page.getByRole('link', { name: title, exact: true }).click(),
+	]);
 }
 
 // ============================================================================
@@ -2107,6 +2120,29 @@ export function restoreSiteTheme(state) {
 }
 
 /**
+ * Save a page of settings in the admin UI, under Settings or Appearance, or the system preferences, and wait for the
+ * page to come back. The button submits a form, and the browser can begin to send it after the click is over. Going
+ * anywhere else before then cancels the save. What was chosen is already showing, so checking it proves nothing until
+ * the page has come back.
+ * @param {import('@playwright/test').Page} page On the settings page, and loaded
+ */
+export async function saveAdminSettings(page) {
+	await page.waitForLoadState('load');
+	const whichPage = () => {
+		const { pathname, searchParams } = new URL(page.url());
+		return [pathname, searchParams.get('page'), searchParams.get('view')];
+	};
+	const saved = whichPage();
+	await Promise.all([
+		page.waitForEvent('load', { timeout: 60000 }),
+		page.getByRole('button', { name: 'Save your changes' }).click(),
+	]);
+	// A save comes back to its own page with scrollx in the address. One that's refused goes to the system preferences instead.
+	expect(whichPage(), 'the settings were saved').toEqual(saved);
+	expect(page.url()).toMatch(/[?&]scrollx=/);
+}
+
+/**
  * Choose the site's theme, and the theme webmasters see, on Admin > Appearance > Settings, and save, the way an
  * administrator does. Saving a new site theme also moves every user, and every screen, to it, which
  * setSiteThemeInDb() doesn't do. Call it signed in as a webmaster.
@@ -2120,12 +2156,7 @@ export async function chooseSiteThemes(page, site, admin) {
 	await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 	await page.locator('#theme_set').selectOption(site);
 	await page.locator('#theme_admin_set').selectOption(admin);
-	// A save comes back to this page with scrollx in its address, which it didn't have before. One that's refused goes
-	// to the system preferences instead.
-	await Promise.all([
-		page.waitForURL(/view=settings.*scrollx=/),
-		page.getByRole('button', { name: 'Save your changes' }).click(),
-	]);
+	await saveAdminSettings(page);
 	await page.goto(settingsUrl);
 	await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 	await expect(page.locator('#theme_set')).toHaveValue(site);
