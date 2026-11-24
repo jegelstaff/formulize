@@ -6,6 +6,7 @@ var governedElements = window.governedElements || new Array();
 var relevantElements = window.relevantElements || new Array();
 var oneToOneElements = window.oneToOneElements || new Array();
 var elementScreenIds = window.elementScreenIds || new Array();
+var elementFrids = window.elementFrids || new Array();
 var elementIsSimpleDisplayCondition = window.elementIsSimpleDisplayCondition || new Array();
 
 var conditionalCheckInProgress = window.conditionalCheckInProgress || 0;
@@ -173,7 +174,10 @@ function checkCondition(relevantElementSet, elementValuesForURL, oneToOne) {
 	var elementIds = '';
 	var elementIdsSep = '';
 	var incrementCount = 0; // Track how many we increment
-	var screenIdToUse = FORMULIZE.SCREEN_ID; // Default to global screen ID
+	// The page's screen and relationship are defaults for elements set up by custom code that doesn't give them. The drawer
+	// can put another form in the page, with its own.
+	var screenIdToUse = FORMULIZE.SCREEN_ID;
+	var fridToUse = FORMULIZE.FRID;
 
 	for(k in relevantElementSet) {
 		conditionalCheckInProgress = conditionalCheckInProgress + 1;
@@ -187,13 +191,17 @@ function checkCondition(relevantElementSet, elementValuesForURL, oneToOne) {
 		if(typeof elementScreenIds[markupHandle] !== 'undefined' && elementScreenIds[markupHandle] !== null) {
 			screenIdToUse = elementScreenIds[markupHandle];
 		}
+		// Use the relationship of the form the element is in, if available
+		if(typeof elementFrids[markupHandle] !== 'undefined' && elementFrids[markupHandle] !== null) {
+			fridToUse = elementFrids[markupHandle];
+		}
 		if(oneToOne && oneToOneAdded == false && oneToOneElements[markupHandle]['onetoonefrid'] && partsArray[1] != oneToOneElements[markupHandle]['onetoonefid']) {
 				elementValuesForURL = elementValuesForURL + '&onetoonekey=1&onetoonefrid='+oneToOneElements[markupHandle]['onetoonefrid']+'&onetoonefid='+oneToOneElements[markupHandle]['onetoonefid']+'&onetooneentries='+oneToOneElements[markupHandle]['onetooneentries']+'&onetoonefids='+oneToOneElements[markupHandle]['onetoonefids'];
 				oneToOneAdded = true;
 		}
 		elementIdsSep = ',';
 	}
-	return jQuery.post(FORMULIZE.XOOPS_URL+"/modules/formulize/formulize_xhr_responder.php?uid="+FORMULIZE.XOOPS_UID+"&sid="+screenIdToUse+"&op=get_element_row_html&elementId="+elementIds+"&entryId="+entryId+"&fid="+fid+"&frid="+FORMULIZE.FRID+elementValuesForURL)
+	return jQuery.post(FORMULIZE.XOOPS_URL+"/modules/formulize/formulize_xhr_responder.php?uid="+FORMULIZE.XOOPS_UID+"&sid="+screenIdToUse+"&op=get_element_row_html&elementId="+elementIds+"&entryId="+entryId+"&fid="+fid+"&frid="+fridToUse+elementValuesForURL)
 		.fail(function() {
 			// Network error - decrement the counter
 			conditionalCheckInProgress = Math.max(0, conditionalCheckInProgress - incrementCount);

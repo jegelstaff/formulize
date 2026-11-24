@@ -1745,7 +1745,7 @@ function displayForm($formframe, $entry="", $mainform="", $done_dest="", $button
 		$renderingInlineSubformEntry = isset($GLOBALS['formulize_inlineSubformFrid']);
 		$renderingInDrawer = (isset($GLOBALS['formulize_elementsOnly_wrapperTemplateType']) AND $GLOBALS['formulize_elementsOnly_wrapperTemplateType'] === 'drawer');
 		if(count((array) $formulize_governingElements)> 0 AND !$renderingInlineSubformEntry AND (!$formElementsOnly OR $renderingInDrawer)) {
-			drawJavascriptForConditionalElements(array_keys($GLOBALS['formulize_renderedElementHasConditions']), $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData, $formulize_elementScreenIds, $formulize_elementIsSimpleDisplayCondition);
+			drawJavascriptForConditionalElements(array_keys($GLOBALS['formulize_renderedElementHasConditions']), $formulize_governingElements, $formulize_oneToOneElements, $formulize_oneToOneMetaData, $formulize_elementScreenIds, $formulize_elementIsSimpleDisplayCondition, intval($screen ? $screen->getVar('sid') : 0), intval(($screen AND !$frid) ? $screen->getVar('frid') : $frid)); // the same screen and relationship drawJavascript() puts in FORMULIZE
 		}
 
         // need to always include, once, the subformelementid that is being displayed, regardless of whether there are more subs below this or not
@@ -3485,7 +3485,15 @@ function markupNameAttr($renderedMarkupName) {
 // PRIMARILY THIS APPLIES TO CONDITIONAL ELEMENTS, BUT ALSO USED IN ONE-TO-ONE RELATIONSHIPS
 // conditionalElements is array of the elements (DOM ids, ie: de_fid_entryId_elementId) of the elements that have conditions.
 // governingElements is array with keys that are the DOM ids of the elements that govern other elements, and the values are arrays of the elements being governed
-function drawJavascriptForConditionalElements($conditionalElements, $governingElements, $oneToOneElements, $oneToOneMetaData=false, $elementScreenIds=false, $elementIsSimpleDisplayCondition=false) {
+// formScreenId and formFrid are the screen and relationship of the form these elements are drawn in. They're sent to the page with each element, because the drawer
+// can put another form in the same page, with its own. The screen is for elements that have none in elementScreenIds. Custom code that leaves these out gets the
+// page's, from the FORMULIZE object.
+function drawJavascriptForConditionalElements($conditionalElements, $governingElements, $oneToOneElements, $oneToOneMetaData=false, $elementScreenIds=false, $elementIsSimpleDisplayCondition=false, $formScreenId=null, $formFrid=null) {
+
+    // The governing elements accumulate for the whole request, so on a page with more than one form, a later form passes the earlier forms' elements again.
+    // So the first form to pass an element is the one it's in.
+    static $screenIdOfElementsForm = array();
+    static $fridOfElementsForm = array();
 
     $initCode = "
 jQuery(document).ready(function() {
@@ -3497,13 +3505,25 @@ jQuery(document).ready(function() {
 		$thisGoverningElement = markupNameAttr($thisGoverningElement);
 		$initCode .= "governedElements['".$thisGoverningElement."'] = new Array();\n";
 		foreach($theseGovernedElements as $innerKey=>$thisGovernedElement) {
+			$recordedName = $thisGovernedElement; // the screen ids are recorded under the name without any []
 			$thisGovernedElement = markupNameAttr($thisGovernedElement);
 			if(!isset($relevantElementArray[$thisGovernedElement])) {
 				$initCode .= "relevantElements['".$thisGovernedElement."'] = new Array();\n";
 				$initCode .= "oneToOneElements['".$thisGovernedElement."'] = new Array();\n";
 				// Initialize elementScreenIds array for this governed element
-				if($elementScreenIds && isset($elementScreenIds[$thisGovernedElement])) {
-					$initCode .= "elementScreenIds['".$thisGovernedElement."'] = ".$elementScreenIds[$thisGovernedElement].";\n";
+				if(!isset($screenIdOfElementsForm[$thisGovernedElement])) {
+					$screenIdOfElementsForm[$thisGovernedElement] = $formScreenId;
+				}
+				$screenIdOfElement = ($elementScreenIds AND isset($elementScreenIds[$recordedName])) ? $elementScreenIds[$recordedName] : $screenIdOfElementsForm[$thisGovernedElement];
+				if($screenIdOfElement !== null) {
+					$initCode .= "elementScreenIds['".$thisGovernedElement."'] = ".intval($screenIdOfElement).";\n";
+				}
+				// Initialize elementFrids array for this governed element
+				if(!isset($fridOfElementsForm[$thisGovernedElement])) {
+					$fridOfElementsForm[$thisGovernedElement] = $formFrid;
+				}
+				if($fridOfElementsForm[$thisGovernedElement] !== null) {
+					$initCode .= "elementFrids['".$thisGovernedElement."'] = ".intval($fridOfElementsForm[$thisGovernedElement]).";\n";
 				}
 				// Initialize elementIsSimpleDisplayCondition array for this governed element
 				if($elementIsSimpleDisplayCondition && isset($elementIsSimpleDisplayCondition[$thisGovernedElement])) {
