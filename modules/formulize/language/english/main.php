@@ -819,6 +819,11 @@ define("_formulize_GENERIC_FILTER_MATCH_ONEORMORE", "Match one or more of these:
 
 define("_formulize_REQUIRED_UNIQUE", "The value you entered for '%s' has been entered already.  You must type a unique value.");
 
+// A date element's earliest and latest dates (check_date_limits(), in formulize_elementScripts() in include/functions.php).
+// Every constant starting _formulize_JS_DATE_LIMIT_ goes to the script, which knows it by the rest of its name. %s is the date.
+define("_formulize_JS_DATE_LIMIT_TOO_EARLY", "The date you selected is too far in the past.\n\nPlease select a date on or after %s.");
+define("_formulize_JS_DATE_LIMIT_TOO_LATE", "The date you selected is too far in the future.\n\nPlease select a date on or before %s.");
+
 define("_formulize_NO_MATCH_FOUND", "No match found");
 define("_formulize_NEW_VALUE", "New Value: ");
 

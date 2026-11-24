@@ -4129,8 +4129,8 @@ function formulize_printFilterPopoverScript($screen, $fid) {
 // note the mandatory clearing of the ventry value upon loading of the page.  Necessary to make the back button work right (otherwise ventry setting is retained from the previous loading of the page and the form is displayed after the next submission of the controls form)
 function interfaceJavascript($fid, $frid, $currentview, $useWorking, $useXhr, $lockedColumns, $screen=null, $restoreScrollPosition=false, $buttonCodeArray=array()) {
 
-	$autocompleteJsVersion = formulize_get_file_version('/modules/formulize/include/js/autocomplete.js');
-	print "<script type='text/javascript' src='".XOOPS_URL."/modules/formulize/include/js/autocomplete.js?v=".$autocompleteJsVersion."'></script>";
+	// what elements need, here for the elements edited in the list
+	print formulize_elementScripts();
 
 	formulize_printFilterPopoverScript($screen, $fid);
 
