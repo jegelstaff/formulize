@@ -64,6 +64,6 @@ Form pages don't put the token in the field. The field goes out empty, and it's 
 Two things follow from that:
 
 - **Any script that fills a token must look inside its own form.** A selector across the whole page copies one form's token into another. That once made drawer saves fail: a click in the drawer put the page's token in the drawer's form, the first save used it up, and the next was refused.
-- **A test that clicks and then saves within 269ms sends an empty token.** Wait for it first, with `waitForFormulizeFormToken()` in `tests/e2e/utils.js`. It looks at `#formulize_mainform`, so a form with another id needs its own wait.
+- **A test that clicks and then saves within 269ms sends an empty token.** Wait for it first, with `waitForFormulizeFormToken()` in `tests/e2e/utils.js`, or `waitForDrawerFormToken()` for a form in the drawer. `saveFormulizeForm()` and `saveDrawerForm()` do that for you. `fill()` counts as the first thing done in the form, and can be quicker than the token.
 
 A person can't save that fast, so this is a wait for something real. See [testing-robust-specs](testing-robust-specs.md).

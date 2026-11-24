@@ -392,26 +392,7 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 		}
 		if(isset($ele_value[ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED]) AND $ele_value[ELE_VALUE_TEXT_UNIQUE_VALUE_REQUIRED]) {
 			$eltmsgUnique = empty($eltcaption) ? sprintf( _formulize_REQUIRED_UNIQUE, $eltname ) : sprintf( _formulize_REQUIRED_UNIQUE, $eltcaption );
-			$validationCode[] = "if ( myform.{$eltname}.value != '' ) {\n";
-			$validationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'notreturned') {\n"; // a value has already been returned from xhr, so let's check that out...
-			$validationCode[] = "if(\"{$eltname}\" in formulize_xhr_returned_check_for_unique_value && formulize_xhr_returned_check_for_unique_value[\"{$eltname}\"] != 'valuenotfound') {\n"; // request has come back, form has been resubmitted, but the check turned up postive, ie: value is not unique, so we have to halt submission , and reset the check for unique flag so we can check again when the user has typed again and is ready to submit
-			$validationCode[] = "window.alert(\"{$eltmsgUnique}\");\n";
-			$validationCode[] = "hideSavingGraphic();\n";
-			$validationCode[] = "delete formulize_xhr_returned_check_for_unique_value.{$eltname};\n"; // unset this key
-			$validationCode[] = "myform.{$eltname}.focus();\n return false;\n";
-			$validationCode[] = "}\n";
-			$validationCode[] = "} else {\n";	 // do not submit the form, just send off the request, which will trigger a resubmission after setting the returned flag above to true so that we won't send again on resubmission
-			$validationCode[] = "\nvar formulize_xhr_params = []\n";
-			$validationCode[] = "formulize_xhr_params[0] = myform.{$eltname}.value;\n";
-			$validationCode[] = "formulize_xhr_params[1] = ".$element->getVar('ele_id').";\n";
-			$xhr_entry_to_send = is_numeric($entry_id) ? $entry_id : "'".$entry_id."'";
-			$validationCode[] = "formulize_xhr_params[2] = ".$xhr_entry_to_send.";\n";
-			$validationCode[] = "formulize_xhr_params[4] = leave;\n"; // will have been passed in to the main function and we need to preserve it after xhr is done
-			$validationCode[] = "formulize_xhr_send('check_for_unique_value', formulize_xhr_params);\n";
-			//$validationCode[] = "showSavingGraphic();\n";
-			$validationCode[] = "return false;\n";
-			$validationCode[] = "}\n";
-			$validationCode[] = "}\n";
+			$validationCode = array_merge($validationCode, formulize_uniqueValueValidationCode($eltname, "myform.{$eltname}.value", $element->getVar('ele_id'), $entry_id, $eltmsgUnique, "myform.{$eltname}"));
 		}
 		return $validationCode;
 	}

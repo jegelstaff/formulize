@@ -505,61 +505,15 @@ $drawerTemplates = array(
 );
 $drawerTemplatesJs = "<script type=\"application/json\" class=\"formulize-drawer-templates\">".json_encode($drawerTemplates)."</script>\n";
 
-// Rich-text (CKEditor) bootstrap. In a full page load formdisplay.php's drawJavascript()
-// loads the CKEditor library (via $xoTheme->addScript) and emits the initializeCKEditor /
-// updateCKEditors JS. In elements-only mode drawJavascript() is skipped and $xoTheme->addScript
-// only mutates the (never-rendered) theme head, so a rich-text textarea arrives in the drawer as
-// a plain <textarea> that never becomes an editor. Re-emit that bootstrap here so any rich-text
-// fields registered during render (in $GLOBALS['formulize_CKEditors']) initialise after injection.
-//
-// The library is emitted as a separate <script src> node so the host's fragment injector (see
-// themes/Lyris/js/script.js injectFragment) loads it before the following inline init runs — the
-// ordering a normal document gives for free but innerHTML/.load() do not.
+// Rich text editors, set up by the same code as full screen (formulize_richTextEditorJs() in formdisplay.php), which
+// can run again for every form the drawer shows, over a page that has editors of its own. Full screen gets the editor
+// library from the theme's head, which this request never draws, so it's loaded here, as a script of its own that the
+// drawer's injectFragment() waits for before it runs the next one. Over a form screen with a rich text field the page
+// has it already, and CKEditor refuses the second copy with an error in the console, keeping the first.
 $editorJs = '';
 if(!empty($GLOBALS['formulize_CKEditors'])) {
-    $editorIds = array_values(array_unique((array) $GLOBALS['formulize_CKEditors']));
-
-    $editorJs .= "<script type='text/javascript' src='".XOOPS_URL."/editors/CKEditor/ckeditor.js'></script>\n";
-
-    $initCalls = '';
-    $updateBody = '';
-    foreach($editorIds as $editorID) {
-        $safeId = htmlspecialchars($editorID, ENT_QUOTES);
-        $initCalls  .= "        initializeCKEditor('".$safeId."');\n";
-        $updateBody .= "        if(jQuery('#".$safeId."').length > 0 && window.CKEditors['".$safeId."']) {\n";
-        $updateBody .= "            jQuery('#hidden_".$safeId."').val(window.CKEditors['".$safeId."'].getData().replace(\"'\", '&#039;'));\n";
-        $updateBody .= "        }\n";
-    }
-
-    $editorJs .= "<script type='text/javascript'>
-    // Guarded so repeated drawer opens (or a host page that already has editors) do not clobber
-    // existing instances. updateCKEditors() is redefined each open to target the current fields;
-    // the drawer's save/validate path calls it before submitting to flush editor content back into
-    // the hidden inputs Formulize reads.
-    window.CKEditors = window.CKEditors || {};
-    function initializeCKEditor(editorID) {
-        if(typeof ClassicEditor === 'undefined') { return; }
-        if(jQuery('#'+editorID).length > 0 && !window.CKEditors[editorID]) {
-            ClassicEditor
-                .create( document.querySelector( '#'+editorID ) )
-                .then( editor => {
-                    window.CKEditors[editorID] = editor;
-                    window.CKEditors[editorID].model.document.on('change:data', function() {
-                        window.formulizechanged = 1;
-                    });
-                    jQuery('#'+editorID).attr('name', 'useCKEditor');
-                    jQuery(\"<input type='hidden' value='' name='\"+editorID.replace('_tarea', '')+\"' id='hidden_\"+editorID+\"' />\").appendTo(jQuery('#'+editorID).parent());
-                })
-                .catch( error => {
-                    console.error( error );
-                } );
-        }
-    }
-    jQuery(document).ready(function () {
-".$initCalls."    });
-    window.updateCKEditors = function() {
-".$updateBody."    };
-</script>\n";
+    $editorJs = "<script type='text/javascript' src='".XOOPS_URL."/editors/CKEditor/ckeditor.js'></script>\n"
+        ."<script type='text/javascript'>\n".formulize_richTextEditorJs($GLOBALS['formulize_CKEditors'])."</script>\n";
 }
 
 // "Office Use Only" toggle. On a full page load this function is defined by formdisplay.php's
@@ -576,14 +530,21 @@ window.officeUseOnlyToggle = function() {
 };
 </script>\n";
 
+// The functions that send a request to formulize_xhr_responder.php and act on its answer, which a unique value check
+// needs. Lists and form screens print them too, and these are the same ones, so printing them again for each form
+// the drawer shows changes nothing over those pages, and gives the drawer them over any other page.
+ob_start();
+drawXhrJavascript();
+$xhrJs = "<script type='text/javascript'>\n".ob_get_clean()."\nif(typeof formulize_xhr === 'undefined') { initialize_formulize_xhr(); }\n</script>\n";
+
 // validation + entry-lock cleanup helpers, keyed to this form's name so multiple
 // elements-only forms can coexist on a page.
-// NOTE: the element validation code collected here is written for full screen's xoopsFormValidate_<form>(leave, myform),
-// and this function takes only myform. The unique value checks in the text and user account elements use leave, so here
-// they throw and the save does nothing, and their answer from the server calls full screen's validateAndSubmit().
-// See ai-context/drawer.md.
+// The element validation code collected here is written for full screen's validation function, so this one takes the
+// same arguments. The drawer calls it with leave set to 'drawer', and a check the server has to answer, like a unique
+// value check, sends that with its request: formulize_xhr_return() then hands the answer back to the drawer, which
+// tries the action again, rather than to full screen's validateAndSubmit(). See formulize_uniqueValueValidationCode().
 $validationJs = "<script type='text/javascript'>
-function xoopsFormValidate_".$formname."(myform) {
+function xoopsFormValidate_".$formname."(leave, myform) {
 "
 .trim(implode("\n\r", (array) $GLOBALS['formulize_elementsOnlyForm_validationCode']))
 ."\n\r return true;
@@ -629,5 +590,6 @@ print $saveMessages
     .$drawerTemplatesJs
     .$editorJs
     .$officeUseOnlyJs
+    .$xhrJs
     .$validationJs
     .$activityLogJs;

@@ -2828,6 +2828,55 @@ if(!window.formulizeOtherBoxFocusAdded) {
 JS;
 }
 
+/**
+ * The JavaScript that turns rich text fields into editors, and copies each editor's text into the field that is saved.
+ * Full screen prints it in drawJavascript(), and the drawer's endpoint prints it with every form it shows. The drawer's
+ * form can be over a full screen form, in the same page, so this runs more than once in a page, for more than one form.
+ * What it knows is kept on window and added to, never replaced, and the functions are the same whichever form defined
+ * them last. updateCKEditors() copies every editor in the page, so saving either form copies its own.
+ * @param array $editorIds The ids of the rich text fields' textareas. Include the ones hidden by conditions, since
+ * conditional.js turns those into editors when it shows them, and only the ids listed here become editors.
+ * @return string The JavaScript, without script tags
+ */
+function formulize_richTextEditorJs($editorIds) {
+	$editorIds = array_values(array_unique((array) $editorIds));
+	return "window.formulizeCKEditorIDs = Object.assign(window.formulizeCKEditorIDs || {}, ".json_encode(array_fill_keys($editorIds, true), JSON_FORCE_OBJECT).");\n"
+		.<<<'JS'
+window.CKEditors = window.CKEditors || {};
+window.initializeCKEditor = function(editorID) {
+    if(!formulizeCKEditorIDs[editorID] || typeof ClassicEditor === 'undefined') { return; } // an ordinary textarea, or no editor to make
+    var textarea = document.getElementById(editorID);
+    // A textarea is marked as soon as its editor is asked for, so it never gets two, however soon it's asked again.
+    // One that conditional.js has drawn again is a new textarea, with no mark, and gets an editor of its own.
+    if(!textarea || textarea.formulizeRichTextEditor) { return; }
+    textarea.formulizeRichTextEditor = true;
+    ClassicEditor
+        .create(textarea)
+        .then(editor => {
+            CKEditors[editorID] = editor;
+            editor.model.document.on('change:data', function() {
+                window.formulizechanged = 1;
+            });
+            jQuery(textarea).attr('name', 'useCKEditor');
+            jQuery("<input type='hidden' value='' name='"+editorID.replace('_tarea', '')+"' id='hidden_"+editorID+"' />").appendTo(jQuery(textarea).parent());
+        })
+        .catch(error => {
+            console.error(error);
+        });
+};
+// every editor in the page: ones made when conditional.js showed a field, and ones in another form on the page
+window.updateCKEditors = function() {
+    for(var editorID in CKEditors) {
+        if(CKEditors[editorID] && jQuery('#'+editorID).length > 0) {
+            jQuery('#hidden_'+editorID).val(CKEditors[editorID].getData().replace("'", '&#039;'));
+        }
+    }
+};
+
+JS
+		."jQuery(document).ready(function() {\n    ".json_encode($editorIds).".forEach(function(editorID) { initializeCKEditor(editorID); });\n});\n";
+}
+
 function drawJavascript($nosave=false, $entryId=null, $screen=null, $frid=null, $settings=array()) {
 
 if($screen AND !$frid) {
@@ -2899,55 +2948,9 @@ if(isset($GLOBALS['formulize_fckEditors'])) {
 	print "}\n";
 }
 
-// on first load, turn on rich text editors -- conditional loads are handled elsewhere
+// turn on rich text editors. The catalogue includes elements that are hidden by conditions, which are not in the page yet, since they may be rendered by XHR later on
 if(isset($GLOBALS['formulize_CKEditors'])) {
-
-    // the catalogue includes elements that are currently hidden by conditions, and so are not in the page yet, since they may be rendered by XHR later on
-    $ckEditorIDs = array_values(array_unique($GLOBALS['formulize_CKEditors']));
-
-    print "var CKEditors = {};\n";
-    print "var formulizeCKEditorIDs = ".json_encode(array_fill_keys($ckEditorIDs, true), JSON_FORCE_OBJECT).";\n";
-
-    print "
-    function initializeCKEditor(editorID) {
-        if(!formulizeCKEditorIDs[editorID]) { return; } // this element does not use a rich text editor, ie: it's an ordinary textarea
-        if(jQuery('#'+editorID).length > 0) {
-            ClassicEditor
-                .create( document.querySelector( '#'+editorID ) )
-                .then( editor => {
-                    CKEditors[editorID] = editor;
-                    CKEditors[editorID].model.document.on('change:data', function() {
-                        formulizechanged = 1;
-                    });
-                    jQuery('#'+editorID).attr('name', 'useCKEditor');
-                    jQuery(\"<input type='hidden' value='' name='\"+editorID.replace('_tarea', '')+\"' id='hidden_\"+editorID+\"' />\").appendTo(jQuery('#'+editorID).parent());
-                    })
-                .catch( error => {
-                    console.error( error );
-                } );
-        }
-    }";
-
-    print "
-    jQuery(document).ready(function () {
-    ";
-
-    foreach($ckEditorIDs as $editorID) {
-        print "initializeCKEditor('$editorID');\n";
-    }
-
-    print "
-    });
-
-    // iterate over the editors that actually exist, so that editors created when a conditional element was revealed are included too
-    function updateCKEditors() {
-        for(var editorID in CKEditors) {
-            if(CKEditors[editorID] && jQuery('#'+editorID).length > 0) {
-                jQuery('#hidden_'+editorID).val(CKEditors[editorID].getData().replace(\"'\", '&#039;'));
-            }
-        }
-    }\n";
-
+    print formulize_richTextEditorJs($GLOBALS['formulize_CKEditors']);
 }
 
 ?>

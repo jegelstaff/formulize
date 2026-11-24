@@ -29,6 +29,8 @@
  *   saveEntry()                        - save the loaded entry form and leave it
  *   subformAction(action, args)        - called by the elements-only endpoint's
  *                                        subform stubs (add/edit/delete/clone)
+ *   retryAfterValueCheck()             - called by formulize_xhr_return() when the server
+ *                                        answers a check validation was waiting on
  *   initListView({ fid, frid, editDestination })
  *                                      - wire a list of entries to the drawer
  *   isOpen()                           - is a drawer panel currently showing?
@@ -1185,12 +1187,40 @@
     // the call so navigation would always enforce required fields, which made the
     // drawer refuse tab hops that full screen allows (issue reported on PR #127).
     // Honouring the real flag is what keeps the two surfaces identical.
-    function validateCurrentForm(form) {
+    //
+    // retry is the action being validated for. A check the server has to answer, such as
+    // whether a value is unique, sends its request and fails validation until the answer
+    // comes. The validation function is called with leave set to 'drawer', the request
+    // carries that, and formulize_xhr_return() hands the answer back to retryAfterValueCheck(),
+    // which does the action again, and so validates again, finding the answer this time.
+    // Full screen does the same with its save, through validateAndSubmit().
+    var actionAwaitingValueCheck = null;
+
+    function validateCurrentForm(form, retry) {
         var validateFn = window['xoopsFormValidate_' + form.id];
         var ok = true;
-        if (typeof validateFn === 'function') { ok = !!validateFn(form); }
-        if (ok && typeof updateCKEditors === 'function') { updateCKEditors(); }
+        actionAwaitingValueCheck = retry || null;
+        if (typeof validateFn === 'function') { ok = !!validateFn('drawer', form); }
+        if (ok) {
+            actionAwaitingValueCheck = null;
+            if (typeof updateCKEditors === 'function') { updateCKEditors(); }
+        }
         return ok;
+    }
+
+    // Is validation waiting on the server's answer to a check? Then a refused move isn't the
+    // person's to fix yet.
+    function valueCheckIsWaiting() {
+        var answers = window.formulize_xhr_returned_check_for_unique_value || {};
+        return Object.keys(answers).some(function (key) { return answers[key] === 'notreturned'; });
+    }
+
+    // The server has answered a check that validation was waiting on: do again what was
+    // being done, unless the person has left the entry in the meantime.
+    function retryAfterValueCheck() {
+        var retry = actionAwaitingValueCheck;
+        actionAwaitingValueCheck = null;
+        if (retry && drawerIsOpen() && drawerMode === 'entry') { retry(); }
     }
 
     // The header Back control is only shown while descended into a sub entry.
@@ -1201,11 +1231,9 @@
     // Drop CKEditor instances whose textarea was removed with a previous fragment, or is
     // about to be: this runs as a new fragment arrives, while the form it replaces is still
     // in the drawer body (fetchIntoDrawer keeps it on screen through the load), so every
-    // editor in the body is on its way out too. The endpoint's init code skips ids already
-    // present in window.CKEditors, so a dead instance would otherwise block the editor from
-    // initialising when the same entry is rendered again: after a save that stays, the rich
-    // text field came back as a bare textarea; or descend into a sub entry, go back, descend
-    // again.
+    // editor in the body is on its way out too. A new fragment's textareas get editors of
+    // their own whatever is left in window.CKEditors, so this is so the old editors are
+    // destroyed, and so updateCKEditors() goes through the editors that are in the page.
     function pruneDeadEditors() {
         if (!window.CKEditors) { return; }
         Object.keys(window.CKEditors).forEach(function (id) {
@@ -1317,12 +1345,12 @@
         var form = bodyEl ? bodyEl.querySelector('form') : null;
         if (!form || !currentFrame) { return; }
         if (currentEntryNav) {
-            if (!validateCurrentForm(form)) { return; }
+            if (!validateCurrentForm(form, saveAndStay)) { return; }
             goToPage(currentEntryNav.currentPage);
             return;
         }
         if (!formHasChanges()) { showDrawerNotice(S().noChanges); return; }
-        if (!validateCurrentForm(form)) { return; }
+        if (!validateCurrentForm(form, saveAndStay)) { return; }
         form.querySelectorAll('input[type="hidden"]').forEach(function (i) { i.disabled = false; });
         var fd = new FormData(form);
         fd.append('formulize_save', '1');
@@ -1342,7 +1370,7 @@
             if (drawerStack.length) { popToParent(); } else { closeAndRefresh(); }
             return;
         }
-        if (!validateCurrentForm(form)) { return; }
+        if (!validateCurrentForm(form, saveEntryFromDrawer)) { return; }
         saveCurrentPage(form).then(drawerStack.length ? popToParent : closeAndRefresh);
     }
 
@@ -1354,11 +1382,13 @@
     // created on the first save is carried into later pages by the endpoint, so no id
     // tracking is needed.
     // Returns false when the move was refused because the current page does not
-    // validate, so a caller can say so rather than looking inert.
+    // validate, so a caller can say so rather than looking inert. A move waiting on the
+    // server's answer to a check isn't refused: it goes ahead, or not, when the answer comes.
     function goToPage(targetPage) {
         if (typeof jQuery === 'undefined' || !currentEntryNav) { return false; }
         var form = bodyEl ? bodyEl.querySelector('form') : null;
-        if (!form || !validateCurrentForm(form)) { return false; }
+        if (!form) { return false; }
+        if (!validateCurrentForm(form, function () { goToPage(targetPage); })) { return valueCheckIsWaiting(); }
 
         var changed = formHasChanges();
         var url = buildEntryUrl({
@@ -1392,7 +1422,7 @@
         }
         var form = bodyEl ? bodyEl.querySelector('form') : null;
         if (!form || !formHasChanges()) { leaveFinishedEntry(); return; }
-        if (!validateCurrentForm(form)) { return; }
+        if (!validateCurrentForm(form, finishDrawer)) { return; }
         saveCurrentPage(form).then(leaveFinishedEntry);
     }
 
@@ -1436,7 +1466,7 @@
             // core saves the parent when drilling into a sub; mirror that so parent
             // changes aren't lost, but skip the round trip when nothing changed
             if (formHasChanges()) {
-                if (!validateCurrentForm(form)) { return; }
+                if (!validateCurrentForm(form, function () { subformAction(action, args); })) { return; }
                 saveCurrentPage(form).then(function () { descendToSub(args); });
             } else {
                 descendToSub(args);
@@ -1445,7 +1475,7 @@
         }
 
         if (action === 'add') {
-            if (!validateCurrentForm(form)) { return; }
+            if (!validateCurrentForm(form, function () { subformAction(action, args); })) { return; }
             addSubEntry(form, args);
             return;
         }
@@ -1637,6 +1667,7 @@
         openAI: openAIInDrawer,
         saveEntry: saveEntryFromDrawer,
         subformAction: subformAction,
+        retryAfterValueCheck: retryAfterValueCheck,
         initListView: initListView,
         isOpen: drawerIsOpen
     };

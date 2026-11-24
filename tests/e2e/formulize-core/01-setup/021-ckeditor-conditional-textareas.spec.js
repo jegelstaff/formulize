@@ -141,8 +141,9 @@ test.describe('CKEditor is only applied to rich text textareas', () => {
 			// the plain always-visible textarea's DOM id, which is <markupName>_tarea just like
 			// a rich text one -- this collision is what the old code tripped over
 			streetAddressEditorId: document.querySelector('.form-row:has(.formulize-label-donors_street_address) textarea').id,
-			// the bootstrap must declare the editor registry exactly once, not once per editor
-			ckEditorsDeclarations: (document.documentElement.innerHTML.match(/var CKEditors = \{\};/g) || []).length,
+			// the bootstrap must declare the editor registry exactly once, not once per editor. It keeps what is in it
+			// already, because the drawer runs it again over a page that has editors of its own (formulize_richTextEditorJs()).
+			ckEditorsDeclarations: (document.documentElement.innerHTML.match(/window\.CKEditors = window\.CKEditors \|\| \{\};/g) || []).length,
 		}));
 		expect(bootstrap.hasInitFunction).toBe(true);
 		expect(bootstrap.ckEditorsDeclarations).toBe(1);
