@@ -116,9 +116,9 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
     }
 
     /**
-     * Set the default values on a new template screen. The settings with fixed values come from the site's theme's
-     * screen-defaults.json (see formulizeScreenHandler::getThemeScreenDefaults). The ones here are the words, which
-     * are in the site's language, and what comes from the form.
+     * Set the default values on a new template screen. The settings with fixed values, and the words, come from the
+     * site's theme's screen-defaults.json (see formulizeScreenHandler::getThemeScreenDefaults). The ones here are what
+     * comes from the form.
      *
      * @param object $screen the new screen
      * @param object $formObject the form the screen is for
@@ -131,8 +131,6 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             'frid' => -1,
             'type' => 'template',
             'theme' => formulize_storedSiteTheme(),
-            'savebuttontext' => _formulize_SAVE,
-            'donebuttontext' => _formulize_SAVE_AND_LEAVE,
         ));
     }
 

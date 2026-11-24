@@ -93,9 +93,9 @@ class formulizeMapScreenHandler extends formulizeScreenHandler {
     }
 
     /**
-     * Set the default values on a new map screen. The settings with fixed values come from the site's theme's
-     * screen-defaults.json (see formulizeScreenHandler::getThemeScreenDefaults). The ones here are the words, which
-     * are in the site's language, what comes from the form, and the map's empty content.
+     * Set the default values on a new map screen. The settings with fixed values, and the words, come from the site's
+     * theme's screen-defaults.json (see formulizeScreenHandler::getThemeScreenDefaults). The ones here are what comes
+     * from the form, and the map's empty content.
      *
      * @param object $screen the new screen
      * @param object $formObject the form the screen is for
@@ -110,7 +110,6 @@ class formulizeMapScreenHandler extends formulizeScreenHandler {
             'theme' => formulize_storedSiteTheme(),
             'columns' => serialize(array()),
             'fundamental_filters' => serialize(array()),
-            'filter_button_text' => _AM_MAP_FILTER_BUTTON_DEFAULT,
         ));
     }
 

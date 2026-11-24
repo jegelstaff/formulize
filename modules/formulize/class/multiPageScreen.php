@@ -774,9 +774,9 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
     }
 
     /**
-     * Set the default values on a new form screen. The settings with fixed values come from the site's theme's
-     * screen-defaults.json (see formulizeScreenHandler::getThemeScreenDefaults). The ones here are the words, which
-     * are in the site's language, what comes from the form, and the screen's one empty page.
+     * Set the default values on a new form screen. The settings with fixed values, and the words, come from the site's
+     * theme's screen-defaults.json (see formulizeScreenHandler::getThemeScreenDefaults). The ones here are what comes
+     * from the form, and the screen's one empty page.
      *
      * @param object $defaultFormScreen the new form screen
      * @param object $formObject the form the screen is for
@@ -795,16 +795,6 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
             'pagetitles' => serialize(array(0=>$formObject->getSingular())),
             'pages' => serialize(array(0=>array())),
             'disabledpages' => serialize(array(0=>0)),
-            'buttontext' => serialize(array(
-                'thankyoulinktext'=>trans(_formulize_DMULTI_CONTINUE),
-                'leaveButtonText'=>trans(_formulize_SAVE_AND_LEAVE),
-                'prevButtonText'=>trans(_formulize_DMULTI_PREV),
-                'saveButtonText'=>trans(_formulize_SAVE),
-                'nextButtonText'=>trans(_formulize_DMULTI_NEXT),
-                'finishButtonText'=>trans(_formulize_DMULTI_SAVE),
-                'printableViewButtonText'=>trans(_formulize_PRINTVIEW),
-                'closeButtonText'=>trans(_formulize_DONE)
-            )),
         ));
     }
 

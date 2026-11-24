@@ -428,9 +428,10 @@ class formulizeScreenHandler {
 	 * Formulize's standard values, and fills in anything the theme's file leaves out: everything, for a theme with no
 	 * file, or with a file that cannot be read as JSON.
 	 *
-	 * The words a screen starts with (button labels and the like, which are in the site's language) and what comes
-	 * from the form (the title, the handle, the Add/Update button's text) are not in the files. They're set in code by
-	 * each type's setDefault...ScreenVars method. The 8.30 update compares existing screens with what this returns.
+	 * The words a screen starts with (button labels and the like) are in the files as the names of language constants,
+	 * and are returned in the site's language. What comes from the form (the title, the handle, the Add/Update
+	 * button's text) is not in the files. It's set in code by each type's setDefault...ScreenVars method. The 8.30
+	 * update compares existing screens with what this returns.
 	 *
 	 * Properties the screen type doesn't have are left in, and are ignored when the defaults are applied
 	 * (see applyDefaultScreenVars).
@@ -451,11 +452,40 @@ class formulizeScreenHandler {
 		$theme = (string) $theme;
 		// a theme is a folder directly in themes/, so the name can never reach anywhere else
 		if($theme === '' OR !preg_match('/^[A-Za-z0-9_\-]+$/', $theme) OR !is_dir(ICMS_THEME_PATH . '/' . $theme)) {
-			return $coreDefaults;
+			return array_map(array(self::class, 'resolveScreenDefaultWords'), $coreDefaults);
 		}
 		$themeFile = self::readScreenDefaultsFile(ICMS_THEME_PATH . '/' . $theme . '/screen-defaults.json');
 		$themeDefaults = (isset($themeFile[$screenType]) AND is_array($themeFile[$screenType])) ? $themeFile[$screenType] : array();
-		return array_merge($coreDefaults, $themeDefaults);
+		foreach($themeDefaults as $property => $value) {
+			// a set of named values, such as a form screen's button texts, where the theme's file may leave some out
+			if(is_array($value) AND isset($coreDefaults[$property]) AND is_array($coreDefaults[$property]) AND is_string(key($coreDefaults[$property]))) {
+				$themeDefaults[$property] = array_merge($coreDefaults[$property], $value);
+			}
+		}
+		return array_map(array(self::class, 'resolveScreenDefaultWords'), array_merge($coreDefaults, $themeDefaults));
+	}
+
+	/**
+	 * A value from a screen defaults file, with the name of a language constant replaced by its words. Only names that
+	 * start with an underscore count, as the names of Formulize's language constants do, so no other value in a file
+	 * can be taken for a constant, and no other constant can be read through one. A name that isn't defined gives
+	 * no words, so a mistake leaves a button out rather than showing the constant's name on it.
+	 *
+	 * @param mixed $value the value in the file, or an array of them
+	 * @return mixed the value to use
+	 */
+	private static function resolveScreenDefaultWords($value) {
+		if(is_array($value)) {
+			return array_map(array(self::class, 'resolveScreenDefaultWords'), $value);
+		}
+		if(is_string($value) AND preg_match('/^_[A-Za-z][A-Za-z0-9_]*$/', $value)) {
+			if(!defined($value)) {
+				error_log('Formulize: the screen defaults use the language constant '.$value.', which is not defined.');
+				return '';
+			}
+			return trans(constant($value));
+		}
+		return $value;
 	}
 
 	/**
@@ -482,11 +512,11 @@ class formulizeScreenHandler {
 	}
 
 	/**
-	 * Set the default values on a new screen: the settings with fixed values from the site's theme (see
-	 * getThemeScreenDefaults), and the rest from the type handler's setDefault...ScreenVars method, which works out the
-	 * words, what comes from the form, and the screen's empty content (pages, columns, buttons, filters) and hands
-	 * them here. A theme's file can override those too, except what THEME_DEFAULTS_EXCLUDED lists, so a theme can set
-	 * a button's text to "" to start screens without that button.
+	 * Set the default values on a new screen: the settings with fixed values, and the words, from the site's theme (see
+	 * getThemeScreenDefaults), and the rest from the type handler's setDefault...ScreenVars method, which works out
+	 * what comes from the form, and the screen's empty content (pages, columns, buttons, filters) and hands them here.
+	 * A theme's file can override those too, except what THEME_DEFAULTS_EXCLUDED lists. A button's text can be "" in a
+	 * theme's file, to start screens without that button.
 	 *
 	 * @param object $screen the new screen object
 	 * @param array $defaults property name => value, the values worked out in code. Must include 'type', which says

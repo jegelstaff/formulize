@@ -21,7 +21,8 @@ behaviour. CI runs them *before* the e2e suite, since they have nothing to wait 
   in `docs/uploads_not_executable.md`, is the same set everywhere. Fails if any copy drifts from the constant.
 * `screen_defaults_test.php` - every theme's `screen-defaults.json` lists every setting in Formulize's own
   `include/screen_defaults.json`, and every file names only settings its screen type has and a theme can set,
-  with a list only where the setting takes one. Lyris and Anari must each have a file.
+  with a list only where the setting takes one. Every language constant a file names has to be defined in English
+  and in French. Lyris and Anari must each have a file.
 
 **Integrity tests against a built system** boot the application and read the live database, so CI runs
 them *after* the e2e suite, when the setup specs have finished building the museum system.

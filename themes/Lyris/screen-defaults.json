@@ -16,7 +16,26 @@
     "textwidth": 255,
     "usecheckboxes": 0,
     "useToken": 1,
-    "anonNeedsPasscode": 1
+    "anonNeedsPasscode": 1,
+    "usecurrentviewlist": "_formulize_DE_CURRENT_VIEW",
+    "desavetext": "_formulize_SAVE",
+    "useaddmultiple": "_formulize_DE_ADD_MULTIPLE_ENTRY",
+    "useaddproxy": "_formulize_DE_PROXYENTRY",
+    "useexport": "_formulize_DE_EXPORT",
+    "useimport": "_formulize_DE_IMPORT",
+    "usenotifications": "_formulize_DE_NOTBUTTON",
+    "usechangecols": "_formulize_DE_CHANGECOLS",
+    "usecalcs": "_formulize_DE_CALCS",
+    "useadvcalcs": "_formulize_DE_ADVCALCS",
+    "useexportcalcs": "_formulize_DE_EXPORT_CALCS",
+    "useclone": "_formulize_DE_CLONESEL",
+    "usedelete": "_formulize_DE_DELETESEL",
+    "useselectall": "_formulize_DE_SELALL",
+    "useclearall": "_formulize_DE_CLEARALL",
+    "usereset": "_formulize_DE_RESETVIEW",
+    "usesave": "_formulize_DE_SAVE",
+    "usedeleteview": "_formulize_DE_DELETE",
+    "usechangeowner": "_formulize_DE_CHANGEOWNER"
   },
   "multiPage": {
     "displayheading": 0,
@@ -37,16 +56,29 @@
     "column1width": "auto",
     "column2width": "auto",
     "useToken": 1,
-    "anonNeedsPasscode": 1
+    "anonNeedsPasscode": 1,
+    "buttontext": {
+      "thankyoulinktext": "_formulize_DMULTI_CONTINUE",
+      "leaveButtonText": "_formulize_SAVE_AND_LEAVE",
+      "prevButtonText": "_formulize_DMULTI_PREV",
+      "saveButtonText": "_formulize_SAVE",
+      "nextButtonText": "_formulize_DMULTI_NEXT",
+      "finishButtonText": "_formulize_DMULTI_SAVE",
+      "printableViewButtonText": "_formulize_PRINTVIEW",
+      "closeButtonText": "_formulize_DONE"
+    }
   },
   "template": {
-    "donedest": ""
+    "donedest": "",
+    "savebuttontext": "_formulize_SAVE",
+    "donebuttontext": "_formulize_SAVE_AND_LEAVE"
   },
   "calendar": {
     "caltype": "month"
   },
   "map": {
     "tileset": "osm",
-    "show_view_entry_link": 1
+    "show_view_entry_link": 1,
+    "filter_button_text": "_AM_MAP_FILTER_BUTTON_DEFAULT"
   }
 }

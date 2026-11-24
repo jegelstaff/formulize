@@ -6,7 +6,8 @@
  * folder, so it runs anywhere PHP is available:  php tests/screen_defaults_test.php
  *
  * WHY THIS EXISTS
- * The settings with fixed values that a new screen starts with are in JSON files, not in code:
+ * The settings with fixed values that a new screen starts with, and its words, are in JSON files, not in code. The
+ * words are the names of language constants:
  *   modules/formulize/include/screen_defaults.json - Formulize's standard values, used for anything a theme's
  *     file leaves out, and for themes with no file
  *   themes/<theme>/screen-defaults.json - each theme's own values
@@ -18,6 +19,9 @@
  *   - a theme's file leaves out a setting or a screen type the standard file has
  *   - a theme's file names a setting the screen type doesn't have, or one a theme can't set
  *   - a value is a list where the setting takes a single value, or the other way round
+ *   - a set of named values, such as a form screen's button texts, leaves out one the standard file has, or has one
+ *     the standard file doesn't
+ *   - a language constant isn't defined in both the English and the French files
  * Lyris and Anari must each have a file. Any other theme with one is checked too.
  *
  * The settings a screen type has are read from the initVar() calls in its class and in formulizeScreen, and the
@@ -79,6 +83,41 @@ function declaredSettings($file, $className) {
     return $settings;
 }
 
+/**
+ * The language constants a language's main.php and admin.php define, as name => true. Formulize loads both on every
+ * page, so the words can be in either one. Each language's file is read on its own, since the French files include
+ * the English ones for whatever they leave out.
+ */
+function definedWords($languageDir) {
+    $words = array();
+    foreach (array('main.php', 'admin.php') as $file) {
+        $source = (string) file_get_contents($languageDir . '/' . $file);
+        preg_match_all('/^\s*define\(\s*[\'"]([A-Za-z0-9_]+)[\'"]/m', $source, $matches);
+        $words += array_fill_keys($matches[1], true);
+    }
+    return $words;
+}
+
+// Each language constant a value names is defined in every language that has to have all the words
+function checkWords($label, $value, $words) {
+    if (is_array($value)) {
+        foreach ($value as $key => $part) {
+            checkWords("$label.$key", $part, $words);
+        }
+    } elseif (is_string($value) AND strpos($value, '_') === 0) {
+        foreach ($words as $language => $defined) {
+            if (!isset($defined[$value])) {
+                fail("$label: $value isn't defined in the $language main.php or admin.php");
+            }
+        }
+    }
+}
+
+// A set of named values, rather than a list: keyed by name
+function isNamedSet($value) {
+    return is_array($value) AND is_string(key($value));
+}
+
 function readJson($file) {
     $decoded = json_decode((string) file_get_contents($file), true);
     if (!is_array($decoded)) {
@@ -86,6 +125,15 @@ function readJson($file) {
         return null;
     }
     return $decoded;
+}
+
+// The words every language that has to have them all defines
+$words = array();
+foreach (array('english', 'french') as $language) {
+    $words[$language] = definedWords($root . '/modules/formulize/language/' . $language);
+    if (!$words[$language]) {
+        fail("Cannot find any language constants in $language");
+    }
 }
 
 // What each type has, and what a theme can't set
@@ -102,13 +150,14 @@ if (preg_match('/const\s+THEME_DEFAULTS_EXCLUDED\s*=\s*array\(([^)]*)\)/', (stri
     fail('Cannot find formulizeScreenHandler::THEME_DEFAULTS_EXCLUDED in class/screen.php');
 }
 
-// Each setting in a file is one the type has, a theme can set, and given the right kind of value
-function checkSettings($label, $type, $settings, $typeSettings, $excluded) {
+// Each setting in a file is one the type has, a theme can set, and given the right kind of value, with words that exist
+function checkSettings($label, $type, $settings, $typeSettings, $excluded, $words) {
     if (!is_array($settings)) {
         fail("$label: $type isn't a set of settings");
         return;
     }
     foreach ($settings as $name => $value) {
+        checkWords("$label: $type.$name", $value, $words);
         if (!isset($typeSettings[$type][$name])) {
             fail("$label: $type has no setting called $name");
         } elseif (in_array($name, $excluded, true)) {
@@ -126,7 +175,7 @@ if ($core !== null) {
             fail("include/screen_defaults.json: $type isn't a type of screen that new screens are made as");
             continue;
         }
-        checkSettings('include/screen_defaults.json', $type, $settings, $typeSettings, $excluded);
+        checkSettings('include/screen_defaults.json', $type, $settings, $typeSettings, $excluded, $words);
     }
     foreach (array_keys($screenClasses) as $type) {
         if (!isset($core[$type])) {
@@ -150,16 +199,23 @@ foreach ($themeFiles as $file) {
             fail("$label: $type isn't a type of screen that new screens are made as");
             continue;
         }
-        checkSettings($label, $type, $settings, $typeSettings, $excluded);
+        checkSettings($label, $type, $settings, $typeSettings, $excluded, $words);
     }
     foreach ($core as $type => $settings) {
         if (!isset($themeDefaults[$type]) OR !is_array($themeDefaults[$type])) {
             fail("$label: has no settings for $type");
             continue;
         }
-        foreach (array_keys($settings) as $name) {
+        foreach ($settings as $name => $value) {
             if (!array_key_exists($name, $themeDefaults[$type])) {
                 fail("$label: $type.$name is missing. Every theme's file lists every setting in include/screen_defaults.json");
+            } elseif (isNamedSet($value) AND is_array($themeDefaults[$type][$name])) {
+                foreach (array_keys(array_diff_key($value, $themeDefaults[$type][$name])) as $part) {
+                    fail("$label: $type.$name.$part is missing");
+                }
+                foreach (array_keys(array_diff_key($themeDefaults[$type][$name], $value)) as $part) {
+                    fail("$label: $type.$name has no value called $part");
+                }
             }
         }
     }

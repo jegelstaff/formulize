@@ -305,6 +305,7 @@ define("_formulize_DE_CALCSUB", "Ajouter un ou des calculs à la liste");
 define("_formulize_DE_CANCELASEARCH", "Effacer cette recherche");
 define("_formulize_DE_CANCELCALCS", "Annuler calculs");
 define("_formulize_DE_CHANGECOLS", "Changer les colonnes");
+define("_formulize_DE_CHANGEOWNER", "Changer le propriétaire");
 define("_formulize_DE_CHOOSE_EXPORT", "Choose the export format you want");
 define("_formulize_DE_CLEARALL", "Effacer les selections");
 define("_formulize_DE_CLICKSAVE", "Clic droit et sauvegarder pour télécharger vos données.");

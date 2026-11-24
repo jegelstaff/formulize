@@ -451,12 +451,18 @@ Lyris's file:
     "entriesperpage": 20,
     "editdestination": "drawer",
     "usesearch": 2,
+    "useaddmultiple": "_formulize_DE_ADD_MULTIPLE_ENTRY",
+    "useexport": "_formulize_DE_EXPORT",
     ...
   },
   "multiPage": {
     "displaycolumns": 1,
     "column1width": "auto",
     "column2width": "auto",
+    "buttontext": {
+      "saveButtonText": "_formulize_SAVE",
+      ...
+    },
     ...
   },
   ...
@@ -486,15 +492,24 @@ The types of screen are `listOfEntries` (a list of entries), `multiPage` (a form
 | `listOfEntries` | `usesearch` | The row of search boxes under the column headings | `1` shown (the standard), `2` hidden until the user opens it, `0` none |
 | `listOfEntries` | `entriesperpage` | How many entries each page of the list shows | A number. The standard is `10` |
 | `listOfEntries` | `useheadings` | The column headings | `1` shown (the standard), `0` hidden |
+| `listOfEntries` | `useaddmultiple` | The button for adding several entries, one after another | `"_formulize_DE_ADD_MULTIPLE_ENTRY"`, or `""` for no button (the standard) |
 | `multiPage` | `displaycolumns` | Whether a form's captions are above its questions or beside them | `1` one column (the standard), `2` two columns |
 | `multiPage` | `column1width`, `column2width` | The width of each column. With one column, only `column1width` is used | Any CSS width, such as `"20%"`, or `"auto"` (the standard) |
 | `multiPage` | `showtabs` | The tabs for a form's pages | `1` shown (the standard), `0` hidden |
 
-Some things a new screen starts with aren't in the file, because they don't have one fixed value:
+The words a screen starts with, such as the text on its buttons, are the names of language constants
+(see [Translating text](/documentation/translating_text/)). When a screen is made, it gets the words in
+the language in use at the time.
 
-- **The words on its buttons.** They're in the site's language. To start screens without one of a
-  list's buttons, set its text to `""` in your file, as in `"useexport": ""`. Don't write other text
-  for a button there, because it wouldn't be translated.
+- To start screens without one of a list's buttons, set its text to `""`, as in `"useexport": ""`.
+- To start screens with different words, use the name of another constant from Formulize's `main.php`
+  or `admin.php` language files. The name has to start with an underscore. If there's no constant
+  with that name, the text is left blank, and an error is logged.
+- Don't write the words themselves there, because they wouldn't be translated.
+
+Some things a new screen starts with aren't in the file, because they're only known when the screen is
+made:
+
 - **What comes from the form,** such as the screen's title, and the text of a list's Add button.
 - **What's on the screen,** such as a list's columns, or a form's pages.
 

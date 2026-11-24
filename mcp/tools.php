@@ -3020,7 +3020,7 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 	private function listScreenButtonDescriptions() {
 		return [
 			'add_entry' => 'Starts a new entry (or opens the user\'s own entry, on a form where each user has only one). Default is "Add <the form\'s singular name>".',
-			'add_multiple_entries' => 'Starts a new entry, and reloads the form blank after saving, so another new entry can be created. Useful for forms where people make more than one entry at once often. This button is off by default. Suggested text would be "Add <the form\'s plural name>".',
+			'add_multiple_entries' => 'Starts a new entry, and reloads the form blank after saving, so another new entry can be created. Useful for forms where people make more than one entry at once often. Suggested text would be "Add <the form\'s plural name>".',
 			'proxy_entry' => 'Starts a new entry on behalf of another user. Only ever shown to users who have permission to do that, and no permission to create entries of their own.',
 			'clone_selected' => 'Duplicates the entries the user has checked off.',
 			'delete_selected' => 'Deletes the entries the user has checked off.',

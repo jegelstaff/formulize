@@ -1020,5 +1020,6 @@ define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_TEMPLATES_ONE", "1 écran reçoit une cop
 define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_TEMPLATES_NONE", "Aucun écran ne reçoit de copie de ses templates pour Lyris.");
 define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_TEMPLATE_SCREENS", "%s écrans de type template reçoivent une copie de leur code et de leur template pour Lyris, car ils n'ont rien d'autre à utiliser dans ce thème.");
 define("_AM_FORMULIZE_JS_LYRIS_SUMMARY_TEMPLATE_SCREENS_ONE", "1 écran de type template reçoit une copie de son code et de son template pour Lyris, car il n'a rien d'autre à utiliser dans ce thème.");
+define("_AM_MAP_FILTER_BUTTON_DEFAULT", "Filtrer");
 
 include_once XOOPS_ROOT_PATH.'/modules/formulize/language/english/admin.php'; // just to catch whatever constants might be missing

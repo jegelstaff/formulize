@@ -11,8 +11,9 @@ test.use({ baseURL: E2E_TEST_BASE_URL });
 // Lyris appearance - the settings new screens start with
 // ============================================================
 // A theme's screen-defaults.json says how new screens start out in that theme. Lyris opens a list's entries
-// in the drawer, hides the list's search row until it is opened, shows 20 entries a page, and puts a form's
-// captions above its questions. Anari puts a form's captions in a column of their own, 20% wide.
+// in the drawer, hides the list's search row until it is opened, shows 20 entries a page, has the Add multiple
+// entries button, and puts a form's captions above its questions. Anari puts a form's captions in a column of their
+// own, 20% wide. The words in the files are the names of language constants, so a screen must get the words.
 //
 // It makes one form with the site on Lyris and one with the site on Anari, and reads each one's default
 // screens on their admin pages, as an administrator sees them. The site's theme is the only one that
@@ -47,12 +48,15 @@ async function openScreenTab(page, fid, sid, tab) {
 	await waitForAdminPageReady(page);
 }
 
-async function expectListSettings(page, fid, sid, { editdestination, usesearch, entriesperpage }) {
+async function expectListSettings(page, fid, sid, { editdestination, usesearch, entriesperpage, addMultiple }) {
 	await openScreenTab(page, fid, sid, 'entries');
 	await expect(page.locator('#screens-entriesperpage')).toHaveValue(entriesperpage);
 	await openScreenTab(page, fid, sid, 'interface');
 	await expect(page.locator(`input[name="screens-editdestination"][value="${editdestination}"]`)).toBeChecked();
 	await expect(page.locator(`input[name="screens-usesearch"][value="${usesearch}"]`)).toBeChecked();
+	await openScreenTab(page, fid, sid, 'buttons');
+	await expect(page.locator('#screens-useaddmultiple')).toHaveValue(addMultiple);
+	await expect(page.locator('#screens-useexport')).toHaveValue('Export Entries');
 }
 
 async function expectFormSettings(page, fid, sid, { columns, column1width, column2width }) {
@@ -89,7 +93,7 @@ test('A new form on Lyris gets a list that opens entries in the drawer, and a fo
 	const fid = await createMuseumForm(page, LYRIS_FORM);
 	const screens = defaultScreens(fid);
 
-	await expectListSettings(page, fid, screens.list, { editdestination: 'drawer', usesearch: '2', entriesperpage: '20' });
+	await expectListSettings(page, fid, screens.list, { editdestination: 'drawer', usesearch: '2', entriesperpage: '20', addMultiple: 'Add multiple entries' });
 	await expectFormSettings(page, fid, screens.form, { columns: 1, column1width: 'auto', column2width: 'auto' });
 
 	// and the list does open a new entry in the drawer, on the same page
@@ -105,6 +109,6 @@ test('A new form on Anari gets a list that opens entries full screen, and a form
 	const fid = await createMuseumForm(page, ANARI_FORM);
 	const screens = defaultScreens(fid);
 
-	await expectListSettings(page, fid, screens.list, { editdestination: 'screen', usesearch: '1', entriesperpage: '10' });
+	await expectListSettings(page, fid, screens.list, { editdestination: 'screen', usesearch: '1', entriesperpage: '10', addMultiple: '' });
 	await expectFormSettings(page, fid, screens.form, { columns: 2, column1width: '20%', column2width: 'auto' });
 });

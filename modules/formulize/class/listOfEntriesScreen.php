@@ -465,9 +465,9 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
     }
 
     /**
-     * Set the default values on a new list screen. The settings with fixed values come from the site's theme's
-     * screen-defaults.json (see formulizeScreenHandler::getThemeScreenDefaults). The ones here are the words, which
-     * are in the site's language, what comes from the form and the site, and the list's empty content.
+     * Set the default values on a new list screen. The settings with fixed values, and the words, come from the site's
+     * theme's screen-defaults.json (see formulizeScreenHandler::getThemeScreenDefaults). The ones here are what comes
+     * from the form and the site, such as the Add/Update button's text, and the list's empty content.
      *
      * @param object $defaultListScreen the new list screen
      * @param int|string $defaultFormScreenId the screen entries open in, or 'none'
@@ -491,31 +491,11 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
 			$this->applyDefaultScreenVars($defaultListScreen, array(
 				// View
 				'defaultview' => serialize(array(XOOPS_GROUP_USERS => FORMULIZE_QUERY_SCOPE_GLOBAL)),
-				'usecurrentviewlist' => _formulize_DE_CURRENT_VIEW,
 				'viewentryscreen' => $defaultFormScreenId,
 				// Headings
 				'useviewentrylinks' => isset($formulizeConfig['formulizeDefaultEditIconStyle']) ? $formulizeConfig['formulizeDefaultEditIconStyle'] : FORMULIZE_EDIT_ICON_STYLE_PEN,
-				'desavetext' => _formulize_SAVE,
 				// Buttons
 				'useaddupdate' => $addUpdateText,
-				'useaddmultiple' => '', // to set default text: ($formObject->getVar('plural') ? sprintf(_formulize_DE_ADD_PLURAL_ENTRY, $formObject->getVar('plural')) : _formulize_DE_ADD_MULTIPLE_ENTRY));
-				'useaddproxy' => _formulize_DE_PROXYENTRY,
-				'useexport' => _formulize_DE_EXPORT,
-				'useimport' => _formulize_DE_IMPORT,
-				'usenotifications' => _formulize_DE_NOTBUTTON,
-				'usechangecols' => _formulize_DE_CHANGECOLS,
-				'usecalcs' => _formulize_DE_CALCS,
-				'useadvcalcs' => _formulize_DE_ADVCALCS,
-				'useexportcalcs' => _formulize_DE_EXPORT_CALCS,
-				'useadvsearch' => '',
-				'useclone' => _formulize_DE_CLONESEL,
-				'usedelete' => _formulize_DE_DELETESEL,
-				'useselectall' => _formulize_DE_SELALL,
-				'useclearall' => _formulize_DE_CLEARALL,
-				'usereset' => _formulize_DE_RESETVIEW,
-				'usesave' => _formulize_DE_SAVE,
-				'usedeleteview' => _formulize_DE_DELETE,
-				'usechangeowner' => _formulize_DE_CHANGEOWNER,
 				'title' => $formObject->getPlural(),
 				'screen_handle' => $this->makeHandleUnique($formObject->getPlural()),
 				'fid' => $formObject->getVar('fid'),
