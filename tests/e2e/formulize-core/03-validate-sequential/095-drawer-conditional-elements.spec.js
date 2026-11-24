@@ -93,6 +93,13 @@ function formScreen(fid) {
 	return { sid, frid };
 }
 
+// the screen a form's entries open in when they're sub entries of another form, which is made with the subform, and its relationship
+function subformScreen(fid, mainFid) {
+	const screens = dbQuery(`SELECT sid, frid FROM ${dbPrefix()}_formulize_screen WHERE fid = ${fid} AND screen_handle = 'subform_for_form_${mainFid}'`);
+	expect(screens.length, 'the subform should have made one screen for its entries').toBe(1);
+	return { sid: screens[0][0], frid: screens[0][1] };
+}
+
 // Do something that makes a form fetch its conditional elements, and return the screen and relationship it fetched them with
 async function fetchedWith(page, fid, action) {
 	const parameters = request => new URL(request.url()).searchParams;
@@ -369,13 +376,13 @@ test('A date field keeps to its earliest and latest dates in a drawer opened fro
 test('The form behind the drawer keeps its own screen and relationship after the drawer closes', async ({ page }) => {
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 
-	// The display cases' screen shows the form alone, so its relationship isn't the exhibitions' one
-	const caseScreen = formScreen(casesFid);
+	// The screen the display cases open in from the subform shows the form alone, so its relationship isn't the exhibitions' one
+	const caseScreen = subformScreen(casesFid, exhibitionsFid);
 	await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${casesFid}&sid=${caseScreen.sid}&tab=relationships`);
 	await waitForAdminPageReady(page);
 	await page.locator('#screens-frid').selectOption('0');
 	await saveAdminForm(page);
-	caseScreen.frid = formScreen(casesFid).frid;
+	caseScreen.frid = subformScreen(casesFid, exhibitionsFid).frid;
 	expect(caseScreen.frid, 'the display cases should have no relationship').toBe('0');
 	const exhibitionScreen = formScreen(exhibitionsFid);
 	expect(exhibitionScreen.frid, 'the exhibitions should have one').not.toBe('0');
