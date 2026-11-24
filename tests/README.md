@@ -23,6 +23,9 @@ behaviour. CI runs them *before* the e2e suite, since they have nothing to wait 
   `include/screen_defaults.json`, and every file names only settings its screen type has and a theme can set,
   with a list only where the setting takes one. Every language constant a file names has to be defined in English
   and in French. Lyris and Anari must each have a file.
+* `ai_site_key_test.php` - the site-wide AI API keys, which are encrypted as their setting is written, are kept when
+  the settings page is saved and when the module update deletes the setting and inserts it again. It runs the real
+  `icms_config_Item_Handler::insert()` with a stand-in for the database.
 
 **Integrity tests against a built system** boot the application and read the live database, so CI runs
 them *after* the e2e suite, when the setup specs have finished building the museum system.

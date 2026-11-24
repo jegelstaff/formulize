@@ -263,6 +263,10 @@ jobs:
       if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/screen_template_cleanup_test.php
 
+    - name: PHP logic tests (the site-wide AI keys survive settings saves and module updates)
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
+      run: docker exec formulize-web-1 php /var/www/html/tests/ai_site_key_test.php
+
     - name: Install dependencies
       id: dependencies
       if: ${{ !cancelled() && (success() || steps.containers.outcome == 'success') }}
