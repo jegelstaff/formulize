@@ -265,6 +265,9 @@ class formulizeApplication extends XoopsObject {
 
   private $_forms = null;
 
+  // The ids of the forms that were in the application when it was read from the database. See formulizeApplicationsHandler::insert()
+  public $formsWhenLoaded = array();
+
   function __construct() {
     parent::__construct();
     $this->initVar("appid", XOBJ_DTYPE_INT, NULL, false);
@@ -404,6 +407,7 @@ class formulizeApplicationsHandler {
 					array_multisort($sortArray, SORT_NATURAL, $foundForms);
         }
         $newApp->assignVar('forms', serialize($foundForms)); // need to serialize arrays when assigning to array properties in the xoops object class
+        $newApp->formsWhenLoaded = $foundForms;
         $cachedApps[$newAppId] = $newApp;
         if($ids === 'all') {
           $foundApps[] = $newApp;
@@ -488,62 +492,43 @@ class formulizeApplicationsHandler {
     }
     $appObject->assignVar('appid', intval($appid));
 
-    // now assign the forms
-
-    $foundForms = array();
-		$checkSQL = "SELECT fid FROM ".$this->db->prefix("formulize_application_form_link"). " WHERE appid=".intval($appid);
-		$checkRes = $this->db->query($checkSQL);
-		while($checkArray = $this->db->fetchArray($checkRes)) {
-			$foundForms[] = $checkArray['fid'];
-		}
-    // figure out what we need to insert and what we need to remove, ie: the differences
-    $formsForRemoval = array_diff($foundForms, $appObject->getVar('forms'));// in foundForms, but not in the app
-    $formsForInsert = array_diff($appObject->getVar('forms'), $foundForms); // in the app, but were not found
-
-		$runRemoval = false;
-		$runInsert = false;
-    if(count((array) $formsForInsert)>0) {
-    	$insertStart = true;
-      $insertSQL = "INSERT INTO ".$this->db->prefix("formulize_application_form_link")." (`fid`, `appid`) VALUES ";
-      foreach($formsForInsert as $thisFid) {
-        if(!$insertStart) { $insertSQL .= ", "; }
-  			$insertSQL .= "(".intval($thisFid).", ".intval($appid).")";
-  			$insertStart = false;
-  			$runInsert = true;
-      }
-    }
-    if(count((array) $formsForRemoval)>0) {
-      $removalSQL = "DELETE FROM ".$this->db->prefix("formulize_application_form_link")." WHERE ";
-      $removalStart = true;
-      foreach($formsForRemoval as $thisFid) {
-        if(!$removalStart) { $removalSQL .= " OR "; }
-        $removalSQL .= " (`appid`=".intval($appid)." AND `fid`=".intval($thisFid).") ";
-        $removalStart = false;
-        $runRemoval = true;
+    // now assign the forms. Only the forms that were added to this object, or removed from it, since it was read are written. The
+    // object's list can be out of date by now, so forms that someone else has put in the application, or taken out of it, since
+    // then are left as they are.
+    $forms = array_map('intval', $appObject->getVar('forms'));
+    $formsWhenLoaded = array_map('intval', $appObject->formsWhenLoaded);
+    $formsForRemoval = array_diff($formsWhenLoaded, $forms);
+    $formsForInsert = array_diff($forms, $formsWhenLoaded);
+    if($formsForInsert) {
+      // someone else might have added the same form already
+      $checkSQL = "SELECT fid FROM ".$this->db->prefix("formulize_application_form_link"). " WHERE appid=".intval($appid);
+      $checkRes = $this->db->query($checkSQL);
+      while($checkArray = $this->db->fetchArray($checkRes)) {
+        $formsForInsert = array_diff($formsForInsert, array(intval($checkArray['fid'])));
       }
     }
 
-		if($runInsert) {
-      if($force) {
-        $result = $this->db->queryF($insertSQL);
-      } else {
-        $result = $this->db->query($insertSQL);
+    $formsSQL = array();
+    if($formsForInsert) {
+      $formsSQL[] = "INSERT INTO ".$this->db->prefix("formulize_application_form_link")." (`fid`, `appid`) VALUES (".implode(", ".intval($appid)."), (", $formsForInsert).", ".intval($appid).")";
+    }
+    if($formsForRemoval) {
+      $formsSQL[] = "DELETE FROM ".$this->db->prefix("formulize_application_form_link")." WHERE `appid`=".intval($appid)." AND `fid` IN (".implode(", ", $formsForRemoval).")";
+    }
+    $formsSaved = true;
+    foreach($formsSQL as $thisSQL) {
+      if(!($force ? $this->db->queryF($thisSQL) : $this->db->query($thisSQL))) {
+        $formsSaved = false;
       }
-		}
-		if($runRemoval) {
-      if($force) {
-        $result2 = $this->db->queryF($removalSQL);
-      } else {
-			  $result2 = $this->db->query($removalSQL);
-			}
-		}
+    }
     // this application's own properties and its list of forms have both potentially changed, so anything
     // cached about applications is now out of date
     self::clearApplicationCache();
 
-    if(($insertSQL AND !$result) OR ($removalSQL AND !$result2)) {
-      throw new Exception("The forms in this application could not be saved in the database. SQL dump:\n" . $removalSQL . "\n" . $insertSQL . "\n".$this->db->error());
+    if(!$formsSaved) {
+      throw new Exception("The forms in this application could not be saved in the database. SQL dump:\n" . implode("\n", $formsSQL) . "\n".$this->db->error());
 		}
+    $appObject->formsWhenLoaded = $forms;
     return $appid;
 	}
 

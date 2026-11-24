@@ -37,6 +37,20 @@ if(!isset($processedValues)) {
 $application_handler = xoops_getmodulehandler('applications', 'formulize');
 $appObject = $application_handler->get($_POST['formulize_admin_key']);
 
+// The page submits the forms that were in the application when the page was opened, as well as the ones that are selected now.
+// Only what the person changed is applied, so a form that someone else has put in the application, or taken out of it, since the
+// page was opened stays as it is. Saving any tab of the page submits this, whatever the person was working on. A copy of the page
+// from before it submitted the first list is taken to have been opened with the forms that are in the application now.
+$fidsFrom = function($values) {
+	return array_unique(array_filter(array_map('intval', $values)));
+};
+$currentForms = $fidsFrom($appObject->getVar('forms'));
+$formsWhenOpened = isset($_POST['forms_when_opened']) ? $fidsFrom(explode(',', $_POST['forms_when_opened'])) : $currentForms;
+$selectedForms = $fidsFrom((array) ($_POST['applications-forms'] ?? array()));
+$forms = array_diff($currentForms, array_diff($formsWhenOpened, $selectedForms)); // without the ones the person removed
+$forms = array_merge($forms, array_diff($selectedForms, $formsWhenOpened, $forms)); // with the ones the person added
+$processedValues['applications']['forms'] = serialize(array_values($forms));
+
 foreach($processedValues['applications'] as $property=>$value) {
 	$appObject->setVar($property, $value);
 }

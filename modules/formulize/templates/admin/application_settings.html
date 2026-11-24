@@ -27,7 +27,9 @@
 		<div class="form-item">
 			<fieldset>
 				<legend><label for="applications-forms" class="question"><{$smarty.const._AM_APP_FORMSIN}></label></legend>
-				<select id="applications-forms" name="applications-forms[]" size=6 multiple>
+				<input type="hidden" name="forms_when_opened" value="<{foreach from=$content.forms item=thisform}><{if $thisform.selected}><{$thisform.id}>,<{/if}><{/foreach}>" />
+				<{* autocomplete is off so that a browser showing the page again doesn't select what was selected before, as if the person had *}>
+				<select id="applications-forms" name="applications-forms[]" size=6 multiple autocomplete="off">
 					<{foreach from=$content.forms item=thisform}>
 						<option value=<{$thisform.id}><{$thisform.selected}>><{$thisform.name}></option>
 					<{/foreach}>
