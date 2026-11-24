@@ -16,10 +16,10 @@ on:
         options:
           - all
           - mariadb-chromium-anari
-          - mysql-chromium-anari
+          - mariadb-chromium-lyris
           - mariadb-firefox-anari
           - mariadb-webkit-anari
-          - mariadb-chromium-lyris
+          - mysql-chromium-anari
       skip_docker_build:
         description: 'Skip Docker rebuild (use existing containers)'
         required: false
@@ -87,6 +87,9 @@ jobs:
   # theme, so they run once on each database.
   # coverage: this job measures coverage when the run asks for it. One report is enough.
   #
+  # They're in alphabetical order by name, because the graph on a run's page always is, and the list of jobs beside it
+  # goes by this order.
+  #
   # Every job runs to the end, whatever happens in the others, and carries on after a failure: past a PHP logic test
   # that fails, and past anything once the setup tests have passed, running all of 02-validate. So one run shows
   # everything that's wrong in every environment. The run passes only if every job passes.
@@ -102,10 +105,10 @@ jobs:
       run: |
         ALL='[
           {"id": "mariadb-chromium-anari", "name": "MariaDB, Chromium, Anari", "database": "mariadb", "browser": "chromium", "theme": "Anari", "php": true,  "coverage": true},
-          {"id": "mysql-chromium-anari",   "name": "MySQL, Chromium, Anari",   "database": "mysql",   "browser": "chromium", "theme": "Anari", "php": true,  "coverage": false},
+          {"id": "mariadb-chromium-lyris", "name": "MariaDB, Chromium, Lyris", "database": "mariadb", "browser": "chromium", "theme": "Lyris", "php": false, "coverage": false},
           {"id": "mariadb-firefox-anari",  "name": "MariaDB, Firefox, Anari",  "database": "mariadb", "browser": "firefox",  "theme": "Anari", "php": false, "coverage": false},
           {"id": "mariadb-webkit-anari",   "name": "MariaDB, WebKit, Anari",   "database": "mariadb", "browser": "webkit",   "theme": "Anari", "php": false, "coverage": false},
-          {"id": "mariadb-chromium-lyris", "name": "MariaDB, Chromium, Lyris", "database": "mariadb", "browser": "chromium", "theme": "Lyris", "php": false, "coverage": false}
+          {"id": "mysql-chromium-anari",   "name": "MySQL, Chromium, Anari",   "database": "mysql",   "browser": "chromium", "theme": "Anari", "php": true,  "coverage": false}
         ]'
         if [ "$CHOSEN" = "all" ]; then
           MATRIX=$(jq -c . <<< "$ALL")

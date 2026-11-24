@@ -25,10 +25,10 @@ Every run tests the whole suite in five environments at the same time. Each one 
 | Environment | Database | Browser | Theme | PHP tests |
 |---|---|---|---|---|
 | `mariadb-chromium-anari` | MariaDB | Chromium | Anari | Yes |
-| `mysql-chromium-anari` | MySQL 8.4 | Chromium | Anari | Yes |
+| `mariadb-chromium-lyris` | MariaDB | Chromium | Lyris | No |
 | `mariadb-firefox-anari` | MariaDB | Firefox | Anari | No |
 | `mariadb-webkit-anari` | MariaDB | WebKit | Anari | No |
-| `mariadb-chromium-lyris` | MariaDB | Chromium | Lyris | No |
+| `mysql-chromium-anari` | MySQL 8.4 | Chromium | Anari | Yes |
 
 A difference between databases doesn't depend on the browser, and a difference between browsers doesn't depend on the database, so the other browsers run on MariaDB only. The PHP tests depend on the database and nothing else, so they run once on each. The Lyris job runs the same specs as the first one, except that the site stays on Lyris after the install, so the museum system is built with Lyris's screen settings: its lists open entries in the drawer, show 20 entries a page, and keep their search boxes hidden until they're opened.
 
