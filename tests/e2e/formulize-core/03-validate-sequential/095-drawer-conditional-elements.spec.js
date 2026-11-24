@@ -522,11 +522,17 @@ test('The drawer asks about letters in a number box, and runs its own form\'s ex
 	await closeDrawer(page);
 
 	// the exhibition behind has no extra validation, so what the display cases refuse is fine there
-	const exhibition = page.locator('#formulizeform');
-	await exhibition.locator('.form-row:has(.formulize-label-dct_exhibition_name)').getByRole('textbox').fill(REFUSED_NAME);
-	await exhibition.locator('.form-row:has(.formulize-label-dct_exhibition_name)').getByRole('textbox').press('Tab');
+	const exhibitionName = page.locator('#formulizeform .form-row:has(.formulize-label-dct_exhibition_name)').getByRole('textbox');
+	await exhibitionName.fill(REFUSED_NAME);
+	await exhibitionName.press('Tab');
 	await saveFormulizeForm(page, 'Save');
 	expect(storedValue(exhibitionsFid, exhibitionEntryId, 'dct_exhibition_name')).toBe(REFUSED_NAME);
+
+	// put the name back, since tests after this one look for the exhibition by it
+	await exhibitionName.fill(EXHIBITION);
+	await exhibitionName.press('Tab');
+	await saveFormulizeForm(page, 'Save');
+	expect(storedValue(exhibitionsFid, exhibitionEntryId, 'dct_exhibition_name'), 'the exhibition should have its own name back').toBe(EXHIBITION);
 
 	await leaveForExhibitionsList(page);
 });
