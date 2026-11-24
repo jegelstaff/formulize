@@ -328,10 +328,9 @@ test('A date field keeps to its earliest and latest dates in a drawer opened fro
 	// a date in 2026 is kept, and saved
 	await installedOn.fill(INSTALLED_ON);
 	await expect(installedOn).toHaveValue(INSTALLED_ON);
-	await drawer(page).locator('.formulize-drawer__foot input[name="save"]').click();
-	await expect.poll(() => storedValue(casesFid, caseEntryId, 'dct_case_installed'), { message: 'the date should be saved' }).toBe(INSTALLED_ON);
-	// the form drawn again after the save is in place, and its field still keeps to the limits
-	await expect(drawer(page)).not.toHaveClass(/formulize-drawer--busy/);
+	await saveDrawerForm(page);
+	expect(storedValue(casesFid, caseEntryId, 'dct_case_installed'), 'the date should be saved').toBe(INSTALLED_ON);
+	// the field in the form drawn again after the save still keeps to the limits
 	await expect(installedOn).toHaveValue(INSTALLED_ON);
 	await chooseAndExpectRefusal('2027-01-01', 'too far in the future');
 
