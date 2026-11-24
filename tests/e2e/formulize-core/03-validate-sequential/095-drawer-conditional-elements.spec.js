@@ -28,6 +28,9 @@ import { login, leavePage, conditionalElementReady, conditionalChecksFinished, w
 //  - The drawer makes the checks full screen makes before it submits: it waits for conditional elements that are still
 //    on their way, asks about letters in a number box, and runs a form's extra validation function. It used to make none
 //    of them. Deleting a sub entry made no checks at all, and saved the form's rich text fields empty.
+//  - A script in the drawer's form that waits for the page to load runs, and a script file the page already has isn't
+//    loaded again. CKEditor used to refuse its second copy with an error, and an existing user's password was marked as
+//    required, because the script that takes the mark away waited for a load that had already happened.
 //
 // The forms are made here with MCP, in the Museum application, and deleted at the end, so nothing the other specs use
 // changes. MCP is part of the application, and 040 turns it on and makes an API key, which this reads from the admin UI.
@@ -125,6 +128,29 @@ async function deleteTheForms(browser) {
 	} finally {
 		await page.close();
 	}
+}
+
+// Set where a list screen opens its entries, 'drawer' or 'screen', on its Interface tab
+async function setEditDestination(page, fid, sid, destination) {
+	await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${fid}&sid=${sid}&tab=interface`);
+	await waitForAdminPageReady(page);
+	await page.locator(`input[name="screens-editdestination"][value="${destination}"]`).check();
+	await saveAdminForm(page);
+	expect(editDestination(sid), `the list should open entries in the ${destination}`).toBe(destination);
+}
+
+function editDestination(sid) {
+	return dbQuery(`SELECT editdestination FROM ${dbPrefix()}_formulize_screen_listofentries WHERE sid = ${sid}`)[0][0];
+}
+
+// Open a list that opens its entries in the drawer, and the entry in the row with this text. A list drawn on the server
+// shows no working message, so wait for its footer.
+async function openFromList(page, sid, rowText) {
+	await page.goto(`/modules/formulize/index.php?sid=${sid}`);
+	await expect(page.getByText(/Showing entries:/).first()).toBeVisible({ timeout: 30000 });
+	await page.getByRole('row', { name: new RegExp(rowText) }).locator('a[onclick^="javascript:goDetails"]').click();
+	await expect(drawer(page)).toBeVisible();
+	await expect(drawer(page).locator('.formulize-drawer__foot input[type="button"]').first()).toBeVisible();
 }
 
 const drawer = page => page.locator('.formulize-drawer[role="dialog"]');
@@ -267,9 +293,13 @@ test('The form behind the drawer keeps its conditional elements working after th
 
 test('The form behind the drawer keeps its rich text when it is saved after the drawer closes', async ({ page }) => {
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	const pageErrors = [];
+	page.on('pageerror', error => pageErrors.push(error.message));
 	await openDisplayCaseInDrawer(page);
 	// the display case's Notes is a rich text field too, so the drawer has set up editors of its own
 	await expect(drawer(page).locator('.ck-editor__editable')).toBeVisible();
+	// with the page's copy of CKEditor, which refuses to be loaded twice
+	expect(pageErrors.filter(message => /ckeditor/i.test(message))).toEqual([]);
 	await closeDrawer(page);
 
 	const exhibition = page.locator('#formulizeform');
@@ -340,18 +370,9 @@ test('A date field keeps to its earliest and latest dates in a drawer opened fro
 
 	// the list of display cases opens its entries in the drawer, which is set on the list screen's Interface tab
 	const [[listSid]] = dbQuery(`SELECT defaultlist FROM ${dbPrefix()}_formulize_id WHERE id_form = ${casesFid}`);
-	await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${casesFid}&sid=${listSid}&tab=interface`);
-	await waitForAdminPageReady(page);
-	await page.locator('input[name="screens-editdestination"][value="drawer"]').check();
-	await saveAdminForm(page);
-	expect(dbQuery(`SELECT editdestination FROM ${dbPrefix()}_formulize_screen_listofentries WHERE sid = ${listSid}`)[0][0], 'the list should open entries in the drawer').toBe('drawer');
+	await setEditDestination(page, casesFid, listSid, 'drawer');
 
-	// a list drawn on the server shows no working message, so wait for its footer
-	await page.goto(`/modules/formulize/index.php?sid=${listSid}`);
-	await expect(page.getByText(/Showing entries:/).first()).toBeVisible({ timeout: 30000 });
-	await page.getByRole('row', { name: new RegExp(DISPLAY_CASE) }).locator('a[onclick^="javascript:goDetails"]').click();
-	await expect(drawer(page)).toBeVisible();
-	await expect(drawer(page).locator('.formulize-drawer__foot input[type="button"]').first()).toBeVisible();
+	await openFromList(page, listSid, DISPLAY_CASE);
 	const installedOn = drawer(page).locator('input[type="date"]');
 	await expect(installedOn).toBeVisible();
 	await expect(installedOn).toHaveAttribute('min', EARLIEST_INSTALLATION);
@@ -465,16 +486,9 @@ test('Deleting a sub entry in the drawer keeps the rich text of the form it is i
 	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 	// the list of exhibitions opens its entries in the drawer, which is set on the list screen's Interface tab
 	const [[listSid]] = dbQuery(`SELECT defaultlist FROM ${dbPrefix()}_formulize_id WHERE id_form = ${exhibitionsFid}`);
-	await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${exhibitionsFid}&sid=${listSid}&tab=interface`);
-	await waitForAdminPageReady(page);
-	await page.locator('input[name="screens-editdestination"][value="drawer"]').check();
-	await saveAdminForm(page);
+	await setEditDestination(page, exhibitionsFid, listSid, 'drawer');
 
-	await page.goto(`/modules/formulize/index.php?sid=${listSid}`);
-	await expect(page.getByText(/Showing entries:/).first()).toBeVisible({ timeout: 30000 });
-	await page.getByRole('row', { name: new RegExp(EXHIBITION) }).locator('a[onclick^="javascript:goDetails"]').click();
-	await expect(drawer(page)).toBeVisible();
-	await expect(drawer(page).locator('.formulize-drawer__foot input[type="button"]').first()).toBeVisible();
+	await openFromList(page, listSid, EXHIBITION);
 	await expect(drawer(page).locator('.ck-editor__editable')).toContainText(DESCRIPTION);
 
 	// a change somewhere else in the form, so that it's saved along with the delete. The Description isn't touched.
@@ -535,4 +549,27 @@ test('The drawer asks about letters in a number box, and runs its own form\'s ex
 	expect(storedValue(exhibitionsFid, exhibitionEntryId, 'dct_exhibition_name'), 'the exhibition should have its own name back').toBe(EXHIBITION);
 
 	await leaveForExhibitionsList(page);
+});
+
+test('An existing user\'s password is not marked as required in the drawer', async ({ page }) => {
+	await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
+	// the Staff list is shared, so where it opens its entries is put back at the end
+	const [[staffFid, staffListSid]] = dbQuery(`SELECT id_form, defaultlist FROM ${dbPrefix()}_formulize_id WHERE form_title = 'Staff'`);
+	const original = editDestination(staffListSid);
+	try {
+		await setEditDestination(page, staffFid, staffListSid, 'drawer');
+		await openFromList(page, staffListSid, 'ahstaff');
+
+		// the mark is drawn with the label, and taken away for someone who has a password already
+		const label = drawer(page).locator('label.form-label', { hasText: 'Change password' });
+		await expect(label).toBeVisible();
+		await expect(label.locator('span')).toHaveCount(1);
+		await expect(label.locator('span')).toBeHidden();
+
+		await closeDrawer(page);
+		await leavePage(page, `/modules/formulize/index.php?sid=${staffListSid}`);
+		await expect(page.getByText(/Showing entries:/).first()).toBeVisible({ timeout: 30000 });
+	} finally {
+		await setEditDestination(page, staffFid, staffListSid, original);
+	}
 });

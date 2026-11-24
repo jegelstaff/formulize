@@ -155,8 +155,8 @@ class formulizeGoogleAddressElementHandler extends formulizeElementsHandler {
 
             $js .= '
 <script>
-    let autocomplete;
-    autocomplete = new Array();
+    // the drawer runs this again for each form it shows, in the same page
+    var autocomplete = window.autocomplete || new Array();
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key='.$ele_value['apikey'].'&callback=initAutocomplete&libraries=places&v=weekly" defer></script>
 
@@ -164,8 +164,9 @@ class formulizeGoogleAddressElementHandler extends formulizeElementsHandler {
     function initAutocomplete() {
         // Create the autocomplete object, restricting the search predictions to
         // geographical location types.
-        jQuery(".formulizeGoogleAddressAutocomplete").each(function() {
+        jQuery(".formulizeGoogleAddressAutocomplete").not(".formulizeGoogleAddressAutocomplete-ready").each(function() {
 
+            jQuery(this).addClass("formulizeGoogleAddressAutocomplete-ready");
             var elementId = jQuery(this).attr("elementid");
             autocomplete[elementId] = new google.maps.places.Autocomplete(
                 jQuery(this).get(0),
@@ -204,6 +205,10 @@ class formulizeGoogleAddressElementHandler extends formulizeElementsHandler {
 $js.='
         });
 
+    }
+    // Google calls initAutocomplete() when its library loads. In the drawer it may have loaded already, for another form.
+    if (window.google && google.maps && google.maps.places) {
+        initAutocomplete();
     }
 </script>
 ';

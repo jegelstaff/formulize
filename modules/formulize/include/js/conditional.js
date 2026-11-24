@@ -1,6 +1,7 @@
 // need to be global!
-// This file runs again when the drawer shows a form over a page that already loaded it. Keep what the page set up,
-// so its conditional elements keep working. The drawer's form adds its own entries, which are keyed by entry id.
+// Keep what is already set up if this file runs again in the same page, so the conditional elements there keep working.
+// The drawer skips a file the page has, but not a newer version of it. The drawer's form adds its own entries, which are
+// keyed by entry id.
 var conditionalHTML = window.conditionalHTML || new Array();
 var governedElements = window.governedElements || new Array();
 var relevantElements = window.relevantElements || new Array();
