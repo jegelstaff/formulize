@@ -2,6 +2,31 @@
 const { defineConfig, devices } = require('@playwright/test');
 const { resolveBaseUrl } = require('./base-url');
 
+/* The browser the tests run in: chromium (the default), firefox or webkit. Each needs installing first,
+   with npx playwright install <browser>. */
+const BROWSER_DEVICES = { chromium: 'Desktop Chrome', firefox: 'Desktop Firefox', webkit: 'Desktop Safari' };
+const E2E_BROWSER = process.env.E2E_BROWSER || 'chromium';
+if (!BROWSER_DEVICES[E2E_BROWSER]) {
+  throw new Error(`E2E_BROWSER is "${E2E_BROWSER}". It must be one of: ${Object.keys(BROWSER_DEVICES).join(', ')}`);
+}
+
+/* Firefox uses its own user agent. The one Playwright's Firefox profile gives reaches the page and not the service
+   worker, which loads the pages (modules/formulize/pwa/worker.js), so the server would see two browsers. A security
+   token only works from the browser it was made for, so every save would be refused. */
+const device = { ...devices[BROWSER_DEVICES[E2E_BROWSER]] };
+if (E2E_BROWSER === 'firefox') {
+  delete device.userAgent;
+}
+/* WebKit runs with service workers blocked. In CI, WebKit on Linux sent form posts without the session cookie once the
+   site's worker was running, so every save after signing in failed. Without the worker, the rest of the suite can be
+   tested there. The specs about the worker skip themselves, and Chromium and Firefox test it. See docs/ci.md. */
+if (E2E_BROWSER === 'webkit') {
+  device.serviceWorkers = 'block';
+}
+
+/* Where the HTML report goes. Each run empties the folder first, so CI gives each of its runs a folder of its own. */
+const REPORT_DIR = process.env.E2E_REPORT_DIR || './test-report';
+
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -27,7 +52,7 @@ module.exports = defineConfig({
 	maxFailures: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
 	reporter: process.env.GITHUB_ACTIONS ?
-		[['list'], ['github'], ['html', { outputFolder: './test-report' }], ['./php-error-reporter.js'], ['./entry-lock-reporter.js']] : [['list'], ['html', { outputFolder: './test-report' }], ['./php-error-reporter.js'], ['./entry-lock-reporter.js']],
+		[['list'], ['github'], ['html', { outputFolder: REPORT_DIR }], ['./php-error-reporter.js'], ['./entry-lock-reporter.js']] : [['list'], ['html', { outputFolder: REPORT_DIR }], ['./php-error-reporter.js'], ['./entry-lock-reporter.js']],
 	/* Adjust the timeout for slow tests. E2E_TEST_TIMEOUT in .env overrides it, for slow machines. */
 	timeout: Number(process.env.E2E_TEST_TIMEOUT) || 120000,
   retries: 0,
@@ -66,11 +91,12 @@ module.exports = defineConfig({
     },
   },
 
-  /* Configure projects for major browsers */
+  /* One browser per run, chosen by E2E_BROWSER, so a plain run doesn't go through the suite once for each.
+     CI runs a job for each browser (.github/workflows/e2e-test-manual.yml). */
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] }
+      name: E2E_BROWSER,
+      use: device
     }
   ]
 });

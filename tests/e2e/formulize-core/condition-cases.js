@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const { webContainer } = require('../docker-containers');
-import { waitForWorkingMessage } from '../utils';
+import { waitForWorkingMessage, showListSearches } from '../utils';
 
 // Reads conditions-and-searches.md, for the specs that check what it says. That file is the test data: this only knows how
 // to read it. It says what each row should show, and where on the page to look.
@@ -225,6 +225,7 @@ export function disagreementIn(row, expected, shown) {
 export async function searchList(page, openList, searches) {
 	await openList();
 	await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
+	await showListSearches(page);
 	if (searches.some(search => search.picked)) {
 		if (searches.length > 1) {
 			throw new Error('A search picked from a date range has to be the only one in its row, since its Apply searches the list');

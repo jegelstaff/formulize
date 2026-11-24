@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, openMenuAccordion, openElementAccordion, waitForAdminPageReady, editScreenPage, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape, showPermissionsFor, openApplicationAccordion, waitForJQueryAnimations } from '../../utils';
+import { login, saveAdminForm, saveAdminSettings, openMenuAccordion, openElementAccordion, waitForAdminPageReady, editScreenPage, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape, showPermissionsFor, openApplicationAccordion, waitForJQueryAnimations, signOutLink } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -191,7 +191,7 @@ test.describe('Set Permissions', () => {
 	  await page.getByText('No, only permission to view').click();
 		await saveAdminForm(page);
 		await page.goto('/');
-		await page.getByRole('link', { name: 'Logout' }).click();
+		await signOutLink(page).click();
 		// The Survey multipage screen is sid=16 now: the 4 forms 005 creates
 		// (Departments, System Groups, Staff, System Users) consume screen ids
 		// 1-6, shifting the museum screens up by 6 (was sid=10 pre-005-rewrite).
@@ -245,6 +245,8 @@ test.describe('Set columns and elements for screens', () => {
 	test('Artifacts form screen', async ({ page }) => {
 		await page.locator('div[id^=form-details-box-]').nth(0).getByRole('link', { name: 'Screens' }).click();
 		await page.getByRole('link', { name: 'Artifact', exact: true }).click();
+		// the tabs and the page settings popup work once the page is ready
+		await waitForAdminPageReady(page);
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
   	await page.getByLabel('Form elements to display on').selectOption([
@@ -290,6 +292,8 @@ test.describe('Set columns and elements for screens', () => {
 		// By name and value, not by '#form-N': the number is the tab's position, which moves whenever a tab is added
 		await page.locator('input[name="screens-printall"][value="0"]').check();
 		await saveAdminForm(page);
+		// the tabs and the page settings popup work once the page is ready
+		await waitForAdminPageReady(page);
   	await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
 		await page.getByRole('textbox', { name: 'Title for page number' }).fill('Profile');
@@ -351,6 +355,8 @@ test.describe('Set columns and elements for screens', () => {
 	test('Collections form screen', async ({ page }) => {
 		await page.locator('div[id^=form-details-box-]').nth(1).getByRole('link', { name: 'Screens' }).click();
 		await page.getByRole('link', { name: 'Collection', exact: true }).click();
+		// the tabs and the page settings popup work once the page is ready
+		await waitForAdminPageReady(page);
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
 		await expect(page.getByText('Title for page number')).toBeVisible();
@@ -373,6 +379,8 @@ test.describe('Set columns and elements for screens', () => {
 	test('Exhibits form screen', async ({ page }) => {
 		await page.locator('div[id^=form-details-box-]').nth(3).getByRole('link', { name: 'Screens' }).click();
 		await page.getByRole('link', { name: 'Exhibit', exact: true }).click();
+		// the tabs and the page settings popup work once the page is ready
+		await waitForAdminPageReady(page);
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
 		await expect(page.getByText('Title for page number')).toBeVisible();
@@ -407,7 +415,7 @@ test.describe('Set columns and elements for screens', () => {
 		const rewriteRulesEnabled = page.locator('input[name="formulizeRewriteRulesEnabled"][value="1"]');
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await rewriteRulesEnabled.check();
-		await page.getByRole('button', { name: 'Save your changes' }).click();
+		await saveAdminSettings(page);
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await expect(rewriteRulesEnabled).toBeChecked();
 		// Navigate back to the Apps tab to find the Museum application.
@@ -415,13 +423,21 @@ test.describe('Set columns and elements for screens', () => {
   	await openApplicationAccordion(page, 'Museum');
   	await page.locator('div[id^=form-details-box-]').nth(4).getByRole('link', { name: 'Screens' }).click();
   	await page.getByRole('link', { name: 'Survey', exact: true }).click();
-  	await page.locator('input[name="screens-rewriteruleAddress"]').fill('survey');
-  	await page.getByRole('button', { name: 'Save your changes' }).click();
+		const address = page.locator('input[name="screens-rewriteruleAddress"]');
+		await expect(address).toBeVisible();
+		await waitForAdminPageReady(page);
+		const surveyScreen = page.url();
+		await address.fill('survey');
+		await saveAdminForm(page);
+		await page.goto(surveyScreen);
+		await expect(address).toHaveValue('survey');
 	})
 
 	test('Surveys form screen', async ({ page }) => {
 		await page.locator('div[id^=form-details-box-]').nth(4).getByRole('link', { name: 'Screens' }).click();
   	await page.getByRole('link', { name: 'Survey', exact: true }).click();
+		// the tabs and the page settings popup work once the page is ready
+		await waitForAdminPageReady(page);
 		await page.getByRole('link', { name: 'Pages' }).click();
   	await page.getByRole('link', { name: 'Edit this page' }).click();
 		await expect(page.getByText('Title for page number')).toBeVisible();

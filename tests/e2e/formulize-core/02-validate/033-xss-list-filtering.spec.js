@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveFormulizeForm, dbQuery, dbPrefix } from '../../utils';
+import { login, saveFormulizeForm, dbQuery, dbPrefix, openMainMenu, openEntry, entryArea, saveAndCloseEntry, clickListAction } from '../../utils';
 
 /**
  * T2 (list pipeline) security regression tests.
@@ -33,14 +33,14 @@ test.describe('T2 - XSS filtering in list output', () => {
 		await login(page, 'ahstaff', '12345');
 
 		// Create a Collection whose Name is the payload (Name is a plain-text element).
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Collections', exact: true }).click();
-		await page.getByRole('textbox', { name: 'Name *' }).fill(PLAIN_TEXT_PAYLOAD);
-		await page.getByRole('checkbox', { name: 'Children' }).check();
-		await page.getByRole('checkbox', { name: 'Adults' }).check();
+		await openEntry(page, () => clickListAction(page, 'Add Collections', { exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill(PLAIN_TEXT_PAYLOAD);
+		await entryArea(page).getByRole('checkbox', { name: 'Children' }).check();
+		await entryArea(page).getByRole('checkbox', { name: 'Adults' }).check();
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // returns to the list, clears entry lock
+		await saveAndCloseEntry(page); // returns to the list, clears entry lock
 
 		// Now on the Collections list, with the payload entry rendered in a cell.
 		// 1. The payload must NOT have rendered as a live element.
@@ -60,7 +60,7 @@ test.describe('T2 - XSS filtering in list output', () => {
 		if (entryIds.length === 0) { return; }
 		const page = await browser.newPage();
 		await login(page, 'ahstaff', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Collections', exact: true }).click();
 		for (const entryId of entryIds) {
 			await page.locator(`#delete_${entryId}`).check();

@@ -20,7 +20,8 @@ import {
 	leavePage,
 	ensureMainMenuOpen,
 	showPermissionsFor,
-	openApplicationAccordion
+	openApplicationAccordion,
+	showListSearches,
 } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
@@ -619,6 +620,7 @@ test.describe('I. New Users admin page UI', () => {
 
 	test('Search by username filters the user list', async ({ page }) => {
 		const fid = await getFidFromListPage(page);
+		await showListSearches(page);
 		const searchInput = page.locator(`input[name="search_formulize_user_account_username_${fid}"]`);
 		await searchInput.fill('curator');
 		// Press Enter to submit the controls form. Use Promise.all to start
@@ -633,6 +635,7 @@ test.describe('I. New Users admin page UI', () => {
 	});
 
 	test('EAU type filter narrows to Staff users only', async ({ page }) => {
+		await showListSearches(page);
 		// The dropdown onchange calls showLoading() which submits the controls form.
 		// Use Promise.all so waitForNavigation is registered before the change event fires.
 		await Promise.all([
@@ -734,7 +737,9 @@ test.describe('K. Enforcement of per-group conditions', () => {
 	// removable member we add ahstaff (is_curator=No → NOT enforced in All Curators), confirm it
 	// gets a Remove button while curator1 still doesn't, then remove ahstaff to restore state.
 	// Members display the ImpressCMS uname (Full Name): "Curator One", "Ancient History Staff".
-	// gmm Remove/Add buttons have pointer-events:none until hover, so click with force:true.
+	// gmm Remove/Add buttons have pointer-events:none until their row is hovered, so hover the row
+	// first, as a person's mouse does. A forced click moves and clicks at once, and WebKit hasn't
+	// applied the hover by then, so the click lands on the row and nothing is added.
 	test('All Curators: enforced members have no Remove button; a non-enforced added member can be removed', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
 
@@ -758,7 +763,9 @@ test.describe('K. Enforcement of per-group conditions', () => {
 		await addSearch.press('Enter');
 		const addRow = page.locator('.gmm-add-row').filter({ hasText: 'Ancient History Staff' });
 		await expect(addRow).toBeVisible();
-		await addRow.getByRole('button', { name: /Add/i }).click({ force: true });
+		await addRow.hover();
+		await addRow.getByRole('button', { name: /Add/i }).click();
+		await expect(page.locator('.gmm-pending-row').filter({ hasText: 'Ancient History Staff' })).toBeVisible();
 		await saveFormulizeForm(page, 'Save');
 
 		// 3. Reopen: ahstaff is now a member WITH a Remove button (not enforced); curator1 still has none.
@@ -769,7 +776,9 @@ test.describe('K. Enforcement of per-group conditions', () => {
 		await expect(page.locator('.gmm-member-row').filter({ hasText: 'Curator One' }).getByRole('button', { name: /Remove/i })).toHaveCount(0);
 
 		// 4. Remove ahstaff and confirm it's gone (restores the original membership state).
-		await ahstaffRow.getByRole('button', { name: /Remove/i }).click({ force: true });
+		await ahstaffRow.hover();
+		await ahstaffRow.getByRole('button', { name: /Remove/i }).click();
+		await expect(page.locator('.gmm-pending-row').filter({ hasText: 'Ancient History Staff' })).toBeVisible();
 		await saveFormulizeForm(page, 'Save');
 		await openAllCurators();
 		await expect(page.locator('.gmm-member-row').filter({ hasText: 'Ancient History Staff' })).toHaveCount(0);

@@ -424,6 +424,12 @@ test('The form behind the drawer keeps its own screen and relationship after the
 	expect(caseScreen.frid, 'the display cases should have no relationship').toBe('0');
 	const exhibitionScreen = formScreen(exhibitionsFid);
 	expect(exhibitionScreen.frid, 'the exhibitions should have one').not.toBe('0');
+	// The exhibition's screen has two columns, whichever the theme's new screens start with
+	await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${exhibitionsFid}&sid=${exhibitionScreen.sid}&tab=options`);
+	await waitForAdminPageReady(page);
+	await page.locator('#twocolumns').check();
+	await saveAdminForm(page);
+	expect(dbQuery(`SELECT displaycolumns FROM ${dbPrefix()}_formulize_screen_multipage WHERE sid = ${exhibitionScreen.sid}`)[0][0], 'the exhibitions should have two columns').toBe('2');
 
 	// in the drawer, the display case's conditional elements are fetched with its own
 	await openDisplayCaseInDrawer(page);
@@ -437,8 +443,7 @@ test('The form behind the drawer keeps its own screen and relationship after the
 		conditionalElementReady(page, 'dct_exhibition_languages', () => radioIn(exhibition, 'dct_exhibition_audio', 'Yes').check())
 	)).toEqual(exhibitionScreen);
 
-	// The exhibition's screen has two columns, so the checkboxes are in the second one, the same as the Name is. Without
-	// the screen they would be drawn in one column.
+	// So the checkboxes are in the second column, the same as the Name is. Without the screen they would be drawn in one.
 	const secondColumn = handle => exhibition.locator(`.form-row:has(.formulize-label-${handle}) .col2`);
 	await expect(secondColumn('dct_exhibition_name').getByRole('textbox')).toBeVisible();
 	await expect(secondColumn('dct_exhibition_languages').getByRole('checkbox', { name: 'French', exact: true })).toBeVisible();

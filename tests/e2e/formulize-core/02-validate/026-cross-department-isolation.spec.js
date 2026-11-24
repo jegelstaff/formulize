@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login } from '../../utils';
+import { login, openMainMenu } from '../../utils';
 
 // ============================================================
 // Phase 4 — Cross-department data isolation
@@ -23,7 +23,7 @@ import { login } from '../../utils';
 
 async function openArtifactsList(page, username) {
 	await login(page, username, '12345');
-	await page.locator('#burger-and-logo').getByRole('link').first().click();
+	await openMainMenu(page);
 	await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
 	// Wait until the list has actually rendered (the "Showing entries" footer is
 	// present) before asserting — otherwise a not.toBeVisible() check could pass

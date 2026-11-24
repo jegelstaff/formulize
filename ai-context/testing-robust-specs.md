@@ -18,17 +18,22 @@ The Formulize admin UI does a lot of asynchronous work: AJAX saves, fades, accor
 
 - **A green save-type test with no assertion after the save is a latent bug.** Re-navigate to the page, reopen the tab or panel, and assert that the values are there.
 - **Never end a test on the save trigger.** If the last thing a test does is click Save, Playwright can tear down the page before the request goes out. Follow the save with a wait or assertion that depends on the save having finished.
+- **Don't work around a step that didn't take.** If an earlier test was meant to set something up, rely on it, and fail without it.
 - **For saves that later tests depend on, use save, re-navigate, verify, retry.** `setMenuEntryGroups()` in `utils.js` is the model.
 - **Some buttons save the whole page and reload it, without saying so.** "Show permissions for these groups" on a form's Permissions tab is one: what it shows is only on the reloaded page. Wait for the page to be ready before the click, because the button's handler is bound by a script at the end of the page, and wait for the `load` event after it. `showPermissionsFor()` does both.
 - **Reopen with a direct URL.** Capture `page.url()` right after opening a form, and `page.goto()` it. Admin nav links aren't there from every state after a save. Checkbox and select assertions work on attached elements, so they don't need the tab to be active.
 
-**How `saveAdminForm()` waits.** The admin's Save fades `div.admin-ui` to 0.5, posts each tab's form to `save.php` in turn, with a PHP syntax check first on screen and template saves, and returns to full opacity when they're all done. So the opacity is what says the save is finished. If the save asks for a reload, the page stays faded until the reload replaces it. The helper's `networkidle` wait only counts after a reload, because `networkidle` fires once per page. Every admin page also fades in over 250ms once it has loaded, and the save's own fade waits behind that one. So a Save clicked during the fade-in looks finished as soon as the page is fully shown, and the helper waits for animations to end before it clicks. The page settings popup fades itself the same way, but a quick save can come and go between two checks of its opacity, so for a popup save the helper waits for the POST to `save.php?popupsave=1`.
+**How `saveAdminForm()` waits.** The admin's Save fades `div.admin-ui` to 0.5, posts each tab's form to `save.php` in turn, with a PHP syntax check first on screen and template saves, and returns to full opacity when they're all done. So the opacity is what says the save is finished. If the save asks for a reload, the page stays faded until the reload replaces it. The helper's `networkidle` wait only counts after a reload, because `networkidle` fires once per page. Every admin page also fades in over 250ms once it has loaded, and the save's own fade waits behind that one. So a Save clicked during the fade-in looks finished as soon as the page is fully shown, and the helper waits for animations to end before it clicks. A quick save can also be over, and the page reloaded, between two checks of the opacity, so the first answer from `save.php` counts as the save having started too. The page settings popup fades itself the same way, but a quick save can come and go between two checks of its opacity, so for a popup save the helper waits for the POST to `save.php?popupsave=1`.
 
-**How `saveFormulizeForm()` waits.** This is the same idea for forms on the user side. It clicks into the form and waits for the [security token](security-tokens.md#tokens-on-form-pages) to be filled in. Then it clicks the button while watching for `#savingmessage` to appear, because the animation can start and finish quickly, so the wait has to begin before the click. It waits for the animation to go, then asserts that "Your changes were not saved." isn't showing. So `#savingmessage` is what says the save is finished. The helper proves the save ran and wasn't refused, not that the values are right, so still check them.
+**How `saveAdminSettings()` waits.** The settings pages, and the system preferences, submit a form instead. The click is over before the browser has begun to send it, so a `goto()` straight after the click cancels the save, and reading the settings back over and over never finds it: that's how run 45315427351 failed in WebKit. Checking the box or the radio button right after the click passes on the page that hasn't been saved yet. The helper waits for the page to come back.
+
+**How `saveFormulizeForm()` waits.** This is the same idea for forms on the user side. It clicks into the form and waits for the [security token](security-tokens.md#tokens-on-form-pages) to be filled in. Save sends the whole page, so the helper clicks the button while waiting for the next page's `load` event, and then asserts that "Your changes were not saved." isn't showing. The new page loading is what says the save is finished. Don't wait for `#savingmessage` instead: it's shown just before the page goes, and WebKit can leave the page before a check sees it, and the check then goes on looking in the new page, where it's hidden. A save that fails validation sends nothing, so the helper times out. The helper proves the save ran and wasn't refused, not that the values are right, so still check them.
 
 ### `networkidle`
 
 Playwright's `networkidle` fires once per document and stays set. A `click` or `press` that navigates waits for the new document, so a wait after it is real. A wait after something that happens later, on the same document, passes at once and proves nothing. Wait for what a person would see.
+
+Firefox sometimes never reports it, with the page loaded and every request answered: twice in about 1,600 waits in run 45260223721, and never in Chromium. So `waitForAdminPageReady()` and `saveAdminForm()` give it a limited time and carry on, and rely on other checks to say the page is ready. Don't add a bare wait for it, and don't pass it to `waitForNavigation()`.
 
 ### Hidden tabs and autocompletes
 
@@ -96,7 +101,7 @@ Anything that slides, fades or grows open is visible from its first frame. So `t
 
 ### Controls that close their own window
 
-The "Change columns" popup hands its selection to the opener and closes itself, so Playwright's bookkeeping after the click can race the window closing, and fail with *Target page, context or browser has been closed*. `applyColumnChanges(popup)` handles that one. For any other control like it, treat the close as the completion signal:
+The "Change columns" popup hands its selection to the opener and closes itself, so Playwright's bookkeeping after the click can race the window closing, and fail with *Target page, context or browser has been closed*. `applyColumnChanges(popup)` handles that one, and waits for the list behind to reload with the new columns, since until then the page is still the old list. For any other control like it, treat the close as the completion signal:
 
 ```js
 await Promise.all([
@@ -118,7 +123,15 @@ A test that opens an entry must leave the page the way a person would, then chec
 
 ## Concurrency
 
-CI runs the suite in four passes, in `.github/workflows/e2e-test-manual.yml`:
+CI runs the whole suite in several environments at once, each a job on its own runner with its own containers: MariaDB and MySQL in Chromium on Anari, Firefox and WebKit on MariaDB and Anari, and Chromium on MariaDB and Lyris. `E2E_BROWSER`, `E2E_THEME` and `E2E_DB_CLIENT` tell the specs which. A failure in any of them fails the run. See [docs/ci.md](../docs/ci.md).
+
+A browser feature only one browser has, such as clearing the cache over a DevTools session or emulating a phone, is skipped in the others with `test.skip()` and the reason. `aDayPassesForTheWorker()` does this itself.
+
+Firefox runs with its own user agent, not the one in Playwright's profile. Playwright gives an overridden user agent to a Firefox page and not to its service worker. Our [worker](installable-app.md) makes the page loads and the page makes the POSTs, so with an override each [security token](security-tokens.md) is made for one user agent and checked against another, and every save is refused. Don't set `userAgent` in a spec that runs in Firefox.
+
+WebKit runs with service workers blocked, for the reason in [installable-app](installable-app.md#testing). A test that needs the worker running skips itself with `test.skip(serviceWorkers === 'block', NO_SERVICE_WORKERS)`.
+
+Each job runs the suite in four passes, in `.github/workflows/e2e-test-manual.yml`:
 
 | Folder | Flags |
 |---|---|
@@ -147,13 +160,34 @@ Use it when one test toggles a setting the others depend on, one test consumes s
 
 ## Which theme the suite covers
 
-Most of the suite is written for the **Anari** theme, even though a new install uses Lyris. The site is switched to Anari right after the install. In `01-setup/`, `02-validate/` and `03-validate-sequential/`, the selectors, menu structure and page chrome assume Anari's markup, because the suite predates Lyris.
+The whole suite runs on either theme. `E2E_THEME` says which, and it's `Anari` unless it says `Lyris`. On Anari, `01-setup/001` switches the new site to Anari straight after the install. On Lyris, the site stays on the theme it was installed with. Either way every screen the setup specs make starts with that theme's settings (its `screen-defaults.json`), so on Lyris the museum's lists open entries in the drawer, show 20 entries a page and keep their row of search boxes hidden until it's opened. CI runs both: see [Concurrency](#concurrency) and [docs/ci.md](../docs/ci.md). `04-appearance/` switches the site to Lyris and back in either run, and the two wizard specs there, 100 and 110, skip on Lyris, since a museum built on Lyris has nothing to move to it.
 
-Only `04-appearance/` runs on **Lyris**. Those specs switch the site to Lyris, test its looks and the Appearance editor, and put the site back.
+A spec is written once, for both. Do what a person does through the helpers in the "The site's theme" section of `utils.js`, rather than with one theme's markup:
 
-- A passing suite says little about Lyris's UI, apart from looks and the Appearance editor. Verify other Lyris work by driving the running app directly. A throwaway Playwright script against the dev instance works well.
-- Put new Lyris tests in `04-appearance/`, and don't add Lyris assertions to the other specs.
-- When a change branches on the theme, confirm the Anari path is genuinely untouched, rather than relying on the suite to catch a regression.
+| To | Use | Why there's a helper |
+|---|---|---|
+| Follow a menu link | `openMainMenu()`, `goToMenuLink()`, `ensureMainMenuOpen()` | Lyris's sidebar is closed on most pages, and closed it has no width, so its links count as visible to Playwright and a click can't reach them. The AI and account links aren't in `#mainmenu` in Lyris, so it can hold only applications, which are `<details>`, and no `li` of its own |
+| Open an entry from a list, by its row's link or the Add button, or add one with a subform's Add button | `openEntry(page, trigger)` | It opens on the form screen or in the drawer, as the list's `editdestination` says, and it waits for whichever. The trigger can be a function, for a button `clickListAction()` has to find, such as a list's Add multiple entries |
+| Look for an entry's elements | `entryArea(page)` | It's the drawer's body while the drawer is open, and the page otherwise. Over a list, `page.getByText()` and `page.getByLabel()` also match the list's cells and its "Search …" boxes, and they count hidden matches too |
+| Click an entry's own button without saving, such as Close | `entryButton(page, name)` | In the drawer they're in its footer, outside `entryArea` |
+| Save | `saveFormulizeForm()`, `saveAndCloseEntry()` | They save in the drawer when it's open. Save and Close is a link on a form screen and a button in the drawer |
+| Go to another page of an entry | `goToEntryPage()`, or `openFormScreenTab()` when it's always a form screen | Tabs are links on a form screen and buttons in the drawer. A form screen's tab releases the entry's locks by AJAX before it submits, so after a bare click the page being left can still be there, and a step that doesn't wait for the next one acts on it |
+| Pick an autocomplete's suggestion | `autocompleteSuggestion()` | The suggestions' menu is at the end of the page, outside the drawer, and the list behind can have the same names |
+| Type in a list's search boxes | `showListSearches()` first | Lyris lists start with the row hidden |
+| Change columns, Save view, Export, Notifications and the like | `clickListAction()`, `openChangeColumns()` | Anari keeps some behind "...", and Lyris keeps all of them in More actions |
+| Page through a list, or change its page size | `goToListPage()`, `goToNextListPage()`, `showEntriesPerPage()`, `LIST_PAGE_SIZE` | The controls differ, and 16 artifacts fit on one Lyris page |
+| Read or choose the current view | `currentViewName()`, `loadSavedView()` | Anari has a select, and Lyris a view switcher |
+| Follow the Admin link | `goToAdmin()` | Lyris's header links are under the message a redirect shows, such as "Thank you for logging in", for five seconds, and longer while the pointer is on it. Before any other header link on the page a sign-in lands on, use `waitForMessageToGo()` |
+| Sign out, or find the account link | `signOutLink()`, `accountLink()` | Logout and Edit Account in Anari, Sign out and Account in Lyris's header |
+
+Which of a form screen and the drawer an entry opens in is the list's setting, not the theme, so the helpers look at what's on the page. `users.php`, `groups.php` and `master.php` open entries full screen in both themes, and an entry opened by its address (`&ve=`) is always full screen. A spec about form screens, like `02-validate/049`, sets its own list to open entries there.
+
+While the drawer is open, its scrim (`.formulize-drawer-scrim`), the dimmed layer behind it, is over the rest of the page, including the main menu on the other side. A person who clicks there closes the drawer. Playwright won't click something that another element is over, so it waits until the test times out. A form screen has no scrim, so a test that clicks a menu link from an open entry passes on Anari and hangs on Lyris. Leave the entry first. After a test times out, whatever it was waiting on can still finish, and the rest of it can run alongside `afterEach`, which is how a lock can be left that the test seems not to have taken.
+
+The drawer keeps the last form it showed when it closes, hidden, and the list only reloads after a close if something was saved. So after closing without saving, look at the list by role, which leaves out what's hidden, rather than with `page.getByText()`.
+
+- When a change branches on the theme, the Lyris run checks the Lyris path, but confirm the Anari path is genuinely untouched too.
 - Switch themes through the page with `chooseSiteThemes()` in `utils.js`, as `01-setup/001` and `04-appearance/020` do. Saving a new site theme there also moves every screen's theme, which decides the folder its Templates tab edits. `setSiteThemeInDb()` and `restoreSiteTheme()` leave the screens where they were, so a spec that uses them mustn't touch screen templates.
+- A spec that switches the theme puts back the run's theme, `E2E_THEME`, not Anari.
 
 See [themes-anari-and-lyris](themes-anari-and-lyris.md).

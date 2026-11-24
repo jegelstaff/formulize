@@ -1153,13 +1153,16 @@
         return btn;
     }
 
-    // Briefly surface a message in the drawer footer (e.g. "No changes to save").
-    function showDrawerNotice(message) {
+    // Briefly surface a message in the drawer footer (e.g. "No changes to save"). One that
+    // matters more, such as a save that was refused, stays until the next message.
+    function showDrawerNotice(message, keep) {
         var el = footEl ? footEl.querySelector('.formulize-drawer__notice') : null;
         if (!el) { return; }
         el.textContent = message;
         clearTimeout(showDrawerNotice._timer);
-        showDrawerNotice._timer = setTimeout(function () { el.textContent = ''; }, 3000);
+        if (!keep) {
+            showDrawerNotice._timer = setTimeout(function () { el.textContent = ''; }, 3000);
+        }
     }
 
     // ---- Validation / save -----------------------------------------------------
@@ -1309,7 +1312,9 @@
     }
 
     // POST the current page's fields to readelements.php to persist them. Returns a
-    // promise so callers can chain. The entry id is carried in the field names, so this
+    // promise so callers can chain what they do next, such as leave the entry. It never
+    // resolves if the save is refused, so then the person stays on the entry, with their
+    // changes and the reason. The entry id is carried in the field names, so this
     // works for both new and existing entries. The saving animation is up for the round
     // trip, as it is full screen (PR #127 review) — this is the drawer's other write
     // path; the fragment endpoint's POSTs are covered in fetchIntoDrawer.
@@ -1320,6 +1325,7 @@
             '?fid='  + encodeURIComponent(form.getAttribute('data-fid') || '') +
             '&frid=' + encodeURIComponent(form.getAttribute('data-frid') || 0);
         var xhr = null;
+        showDrawerNotice('', true); // a refusal from an earlier try no longer applies
         return whileSaving(function () {
             xhr = jQuery.post({
                 url: saveUrl,
@@ -1347,7 +1353,13 @@
                     entry: frame.entryId || null
                 });
             }
-            return response;
+            // For the same reason, anything it does say means the save was refused, such as for a
+            // bad security token.
+            var refusal = String(response || '').trim();
+            if (refusal) {
+                showDrawerNotice(refusal, true);
+                return new Promise(function () {});
+            }
         });
     }
 

@@ -1287,6 +1287,7 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 	$options =  "";
 	$viewItems = array();
 	$vcounter=0;
+	$pickgroups = null;
 
 	if (!$limitViews) {
 		$options .= "<option value=\"\">" . _formulize_DE_STANDARD_VIEWS . "</option>\n";
@@ -1421,6 +1422,14 @@ function generateViews($fid, $uid, $groups, $frid, $currentView, $loadedView, $v
 				$viewItems[] = array('type' => 'item', 'value' => 'p' . $np_reports[$i]['sv_id'], 'label' => stripslashes($np_reports[$i]['sv_name']), 'selected' => false, 'standard' => false);
 			}
 			$publishedViewNames["p" . $np_reports[$i]['sv_id']] = stripslashes($np_reports[$i]['sv_name']); // used by the screen system to create a variable for each view name, and only the last loaded view is set to true.
+		}
+	}
+	// The scope of a loaded view has been marked as selected above, as well as the view. The view is the current one.
+	if(isset($curviewid)) {
+		foreach($viewItems as $i => $viewItem) {
+			if($viewItem['type'] == 'item' AND $viewItem['standard']) {
+				$viewItems[$i]['selected'] = false;
+			}
 		}
 	}
 	$to_return[0] = $options;
@@ -4576,6 +4585,24 @@ function unselectAll(uncheck) {
 }
 
 function delete_view(pubstart, endstandard) {
+
+	// A theme's list of views may not be a select, as Lyris's isn't. Then the view to delete is the one loaded, which
+	// delviewid_formulize names: s or sold_ for the person's own views, p or pold_ for published ones, and nothing for
+	// a standard view. Only the person's own can be deleted here, as with the select.
+	if (!window.document.controls.currentview.options) {
+		var loadedView = window.document.controls.delviewid_formulize.value;
+		if (loadedView.charAt(0) == 's') {
+			if (confirm('<?php print _formulize_DE_CONF_DELVIEW; ?>')) {
+				window.document.controls.delview.value = 1;
+				window.document.controls.ventry.value = '';
+				showLoading();
+				return true;
+			}
+		} else {
+			alert('<?php print _formulize_DE_DELETE_ALERT; ?>');
+		}
+		return false;
+	}
 
 	for (var i=0; i < window.document.controls.currentview.options.length; i++) {
 		if (window.document.controls.currentview.options[i].selected) {

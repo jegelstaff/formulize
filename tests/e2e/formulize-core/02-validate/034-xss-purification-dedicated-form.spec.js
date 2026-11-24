@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyColumnChanges, createMuseumForm, deleteMuseumFormsTitled, setCodeMirrorValue } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyColumnChanges, createMuseumForm, deleteMuseumFormsTitled, setCodeMirrorValue, openEntry, entryArea, saveAndCloseEntry, openChangeColumns } from '../../utils';
 
 /**
  * T2 (list pipeline) - comprehensive XSS filtering on a purpose-built, throwaway form.
@@ -85,16 +85,17 @@ test.describe.serial('T2 - XSS filtering on a dedicated form', () => {
 
 	test('create an entry carrying payloads in the text and rich-text fields', async ({ page }) => {
 		await login(page, 'admin');
-		// index.php?fid= shows the LIST for this form; open the entry form via its Add button.
+		// index.php?fid= shows the LIST for this form; open the entry form via its Add button, which goes to the form
+		// screen or opens the drawer, as the list's settings say.
 		await page.goto(`/modules/formulize/index.php?fid=${testFid}`);
-		await page.getByRole('button', { name: 'Add XSS Filter Test', exact: true }).click();
+		await openEntry(page, page.getByRole('button', { name: 'Add XSS Filter Test', exact: true }));
 		// The PI element "ID" is a required field - the form will not submit until it has a value.
-		await page.getByRole('textbox', { name: 'ID *' }).fill('IDTEST034');
-		await page.getByLabel('Free Text').fill(TEXT_PAYLOAD);
+		await entryArea(page).getByRole('textbox', { name: 'ID *' }).fill('IDTEST034');
+		await entryArea(page).getByLabel('Free Text').fill(TEXT_PAYLOAD);
 		// CKEditor exposes an ARIA textbox for the rich-text area.
-		await page.getByRole('textbox', { name: /Rich Text Editor/i }).fill(RICH_PAYLOAD);
+		await entryArea(page).getByRole('textbox', { name: /Rich Text Editor/i }).fill(RICH_PAYLOAD);
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+		await saveAndCloseEntry(page); // clears the entry lock
 	});
 
 	test('the list neutralises every payload while keeping admin/formatting markup', async ({ page }) => {
@@ -106,10 +107,7 @@ test.describe.serial('T2 - XSS filtering on a dedicated form', () => {
 		await page.goto(`/modules/formulize/index.php?fid=${testFid}`);
 
 		// The custom elements are not shown as columns by default - add them via the Change columns popup.
-		const popupPromise = page.context().waitForEvent('page');
-		await page.getByRole('button', { name: 'Change columns' }).click();
-		const popup = await popupPromise;
-		await popup.bringToFront();
+		const popup = await openChangeColumns(page);
 		await popup.getByRole('checkbox', { name: 'Free Text' }).check();
 		await popup.getByRole('checkbox', { name: 'Rich Text' }).check();
 		await popup.getByRole('checkbox', { name: 'Derived Wrap' }).check();

@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, leavePage, openAllColumnSections, applyColumnChanges, dbQuery, dbPrefix } from '../../utils';
+import { login, leavePage, openAllColumnSections, applyColumnChanges, dbQuery, dbPrefix, openChangeColumns } from '../../utils';
 
 // Links to a user's account go through userinfo.php, wherever they come from. Your own account opens in edituser.php. For
 // someone else's, the permissions decide whether you get nothing, a disabled form or a working one.
@@ -136,11 +136,8 @@ test('A name in the Creator column goes to the same place', async ({ page }) => 
 	const openCreator = async () => {
 		const fid = dbQuery(`SELECT id_form FROM ${dbPrefix()}_formulize_id WHERE form_handle = 'donors'`)[0][0];
 		await page.goto(`/modules/formulize/index.php?fid=${fid}`);
-		await expect(page.getByText('Change columns')).toBeVisible();
-		const popupPromise = page.context().waitForEvent('page');
-		await page.getByRole('button', { name: 'Change columns' }).click();
-		const popup = await popupPromise;
-		await popup.bringToFront();
+		await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
+		const popup = await openChangeColumns(page);
 		await openAllColumnSections(popup);
 		await popup.getByRole('checkbox', { name: 'User who made entry' }).check();
 		await applyColumnChanges(popup);

@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
-import { login, leavePage, dbQuery, dbPrefix, entryIsLocked, entriesThePageWillRelease, waitForWorkingMessage } from '../../utils';
+import { login, leavePage, dbQuery, dbPrefix, entryIsLocked, entriesThePageWillRelease, waitForWorkingMessage, showListSearches } from '../../utils';
 
 // The list of users shows a Masquerade button for each user, the same button their account shows in a form. It's
 // the column's value in the list, not an element to edit there, so it shows without anything being clicked. A
@@ -103,6 +103,7 @@ test('the installer\'s admin, at level 5, is Active, is found as Active, and sta
 	await expect(status()).toContainText('Active');
 
 	// a search of Status for Active finds the admin, as well as users at level 1
+	await showListSearches(page);
 	const box = page.locator('input[name^="search_formulize_user_account_status_"]');
 	await box.fill('Active');
 	await box.press('Enter');

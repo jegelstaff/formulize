@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled, dbQuery, dbPrefix } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled, dbQuery, dbPrefix, openEntry, entryArea, saveAndCloseEntry } from '../../utils';
 
 /**
  * T3 - {reference} substitution into admin-authored display text (captions and help text).
@@ -112,11 +112,11 @@ test.describe.serial('T3 - {ref} substitution into captions and help text', () =
 	test('create an entry whose source field carries the payload', async ({ page }) => {
 		await login(page, 'admin');
 		await page.goto(`/modules/formulize/index.php?fid=${testFid}`);
-		await page.getByRole('button', { name: 'Add XSS Ref Test', exact: true }).click();
-		await page.getByRole('textbox', { name: 'ID *' }).fill('IDREF036');
-		await page.getByLabel('Source Field').fill(PAYLOAD);
+		await openEntry(page, page.getByRole('button', { name: 'Add XSS Ref Test', exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'ID *' }).fill('IDREF036');
+		await entryArea(page).getByLabel('Source Field').fill(PAYLOAD);
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+		await saveAndCloseEntry(page); // clears the entry lock
 
 		// Resolve the entry id from the DB rather than scraping it out of the UI - the form view has to be
 		// opened by id (?ve=), and a {ref} only resolves against a SAVED entry (on a new entry it is '').

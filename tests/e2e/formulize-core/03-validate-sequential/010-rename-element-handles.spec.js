@@ -10,6 +10,7 @@ import {
 	saveFormulizeForm, saveAdminForm, waitForAdminPageReady, dbQuery, dbPrefix, renameElementHandle, elementId,
 	openArtifactOriginsMap, expectArtifactOriginsMap, loadSavedView, expectCoinsByName, expectArtifactOriginsList,
 	conditionalElementReady, setCodeMirrorValue, autocompleteBox,
+	openMainMenu, openEntry, autocompleteSuggestion, entryArea, saveAndCloseEntry, screenTemplatesForm, emptyScreenTemplates,
 } from '../../utils';
 
 /**
@@ -42,7 +43,7 @@ async function openScreenTemplates(page, fid, sid) {
 	await waitForAdminPageReady(page);
 	const customize = page.getByRole('button', { name: 'Customize the Templates' });
 	// every tab is on the page, so only the editors in the templates tab's form count
-	const templateEditor = templatesForm(page).locator('.CodeMirror').first();
+	const templateEditor = screenTemplatesForm(page).locator('.CodeMirror').first();
 	await expect(customize.or(templateEditor)).toBeVisible();
 	const customized = await customize.isVisible();
 	if (customized) {
@@ -53,10 +54,6 @@ async function openScreenTemplates(page, fid, sid) {
 	await expect(templateEditor).toBeVisible();
 	return customized;
 }
-// The form in a screen's settings that holds its template boxes
-function templatesForm(page) {
-	return page.locator('form:has(input[name="formulize_admin_handler"][value$="_templates"])');
-}
 // Put code in one of a screen's template boxes, and save it, in the screen's settings
 async function setScreenTemplate(page, fid, sid, box, code) {
 	await openScreenTemplates(page, fid, sid);
@@ -66,22 +63,8 @@ async function setScreenTemplate(page, fid, sid, box, code) {
 // What one of a screen's template boxes shows, in the screen's settings
 async function shownScreenTemplate(page, fid, sid, box) {
 	await openScreenTemplates(page, fid, sid);
-	return templatesForm(page).locator(`textarea[name="screens-${box}"] + .CodeMirror`).evaluate(editor => editor.CodeMirror.getValue());
+	return screenTemplatesForm(page).locator(`textarea[name="screens-${box}"] + .CodeMirror`).evaluate(editor => editor.CodeMirror.getValue());
 }
-// Empty all of a screen's template boxes and save, in the screen's settings, which puts it back on the default
-// templates
-async function useDefaultScreenTemplates(page, fid, sid) {
-	await openScreenTemplates(page, fid, sid);
-	const templateBoxes = templatesForm(page).locator('textarea.code-textarea');
-	for (const name of await templateBoxes.evaluateAll(boxes => boxes.map(box => box.name))) {
-		await setCodeMirrorValue(page, `textarea[name="${name}"]`, '');
-	}
-	await saveAdminForm(page);
-	await page.goto(`/modules/formulize/admin/ui.php?page=screen&fid=${fid}&sid=${sid}&tab=templates`);
-	await waitForAdminPageReady(page);
-	await expect(page.getByRole('button', { name: 'Customize the Templates' })).toBeVisible();
-}
-
 test.describe.serial('Renaming element handles', () => {
 
 	test('Year: the Year-Era formula follows the rename, and keeps working', async ({ page }) => {
@@ -160,15 +143,16 @@ test.describe.serial('Renaming element handles', () => {
 		// The Collections box is found by its element's handle, which is whatever it has been renamed to at the time.
 		const expectExhibitToOfferItsCollectionsArtifacts = async collectionsHandle => {
 			await asCurator(page);
-			await page.locator('#burger-and-logo').getByRole('link').first().click();
+			await openMainMenu(page);
 			await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
-			await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
+			await openEntry(page, page.getByRole('button', { name: 'Add Exhibit', exact: true }));
+			// suggestions in the autocomplete's menu: a list behind the drawer has these names in it too
 			await autocompleteBox(page, collectionsHandle).fill('an');
-			await conditionalElementReady(page, 'exhibits_artifacts', () => page.getByText('Ancient History', { exact: true }).click());
+			await conditionalElementReady(page, 'exhibits_artifacts', () => autocompleteSuggestion(page, 'Ancient History', { exact: true }).click());
 			await autocompleteBox(page, 'exhibits_artifacts').fill('roman');
-			await expect(page.getByText('Roman Coin')).toBeVisible();
+			await expect(autocompleteSuggestion(page, 'Roman Coin')).toBeVisible();
 			await autocompleteBox(page, 'exhibits_artifacts').fill('flor');
-			await expect(page.getByText('No match found')).toBeVisible();
+			await expect(autocompleteSuggestion(page, 'No match found')).toBeVisible();
 			await leaveWithoutSaving(page);
 		};
 		await asAdmin(page);
@@ -233,8 +217,8 @@ test.describe.serial('Renaming element handles', () => {
 		await expectArtifactOriginsList(page);
 		await page.goto('/modules/formulize/');
 		await openArtifact(page, 'M001');
-		await expect(page.getByText('Describe the Roman Coin')).toBeVisible();
-		await page.getByRole('link', { name: 'Save and Close' }).click();
+		await expect(entryArea(page).getByText('Describe the Roman Coin')).toBeVisible();
+		await saveAndCloseEntry(page);
 		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 
 		// and back
@@ -302,17 +286,17 @@ test.describe.serial('Renaming element handles', () => {
 			// the spoon's condition as it was, in its form
 			await asCurator(page);
 			await openArtifact(page, 'Babylonian Spoon');
-			await page.getByRole('slider', { name: 'Condition' }).fill(spoon[1]);
+			await entryArea(page).getByRole('slider', { name: 'Condition' }).fill(spoon[1]);
 			await saveFormulizeForm(page);
 			await expect.poll(() => dbQuery(`SELECT artifacts_condition FROM ${dbPrefix()}_formulize_artifacts WHERE entry_id = ${spoon[0]}`)[0][0]).toBe(spoon[1]);
-			await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+			await saveAndCloseEntry(page); // clears the entry lock
 			await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 		} finally {
 			// as it was: on the default templates again if this test gave the list its own, or else with its own
 			// bottom template as it found it
 			await asAdmin(page);
 			if (customized) {
-				await useDefaultScreenTemplates(page, fid, listSid);
+				await emptyScreenTemplates(page, { sid: listSid, fid });
 			} else {
 				await setScreenTemplate(page, fid, listSid, 'bottomtemplate', asItWas);
 			}

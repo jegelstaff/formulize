@@ -1,0 +1,4 @@
+[mysqld]
+# Explicitly set the value to 0, as docker/mariadb/conf.d does for MariaDB. MySQL only reads this
+# when it first sets up its data folder.
+lower_case_table_names = 0

@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login } from '../../utils';
+import { login, saveAdminSettings } from '../../utils';
 
 // These tests change site-wide settings (the MCP server, the AI assistant) and read the first API key in the
 // list, so they run in the sequential stage, where no other spec can change those underneath them. In
@@ -132,7 +132,7 @@ test.describe('Check that tools/list is responding', () => {
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await mcpServerEnabled.check();
 		await aiAssistantEnabled.check();
-		await page.getByRole('button', { name: 'Save your changes' }).click();
+		await saveAdminSettings(page);
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		// With MCP enabled, the preference description shows the external-assistant setup instructions.
 		// Confirming this text is visible verifies the setting was saved on.
@@ -143,7 +143,7 @@ test.describe('Check that tools/list is responding', () => {
 		const loggingEnabled = page.locator('input[name="formulizeLoggingOnOff"][value="1"]');
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await loggingEnabled.check();
-		await page.getByRole('button', { name: 'Save your changes' }).click();
+		await saveAdminSettings(page);
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		// API Keys are under Users → API Keys. This is a fresh page load (not right after creation), so
 		// the key is masked on screen and only available via the data-key attribute on its copy icon.
@@ -184,7 +184,7 @@ test.describe('Check that tools/list is responding', () => {
 		const aiAssistantEnabled2 = page.locator('input[name="formulizeAIAssistantEnabled"][value="1"]');
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await aiAssistantEnabled2.check();
-		await page.getByRole('button', { name: 'Save your changes' }).click();
+		await saveAdminSettings(page);
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await expect(page.getByText('Learn more: https://formulize.org/ai/setup-embedded')).toBeVisible();
 		await expect(aiAssistantEnabled2).toBeChecked();

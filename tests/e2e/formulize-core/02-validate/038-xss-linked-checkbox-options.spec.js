@@ -2,6 +2,7 @@ const { test, expect } = require('@playwright/test');
 import {
 	login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, waitForWorkingMessage, createMuseumForm, deleteMuseumFormsTitled,
 	openAllColumnSections, applyColumnChanges, dbQuery, dbPrefix,
+	openEntry, entryArea, saveAndCloseEntry, openChangeColumns, showListSearches,
 } from '../../utils';
 
 /**
@@ -62,17 +63,17 @@ test.describe.serial('T3.6 - linked checkbox option labels are escaped in the fo
 		await saveAdminForm(page);
 
 		await page.goto(`/modules/formulize/index.php?fid=${sourceFid}`);
-		await page.getByRole('button', { name: 'Add XSS CBLink Source', exact: true }).click();
-		await page.getByRole('textbox', { name: 'ID *' }).fill('CBSRC038');
-		await page.getByLabel('Source Name').fill(LINK_PAYLOAD);
+		await openEntry(page, page.getByRole('button', { name: 'Add XSS CBLink Source', exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'ID *' }).fill('CBSRC038');
+		await entryArea(page).getByLabel('Source Name').fill(LINK_PAYLOAD);
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click();
+		await saveAndCloseEntry(page);
 
-		await page.getByRole('button', { name: 'Add XSS CBLink Source', exact: true }).click();
-		await page.getByRole('textbox', { name: 'ID *' }).fill('CBSRC038B');
-		await page.getByLabel('Source Name').fill(FILTER_PAYLOAD);
+		await openEntry(page, page.getByRole('button', { name: 'Add XSS CBLink Source', exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'ID *' }).fill('CBSRC038B');
+		await entryArea(page).getByLabel('Source Name').fill(FILTER_PAYLOAD);
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click();
+		await saveAndCloseEntry(page);
 		await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
 	});
 
@@ -93,12 +94,12 @@ test.describe.serial('T3.6 - linked checkbox option labels are escaped in the fo
 
 		// a list's filters offer only the values that its entries have, so this entry ticks both source entries
 		await page.goto(`/modules/formulize/index.php?fid=${targetFid}`);
-		await page.getByRole('button', { name: 'Add XSS CBLink Target', exact: true }).click();
-		await page.getByRole('textbox', { name: 'ID *' }).fill('CBTGT038');
-		await page.getByRole('checkbox', { name: new RegExp(LINK_MARKER) }).check();
-		await page.getByRole('checkbox', { name: new RegExp(FILTER_MARKER) }).check();
+		await openEntry(page, page.getByRole('button', { name: 'Add XSS CBLink Target', exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'ID *' }).fill('CBTGT038');
+		await entryArea(page).getByRole('checkbox', { name: new RegExp(LINK_MARKER) }).check();
+		await entryArea(page).getByRole('checkbox', { name: new RegExp(FILTER_MARKER) }).check();
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click();
+		await saveAndCloseEntry(page);
 		await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
 	});
 
@@ -111,10 +112,10 @@ test.describe.serial('T3.6 - linked checkbox option labels are escaped in the fo
 		// Open the target's ADD form: the linked checkbox renders one option whose LABEL is the source
 		// entry's (payload) text. This is the option-<label> sink, exercised in the editable form.
 		await page.goto(`/modules/formulize/index.php?fid=${targetFid}`);
-		await page.getByRole('button', { name: 'Add XSS CBLink Target', exact: true }).click();
+		await openEntry(page, page.getByRole('button', { name: 'Add XSS CBLink Target', exact: true }));
 
 		// POSITIVE first (readiness gate + correctness): the option rendered and shows the marker text.
-		await expect(page.locator('body')).toContainText(LINK_MARKER);
+		await expect(entryArea(page)).toContainText(LINK_MARKER);
 
 		// SAFETY: the payload's <img> did not become a live element in the option label, no on* handler
 		// survived, and no dialog fired. (The <img> class probe count being 0 is the strong check here -
@@ -152,14 +153,13 @@ test.describe.serial('T3.6 - linked checkbox option labels are escaped in the fo
 			await expect(searchTypeSetting.locator('option:checked')).toHaveText(searchType);
 
 			await page.goto(`/modules/formulize/index.php?fid=${targetFid}`);
-			await expect(page.getByRole('button', { name: 'Change columns' })).toBeVisible();
-			const popupPromise = page.context().waitForEvent('page');
-			await page.getByRole('button', { name: 'Change columns' }).click();
-			const popup = await popupPromise;
+			await expect(page.getByText(/Showing entries:/).first()).toBeVisible();
+			const popup = await openChangeColumns(page);
 			await openAllColumnSections(popup);
 			await popup.getByRole('checkbox', { name: 'Linked Choice', exact: true }).check();
 			await applyColumnChanges(popup);
 			await waitForWorkingMessage(page);
+			await showListSearches(page);
 
 			// POSITIVE first: both labels are offered, as text
 			const offered = await read(page);

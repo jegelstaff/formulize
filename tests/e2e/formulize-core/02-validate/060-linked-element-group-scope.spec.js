@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, leavePage, elementRow, autocompleteBox, openElementSettings } from '../../utils';
+import { login, leavePage, elementRow, autocompleteBox, openElementSettings, openMainMenu, openEntry, autocompleteSuggestion } from '../../utils';
 
 // A linked element's scope: "limit them to values from the groups selected here", with "Only use groups that the current
 // user is a member of".
@@ -20,9 +20,9 @@ const ALL_COLLECTIONS = ['Ancient History', 'Modern History', 'Coins', 'Weapons'
 // Open a new artifact, and check which collections its Collections boxes offer
 async function expectNewArtifactToOffer(page, user, offered) {
 	await login(page, user);
-	await page.locator('#burger-and-logo').getByRole('link').first().click();
+	await openMainMenu(page);
 	await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
-	await page.getByRole('button', { name: 'Add Artifact', exact: true }).click();
+	await openEntry(page, page.getByRole('button', { name: 'Add Artifact', exact: true }));
 	const collections = elementRow(page, 'artifacts_collections');
 	await expect(collections.getByRole('checkbox', { name: offered[0], exact: true })).toBeVisible();
 	for (const name of ALL_COLLECTIONS) {
@@ -61,14 +61,15 @@ test('a curator in both departments is offered every collection', async ({ page 
 
 test('the Exhibits collections autocomplete is limited the same way', async ({ page }) => {
 	await login(page, 'ahstaff');
-	await page.locator('#burger-and-logo').getByRole('link').first().click();
+	await openMainMenu(page);
 	await page.locator('#mainmenu').getByRole('link', { name: 'Exhibits', exact: true }).click();
-	await page.getByRole('button', { name: 'Add Exhibit', exact: true }).click();
+	await openEntry(page, page.getByRole('button', { name: 'Add Exhibit', exact: true }));
 	const box = autocompleteBox(page, 'exhibits_collections');
 	await box.fill('co');
-	await expect(page.getByText('Coins', { exact: true })).toBeVisible();
+	// in the autocomplete's menu: a list behind the drawer has collections in it too
+	await expect(autocompleteSuggestion(page, 'Coins', { exact: true })).toBeVisible();
 	await box.fill('mo');
-	await expect(page.getByText('No match found')).toBeVisible();
-	await expect(page.getByText('Modern History', { exact: true })).toHaveCount(0);
+	await expect(autocompleteSuggestion(page, 'No match found')).toBeVisible();
+	await expect(autocompleteSuggestion(page, 'Modern History', { exact: true })).toHaveCount(0);
 	await leaveWithoutSaving(page);
 });

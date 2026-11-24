@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, editScreenPage, conditionalElementReady, createMuseumForm, leavePage, elementId, dbQuery, dbPrefix, sqlEscape } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, editScreenPage, conditionalElementReady, createMuseumForm, leavePage, elementId, dbQuery, dbPrefix, sqlEscape,
+	openMainMenu, openEntry, entryArea, showListSearches, openFormScreenTab } from '../../utils';
 import {
 	formId, museumAppId, startElement, finishElement, makeRequired, linkToSource, inheritPermissionsFromArtifacts, openFormScreens,
 	setElementsOnOnlyPage, expectElementsOnPage, saveAndClose,
@@ -163,59 +164,59 @@ async function setListColumns(page, formTitle, screenHandle, handles) {
 
 async function openArtifactsAndAdd(page, username) {
 	await login(page, username, '12345');
-	await page.locator('#burger-and-logo').getByRole('link').first().click();
+	await openMainMenu(page);
 	await page.locator('#mainmenu').getByRole('link', { name: 'Artifacts', exact: true }).click();
-	await page.getByRole('button', { name: 'Add Artifact', exact: true }).click();
+	await openEntry(page, page.getByRole('button', { name: 'Add Artifact', exact: true }));
 }
 
 async function fillRequiredArtifactFields(page, { name, height, width, depth, year, era }) {
-	await page.getByRole('textbox', { name: 'Short name *' }).fill(name);
-	await page.getByRole('spinbutton', { name: 'Height', exact: true }).fill(height);
-	await page.getByRole('spinbutton', { name: 'Width', exact: true }).fill(width);
-	await page.getByRole('spinbutton', { name: 'Depth', exact: true }).fill(depth);
-	await page.getByRole('spinbutton', { name: 'Year', exact: true }).fill(year);
-	await page.getByRole('radio', { name: era, exact: true }).check();
+	await entryArea(page).getByRole('textbox', { name: 'Short name *' }).fill(name);
+	await entryArea(page).getByRole('spinbutton', { name: 'Height', exact: true }).fill(height);
+	await entryArea(page).getByRole('spinbutton', { name: 'Width', exact: true }).fill(width);
+	await entryArea(page).getByRole('spinbutton', { name: 'Depth', exact: true }).fill(depth);
+	await entryArea(page).getByRole('spinbutton', { name: 'Year', exact: true }).fill(year);
+	await entryArea(page).getByRole('radio', { name: era, exact: true }).check();
 }
 
 async function openDonorsAndAdd(page) {
 	await login(page, 'curator1', '12345');
-	await page.locator('#burger-and-logo').getByRole('link').first().click();
+	await openMainMenu(page);
 	await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
-	await page.getByRole('button', { name: 'Add Donor', exact: true }).click();
+	await openEntry(page, page.getByRole('button', { name: 'Add Donor', exact: true }));
 }
 
 async function addLoanRequest(page, request) {
 	await login(page, 'curator1', '12345');
 	await page.goto(`/modules/formulize/index.php?fid=${formId('Loan Requests')}`);
-	await page.getByRole('button', { name: /^Add Loan Requests?$/ }).click();
-	await page.locator('.form-row:has(.formulize-label-loans_borrower) input[type="text"]').fill(request.borrower);
-	await page.locator('.form-row:has(.formulize-label-loans_artifact) select').selectOption({ label: request.artifact });
+	await openEntry(page, page.getByRole('button', { name: /^Add Loan Requests?$/ }));
+	await entryArea(page).locator('.form-row:has(.formulize-label-loans_borrower) input[type="text"]').fill(request.borrower);
+	await entryArea(page).locator('.form-row:has(.formulize-label-loans_artifact) select').selectOption({ label: request.artifact });
 	for (const collection of request.collections ?? []) {
-		await page.locator('.form-row:has(.formulize-label-loans_collections)').getByRole('checkbox', { name: collection, exact: true }).check();
+		await entryArea(page).locator('.form-row:has(.formulize-label-loans_collections)').getByRole('checkbox', { name: collection, exact: true }).check();
 	}
 	for (const material of request.materials ?? []) {
-		await page.locator('.form-row:has(.formulize-label-loans_materials)').getByRole('checkbox', { name: material, exact: true }).check();
+		await entryArea(page).locator('.form-row:has(.formulize-label-loans_materials)').getByRole('checkbox', { name: material, exact: true }).check();
 	}
 	if (request.era) {
-		await page.locator('.form-row:has(.formulize-label-loans_era)').getByRole('radio', { name: request.era, exact: true }).check();
+		await entryArea(page).locator('.form-row:has(.formulize-label-loans_era)').getByRole('radio', { name: request.era, exact: true }).check();
 	}
 	if (request.madeAfter) {
-		await page.locator('.form-row:has(.formulize-label-loans_made_after)').getByRole('spinbutton').fill(request.madeAfter);
+		await entryArea(page).locator('.form-row:has(.formulize-label-loans_made_after)').getByRole('spinbutton').fill(request.madeAfter);
 	}
 	if (request.donor) {
-		await page.locator('.form-row:has(.formulize-label-loans_donor) select').selectOption({ label: request.donor });
+		await entryArea(page).locator('.form-row:has(.formulize-label-loans_donor) select').selectOption({ label: request.donor });
 	}
 	if (request.start) {
-		await page.getByRole('textbox', { name: 'Start date' }).fill(request.start);
+		await entryArea(page).getByRole('textbox', { name: 'Start date' }).fill(request.start);
 	}
 	if (request.end) {
-		await page.getByRole('textbox', { name: 'End date' }).fill(request.end);
+		await entryArea(page).getByRole('textbox', { name: 'End date' }).fill(request.end);
 	}
 	if (request.approved) {
-		await page.locator('.form-row:has(.formulize-label-loans_approved)').getByRole('radio', { name: request.approved, exact: true }).check();
+		await entryArea(page).locator('.form-row:has(.formulize-label-loans_approved)').getByRole('radio', { name: request.approved, exact: true }).check();
 	}
 	if (request.storage) {
-		await page.locator('.form-row:has(.formulize-label-loans_storage)').getByRole('radio', { name: request.storage, exact: true }).check();
+		await entryArea(page).locator('.form-row:has(.formulize-label-loans_storage)').getByRole('radio', { name: request.storage, exact: true }).check();
 	}
 	await saveFormulizeForm(page);
 	await saveAndClose(page);
@@ -514,8 +515,8 @@ test.describe('Data entry for Locations', () => {
 	test('Create Main Vault', async ({ page }) => {
 		await login(page, 'curator1', '12345');
 		await page.goto(`/modules/formulize/index.php?fid=${formId('Locations')}`);
-		await page.getByRole('button', { name: /^Add Locations?$/ }).click();
-		await page.getByRole('textbox', { name: 'Name *' }).fill('Main Vault');
+		await openEntry(page, page.getByRole('button', { name: /^Add Locations?$/ }));
+		await entryArea(page).getByRole('textbox', { name: 'Name *' }).fill('Main Vault');
 		await saveFormulizeForm(page);
 		await saveAndClose(page);
 		await expect(page.getByText('Main Vault')).toBeVisible();
@@ -526,9 +527,9 @@ test.describe('Donors with punctuation in their names', () => {
 
 	test('Create Aoife O\'Brien donor', async ({ page }) => {
 		await openDonorsAndAdd(page);
-		await conditionalElementReady(page, 'donors_first_name', () => page.getByText('Individual', { exact: true }).click());
-		await page.getByRole('textbox', { name: 'First name' }).fill('Aoife');
-		await page.getByRole('textbox', { name: 'Last name' }).fill('O\'Brien');
+		await conditionalElementReady(page, 'donors_first_name', () => entryArea(page).getByText('Individual', { exact: true }).click());
+		await entryArea(page).getByRole('textbox', { name: 'First name' }).fill('Aoife');
+		await entryArea(page).getByRole('textbox', { name: 'Last name' }).fill('O\'Brien');
 		await saveFormulizeForm(page);
 		await saveAndClose(page);
 		await expect(page.getByRole('button', { name: 'Add Donor', exact: true })).toBeVisible();
@@ -536,9 +537,9 @@ test.describe('Donors with punctuation in their names', () => {
 
 	test('Create Hart & Sons Antiques donor', async ({ page }) => {
 		await openDonorsAndAdd(page);
-		await conditionalElementReady(page, 'donors_organization_name', () => page.getByText('Organization', { exact: true }).click());
-		await page.getByRole('textbox', { name: 'Organization name' }).fill('Hart & Sons Antiques');
-		await page.getByRole('combobox', { name: 'Province', exact: true }).selectOption('Prince Edward Island');
+		await conditionalElementReady(page, 'donors_organization_name', () => entryArea(page).getByText('Organization', { exact: true }).click());
+		await entryArea(page).getByRole('textbox', { name: 'Organization name' }).fill('Hart & Sons Antiques');
+		await entryArea(page).getByRole('combobox', { name: 'Province', exact: true }).selectOption('Prince Edward Island');
 		await saveFormulizeForm(page);
 		await saveAndClose(page);
 		await expect(page.getByRole('button', { name: 'Add Donor', exact: true })).toBeVisible();
@@ -559,10 +560,10 @@ test.describe('Artifacts for blanks and year boundaries', () => {
 	test('Create Bronze Mirror, acquired on the last day of 2002', async ({ page }) => {
 		await openArtifactsAndAdd(page, 'ahstaff');
 		await fillRequiredArtifactFields(page, { name: 'Bronze Mirror', height: '30', width: '30', depth: '2', year: '200', era: 'BCE' });
-		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2002-12-31');
-		await conditionalElementReady(page, 'artifacts_donor', () => page.locator('.form-row:has(.formulize-label-artifacts_donated_to_museum)').getByRole('radio', { name: 'Yes', exact: true }).check()); // donated
-		await page.getByLabel('Donor').selectOption({ label: 'Aoife O\'Brien' });
-		await page.getByRole('checkbox', { name: 'Ancient History' }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Date of acquisition' }).fill('2002-12-31');
+		await conditionalElementReady(page, 'artifacts_donor', () => entryArea(page).locator('.form-row:has(.formulize-label-artifacts_donated_to_museum)').getByRole('radio', { name: 'Yes', exact: true }).check()); // donated
+		await entryArea(page).getByLabel('Donor').selectOption({ label: 'Aoife O\'Brien' });
+		await entryArea(page).getByRole('checkbox', { name: 'Ancient History' }).check();
 		await saveFormulizeForm(page);
 		await saveAndClose(page);
 		await expect(page.getByRole('button', { name: 'Add Artifact', exact: true })).toBeVisible();
@@ -571,10 +572,10 @@ test.describe('Artifacts for blanks and year boundaries', () => {
 	test('Create Silk Scroll, acquired on the first day of 2003', async ({ page }) => {
 		await openArtifactsAndAdd(page, 'mhstaff');
 		await fillRequiredArtifactFields(page, { name: 'Silk Scroll', height: '40', width: '40', depth: '3', year: '1400', era: 'CE' });
-		await page.getByRole('textbox', { name: 'Date of acquisition' }).fill('2003-01-01');
-		await conditionalElementReady(page, 'artifacts_donor', () => page.locator('.form-row:has(.formulize-label-artifacts_donated_to_museum)').getByRole('radio', { name: 'Yes', exact: true }).check()); // donated
-		await page.getByLabel('Donor').selectOption({ label: 'Hart & Sons Antiques' });
-		await page.getByRole('checkbox', { name: 'Modern History' }).check();
+		await entryArea(page).getByRole('textbox', { name: 'Date of acquisition' }).fill('2003-01-01');
+		await conditionalElementReady(page, 'artifacts_donor', () => entryArea(page).locator('.form-row:has(.formulize-label-artifacts_donated_to_museum)').getByRole('radio', { name: 'Yes', exact: true }).check()); // donated
+		await entryArea(page).getByLabel('Donor').selectOption({ label: 'Hart & Sons Antiques' });
+		await entryArea(page).getByRole('checkbox', { name: 'Modern History' }).check();
 		await saveFormulizeForm(page);
 		await saveAndClose(page);
 		await expect(page.getByRole('button', { name: 'Add Artifact', exact: true })).toBeVisible();
@@ -590,7 +591,7 @@ test.describe('Catalogue every artifact', () => {
 			await page.goto(`/modules/formulize/index.php?fid=${artifactsFid}&ve=${artifactEntryId(artifact.name)}`);
 			await page.waitForLoadState('load');
 
-			await page.getByRole('link', { name: 'Location and loans', exact: true }).click();
+			await openFormScreenTab(page, 'Location and loans');
 			const location = page.locator('.form-row:has(.formulize-label-artifacts_location) select');
 			await expect(location).toBeVisible();
 			await location.selectOption({ label: 'Main Vault' });
@@ -609,7 +610,7 @@ test.describe('Catalogue every artifact', () => {
 			await saveFormulizeForm(page);
 
 			if (artifact.appraiser !== undefined) {
-				await page.getByRole('link', { name: 'Appraisal', exact: true }).click();
+				await openFormScreenTab(page, 'Appraisal');
 				const email = page.locator('.form-row:has(.formulize-label-artifacts_appraiser_email)').getByRole('textbox');
 				await expect(email).toBeVisible();
 				if (artifact.appraiser === '') {
@@ -623,7 +624,7 @@ test.describe('Catalogue every artifact', () => {
 			}
 
 			if (artifact.cataloguedBy || artifact.handling) {
-				await page.getByRole('link', { name: 'Cataloguing', exact: true }).click();
+				await openFormScreenTab(page, 'Cataloguing');
 				const cataloguedBy = page.locator('.form-row:has(.formulize-label-artifacts_catalogued_by) select');
 				await expect(cataloguedBy).toBeVisible();
 				if (artifact.cataloguedBy) {
@@ -739,7 +740,7 @@ test.describe('What was built', () => {
 		await login(page, 'curator1', '12345');
 		await page.goto(`/modules/formulize/index.php?fid=${artifactsFid}&ve=${artifactEntryId('Roman Coin')}`);
 		await page.waitForLoadState('load');
-		await page.getByRole('link', { name: 'Location and loans', exact: true }).click();
+		await openFormScreenTab(page, 'Location and loans');
 		const subform = page.locator('.formulize-subform-table');
 		await expect(subform).toBeVisible();
 		await expect(subform.getByText('City Museum', { exact: true })).toBeVisible();
@@ -753,6 +754,7 @@ test.describe('What was built', () => {
 		await login(page, 'curator1', '12345');
 		await page.goto(`/modules/formulize/index.php?sid=${screenId('artifact_catalogue')}`);
 		await expect(page.getByText(`Showing entries: 1 to ${CATALOGUE.length} of ${CATALOGUE.length}`)).toBeVisible();
+		await showListSearches(page);
 		await expect(page.locator('input[name="search_artifacts_appraiser_email"]')).toBeVisible();
 	});
 
@@ -760,6 +762,7 @@ test.describe('What was built', () => {
 		await login(page, 'curator1', '12345');
 		await page.goto(`/modules/formulize/index.php?sid=${screenId('donor_artifacts')}`);
 		await expect(page.getByRole('row', { name: /Aoife O'Brien/ })).toContainText('Bronze Mirror');
+		await showListSearches(page);
 		await expect(page.locator('input[name="search_artifacts_collections"]')).toBeVisible();
 	});
 });

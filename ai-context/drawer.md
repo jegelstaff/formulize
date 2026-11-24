@@ -37,13 +37,13 @@ This difference matters for [tokens](security-tokens.md): the `fetch()` path use
 
 The form's write addresses aren't in the page when it loads. `action` and `data-save-action` get their real values when someone first interacts with the form, and the token follows. So always write through `writeAddress(form)` and `saveAddress(form)`. The `ENDPOINT` constant is for loading forms only.
 
-If `readelements.php` refuses a save, its message is printed first in the response, and the drawer shows it. `include/common.php` turns an error during a drawer request into a message too, because the drawer shows whatever comes back in place of the form.
+If `readelements.php` refuses a save, its message is printed first in the response, and the drawer shows it. On the Save and stay path the message is in the form drawn again. On the Save and leave path a save that worked returns nothing, so any text in the response means it didn't, and the drawer stays on the entry and shows the text in its footer rather than closing. `saveCurrentPage()` does that, by never resolving its promise, so anything chained to it happens only after a save that worked. Going into a sub entry after saving the parent uses it too. `include/common.php` turns an error during a drawer request into a message too, because the drawer shows whatever comes back in place of the form.
 
 `readelements.php` has to return an empty body, because inline editing in a list shows any response as an error. So the drawer reports saves to the assistant's activity log from the browser.
 
 ## Why it needs its own code
 
-Drawing a form in elements-only mode skips `drawJavascript()`, so the endpoint has to supply what a form needs itself: the rich text editor setup, the office use toggle, validation, and removing entry locks. If something works full screen and not in the drawer, look there first. Check what the endpoint prints against what `drawJavascript()` prints.
+Drawing a form in elements-only mode skips `drawJavascript()`, so the endpoint has to supply what a form needs itself: the rich text editor setup, the office use toggle, validation, and removing entry locks. If something works full screen and not in the drawer, look there first. Check what the endpoint prints against what `drawJavascript()` prints. A function the endpoint defines stays defined after the drawer closes, so the next form, which may not print it, still gets the last one.
 
 **Functions that an element's markup calls go in `formulize_elementScripts()`,** in `include/functions/element_scripts.php`, such as the date element's `check_date_limits()`. Full screen forms, lists (for editing in the list) and the endpoint all print it, so the element works whichever drew it, and over any page. Don't define them in `drawJavascript()` alone.
 

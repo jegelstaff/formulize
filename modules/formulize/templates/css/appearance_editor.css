@@ -112,7 +112,9 @@ html:has(> .formulize-editor) { height: 100%; }
 .formulize-editor__tabs { display: inline-flex; gap: 2px; flex-wrap: wrap; }
 .formulize-editor__tabs button { border: 0; background: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; color: var(--fz-color-text-muted); font-size: 0.8125rem; }
 .formulize-editor__tabs button[aria-selected="true"] { background: var(--fz-color-accent-soft); color: var(--fz-color-text); font-weight: 500; }
-.formulize-editor__hint { font-size: 0.8125rem; color: var(--fz-color-text-subtle); min-width: 0; }
+/* It changes as the pointer moves over the preview, so its place doesn't depend on its text: a hint long enough to need a line of
+   its own would push the preview down, away from the pointer. */
+.formulize-editor__hint { flex: 1 1 16rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; color: var(--fz-color-text-subtle); }
 .formulize-editor__hint b { color: var(--fz-color-text); font-weight: 500; }
 .formulize-editor__canvas {
   flex: 1; min-height: 0; overflow: auto; padding: 20px; display: flex; justify-content: center;

@@ -39,7 +39,7 @@ The e2e tests build a system in order and then check it, so what a spec needs de
 
 | Tests | What they do | What they need first |
 |---|---|---|
-| `01-setup/001-install-formulize.spec.js` | Runs the installer. The site is switched to Anari right after, because most of the suite is written for it. See [Which theme the suite covers](testing-robust-specs.md#which-theme-the-suite-covers) | An uninstalled system, with an empty database. See [Starting from an uninstalled system](#starting-from-an-uninstalled-system) |
+| `01-setup/001-install-formulize.spec.js` | Runs the installer. The site is then switched to Anari, or kept on Lyris when `E2E_THEME` is `Lyris`. See [Which theme the suite covers](testing-robust-specs.md#which-theme-the-suite-covers) | An uninstalled system, with an empty database. See [Starting from an uninstalled system](#starting-from-an-uninstalled-system) |
 | The rest of `01-setup/` | Build the museum system, in file-name order, one worker | Everything numbered below them. They create what they need, so they can't run over their own results |
 | `02-validate/` | Read and exercise the finished system, in parallel | All of `01-setup/` |
 | `03-validate-sequential/` | Change things the system shares, check them, then put them back, one at a time | All of `01-setup/`, and nothing else running |
@@ -47,7 +47,8 @@ The e2e tests build a system in order and then check it, so what a spec needs de
 
 ### Choosing where to start
 
-- **Before running any spec outside `04-appearance/`, check that the site is on Anari,** for the site and the admin, on **Admin > Appearance > Settings**. A `04-appearance/` spec that stopped partway can leave the site on Lyris, and the other specs then can't find what they look for. See [Which theme the suite covers](testing-robust-specs.md#which-theme-the-suite-covers).
+- **Before running any spec outside `04-appearance/`, check that the site is on the theme the museum was built on,** for the site and the admin, on **Admin > Appearance > Settings**, and set `E2E_THEME` to it: `Lyris`, or nothing for Anari. A `04-appearance/` spec that stopped partway can leave the site on the other theme, and the specs then look for the wrong things. A museum built on one theme can't stand in for the other, because its screens have that theme's settings. See [Which theme the suite covers](testing-robust-specs.md#which-theme-the-suite-covers).
+- **To run in another browser, or against MySQL:** `E2E_BROWSER` is `chromium`, `firefox` or `webkit`, installed first with `npx playwright install <browser>`. `docker-compose.mysql.yaml` runs the database service on MySQL 8.4 under the same name, in a volume of its own, with `E2E_DB_CLIENT=mysql` so `dbQuery()` uses the `mysql` client. Give it its own `COMPOSE_PROJECT_NAME`, so it doesn't take over the MariaDB containers.
 - **To run a validate spec:** if the museum system is intact, just run it. There's no cleanup to do first.
 - **If a `03-validate-sequential/` or `04-appearance/` spec stopped partway:** it may not have put things back, so restore a snapshot before running anything else.
 - **To re-run a `01-setup/` spec:** restore the snapshot from just before it.
@@ -114,7 +115,7 @@ Key settings in `tests/e2e/playwright.config.js`:
 - `navigationTimeout: 60000`, or `E2E_NAVIGATION_TIMEOUT` from the root `.env`
 - `expect.timeout: 20000` for assertions
 - `baseURL` from `FORMULIZE_WEB_PORT` in the root `.env`, or `http://127.0.0.1:8080`. It's `127.0.0.1`, not `localhost`, because Docker publishes the site on IPv4 only, and on Windows `localhost` tries IPv6 first, which adds about a third of a second to every new connection. Docker Desktop on Windows doesn't publish the port on `[::1]` when asked, so that's no way round it. Use `127.0.0.1` with `curl` and in a browser for the same reason. The site builds its links from the address it's visited at.
-- `outputDir: ./test-results`, with the report in `./test-report`
+- `outputDir: ./test-results`, with the report in `./test-report`, or the folder `E2E_REPORT_DIR` names. A run empties the report folder first, so CI gives each of its four runs its own
 
 ## Debugging Failures
 

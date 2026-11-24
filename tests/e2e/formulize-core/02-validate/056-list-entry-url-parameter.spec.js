@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, dbQuery, dbPrefix } from '../../utils';
+import { login, dbQuery, dbPrefix, showListSearches } from '../../utils';
 import { formId } from '../01-setup/museum-forms';
 
 // ?le=N in a list's address shows only entry N of the list's form, rather than opening it the way ?ve=N does.
@@ -53,6 +53,7 @@ test.describe('The le parameter in a list\'s address', () => {
 		await login(page, 'curator1');
 		await openList(page, `/modules/formulize/index.php?sid=${listSid}&le=${romanCoinId}`);
 		// two artifacts match "coin", and only the one asked for is shown. Clicking the heading sorts, and submits the search
+		await showListSearches(page);
 		await page.locator('input[name="search_artifacts_short_name"]').fill('coin');
 		await page.getByRole('link', { name: 'Short name' }).click();
 		await expect(page.getByText('Showing entries: 1 to 1 of 1.')).toBeVisible();

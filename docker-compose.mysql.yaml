@@ -1,0 +1,28 @@
+# Runs the database on MySQL 8.4 instead of MariaDB. Use it on top of docker-compose.yaml:
+#
+#   docker compose -f docker-compose.yaml -f docker-compose.mysql.yaml up -d
+#
+# or set COMPOSE_FILE=docker-compose.yaml:docker-compose.mysql.yaml (use ; instead of : on Windows),
+# which is what CI does, so that every docker compose command uses both files.
+#
+# The service is still called mariadb, so the installer's database host, the container names the
+# tests look up and the commands in the docs work unchanged.
+#
+# The data goes in a volume of its own, mysql_data, because MySQL can't read MariaDB's data files.
+# To run it beside a MariaDB copy of the same checkout, set COMPOSE_PROJECT_NAME as well, so the two
+# don't share containers.
+services:
+  mariadb:
+    image: "mysql:8.4"
+    healthcheck:
+      # The MariaDB image's healthcheck calls the mariadb client, which this image doesn't have. Over
+      # TCP, so it doesn't pass against the temporary server the image runs while it sets up the
+      # database, which only listens on its socket.
+      test: mysql -h127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'select 1' $$MYSQL_DATABASE
+    # No seed folder: a dump from MariaDB can use collations MySQL doesn't have
+    volumes: !override
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

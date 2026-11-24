@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, openArtifactOriginsMap, searchArtifactOriginsMap, expectArtifactOriginsMap, waitForMapToSettle } from '../../utils';
+import { login, openArtifactOriginsMap, searchArtifactOriginsMap, expectArtifactOriginsMap, waitForMapToSettle, openMainMenu } from '../../utils';
 
 /**
  * The Artifact origins map screen, built in 015: every artifact with a place of origin is a pin, labelled with its
@@ -19,7 +19,7 @@ test.describe('Artifact origins map', () => {
 
 	test('is reached from the Museum menu', async ({ page }) => {
 		await login(page, 'curator1', '12345');
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Artifact origins', exact: true }).click();
 		await waitForMapToSettle(page);
 		await expectArtifactOriginsMap(page);

@@ -394,7 +394,7 @@ if ($command == 'add-references') {
 	}
 	$keep = array();
 	foreach ($changes as list($table, $keyColumn, $key, $column, $change)) {
-		$stored = old_rows("SELECT `$column` AS stored FROM " . old_table($table) . " WHERE `$keyColumn` = " . intval($key))[0]['stored'];
+		$stored = old_rows("SELECT `$column` AS stored_value FROM " . old_table($table) . " WHERE `$keyColumn` = " . intval($key))[0]['stored_value'];
 		$keep[] = array($table, $keyColumn, intval($key), $column, $stored);
 		$value = old_unserialized($stored);
 		old_write("UPDATE " . old_table($table) . " SET `$column` = " . old_q(serialize($change(is_array($value) ? $value : array()))) . " WHERE `$keyColumn` = " . intval($key));

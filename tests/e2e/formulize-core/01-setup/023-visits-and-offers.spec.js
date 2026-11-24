@@ -1,7 +1,7 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import {
-	login, saveFormulizeForm, saveAdminForm, waitForAdminPageReady, createMuseumForm, dbQuery, dbPrefix, sqlEscape, leavePage, showPermissionsFor,
+	login, saveFormulizeForm, saveAdminForm, waitForAdminPageReady, createMuseumForm, dbQuery, dbPrefix, sqlEscape, leavePage, showPermissionsFor, openEntry, entryArea,
 	selectAutocompleteOption, getUserByLogin, getUserGroupIds,
 } from '../../utils';
 import { formId, startElement, finishElement, makeRequired, linkToSource, inheritPermissionsFromArtifacts, setElementsOnOnlyPage, saveAndClose } from './museum-forms';
@@ -54,7 +54,7 @@ async function addEntry(page, formTitle, fill) {
 	await login(page, 'curator1', '12345');
 	await page.goto(`/modules/formulize/index.php?fid=${formId(formTitle)}`);
 	const add = page.getByRole('button', { name: new RegExp(`^Add ${formTitle.replace(/s$/, '')}s?$`) });
-	await add.click();
+	await openEntry(page, add);
 	await fill();
 	await saveFormulizeForm(page);
 	await saveAndClose(page);
@@ -123,9 +123,9 @@ test.describe('Data entry for Visits and Offers', () => {
 	for (const visit of VISITS) {
 		test(`Visit: ${visit.name}`, async ({ page }) => {
 			await addEntry(page, 'Visits', async () => {
-				await page.locator('.form-row:has(.formulize-label-visits_name) input[type="text"]').fill(visit.name);
+				await entryArea(page).locator('.form-row:has(.formulize-label-visits_name) input[type="text"]').fill(visit.name);
 				if (visit.donor) {
-					await page.locator('.form-row:has(.formulize-label-visits_donor) select').selectOption({ label: visit.donor });
+					await entryArea(page).locator('.form-row:has(.formulize-label-visits_donor) select').selectOption({ label: visit.donor });
 				}
 			});
 		});
@@ -134,9 +134,9 @@ test.describe('Data entry for Visits and Offers', () => {
 	for (const offer of OFFERS) {
 		test(`Offer: ${offer.item}`, async ({ page }) => {
 			await addEntry(page, 'Offers', async () => {
-				await page.locator('.form-row:has(.formulize-label-offers_item) input[type="text"]').fill(offer.item);
+				await entryArea(page).locator('.form-row:has(.formulize-label-offers_item) input[type="text"]').fill(offer.item);
 				if (offer.visit) {
-					await page.locator('.form-row:has(.formulize-label-offers_visit) select').selectOption({ label: offer.visit });
+					await entryArea(page).locator('.form-row:has(.formulize-label-offers_visit) select').selectOption({ label: offer.visit });
 				}
 			});
 		});

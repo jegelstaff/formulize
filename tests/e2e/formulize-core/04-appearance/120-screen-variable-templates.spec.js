@@ -5,6 +5,7 @@ import {
 	createMuseumForm, deleteMuseumForm, deleteMuseumFormsTitled, screenTemplateFolderExists, openScreenTemplatesTab,
 	showScreenTemplatesFor, screenTemplatesForm, variableTemplatesForm, variablesSubtab, customizeScreenTemplates,
 	emptyScreenTemplates,
+	E2E_THEME,
 } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
@@ -22,7 +23,7 @@ test.use({ baseURL: E2E_TEST_BASE_URL });
 // edited.
 //
 // Anari has no variable templates, so the spec switches the site to Lyris, which moves every screen's Templates tab to
-// Lyris too, and puts it back to Anari at the end. It uses the Exhibits list, and a form of its own that it deletes.
+// Lyris too, and puts it back on the run's theme at the end (Anari, unless the run is on Lyris already). It uses the Exhibits list, and a form of its own that it deletes.
 // Everything is done through the admin UI. The server's files are only read, to check what the application did.
 
 test.describe.configure({ mode: 'serial' });
@@ -67,7 +68,7 @@ test.beforeAll(async ({ browser }) => {
 	exhibits = listScreen('Exhibits');
 	const page = await adminPage(browser);
 	try {
-		expect(getSiteTheme().site).toBe('Anari');
+		expect(getSiteTheme().site).toBe(E2E_THEME);
 		await deleteMuseumFormsTitled(page, [FORM_TITLE]); // left behind by a run that was killed outright
 		await chooseSiteThemes(page, 'Lyris', 'Lyris');
 		expect(screenTheme(exhibits.sid)).toBe('Lyris');
@@ -84,14 +85,14 @@ test.afterAll(async ({ browser }) => {
 		await deleteMuseumFormsTitled(page, [FORM_TITLE]);
 		await showScreenTemplatesFor(page, exhibits, 'Lyris');
 		await emptyScreenTemplates(page, exhibits);
-		if (getSiteTheme().site !== 'Anari' || getSiteTheme().admin !== 'Anari') {
-			await chooseSiteThemes(page, 'Anari', 'Anari');
+		if (getSiteTheme().site !== E2E_THEME || getSiteTheme().admin !== E2E_THEME) {
+			await chooseSiteThemes(page, E2E_THEME, E2E_THEME);
 		}
 	} finally {
 		await page.close();
 	}
-	expect(getSiteTheme().site).toBe('Anari');
-	expect(screenTheme(exhibits.sid)).toBe('Anari');
+	expect(getSiteTheme().site).toBe(E2E_THEME);
+	expect(screenTheme(exhibits.sid)).toBe(E2E_THEME);
 	expect(screenTemplateFolderExists('Lyris', exhibits.sid)).toBe(false);
 });
 

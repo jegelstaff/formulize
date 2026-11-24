@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
-import { login, saveAdminForm, waitForAdminPageReady } from '../../utils';
+import { login, saveAdminForm, saveAdminSettings, waitForAdminPageReady } from '../../utils';
 
 // The Menu tab of the admin UI (Admin > Menu, admin/site_menu.php): the top level of the menu, which is the
 // applications, "Forms with no app" and the links beside them. These tests put it in order by keyboard and by
@@ -257,7 +257,7 @@ test.describe('The Menu tab', () => {
 		mcpWasEnabled = await page.locator('input[name="formulizeMCPServerEnabled"][value="1"]').isChecked();
 		if (!mcpWasEnabled) {
 			await page.locator('input[name="formulizeMCPServerEnabled"][value="1"]').check();
-			await page.getByRole('button', { name: 'Save your changes' }).click();
+			await saveAdminSettings(page);
 			await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 			await expect(page.locator('input[name="formulizeMCPServerEnabled"][value="1"]')).toBeChecked();
 		}
@@ -349,7 +349,7 @@ test.afterAll(async ({ browser }) => {
 		await page.goto('/modules/formulize/admin/ui.php?page=settings&view=ai');
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await page.locator('input[name="formulizeMCPServerEnabled"][value="0"]').check();
-		await page.getByRole('button', { name: 'Save your changes' }).click();
+		await saveAdminSettings(page);
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 	}
 	await page.close();

@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled, dbQuery, dbPrefix } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled, dbQuery, dbPrefix, openEntry, entryArea, saveAndCloseEntry } from '../../utils';
 
 /**
  * T3.5 - the EDITABLE form-display sinks (T3.1' / T3.2), and the D4 tripwire.
@@ -116,15 +116,15 @@ test.describe.serial('T3.5 - editable form sinks (text, textarea, email)', () =>
 	test('create an entry carrying payloads in the text and textarea fields', async ({ page }) => {
 		await login(page, 'admin');
 		await page.goto(`/modules/formulize/index.php?fid=${testFid}`);
-		await page.getByRole('button', { name: 'Add XSS Edit Test', exact: true }).click();
-		await page.getByRole('textbox', { name: 'ID *' }).fill('IDED039');
-		await page.getByLabel('Edit Text').fill(TEXT_PAYLOAD);
-		await page.locator('textarea[id$="_tarea"]').fill(AREA_PAYLOAD);
+		await openEntry(page, page.getByRole('button', { name: 'Add XSS Edit Test', exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'ID *' }).fill('IDED039');
+		await entryArea(page).getByLabel('Edit Text').fill(TEXT_PAYLOAD);
+		await entryArea(page).locator('textarea[id$="_tarea"]').fill(AREA_PAYLOAD);
 		// Email is left EMPTY here on purpose - its client-side validation would refuse to submit a payload.
 		// It gets its value planted in the final test, which is where it belongs anyway (that test is about
 		// the render sink standing on its own, with no intake in the picture at all).
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+		await saveAndCloseEntry(page); // clears the entry lock
 
 		// Resolve ids from the DB - dbQuery returns rows as arrays of column values (mariadb -N), not objects.
 		const handleRow = dbQuery(`SELECT form_handle FROM ${dbPrefix()}_formulize_id WHERE id_form = ${testFid}`);

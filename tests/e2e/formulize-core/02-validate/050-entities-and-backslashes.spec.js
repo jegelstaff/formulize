@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementType, setCodeMirrorValue, createMuseumForm,
-	deleteMuseumForm, deleteMuseumFormsTitled, showPermissionsFor, waitForFormulizeFormToken, leavePage, dbQuery, dbPrefix } from '../../utils';
+	deleteMuseumForm, deleteMuseumFormsTitled, showPermissionsFor, waitForFormulizeFormToken, leavePage, dbQuery, dbPrefix,
+	screenTemplatesForm } from '../../utils';
 const { execFileSync } = require('child_process');
 const { webContainer } = require('../../docker-containers');
 
@@ -107,7 +108,7 @@ async function openScreenTemplates(page, sid) {
 	await page.goto(screenTab(sid, 'templates'));
 	await waitForAdminPageReady(page);
 	const customize = page.getByRole('button', { name: 'Customize the Templates' });
-	const templateEditor = page.locator('form:has(input[name="formulize_admin_handler"][value$="_templates"]) .CodeMirror').first();
+	const templateEditor = screenTemplatesForm(page).locator('.CodeMirror').first();
 	await expect(customize.or(templateEditor)).toBeVisible();
 	if (await customize.isVisible()) {
 		await Promise.all([page.waitForEvent('load'), customize.click()]);

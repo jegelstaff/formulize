@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled, dbQuery, dbPrefix } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, createMuseumForm, deleteMuseumFormsTitled, dbQuery, dbPrefix, openEntry, entryArea, saveAndCloseEntry } from '../../utils';
 
 /**
  * T3.6 - read-only display funnel (makeValueSafeForReadOnlyDisplay), the DISABLED render path.
@@ -67,15 +67,15 @@ test.describe.serial('T3.6 - read-only display funnel (disabled elements)', () =
 	test('create an entry carrying payloads in both fields (while still editable)', async ({ page }) => {
 		await login(page, 'admin');
 		await page.goto(`/modules/formulize/index.php?fid=${testFid}`);
-		await page.getByRole('button', { name: 'Add XSS ReadOnly Test', exact: true }).click();
-		await page.getByRole('textbox', { name: 'ID *' }).fill('IDRO037');
-		await page.getByLabel('RO Text').fill(TEXT_PAYLOAD);
+		await openEntry(page, page.getByRole('button', { name: 'Add XSS ReadOnly Test', exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'ID *' }).fill('IDRO037');
+		await entryArea(page).getByLabel('RO Text').fill(TEXT_PAYLOAD);
 		// A plain Formulize textarea is not associated to its caption by a <label for>, so getByLabel does
 		// not find it (see 021 - the textarea's id is markupName + '_tarea'). This form has exactly one
 		// content textarea, so target it by that id suffix.
-		await page.locator('textarea[id$="_tarea"]').fill(AREA_PAYLOAD);
+		await entryArea(page).locator('textarea[id$="_tarea"]').fill(AREA_PAYLOAD);
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // clear the entry lock
+		await saveAndCloseEntry(page); // clear the entry lock
 
 		// Resolve ids from the DB (dbQuery returns arrays of column values, not objects - it runs mariadb -N).
 		const handleRow = dbQuery(`SELECT form_handle FROM ${dbPrefix()}_formulize_id WHERE id_form = ${testFid}`);

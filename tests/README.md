@@ -107,3 +107,17 @@ e2e tests are automatically run in CI with a merge to the master branch. The tes
 2. Navigate to the tests folder `/tests/e2e` and perform an `npm install`
 3. Install playwright browsers `npx playwright install --with-deps`
 4. While still in the `/tests/e2e` directory run the test with `npm t` This will run the tests in headless mode. If you'd like to have the browser load to watch the progress use `npm run test:debug`.
+
+#### Running in another theme, browser or database
+
+CI runs the suite in several environments at once (see `docs/ci.md`). To run in one of them locally, set these before `npm t`:
+
+* `E2E_THEME=Lyris` keeps the site on Lyris after the install, instead of switching it to Anari. Every screen the setup
+  specs make then has Lyris's settings, so its lists open entries in the drawer. A museum system built on one theme
+  only runs the specs on that theme.
+* `E2E_BROWSER=firefox` or `E2E_BROWSER=webkit` runs the specs in that browser, which needs installing first with
+  `npx playwright install firefox`. The default is `chromium`.
+* For MySQL 8.4 instead of MariaDB, bring Docker up with both compose files,
+  `docker compose -f docker-compose.yaml -f docker-compose.mysql.yaml up -d`, and set `E2E_DB_CLIENT=mysql`. The
+  database keeps its own volume. Set `COMPOSE_PROJECT_NAME` too, so it doesn't replace your MariaDB containers. The PHP
+  tests run against whichever database the containers have.

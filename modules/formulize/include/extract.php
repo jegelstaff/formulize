@@ -1259,6 +1259,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		$ownerGroupsSortSelect = "";
 		$creatorEmailSortSelect = "";
 		$profileSortSelect = "";
+		$filterSetsTheOrder = $orderByClause ? true : false; // and its clause ends with a LIMIT, so nothing can be added to it
 		if (!$orderByClause and $sortField) {
 			// Support comma-separated multi-sort: "year,price" / "SORT_ASC,SORT_DESC"
 			$sortFields = array_map('trim', explode(',', $sortField));
@@ -1446,6 +1447,12 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 		}
 		if (!$orderByClause) {
 			$orderByClause = $isUserTableForm ? "ORDER BY main.uid" : "ORDER BY main.entry_id";
+		}
+		// Nothing above orders a connected form's entries within a main entry, unless the sort is on that form, and then MariaDB and MySQL
+		// return them in different orders. So they come in the order they were made, after the sort, in the single query, here, and in
+		// each connected form's query, below. The main entry's id goes first, so entries that tie in the sort don't have their rows mixed.
+		if (!$filterSetsTheOrder AND count((array) $linkformids) == 1 AND isset($joinTextIndex["f" . key($linkformids)])) {
+			$orderByClause .= ", main.$mainIdColumn, f" . key($linkformids) . ".entry_id ";
 		}
 
 		debug_memory("Before retrieving mainresults");
@@ -1846,6 +1853,7 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 				if (!empty($connectedFormOrderByParts["f$linkId"])) {
 					$linkQuery .= ", " . implode(", ", $connectedFormOrderByParts["f$linkId"]);
 				}
+				$linkQuery .= ", f$linkId.entry_id"; // and then in the order they were made, see above
 				if ($resultOnly !== 'bypass') {
 					//print str_replace("REPLACEWITHTIMESTAMP",$timestamp,$linkQuery).'<br>';
 					$linkQueryRes[] = $xoopsDB->query(str_replace("REPLACEWITHTIMESTAMP", $timestamp, $linkQuery));

@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyColumnChanges, createMuseumForm, deleteMuseumFormsTitled } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, applyColumnChanges, createMuseumForm, deleteMuseumFormsTitled, openEntry, entryArea, saveAndCloseEntry, openChangeColumns } from '../../utils';
 
 /**
  * T2.10 - a clickable-in-list linked select must render its value as an escaped <a> pointing at the right
@@ -49,11 +49,11 @@ test.describe.serial('T2.10 - clickable linked select renders an escaped link', 
 
 		// one entry, value = payload
 		await page.goto(`/modules/formulize/index.php?fid=${sourceFid}`);
-		await page.getByRole('button', { name: 'Add XSS Link Source', exact: true }).click();
-		await page.getByRole('textbox', { name: 'ID *' }).fill('SRC035');
-		await page.getByLabel('Source Name').fill(LINK_PAYLOAD);
+		await openEntry(page, page.getByRole('button', { name: 'Add XSS Link Source', exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'ID *' }).fill('SRC035');
+		await entryArea(page).getByLabel('Source Name').fill(LINK_PAYLOAD);
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click();
+		await saveAndCloseEntry(page);
 	});
 
 	test('build the target form with a clickable linked select onto the source', async ({ page }) => {
@@ -88,27 +88,18 @@ test.describe.serial('T2.10 - clickable linked select renders an escaped link', 
 		// create the target entry, selecting the (only) source entry - by index 1, past the "none" option,
 		// to avoid matching a payload-laden option label
 		await page.goto(`/modules/formulize/index.php?fid=${targetFid}`);
-		await page.getByRole('button', { name: 'Add XSS Link Target', exact: true }).click();
-		await page.getByRole('textbox', { name: 'ID *' }).fill('TGT035');
-		await page.getByLabel('Linked Value').selectOption({ index: 1 });
+		await openEntry(page, page.getByRole('button', { name: 'Add XSS Link Target', exact: true }));
+		await entryArea(page).getByRole('textbox', { name: 'ID *' }).fill('TGT035');
+		await entryArea(page).getByLabel('Linked Value').selectOption({ index: 1 });
 		await saveFormulizeForm(page);
-		// "Save and Close" releases the entry lock via async AJAX and then navigates itself (a POST-based
-		// screen reload, not a plain redirect), so the navigation hasn't started when the click resolves.
-		// Unlike 034/036, which end their test right here and let the next test start a fresh page, this
-		// test keeps going on the SAME page - so wait for that navigation, or the explicit goto below can
-		// fire while it is in progress and get net::ERR_ABORTED. Listening before the click means it can't
-		// be missed. waitForLoadState wouldn't do: it fires once per page, and this page already has.
-		await Promise.all([
-			page.waitForNavigation({ waitUntil: 'networkidle', timeout: 120000 }),
-			page.getByRole('link', { name: 'Save and Close' }).click(),
-		]);
+		// "Save and Close" releases the entry lock via async AJAX and then sends the page back to the list itself, so
+		// the page hasn't moved when the click resolves. saveAndCloseEntry() waits for the list, or for the drawer
+		// to close over it, so the explicit goto below can't cut it short with net::ERR_ABORTED.
+		await saveAndCloseEntry(page);
 
 		// view the target list, reveal the linked column
 		await page.goto(`/modules/formulize/index.php?fid=${targetFid}`);
-		const popupPromise = page.context().waitForEvent('page');
-		await page.getByRole('button', { name: 'Change columns' }).click();
-		const popup = await popupPromise;
-		await popup.bringToFront();
+		const popup = await openChangeColumns(page);
 		await popup.getByRole('checkbox', { name: 'Linked Value' }).check();
 		await applyColumnChanges(popup);
 

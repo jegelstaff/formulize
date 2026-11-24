@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, addElementForm, ElementType, openApplicationAccordion, conditionalElementReady } from '../../utils';
+import { login, saveAdminForm, saveFormulizeForm, waitForAdminPageReady, addElementForm, ElementType, openApplicationAccordion, conditionalElementReady,
+	openMainMenu, openEntry, saveAndCloseEntry, entryArea } from '../../utils';
 
 // Rich text (CKEditor) textareas mixed with ordinary textareas, with conditions on them.
 //
@@ -116,16 +117,17 @@ test.describe('CKEditor is only applied to rich text textareas', () => {
 
 	test.beforeEach(async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
-		await page.getByRole('button', { name: 'Add Donor', exact: true }).click();
+		await openEntry(page, page.getByRole('button', { name: 'Add Donor', exact: true }));
 	})
 
 	test('Conditionally revealed textareas become editors only when they are rich text', async ({ page }) => {
 
-		const streetAddress = page.locator('.form-row:has(.formulize-label-donors_street_address)');
-		const bio = page.locator('.form-row:has(.formulize-label-donors_bio)');
-		const orgBackground = page.locator('.form-row:has(.formulize-label-donors_org_background)');
+		// in the entry's area, which is the drawer when the list opens its entries there
+		const streetAddress = entryArea(page).locator('.form-row:has(.formulize-label-donors_street_address)');
+		const bio = entryArea(page).locator('.form-row:has(.formulize-label-donors_bio)');
+		const orgBackground = entryArea(page).locator('.form-row:has(.formulize-label-donors_org_background)');
 
 		// ---- On first load: nothing is answered, so both conditional elements are hidden.
 		// The always-visible plain textarea (street address) must not be an editor.
@@ -153,10 +155,10 @@ test.describe('CKEditor is only applied to rich text textareas', () => {
 		expect(bootstrap.streetAddressEditorId).toMatch(/_tarea$/);
 
 		// ---- Reveal BOTH conditional textareas at once: a rich text one and a plain one.
-		await page.getByText('Organization', { exact: true }).click(); // Type of donor -> reveals the plain Organization background
+		await entryArea(page).getByText('Organization', { exact: true }).click(); // Type of donor -> reveals the plain Organization background
 		await expect(orgBackground.locator('textarea')).toBeVisible();
 
-		await page.getByText('No', { exact: true }).click(); // Is the donor anonymous? -> reveals the rich text Bio
+		await entryArea(page).getByText('No', { exact: true }).click(); // Is the donor anonymous? -> reveals the rich text Bio
 		await expect(bio.locator('.ck-editor')).toBeVisible(); // the rich text one DID become an editor
 
 		// THE REGRESSION: the plain conditional textarea must stay a plain textarea, even though
@@ -174,22 +176,22 @@ test.describe('CKEditor is only applied to rich text textareas', () => {
 
 		// ---- Fill everything in and save. This exercises updateCKEditors(), which copies the
 		// editor's content into the hidden input that carries the element's markup name.
-		await page.getByRole('textbox', { name: 'Organization name' }).fill('L. Warner Foundation');
+		await entryArea(page).getByRole('textbox', { name: 'Organization name' }).fill('L. Warner Foundation');
 		await orgBackground.locator('textarea').fill('Founded in 1885 by a group of amateur archaeologists.');
 		await bio.locator('.ck-content').fill('A distinguished patron of the museum.');
 
 		await saveFormulizeForm(page);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+		await saveAndCloseEntry(page); // clears the entry lock
 
 		// ---- Reopen the saved entry: both values must have persisted, and on this load both
 		// elements are rendered normally (their conditions are met by the saved data) rather
 		// than injected by conditional.js.
-		await page.locator('#burger-and-logo').getByRole('link').first().click();
+		await openMainMenu(page);
 		await page.locator('#mainmenu').getByRole('link', { name: 'Donors', exact: true }).click();
 		// entry names in the list render as plain text, not as an anchor -- the actual "open this
 		// entry" link is the nameless <a href="...&ve=N"> in the row's first cell, next to the
 		// selection checkbox, so find the row by its text and click the link inside it
-		await page.locator('tr', { hasText: 'L. Warner Foundation' }).locator('a').first().click();
+		await openEntry(page, page.locator('tr', { hasText: 'L. Warner Foundation' }).locator('a').first());
 
 		await expect(bio.locator('.ck-editor')).toBeVisible();
 		await expect(bio.locator('.ck-content')).toContainText('A distinguished patron of the museum.');
@@ -198,16 +200,16 @@ test.describe('CKEditor is only applied to rich text textareas', () => {
 
 		// ---- Hide the rich text editor again: it must be destroyed and unregistered, not left
 		// behind as a stale entry in the CKEditors registry.
-		await page.getByText('Yes', { exact: true }).click(); // anonymous -> hides the Bio
+		await entryArea(page).getByText('Yes', { exact: true }).click(); // anonymous -> hides the Bio
 		await expect(bio.locator('.ck-editor')).toHaveCount(0);
 		await expect.poll(() => page.evaluate(() => Object.keys(CKEditors).length)).toBe(0);
 
 		// Put the answer back, since later specs expect this donor not to be anonymous, then save and wait for the list.
 		// A save clicked while a conditional element is being redrawn waits for the redraw, so a test that ended on the click
 		// could close the page before the save went out, or after it, and the donor was left either way.
-		await conditionalElementReady(page, 'donors_bio', () => page.getByText('No', { exact: true }).click());
+		await conditionalElementReady(page, 'donors_bio', () => entryArea(page).getByText('No', { exact: true }).click());
 		await expect(bio.locator('.ck-editor')).toBeVisible();
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // saves, and clears the entry lock
+		await saveAndCloseEntry(page); // saves, and clears the entry lock
 		await expect(page.locator('tr', { hasText: 'L. Warner Foundation' })).toBeVisible();
 	});
 

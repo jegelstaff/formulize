@@ -183,24 +183,37 @@ const elementToContentMapping = {
 };
 
 /**
- * Wait for the Formulize form token to be valid before moving on
+ * Wait for the Formulize form token to be valid before moving on. For a form in the drawer, use waitForDrawerFormToken().
  * @param {*} page Playwright page object
- * @param {string} form Selector of the form. The drawer's is '#formulize_drawer', which waitForDrawerFormToken passes
  */
-export async function waitForFormulizeFormToken(page, form = '#formulize_mainform') {
-	await page.waitForFunction(
-		selector => document.querySelector(`${selector} input[name="XOOPS_TOKEN_REQUEST"]`).value.length > 0,
-		form
-	)
+export async function waitForFormulizeFormToken(page) {
+	await page.waitForFunction(() => document.querySelector('#formulize_mainform input[name="XOOPS_TOKEN_REQUEST"]').value.length > 0)
 }
 
 /**
  * Wait for the token of the form in the drawer, before something that sends the form. It's filled in a moment after the
- * first thing done in the form, and again after each save, since the drawer draws the form again.
- * @param {*} page Playwright page object
+ * first thing done in the form, and again after each save, since the drawer draws the form again. A person can't click
+ * Save that fast. See the token script in modules/formulize/include/formdisplay-elementsonly.php.
+ * @param {import('@playwright/test').Page} page
  */
 export async function waitForDrawerFormToken(page) {
-	await waitForFormulizeFormToken(page, '#formulize_drawer');
+	const form = entryDrawer(page).locator('form#formulize_drawer');
+	const token = form.locator('input[name="XOOPS_TOKEN_REQUEST"]');
+	if (await token.count() === 0 || (await token.inputValue()).length > 0) {
+		return;
+	}
+	// in case nothing in the form has been touched yet, go into it the way a person tabbing to the first box does
+	const first = form.locator('input:not([type="hidden"]):visible, textarea:visible, select:visible').first();
+	if (await first.count() === 0) {
+		// Nothing to change, such as an entry the user may add but not edit, drawn again after its first save. There's
+		// nothing to save either, so the save needs no token, as on a form screen that hasn't been touched.
+		return;
+	}
+	await first.focus();
+	await page.waitForFunction(() => {
+		const input = document.querySelector('#formulize_drawer input[name="XOOPS_TOKEN_REQUEST"]');
+		return !input || input.value.length > 0;
+	});
 }
 
 /**
@@ -225,6 +238,11 @@ export async function login(page, username, password = '12345') {
   ]);
 }
 
+// Why a test of the site's service worker skips in a run that blocks service workers, as the WebKit run does (see
+// playwright.config.js). Skip with test.skip(serviceWorkers === 'block', NO_SERVICE_WORKERS), serviceWorkers being the test's
+// own option.
+export const NO_SERVICE_WORKERS = 'Service workers are blocked in this browser, so the worker is tested in Chromium and Firefox (see docs/ci.md)';
+
 /**
  * A day passing, as far as the site's service worker goes. sw.php may be kept for a day, so a browser only
  * finds a new worker, such as one with a new theme or one that removes itself, once its copy is a day old.
@@ -233,28 +251,57 @@ export async function login(page, username, password = '12345') {
  * @param {import('@playwright/test').Page} page
  */
 export async function aDayPassesForTheWorker(page) {
+	// Only Chromium lets a test clear the browser's cache, so in another browser the rest of the test can't be done
+	test.skip(page.context().browser()?.browserType().name() !== 'chromium',
+		"A day passing for the service worker is the browser's cache being cleared, which only Chromium lets a test do");
 	const cdp = await page.context().newCDPSession(page);
 	await cdp.send('Network.clearBrowserCache');
 	await cdp.detach();
 }
 
 /**
- * Save the form in the drawer, with its Save button, when the save should work. Something in the form has to have been
+ * Click one of the drawer's form buttons, by its words, when it should work, and wait for what it does. Save writes the
+ * entry and draws it again. Save and Close, Save and Finish and the like write it and close the drawer, and the list
+ * behind it reloads when anything was saved. Close leaves without saving. Save needs something in the form to have been
  * changed first. A save that should be refused before it's sent doesn't come back, so click the button for that.
- * @param {*} page Playwright page object
+ * @param {import('@playwright/test').Page} page
+ * @param {string} buttonText
  * @param {number} timeout - Maximum time to wait for the save to come back (default 120000ms)
  */
-export async function saveDrawerForm(page, timeout = 120000) {
-	const drawer = page.locator('.formulize-drawer[role="dialog"]');
+export async function saveDrawerForm(page, buttonText = 'Save', timeout = 120000) {
+	const drawer = entryDrawer(page);
+	await drawerEntryReady(page, timeout);
 	await waitForDrawerFormToken(page);
-	const saved = page.waitForResponse(response =>
-		response.request().method() === 'POST' && response.url().includes('/include/formdisplay-elementsonly.php'), { timeout });
-	await drawer.locator('.formulize-drawer__foot input[name="save"]').click();
-	await saved;
-	// The drawer is busy from when it sends the save until the form drawn again after it is in place
-	await expect(drawer).not.toHaveClass(/formulize-drawer--busy/);
-	// Ensure the save was not refused
-	await expect(drawer.getByText('Your changes were not saved.')).not.toBeVisible();
+	const button = drawer.locator('.formulize-drawer__foot').getByRole('button', { name: buttonText, exact: true });
+	await expect(button).toBeVisible();
+	if (await button.getAttribute('name') === 'save') {
+		// Save stays on the entry: the drawer sends the form, and draws what comes back. With nothing changed, it says so
+		// and sends nothing.
+		const sent = page.waitForResponse(response => response.url().includes('/include/formdisplay-elementsonly.php'), { timeout });
+		const unchanged = drawer.locator('.formulize-drawer__notice', { hasText: /\S/ }).waitFor({ timeout });
+		sent.catch(() => {});
+		unchanged.catch(() => {});
+		await button.click();
+		// A Save that sends nothing hasn't saved what the test filled in, so the test mustn't carry on as if it had
+		if (await Promise.race([sent.then(() => 'sent'), unchanged.then(() => 'unchanged')]) === 'unchanged') {
+			throw new Error(`The drawer sent nothing when ${buttonText} was clicked, and said: ${await drawer.locator('.formulize-drawer__notice').textContent()}`);
+		}
+		await expect(drawer).not.toHaveClass(/formulize-drawer--busy/, { timeout });
+		await expect(drawer.locator('form#formulize_drawer')).toBeAttached({ timeout });
+	} else {
+		// The drawer closes when the entry is saved. When the save is refused, it stays open and says why.
+		await button.click();
+		const notice = drawer.locator('.formulize-drawer__notice', { hasText: /\S/ });
+		const closed = drawer.waitFor({ state: 'hidden', timeout }).then(() => 'closed');
+		const refused = notice.waitFor({ timeout }).then(() => 'notice', () => 'closed');
+		closed.catch(() => {});
+		if (await Promise.race([closed, refused]) === 'notice' && await drawer.isVisible()) {
+			throw new Error(`The drawer didn't save the entry when ${buttonText} was clicked, and said: ${await notice.textContent()}`);
+		}
+		await expect(drawer).toBeHidden({ timeout });
+		await listReloadedAfterDrawer(page, timeout);
+	}
+	await expect(page.getByText('Your changes were not saved.')).not.toBeVisible({ timeout: 10000 });
 }
 
 /**
@@ -263,23 +310,20 @@ export async function saveDrawerForm(page, timeout = 120000) {
  * @param {number} timeout - Maximum time to wait for the saving process to complete (default 120000ms)
  */
 export async function saveFormulizeForm(page, buttonText = 'Save', timeout = 120000) {
+	// An entry opened from a list that opens its entries in the drawer is saved there
+	if (await drawerIsOpen(page)) {
+		await saveDrawerForm(page, buttonText, timeout);
+		return;
+	}
 	// Wait for the formulize page token
   await page.locator('div#formulizeform').click();
 	await waitForFormulizeFormToken(page);
+	// Save sends the whole page, and the entry comes back on a new one, so the new page loading says the save went out.
+	// The saving message is shown just before the page goes, and WebKit can leave before a check sees it.
 	await Promise.all([
-    page.waitForFunction(() => {
-      const element = document.getElementById('savingmessage');
-      return element &&
-             window.getComputedStyle(element).display === 'flex' &&
-             window.getComputedStyle(element).opacity === '1';
-    }),
-    page.getByRole('button', { name: buttonText }).click()
-  ]);
-	// await saving animation dissapear
-  await page.waitForFunction(() => {
-    const element = document.getElementById('savingmessage');
-    return element && window.getComputedStyle(element).display === 'none';
-  }, { timeout: 120000 });
+		page.waitForEvent('load', { timeout }),
+		page.getByRole('button', { name: buttonText }).click(),
+	]);
 	// Ensure the save was not refused
 	await expect(page.getByText('Your changes were not saved.')).not.toBeVisible({ timeout: 10000 });
 }
@@ -345,9 +389,17 @@ export async function openAllColumnSections(popup) {
  * but cannot eliminate it, so: swallow that rejection whenever the popup did close, and only
  * rethrow if the popup stayed open (a genuine click failure).
  *
+ * Before it closes, the popup submits the list behind it, which reloads with the new columns. So
+ * this then waits for that page to load. Until it has, the page is the old list, and a check of it
+ * can pass or act on what's about to go, as showListSearches() once did on Lyris, finding the old
+ * list's search row and not opening the new one's.
+ *
  * @param {import('@playwright/test').Page} popup The "Change columns" popup page
  */
 export async function applyColumnChanges(popup) {
+	const list = await popup.opener();
+	const reloaded = list ? list.waitForEvent('load') : Promise.resolve();
+	reloaded.catch(() => {}); // awaited below, after the popup has closed
 	const closed = popup.waitForEvent('close');
 	closed.catch(() => {}); // never let this reject unhandled if we rethrow below
 	try {
@@ -356,6 +408,7 @@ export async function applyColumnChanges(popup) {
 		if (!popup.isClosed()) throw error;
 	}
 	await closed; // popup closing is the signal that the column change was submitted
+	await reloaded;
 }
 
 /**
@@ -374,9 +427,12 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 		// look as if it had started, and finished when the fade did. The save's own fade waits behind it, and so does the save itself
 		// when the code is checked first.
 		await waitForJQueryAnimations(page);
+		// First wait for the save to be in progress: the opacity drops, or the first tab's save comes back, which it does with the page
+		// still faded. A quick save can be over, and the page reloaded, between two checks of the opacity, so either will do.
+		const answered = page.waitForResponse(response => response.request().method() === 'POST' && response.url().includes('/admin/save.php'), { timeout });
+		answered.catch(() => {}); // a click that fails leaves it waiting
 		await page.getByRole('button', { name: 'Save your changes' }).click();
-		// First wait for opacity to drop (save in progress)
-		await page.waitForFunction(
+		await Promise.any([answered, page.waitForFunction(
 			(selector) => {
 				const element = document.querySelector(selector);
 				if (!element) return false;
@@ -385,7 +441,7 @@ export async function saveAdminForm(page, type = 'regular', timeout = 120000) {
 			},
 			opacityTarget, // Pass the selector as an argument
 			{ timeout }
-		);
+		)]);
 	} else {
 		// The page settings popup fades to 0.25 while it saves, and back when the save has come back. Custom code on the page is
 		// checked before the fade starts, and a quick save can be over between two checks of the opacity, so wait for the save
@@ -560,8 +616,10 @@ export async function openMenuAccordion(page, accordionHeaderText, timeout = 200
 
 
 export async function waitForAdminPageReady(page) {
-  // Wait for network to be idle first
-  await page.waitForLoadState('networkidle');
+  // Let the network go idle first. Firefox now and then never reports it, about once in 800 pages, with the page
+  // loaded and every request answered. So that doesn't fail the test: the checks below are what say the page is ready.
+  await page.waitForLoadState('load');
+  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
 
   // Wait for jQuery and jQuery UI to be fully loaded and ready
   return page.waitForFunction(() => {
@@ -989,9 +1047,10 @@ export async function addConditionToPerGroupPanel(page, groupId, elementCaption,
 	// page navigation.  waitForNavigation reliably catches the form-submit navigation
 	// regardless of how long the AJAX round-trip takes.
 	await Promise.all([
-		page.waitForNavigation({ waitUntil: 'networkidle', timeout: 120000 }),
+		page.waitForNavigation({ waitUntil: 'load', timeout: 120000 }),
 		panel.locator('input[name="addcon"]').click()
 	]);
+	await waitForAdminPageReady(page);
 	// After navigation the window.load handler sets admin-ui opacity 0 → 1 (250 ms).
 	// Wait until that animation completes before returning.
 	await page.waitForFunction(() => {
@@ -1388,12 +1447,445 @@ function serverTempFiles() {
  * outside of the viewport".
  */
 export async function ensureMainMenuOpen(page) {
+	if (ON_LYRIS) {
+		await openLyrisSidebar(page);
+		return;
+	}
 	const isOpen = await page.locator('.js-flyout-menu').evaluate(
 		el => el.classList.contains('site-layout__sidebar--open')
 	);
 	if (!isOpen) {
 		await page.locator('#burger-and-logo').getByRole('link').first().click();
 	}
+}
+
+// ============================================================================
+// The site's theme, and what's different about using the site in each one
+// ----------------------------------------------------------------------------
+// The suite runs on Anari, which 01-setup/001 switches a new site to, unless E2E_THEME is Lyris. Then the site stays
+// on Lyris, the theme a new site starts with, and every screen the setup specs make starts with Lyris's settings
+// (themes/Lyris/screen-defaults.json): lists open entries in the drawer, show 20 entries a page, and keep their row
+// of search boxes hidden until it's opened. The helpers here do what a person does in whichever theme the run is
+// on, so each spec is written once. The admin pages look the same in both themes.
+//
+// What decides between the drawer and a form screen is what's on the page, not the theme, because a list's own
+// settings decide where its entries open. users.php, groups.php and master.php open entries full screen in both.
+// ============================================================================
+
+export const E2E_THEME = process.env.E2E_THEME || 'Anari';
+if (!['Anari', 'Lyris'].includes(E2E_THEME)) {
+	throw new Error(`E2E_THEME is "${E2E_THEME}". It must be Anari or Lyris`);
+}
+/** Whether this run is on Lyris */
+export const ON_LYRIS = E2E_THEME === 'Lyris';
+
+/** How many entries a page the lists the setup specs make show, which is what new list screens start with in the theme */
+export const LIST_PAGE_SIZE = ON_LYRIS ? 20 : 10;
+
+/**
+ * Open the menu at the side of the page, so the links in #mainmenu can be clicked: Anari's burger, or the button
+ * that opens Lyris's sidebar. Lyris's sidebar starts closed on most pages for someone who's signed in. Closed, it
+ * has no width, so Playwright counts its links as visible, but a click can't reach them.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function openMainMenu(page) {
+	if (ON_LYRIS) {
+		await openLyrisSidebar(page);
+	} else {
+		await page.locator('#burger-and-logo').getByRole('link').first().click();
+	}
+}
+
+/**
+ * Open the menu, and follow one of its links, by the link's words.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} name - The words of the link, such as 'Artifacts'
+ */
+export async function goToMenuLink(page, name) {
+	await openMainMenu(page);
+	await page.locator('#mainmenu').getByRole('link', { name, exact: true }).click();
+}
+
+async function openLyrisSidebar(page) {
+	// script.js handles the button once the page's content has loaded
+	await page.waitForLoadState('domcontentloaded');
+	const app = page.locator('#lyris-app');
+	const closed = await app.evaluate(el => window.innerWidth <= 768
+		? !el.classList.contains('lyris-app--sidebar-open')
+		: el.classList.contains('lyris-app--sidebar-closed'));
+	if (closed) {
+		await page.locator('.js-sidebar-toggle').click();
+	}
+	await expect(app).not.toHaveClass(/lyris-app--sidebar-closed/);
+	// it grows to its width over a moment, and its links can't be clicked until then
+	await page.waitForFunction(() => {
+		const sidebar = document.getElementById('lyris-sidebar');
+		const width = sidebar ? sidebar.getBoundingClientRect().width : 0;
+		const before = window._e2eSidebarWidth;
+		window._e2eSidebarWidth = width;
+		return width > 0 && width === before;
+	}, null, { polling: 100 });
+}
+
+/**
+ * Wait for the message a page shows after a redirect, such as "Thank you for logging in", to go, the way a person does
+ * when it's over something they want. It's at the top right, over the header's links in Lyris, and goes after five
+ * seconds. If there isn't one, this doesn't wait.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function waitForMessageToGo(page) {
+	await page.waitForLoadState('load');
+	// It stays as long as the pointer is on it
+	await page.mouse.move(0, 0);
+	// It's queued when the page is ready and shown up to a quarter of a second later, so one in the queue counts
+	await page.waitForFunction(() => {
+		const queue = window.jQuery ? window.jQuery('#jGrowl').data('jGrowl.instance') : null;
+		return !(queue && queue.notifications.length > 0) && document.querySelector('#jGrowl .message') === null;
+	}, null, { timeout: 30000 });
+}
+
+/**
+ * Follow the Admin link, in the page's header or menu, once nothing is over it
+ * @param {import('@playwright/test').Page} page
+ */
+export async function goToAdmin(page) {
+	await waitForMessageToGo(page);
+	await page.getByRole('link', { name: 'Admin' }).click();
+}
+
+/**
+ * The link that signs the person out, in the page's header or menu
+ * @param {import('@playwright/test').Page} page
+ */
+export function signOutLink(page) {
+	return ON_LYRIS
+		? page.locator('header').getByRole('link', { name: 'Sign out', exact: true })
+		: page.getByRole('link', { name: 'Logout' });
+}
+
+/**
+ * The link to the person's own account page, which a person who's signed in has in the page's header or menu
+ * @param {import('@playwright/test').Page} page
+ */
+export function accountLink(page) {
+	return ON_LYRIS
+		? page.locator('header').getByRole('link', { name: 'Account', exact: true })
+		: page.getByRole('link', { name: 'Edit Account' });
+}
+
+/**
+ * Show a list's search boxes, the row at the top of its columns. A list made on Lyris keeps the row hidden until
+ * the filter button opens it (Quicksearch is "Yes, but hide the row"), and remembers whether it's open, so this
+ * only clicks when it's closed. Does nothing on a list without the row.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function showListSearches(page) {
+	await page.waitForLoadState('domcontentloaded');
+	const row = page.locator('tr.lyris-search-row');
+	if (await row.count() === 0 || await row.first().isVisible()) {
+		return;
+	}
+	await page.locator('#lyris-filter-toggle').click();
+	await expect(row.first()).toBeVisible();
+}
+
+/**
+ * Click one of a list's buttons for the list itself, by its words: Change columns, Export Entries, Save view, Reset
+ * view, Delete view, Calculations, Notifications, Add multiple entries, Import entries. Lyris keeps these in the
+ * list's More actions menu, so this opens that first.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} name - The button's words
+ * @param {{exact?: boolean}} [options] - As for getByRole
+ */
+export async function clickListAction(page, name, options = {}) {
+	await page.waitForLoadState('load');
+	// Anari shows its pages by fading the body in, and nothing reads as visible before it starts
+	await expect(page.locator('body')).toBeVisible();
+	const button = page.getByRole('button', { name, ...options });
+	if (!(await button.isVisible())) {
+		if (ON_LYRIS) {
+			// More actions, a menu that pops up over the list
+			await page.locator('#formulize_moreActionsButton').click();
+		} else {
+			// "...", which slides the rest of the list's buttons open below its title
+			await page.locator('#formulize_moreActions').click();
+			await waitForJQueryAnimations(page);
+		}
+	}
+	await expect(button).toBeVisible();
+	await button.click();
+}
+
+/**
+ * The name of the view a list is showing: the option chosen in Anari's list of views, or the words on Lyris's view
+ * switcher, beside the list's title. Use with toHaveText().
+ * @param {import('@playwright/test').Page} page
+ */
+export function currentViewName(page) {
+	return ON_LYRIS
+		? page.locator('#lyris-view-toggle .lyris-view-switcher__label')
+		: page.locator('select[name="currentview"] option:checked');
+}
+
+/**
+ * Where an entry's form is: in the drawer while the drawer is open, and otherwise anywhere on the page. Look for the
+ * form's elements in here, rather than on the whole page, where something in the list behind the drawer can match as
+ * well, such as a name in one of its columns. It's worked out each time it's used, so it can be made before the entry
+ * opens. Suggestions for an autocomplete aren't in here, because their menu is at the end of the page: use
+ * autocompleteSuggestion().
+ * @param {import('@playwright/test').Page} page
+ */
+export function entryArea(page) {
+	return page.locator('.formulize-drawer:not([hidden]) .formulize-drawer__body:not(.formulize-drawer__body--ai), body:not(:has(.formulize-drawer:not([hidden])))');
+}
+
+/**
+ * One of an entry's own buttons, such as Save or Close, by its words exactly: at the bottom of a form screen, or in the
+ * drawer's footer while the drawer is open. To save, use saveFormulizeForm() or saveAndCloseEntry(), which wait for
+ * the save. This is for a click that shouldn't save, such as one that's refused.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} name
+ */
+export function entryButton(page, name) {
+	return page.locator('.formulize-drawer:not([hidden]) .formulize-drawer__foot, body:not(:has(.formulize-drawer:not([hidden])))')
+		.getByRole('button', { name, exact: true });
+}
+
+/**
+ * A suggestion in the menu an autocomplete element shows while someone types in it, by its words
+ * @param {import('@playwright/test').Page} page
+ * @param {string|RegExp} text
+ * @param {{exact?: boolean}} [options] - As for getByText
+ */
+export function autocompleteSuggestion(page, text, options = {}) {
+	return page.locator('ul.ui-autocomplete:visible').getByText(text, options);
+}
+
+/**
+ * Show one of a list's pages of entries, by its number, with the list's page controls: links in Anari, and buttons
+ * in Lyris, named "Page 2" and so on.
+ * @param {import('@playwright/test').Page} page
+ * @param {number} number
+ */
+export async function goToListPage(page, number) {
+	const control = ON_LYRIS
+		? page.locator('.lyris-pagination__pages').getByRole('button', { name: `Page ${number}`, exact: true })
+		: page.getByRole('link', { name: String(number), exact: true });
+	await control.click();
+	await waitForWorkingMessage(page);
+}
+
+/**
+ * Show the next of a list's pages of entries, with its Next control: a link in Anari, and a button in Lyris.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function goToNextListPage(page) {
+	const next = ON_LYRIS
+		? page.locator('.lyris-pagination').getByRole('button', { name: 'Next', exact: true })
+		: page.getByRole('link', { name: 'Next', exact: true });
+	await next.click();
+	await waitForWorkingMessage(page);
+}
+
+/**
+ * Choose how many entries a page the list shows, with the list's own control for it, which reloads the list.
+ * @param {import('@playwright/test').Page} page
+ * @param {number} count - One of the numbers the control offers, such as 10
+ */
+export async function showEntriesPerPage(page, count) {
+	// the control is set up once the page has loaded
+	await page.waitForLoadState('load');
+	await page.locator('select[name="formulize_entriesPerPage"]').first().selectOption(String(count));
+	await waitForWorkingMessage(page);
+}
+
+/**
+ * Click Change columns on a list, and return the popup it opens. Use openAllColumnSections() and
+ * applyColumnChanges() with the popup, as usual.
+ * @param {import('@playwright/test').Page} page
+ * @returns {Promise<import('@playwright/test').Page>}
+ */
+export async function openChangeColumns(page) {
+	const popupOpened = page.context().waitForEvent('page');
+	await clickListAction(page, 'Change columns');
+	const popup = await popupOpened;
+	await popup.bringToFront();
+	return popup;
+}
+
+/**
+ * The drawer that shows an entry over a list, when the list opens its entries there.
+ * See modules/formulize/include/js/drawer.js
+ * @param {import('@playwright/test').Page} page
+ */
+export function entryDrawer(page) {
+	return page.locator('.formulize-drawer[role="dialog"]');
+}
+
+/**
+ * Whether the drawer is showing a form, or about to. It's there once something has opened it, and hidden when
+ * it's closed.
+ * @param {import('@playwright/test').Page} page
+ */
+async function drawerIsOpen(page) {
+	try {
+		return await page.evaluate(() => {
+			const drawer = document.querySelector('.formulize-drawer');
+			return !!(drawer && !drawer.hidden && !drawer.querySelector('.formulize-drawer__body--ai:not([hidden])'));
+		});
+	} catch (e) {
+		return false; // a page on its way somewhere has no drawer open
+	}
+}
+
+/**
+ * Wait for the entry the drawer is loading to be there to work with: its form in the drawer, and the drawer no
+ * longer busy. Call it after whatever opens an entry, where the list opens its entries in the drawer.
+ * @param {import('@playwright/test').Page} page
+ * @param {number} [timeout]
+ */
+export async function drawerEntryReady(page, timeout = 60000) {
+	const drawer = entryDrawer(page);
+	await expect(drawer).toBeVisible({ timeout });
+	await expect(drawer.locator('form#formulize_drawer')).toBeAttached({ timeout });
+	await expect(drawer).not.toHaveClass(/formulize-drawer--busy/, { timeout });
+}
+
+/**
+ * Open an entry from a list, by clicking something on the list, such as a row's link or the Add button, and wait
+ * for it: the form screen it goes to, or the entry in the drawer, as the list's settings say. A subform's Add button
+ * works the same way: it draws the form again, on a new page or in the drawer.
+ * @param {import('@playwright/test').Page} page
+ * @param {import('@playwright/test').Locator|function(): Promise<void>} trigger - What to click, or a function that
+ *   clicks it, for a button that has to be found first, as clickListAction() does
+ */
+export async function openEntry(page, trigger) {
+	await page.waitForLoadState('load');
+	// Mark this page, and any form the drawer has from before, so what comes next can be told apart from it. What was
+	// clicked can't tell them apart, because it can be on the next page too, as a subform's Add button is.
+	await page.evaluate(() => {
+		window.e2eBeforeOpening = true;
+		const form = document.querySelector('.formulize-drawer form#formulize_drawer');
+		if (form) {
+			form.e2eBeforeOpening = true;
+		}
+	});
+	await (typeof trigger === 'function' ? trigger() : trigger.click());
+	// either a new page arrives, or the drawer gets a form it didn't have
+	const opened = async () => {
+		try {
+			return await page.evaluate(() => {
+				if (!window.e2eBeforeOpening) {
+					return 'page';
+				}
+				const drawer = document.querySelector('.formulize-drawer');
+				const form = drawer && !drawer.hidden && drawer.querySelector('form#formulize_drawer');
+				return form && !form.e2eBeforeOpening ? 'drawer' : '';
+			});
+		} catch (e) {
+			return ''; // the page is on its way
+		}
+	};
+	let where = '';
+	await expect.poll(async () => (where = await opened()), { timeout: 60000 }).not.toBe('');
+	if (where === 'drawer') {
+		await drawerEntryReady(page);
+	} else {
+		await page.waitForLoadState('load');
+	}
+}
+
+// After the drawer closes, the list behind it reloads if anything was saved while it was open (onEntrySaved in
+// drawer.js calls the list's showLoading(), which shows the working message and sends the list's form)
+async function listReloadedAfterDrawer(page, timeout) {
+	const reloading = await page.evaluate(() => {
+		const message = document.getElementById('workingmessage');
+		return !!message && window.getComputedStyle(message).display !== 'none';
+	}).catch(() => true); // the page is already going
+	if (reloading) {
+		await page.waitForFunction(() => {
+			const message = document.getElementById('workingmessage');
+			return document.readyState === 'complete' && (!message || window.getComputedStyle(message).display === 'none');
+		}, null, { timeout });
+		await page.waitForLoadState('load');
+	}
+}
+
+/**
+ * Save an entry and close it, the way a person leaves an entry they've finished with: Save and Close on a form
+ * screen, which goes back to the list, or in the drawer, which closes it over the list. On a form screen, assert
+ * something on the page it goes to afterwards.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} [buttonText] - The button's words, if the screen calls it something else
+ */
+export async function saveAndCloseEntry(page, buttonText = 'Save and Close', timeout = 120000) {
+	if (await drawerIsOpen(page)) {
+		await saveDrawerForm(page, buttonText, timeout);
+	} else {
+		// A form that's been touched fills in its security token a moment later, and a save sent before then is refused.
+		// A person can't click that fast. A form that hasn't been touched has nothing to save, so it needs no token.
+		await page.waitForFunction(() => {
+			const token = document.querySelector('#formulize_mainform input[name="XOOPS_TOKEN_REQUEST"]');
+			const form = document.getElementById('formulize_mainform');
+			const touched = window.formulizechanged || (form && form.contains(document.activeElement));
+			return !token || !touched || token.value.length > 0;
+		}, null, { timeout: 5000 }).catch(() => {}); // if it isn't filled, the check below says the save was refused
+		// The link saves, releases the entry's lock over AJAX, and then sends the page back to the list, so the page is
+		// still the entry's when the click is over. Waiting for the list means the save went out, and that something
+		// done next isn't done to the entry, or cut short by the list arriving.
+		await Promise.all([
+			page.waitForNavigation({ waitUntil: 'load', timeout }),
+			page.getByRole('link', { name: buttonText }).click(),
+		]);
+		// the list says so if the save was refused
+		await expect(page.getByText('Your changes were not saved.')).not.toBeVisible({ timeout: 10000 });
+	}
+}
+
+/**
+ * The tab for one of the pages of an entry that has more than one, by its title: a link on a form screen, and a
+ * button in the drawer.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} title
+ */
+export async function entryPageTab(page, title) {
+	return (await drawerIsOpen(page))
+		? entryDrawer(page).locator('nav.formulize-drawer__tabs').getByRole('button', { name: title, exact: true })
+		: page.getByRole('link', { name: title, exact: true });
+}
+
+/**
+ * Go to another page of an entry that has more than one, by its tab, and wait for it to be shown. The drawer saves
+ * the page being left, if anything on it changed, as a form screen does.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} title
+ */
+export async function goToEntryPage(page, title) {
+	if (await drawerIsOpen(page)) {
+		await drawerEntryReady(page);
+		await waitForDrawerFormToken(page);
+		const tab = await entryPageTab(page, title);
+		await tab.click();
+		await expect(tab).toHaveAttribute('aria-current', 'page', { timeout: 60000 });
+		await drawerEntryReady(page);
+	} else {
+		await openFormScreenTab(page, title);
+	}
+}
+
+/**
+ * Click a tab on a form screen, and wait for that page of the entry. The tab releases the entry's locks by AJAX, and
+ * submits the form only when that's done. So after the click, the page being left is still there, loaded, with nothing
+ * to say it's about to go.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} title
+ */
+export async function openFormScreenTab(page, title) {
+	await page.waitForLoadState('load');
+	await Promise.all([
+		page.waitForEvent('load', { timeout: 60000 }),
+		page.getByRole('link', { name: title, exact: true }).click(),
+	]);
 }
 
 // ============================================================================
@@ -1415,6 +1907,8 @@ const { dbContainer, webContainer } = require('./docker-containers');
 
 const DB_ROOT_PASS = process.env.E2E_DB_ROOT_PASS || 'abc123';
 const DB_NAME = process.env.E2E_DB_NAME || 'formulize';
+// The client in the database container: mariadb, or mysql when it runs MySQL (docker-compose.mysql.yaml)
+const DB_CLIENT = process.env.E2E_DB_CLIENT || 'mariadb';
 
 /**
  * Run a SQL statement against the test database and return the rows as an array of
@@ -1425,9 +1919,11 @@ const DB_NAME = process.env.E2E_DB_NAME || 'formulize';
 export function dbQuery(sql) {
 	// -N: skip column-name header. The SQL is passed as a single argv entry, never through a shell:
 	// a shell would treat backticks (MySQL identifier quotes, e.g. `groups`) as command substitution.
+	// The character set is named, because the mysql client in the MySQL image talks latin1 unless told otherwise, and Node
+	// reads what comes back as UTF-8.
 	const out = execFileSync(
 		'docker',
-		['exec', dbContainer(), 'mariadb', '-uroot', `-p${DB_ROOT_PASS}`, '-N', '-e', sql, DB_NAME],
+		['exec', dbContainer(), DB_CLIENT, '-uroot', `-p${DB_ROOT_PASS}`, '--default-character-set=utf8mb4', '-N', '-e', sql, DB_NAME],
 		{ encoding: 'utf8' }
 	);
 	const trimmed = out.replace(/\n$/, '');
@@ -1627,6 +2123,29 @@ export function restoreSiteTheme(state) {
 }
 
 /**
+ * Save a page of settings in the admin UI, under Settings or Appearance, or the system preferences, and wait for the
+ * page to come back. The button submits a form, and the browser can begin to send it after the click is over. Going
+ * anywhere else before then cancels the save. What was chosen is already showing, so checking it proves nothing until
+ * the page has come back.
+ * @param {import('@playwright/test').Page} page On the settings page, and loaded
+ */
+export async function saveAdminSettings(page) {
+	await page.waitForLoadState('load');
+	const whichPage = () => {
+		const { pathname, searchParams } = new URL(page.url());
+		return [pathname, searchParams.get('page'), searchParams.get('view')];
+	};
+	const saved = whichPage();
+	await Promise.all([
+		page.waitForEvent('load', { timeout: 60000 }),
+		page.getByRole('button', { name: 'Save your changes' }).click(),
+	]);
+	// A save comes back to its own page with scrollx in the address. One that's refused goes to the system preferences instead.
+	expect(whichPage(), 'the settings were saved').toEqual(saved);
+	expect(page.url()).toMatch(/[?&]scrollx=/);
+}
+
+/**
  * Choose the site's theme, and the theme webmasters see, on Admin > Appearance > Settings, and save, the way an
  * administrator does. Saving a new site theme also moves every user, and every screen, to it, which
  * setSiteThemeInDb() doesn't do. Call it signed in as a webmaster.
@@ -1640,10 +2159,7 @@ export async function chooseSiteThemes(page, site, admin) {
 	await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 	await page.locator('#theme_set').selectOption(site);
 	await page.locator('#theme_admin_set').selectOption(admin);
-	await Promise.all([
-		page.waitForURL(/page=appearance/),
-		page.getByRole('button', { name: 'Save your changes' }).click(),
-	]);
+	await saveAdminSettings(page);
 	await page.goto(settingsUrl);
 	await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 	await expect(page.locator('#theme_set')).toHaveValue(site);
@@ -2077,9 +2593,10 @@ export async function removeConditions(page, open, deleteLinks) {
 		// The click has its own timeout, shorter than the navigation's, so a click that can't land fails with the reason
 		// Playwright gives, ie: another element intercepts it, rather than with the navigation that never came
 		await Promise.all([
-			page.waitForNavigation({ waitUntil: 'networkidle', timeout: 120000 }),
+			page.waitForNavigation({ waitUntil: 'load', timeout: 120000 }),
 			page.locator(deleteLinks).first().click({ timeout: 30000 }),
 		]);
+		await waitForAdminPageReady(page);
 		await open(page);
 	}
 }
@@ -2152,10 +2669,18 @@ export async function expectArtifactOriginsMap(page) {
  */
 export async function loadSavedView(page, name) {
 	await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
-	const views = page.locator('select[name="currentview"]');
-	const value = await views.locator('option', { hasText: name }).first().getAttribute('value');
-	await Promise.all([page.waitForEvent('load'), views.selectOption(value)]);
-	await expect(page.locator('select[name="currentview"] option:checked')).toHaveText(new RegExp(name));
+	if (ON_LYRIS) {
+		// Lyris lists the views in a menu, which its view switcher, beside the list's title, opens
+		await page.locator('#lyris-view-toggle').click();
+		const view = page.locator('#lyris-view-panel').getByRole('button', { name }).first();
+		await expect(view).toBeVisible();
+		await Promise.all([page.waitForEvent('load'), view.click()]);
+	} else {
+		const views = page.locator('select[name="currentview"]');
+		const value = await views.locator('option', { hasText: name }).first().getAttribute('value');
+		await Promise.all([page.waitForEvent('load'), views.selectOption(value)]);
+	}
+	await expect(currentViewName(page)).toHaveText(new RegExp(name));
 }
 
 /**

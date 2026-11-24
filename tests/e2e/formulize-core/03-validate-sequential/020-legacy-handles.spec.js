@@ -5,6 +5,7 @@ import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
 import {
 	login, renameElementHandle, elementId, openArtifactOriginsMap, expectArtifactOriginsMap, loadSavedView, expectArtifactOriginsList,
 	dbQuery, dbPrefix,
+	openEntry, entryButton, entryArea, saveAndCloseEntry,
 } from '../../utils';
 import { asAdmin, asCurator } from './museum-checks';
 
@@ -92,11 +93,11 @@ test.describe.serial('A linked list whose source is stored by handle', () => {
 		await page.goto('/user.php?op=logout');
 		await login(page, 'curator1', '12345');
 		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
-		await page.getByRole('row', { name: 'M001' }).getByRole('link').first().click();
-		await expect(page.getByRole('button', { name: 'Save', exact: true })).toBeVisible();
-		await expect(page.getByLabel('Donor').locator('option', { hasText: donor })).toHaveCount(1);
-		await expect(page.getByLabel('Donor').locator('option:checked')).toHaveText(donor);
-		await page.getByRole('link', { name: 'Save and Close' }).click(); // clears the entry lock
+		await openEntry(page, page.getByRole('row', { name: 'M001' }).getByRole('link').first());
+		await expect(entryButton(page, 'Save')).toBeVisible();
+		await expect(entryArea(page).getByLabel('Donor').locator('option', { hasText: donor })).toHaveCount(1);
+		await expect(entryArea(page).getByLabel('Donor').locator('option:checked')).toHaveText(donor);
+		await saveAndCloseEntry(page); // clears the entry lock
 		await expect(page.getByText('Showing entries: 1 to')).toBeVisible();
 	}
 

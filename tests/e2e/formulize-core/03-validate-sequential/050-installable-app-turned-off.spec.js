@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-import { getSystemConfig, setSystemConfig, aDayPassesForTheWorker } from '../../utils';
+import { getSystemConfig, setSystemConfig, aDayPassesForTheWorker, NO_SERVICE_WORKERS } from '../../utils';
 
 // Turning off the site as an installed app. The rest of the app's tests are in
 // 02-validate/044-installable-app.spec.js. This one is here because it changes the setting for the whole
@@ -15,7 +15,8 @@ async function waitForWorker(page) {
 
 test.describe('Turning off the site as an installed app', () => {
 
-	test('turned off, the installed worker removes itself and what it kept', async ({ page, request }) => {
+	test('turned off, the installed worker removes itself and what it kept', async ({ page, request, serviceWorkers }) => {
+		test.skip(serviceWorkers === 'block', NO_SERVICE_WORKERS);
 		await page.goto('/');
 		await waitForWorker(page);
 		await page.reload();

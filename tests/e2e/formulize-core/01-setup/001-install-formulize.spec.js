@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, waitForAdminPageReady, chooseSiteThemes, expectSiteTheme } from '../../utils';
+import { login, waitForAdminPageReady, chooseSiteThemes, saveAdminSettings, expectSiteTheme, E2E_THEME, ON_LYRIS, accountLink } from '../../utils';
 
 test.describe('Installation of Formulize', () => {
 	test('Run the Installer', async ({ page }) => {
@@ -67,13 +67,16 @@ test.describe('Installation of Formulize', () => {
 		await expect(page.locator('a.lyris-header__brand')).toBeVisible();
 
 	}),
-	// Most of the suite is written for Anari, so the site is switched to it straight away, before anything
-	// else is made, the way an administrator would: on Admin > Appearance > Settings. 04-appearance switches
-	// to Lyris and back for the specs written for it.
-	test('Switch the site to Anari', async ({ page }) => {
+	// The run is on the theme E2E_THEME names, Anari unless it says Lyris (see "The site's theme" in utils.js). For Anari,
+	// the site is switched to it straight away, before anything else is made, the way an administrator would: on
+	// Admin > Appearance > Settings. For Lyris, the site stays on the theme it was installed with, and the same page
+	// is saved with Lyris in both choices, which changes nothing but records that Lyris is the site's theme
+	// (activated.lock), as it does on any new site whose settings are opened. Either way every screen the setup
+	// specs make starts with that theme's settings.
+	test(ON_LYRIS ? 'Keep the site on Lyris' : 'Switch the site to Anari', async ({ page }) => {
 		await login(page, E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD);
-		await chooseSiteThemes(page, 'Anari', 'Anari');
-		await expectSiteTheme(page, 'Anari');
+		await chooseSiteThemes(page, E2E_THEME, E2E_THEME);
+		await expectSiteTheme(page, E2E_THEME);
 	}),
 	test('Update Formulize', async ({ page }) => {
 
@@ -108,7 +111,7 @@ test.describe('Installation of Formulize', () => {
 		const loggingEnabled = page.locator('input[name="formulizeLoggingOnOff"][value="1"]');
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await loggingEnabled.check();
-		await page.getByRole('button', { name: 'Save your changes' }).click();
+		await saveAdminSettings(page);
 		await page.locator('.formulize-config-settings').waitFor({ state: 'visible' });
 		await expect(loggingEnabled).toBeChecked();
 	}),
@@ -123,7 +126,7 @@ test.describe('Installation of Formulize', () => {
 		const closeSiteNo = page.locator('input[name="closesite"][value="0"]');
 		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
 		await closeSiteYes.check();
-  	await page.getByRole('button', { name: 'Save your changes' }).click();
+		await saveAdminSettings(page);
 		await waitForAdminPageReady(page);
 		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
 		await expect(closeSiteYes).toBeChecked();
@@ -133,11 +136,11 @@ test.describe('Installation of Formulize', () => {
 		await page.locator('input[name="uname"]').fill((E2E_TEST_ADMIN_USERNAME || 'admin'));
 		await page.locator('input[name="pass"]').fill((E2E_TEST_ADMIN_PASSWORD || 'password'));
 		await page.getByRole('button', { name: 'Login' }).click();
-		await expect(page.getByRole('link', { name: 'Edit Account' })).toBeVisible();
+		await expect(accountLink(page)).toBeVisible();
 		await page.goto('/modules/system/admin.php?fct=preferences&op=show&confcat_id=1');
 		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
 		await closeSiteNo.check();
-  	await page.getByRole('button', { name: 'Save your changes' }).click();
+		await saveAdminSettings(page);
 		await waitForAdminPageReady(page);
 		await page.locator('#formulize-prefs-hide-on-load').waitFor({ state: 'visible' });
 		await expect(closeSiteNo).toBeChecked();
