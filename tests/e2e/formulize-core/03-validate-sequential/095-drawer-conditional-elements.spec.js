@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+import { saveDrawerForm } from '../../utils';
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import { login, leavePage, conditionalElementReady, waitForJQueryAnimations, saveFormulizeForm, saveAdminForm, openElementSettings, dbQuery, dbPrefix, sqlEscape, deleteMuseumFormsTitled } from '../../utils';
 
@@ -261,11 +262,8 @@ test('A value that has to be unique is checked in the drawer, each time it chang
 
 	// a number no case has is saved
 	await typeNumber(NEW_CASE_NUMBER);
-	await save.click();
-	await expect.poll(() => storedValue(casesFid, caseEntryId, 'dct_case_catalogue'), { message: 'the new number should be saved' }).toBe(NEW_CASE_NUMBER);
-	// The drawer is busy from when it sends the save, which is before the number is stored, until the form drawn again
-	// after it is in place, so this waits for that form, and the field below is the new one.
-	await expect(drawer(page)).not.toHaveClass(/formulize-drawer--busy/);
+	await saveDrawerForm(page);
+	expect(storedValue(casesFid, caseEntryId, 'dct_case_catalogue'), 'the new number should be saved').toBe(NEW_CASE_NUMBER);
 	await expect(catalogue).toHaveValue(NEW_CASE_NUMBER);
 
 	// the drawer has saved without reloading the page, and Case Two's number is still refused after that

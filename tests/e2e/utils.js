@@ -185,11 +185,22 @@ const elementToContentMapping = {
 /**
  * Wait for the Formulize form token to be valid before moving on
  * @param {*} page Playwright page object
+ * @param {string} form Selector of the form. The drawer's is '#formulize_drawer', which waitForDrawerFormToken passes
  */
-export async function waitForFormulizeFormToken(page) {
+export async function waitForFormulizeFormToken(page, form = '#formulize_mainform') {
 	await page.waitForFunction(
-		() => document.querySelector('#formulize_mainform input[name="XOOPS_TOKEN_REQUEST"]').value.length > 0
+		selector => document.querySelector(`${selector} input[name="XOOPS_TOKEN_REQUEST"]`).value.length > 0,
+		form
 	)
+}
+
+/**
+ * Wait for the token of the form in the drawer, before something that sends the form. It's filled in a moment after the
+ * first thing done in the form, and again after each save, since the drawer draws the form again.
+ * @param {*} page Playwright page object
+ */
+export async function waitForDrawerFormToken(page) {
+	await waitForFormulizeFormToken(page, '#formulize_drawer');
 }
 
 /**
@@ -225,6 +236,25 @@ export async function aDayPassesForTheWorker(page) {
 	const cdp = await page.context().newCDPSession(page);
 	await cdp.send('Network.clearBrowserCache');
 	await cdp.detach();
+}
+
+/**
+ * Save the form in the drawer, with its Save button, when the save should work. Something in the form has to have been
+ * changed first. A save that should be refused before it's sent doesn't come back, so click the button for that.
+ * @param {*} page Playwright page object
+ * @param {number} timeout - Maximum time to wait for the save to come back (default 120000ms)
+ */
+export async function saveDrawerForm(page, timeout = 120000) {
+	const drawer = page.locator('.formulize-drawer[role="dialog"]');
+	await waitForDrawerFormToken(page);
+	const saved = page.waitForResponse(response =>
+		response.request().method() === 'POST' && response.url().includes('/include/formdisplay-elementsonly.php'), { timeout });
+	await drawer.locator('.formulize-drawer__foot input[name="save"]').click();
+	await saved;
+	// The drawer is busy from when it sends the save until the form drawn again after it is in place
+	await expect(drawer).not.toHaveClass(/formulize-drawer--busy/);
+	// Ensure the save was not refused
+	await expect(drawer.getByText('Your changes were not saved.')).not.toBeVisible();
 }
 
 /**
