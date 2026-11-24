@@ -72,8 +72,8 @@ class formulizeFullWidthContentElementHandler extends formulizeStaticContentElem
 		return $ele_value;
 	}
 
-	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
-		$result = parent::validateEleValuePublicAPIProperties($properties, $ele_value, $elementIdentifier);
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null, $formId = null) {
+		$result = parent::validateEleValuePublicAPIProperties($properties, $ele_value, $elementIdentifier, $formId);
 		// the visual style is not exposed via the public API - always use the default
 		$result['ele_value'][ELE_VALUE_FULLWIDTHCONTENT_CSSCLASS] = 'head';
 		return $result;

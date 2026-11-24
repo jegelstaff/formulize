@@ -232,9 +232,10 @@ class formulizeTextElementHandler extends formulizeElementsHandler {
 	 * @param array $properties The properties to validate
 	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
 	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
+	 * @param int $formId The id of the form the element is in. Needed when creating, because a new element does not exist yet, so its form cannot be read from it. Ignored when $elementIdentifier resolves to an existing element.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null, $formId = null) {
 		if(isset($properties['defaultValue'])) {
 			$ele_value[$this->defaultValueKey] = trim($properties['defaultValue']);
 		}

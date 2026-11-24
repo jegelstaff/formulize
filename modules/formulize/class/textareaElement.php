@@ -342,8 +342,8 @@ class formulizeTextareaElementHandler extends formulizeTextElementHandler {
 		return parent::prepareDataForSaving($value, $element, $entry_id, $subformBlankCounter);
 	}
 
-	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
-		$result    = parent::validateEleValuePublicAPIProperties($properties, $ele_value, $elementIdentifier);
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null, $formId = null) {
+		$result    = parent::validateEleValuePublicAPIProperties($properties, $ele_value, $elementIdentifier, $formId);
 		$ele_value = $result['ele_value'];
 		$allowed   = ['none', 'characters', 'words'];
 		if (isset($properties['counterType'])) {

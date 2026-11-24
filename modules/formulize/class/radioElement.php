@@ -112,14 +112,15 @@ class formulizeRadioElementHandler extends formulizeBaseClassForListsElementHand
 	 * @param array $properties The properties to validate
 	 * @param array $ele_value The ele_value settings for this element, if applicable. Should be set by the caller, to the current ele_value settings of the element, if this is an existing element.
 	 * @param int|string|object $elementIdentifier The element id, handle or object of the element for which we're validating the properties.
+	 * @param int $formId The id of the form the element is in. Needed when creating, because a new element does not exist yet, so its form cannot be read from it. Ignored when $elementIdentifier resolves to an existing element.
 	 * @return array An array of properties ready for the object. Usually just ele_value but could be others too.
 	 */
-	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null, $formId = null) {
 		// radio buttons are the only list elements that have plain ele_value array, all others put options in key 2 by convention
 		// The validateEleValuePublicAPIProperties in the base class returns processed options in key 2
 		// So, if we get back anything at key 2, ele_value and ele_uitext should be taken from the processed values
 		// Otherwise, stick with the values of the existing element
-		list($processed_ele_value, $ele_uitext, $ele_delim) = array_values(formulizeBaseClassForListsElementHandler::validateEleValuePublicAPIProperties($properties, [], $elementIdentifier)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
+		list($processed_ele_value, $ele_uitext, $ele_delim) = array_values(formulizeBaseClassForListsElementHandler::validateEleValuePublicAPIProperties($properties, [], $elementIdentifier, $formId)); // array_values will take the values in the associative array and assign them to the list variables correctly, since list expects numeric keys
 		if(isset($processed_ele_value[2])) {
 			$ele_value = $processed_ele_value[2];
 		} elseif($elementObject = _getElementObject($elementIdentifier)) {

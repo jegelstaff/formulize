@@ -176,9 +176,10 @@ abstract class formulizeStaticContentElementHandler extends formulizeElementsHan
 	 * @param array $properties The properties to validate (the public API representation)
 	 * @param array $ele_value The current ele_value settings for this element (or the default for a new element)
 	 * @param int|string|object $elementIdentifier The element id, handle or object being validated, if any
+	 * @param int $formId The id of the form the element is in. Needed when creating, because a new element does not exist yet, so its form cannot be read from it. Ignored when $elementIdentifier resolves to an existing element.
 	 * @return array An array of properties ready for the object, keyed by object property name
 	 */
-	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null) {
+	public function validateEleValuePublicAPIProperties($properties, $ele_value = [], $elementIdentifier = null, $formId = null) {
 		if(isset($properties['content'])) {
 			$properties['content'] = is_array($properties['content']) ? $properties['content'][array_key_first($properties['content'])] : $properties['content'];
 			$content = (string)$properties['content'];
