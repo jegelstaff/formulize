@@ -1490,8 +1490,9 @@ $modversion['config'][] = array(
 	'valuetype' => 'text',
 	'default' => '',
 );
-// Rendered by a Formulize-specific formtype that never writes the key into the page or
-// the config table - it is stored encrypted in formulize_ai_keys under uid -1.
+// Rendered by a Formulize-specific formtype that never writes the key into the page. The
+// value stored here is the keys encrypted, one per provider - see "API key storage" in
+// include/aiadminconfig.php.
 $modversion['config'][] = array(
 	'name' => 'formulizeAIApiKey',
 	'title' => '_MI_formulize_AIAPIKEY',

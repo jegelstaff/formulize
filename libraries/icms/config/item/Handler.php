@@ -126,17 +126,25 @@ class icms_config_Item_Handler extends icms_core_ObjectHandler {
 		 * as empty - so every save of this settings page, not only ones where a new key
 		 * was typed, silently erased whatever key was already stored. Read the real,
 		 * still-current value straight from the database instead.
+		 *
+		 * A new config item is the opposite case. The module update deletes every one of the
+		 * module's config items and inserts them again with the values they had, so there is
+		 * no row to read and the in-memory copy is the only one left. Looking in the database
+		 * there finds nothing, and erases the key on every module update.
 		 */
 		if ($config->getVar('conf_name') == 'formulizeAIApiKey') {
 			include_once XOOPS_ROOT_PATH . '/modules/formulize/include/aiadminconfig.php';
 			if (function_exists('formulizeAI_prepareApiKeyForConfigStorage')) {
 				global $formulizeAIApiKey_new, $formulizeAIApiKey_clear, $formulizeAIProvider;
-				$currentRow = false;
-				if ($result = $this->db->query("SELECT conf_value FROM " . $this->db->prefix('config') . " WHERE conf_id = '" . (int) $config->getVar('conf_id') . "'")) {
+				$storedKeys = '';
+				if ($config->isNew()) {
+					$storedKeys = $config->getVar('conf_value', 'N');
+				} elseif ($result = $this->db->query("SELECT conf_value FROM " . $this->db->prefix('config') . " WHERE conf_id = '" . (int) $config->getVar('conf_id') . "'")) {
 					$currentRow = $this->db->fetchArray($result);
+					$storedKeys = $currentRow ? $currentRow['conf_value'] : '';
 				}
 				$config->setVar('conf_value', formulizeAI_prepareApiKeyForConfigStorage(
-					$currentRow ? $currentRow['conf_value'] : '',
+					$storedKeys,
 					isset($formulizeAIApiKey_new) ? $formulizeAIApiKey_new : '',
 					!empty($formulizeAIApiKey_clear),
 					isset($formulizeAIProvider) ? $formulizeAIProvider : ''
