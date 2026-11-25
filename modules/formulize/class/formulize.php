@@ -310,7 +310,7 @@ class formulizeHandler {
 
 		// the source form is chosen once, at creation, so it is not offered when updating at all
 		$sourceFormDescription = $update ? "" : "
-- sourceForm (int, the form ID of the form to be displayed in this Subform Interface. This cannot be changed later. If the source form is not already connected to this form, a new Linked Dropdown List will be created in the source form, and it will be linked to the Principal Identifer in this form. For example, if a Cities form is embedded in a Provinces form, and there is no existing connection between them, then a Linked Dropdown List will be added to the Cities form that links to the Province form's principal identifier.)";
+- sourceForm (int, the form ID of the form to be displayed in this Subform Interface. This cannot be changed later. If the source form is not already connected to this form, a new Linked Dropdown List will be created in the source form, and it will be linked to the Principal Identifer in this form. For example, if a Cities form is embedded in a Provinces form, and there is no existing connection between them, then a Linked Dropdown List will be added to the Cities form that links to the Province form's principal identifier. Do not delete the linked element in the source form, or the Subform Interface will stop working.)";
 
 		$description = "
 **Overview:**
