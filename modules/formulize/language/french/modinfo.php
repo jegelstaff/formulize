@@ -190,4 +190,19 @@ define("_MI_formulize_PWAENABLED_MANAGED", "Oui, votre organisation l'installe s
 define("_MI_formulize_PWASHORTNAME", "Nom sous l'icône de l'application");
 define("_MI_formulize_PWASHORTNAME_DESC", "Le nom affiché sous l'icône sur l'écran d'accueil d'un téléphone. Les téléphones y raccourcissent les noms longs : si le nom du site est long, indiquez-en un plus court ici. Laissez ce champ vide pour utiliser le nom du site.");
 
+define("_MI_formulize_AIPROVIDER", "Choix du fournisseur d'IA");
+define("_MI_formulize_AIPROVIDER_DESC", "Par défaut, chaque personne choisit son propre fournisseur d'IA et entre sa propre clé API dans l'assistant. Choisissez plutôt un fournisseur ici, sélectionnez un modèle ci-dessous et fournissez une clé au besoin, et tout le monde l'utilisera.");
+define("_MI_formulize_AIPROVIDER_USERSPECIFIED", "Au choix de l'utilisateur");
+define("_MI_formulize_AIPROVIDER_CLAUDE", "Claude (Anthropic)");
+define("_MI_formulize_AIPROVIDER_GEMINI", "Gemini (Google)");
+define("_MI_formulize_AIPROVIDER_OPENAI", "OpenAI");
+define("_MI_formulize_AIPROVIDER_OPENROUTER", "OpenRouter");
+define("_MI_formulize_AIPROVIDER_OLLAMA", "Ollama (modèle local)");
+define("_MI_formulize_AIMODEL", "Modèle");
+define("_MI_formulize_AIMODEL_DESC", "Le nom exact du modèle à utiliser, tel que le fournisseur l'écrit - par exemple <i>claude-sonnet-4-6</i>, <i>gemini-2.0-flash</i>, <i>gpt-4o</i>, <i>openrouter/auto</i> ou <i>llama3.2</i>. Laissez ce champ vide pour utiliser un choix raisonnable pour le fournisseur choisi.");
+define("_MI_formulize_AIAPIKEY", "Clé API");
+define("_MI_formulize_AIAPIKEY_DESC", "La clé API du fournisseur choisi. Elle est chiffrée avant d'être enregistrée, n'est jamais envoyée au navigateur de qui que ce soit et ne peut pas être relue ici. Si vous la perdez, remplacez-la au lieu de la chercher. Ollama n'a pas besoin de clé.");
+define("_MI_formulize_AIOLLAMABASEURL", "Adresse d'Ollama");
+define("_MI_formulize_AIOLLAMABASEURL_DESC", "L'emplacement où Ollama s'exécute, tel que <i>ce serveur Formulize</i> le voit, et non le navigateur. La valeur par défaut, http://localhost:11434, signifie qu'Ollama est installé sur la même machine que Formulize.");
+
 include_once XOOPS_ROOT_PATH . '/modules/formulize/language/english/modinfo.php'; // Include the English version of the module info file to ensure all constants are defined

@@ -39,7 +39,7 @@ $modversion = array(
 	'license' => "GPL-2.0",
 	'image' => "images/formulize.gif",
 	'dirname' => "formulize",
-	'dbversion' => 38,
+	'dbversion' => 39,
 	'onUpdate' => "include/on_update.php"
 );
 
@@ -1479,6 +1479,7 @@ $modversion['config'][] = array(
 		_MI_formulize_AIPROVIDER_CLAUDE => 'claude',
 		_MI_formulize_AIPROVIDER_GEMINI => 'gemini',
 		_MI_formulize_AIPROVIDER_OPENAI => 'openai',
+		_MI_formulize_AIPROVIDER_OPENROUTER => 'openrouter',
 		_MI_formulize_AIPROVIDER_OLLAMA => 'ollama',
 	),
 );

@@ -12,6 +12,8 @@ There are two ways to use AI with Formulize:
 
 Use AI right inside your Formulize system — no extra software needed. Just enable it in the _Formulize Preferences_ and then click the __Use AI__ link in the menu. To use the embedded AI assistant with a commercial AI provider, users will need _an API key from the AI provider_.
 
+With <a href="https://openrouter.ai" target="_blank">OpenRouter</a>, one API key gives you a choice of hundreds of models from many different companies.
+
 The embedded AI assistant can also be used with local language models, via <a href="https://ollama.com" target="_blank">Ollama</a>. In this case, you do not need any API keys.
 
 [Read the setup steps...](../ai/setup-embedded)

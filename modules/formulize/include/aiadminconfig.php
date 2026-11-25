@@ -32,34 +32,78 @@ include_once XOOPS_ROOT_PATH . "/modules/formulize/include/functions.php";
  */
 define('FORMULIZE_AI_SYSTEM_UID', -1);
 
-/** Providers the assistant can talk to. Ollama is keyless. */
+/**
+ * The providers the assistant can talk to, and what is different about each one. Where
+ * requests go, and what they look like, is in ai/ai_providers.php.
+ *
+ * needsKey       whether it has an API key
+ * compatible     whether it is one of the providers that share the same OpenAI-compatible
+ *                code and differ only in these details and their addresses. OpenAI is not
+ *                one, because it has a Files API, and some parameters, that the others don't.
+ * model          the model used when nothing has been chosen
+ * contextWindow  the default history limit, in characters (conversation history only, not
+ *                the system prompt or tool definitions). Set near the model's actual context
+ *                window, leaving headroom. Claude 200K tokens -> 600K chars; gpt-4o 128K
+ *                tokens -> 400K chars; Ollama varies by model and available RAM. Used when
+ *                the provider doesn't say what a model's context window is.
+ * timeout        how long to wait for a reply, in seconds, for the proxy and the browser
+ *
+ * @return array Map of provider id => details. An id is lowercase letters only, and no more
+ *               than 20 of them, the size of the provider column in formulize_ai_keys.
+ */
+function formulizeAI_providerDetails() {
+    return array(
+        'claude' => array(
+            'needsKey' => true, 'compatible' => false,
+            'model' => 'claude-sonnet-4-6', 'contextWindow' => 600000, 'timeout' => 600,
+        ),
+        'gemini' => array(
+            'needsKey' => true, 'compatible' => false,
+            'model' => 'gemini-2.0-flash', 'contextWindow' => 2000000, 'timeout' => 600,
+        ),
+        'openai' => array(
+            'needsKey' => true, 'compatible' => false,
+            'model' => 'gpt-4o', 'contextWindow' => 400000, 'timeout' => 600,
+        ),
+        'openrouter' => array(
+            'needsKey' => true, 'compatible' => true,
+            'model' => 'openrouter/auto', 'contextWindow' => 400000, 'timeout' => 600,
+        ),
+        // Ollama is the one provider with no ceiling of its own - it is somebody's own
+        // machine, and a large model on CPU can take a very long time. There is no way
+        // to tell that apart from a dead connection, so its timeout is set high enough that
+        // it should never interrupt real work, and exists only so a hung socket is
+        // eventually let go rather than held until TCP keepalive notices, two hours on.
+        'ollama' => array(
+            'needsKey' => false, 'compatible' => true,
+            'model' => 'llama3.2', 'contextWindow' => 128000, 'timeout' => 1800,
+        ),
+    );
+}
+
+/** The ids of the providers the assistant can talk to. */
 function formulizeAI_providers() {
-    return array('claude', 'gemini', 'openai', 'ollama');
+    return array_keys(formulizeAI_providerDetails());
+}
+
+/** Whether a provider has an API key. False for a provider that does not exist. */
+function formulizeAI_providerNeedsKey($provider) {
+    $details = formulizeAI_providerDetails();
+    return isset($details[$provider]) && $details[$provider]['needsKey'];
 }
 
 /** Default model per provider, used when nothing has been chosen. */
 function formulizeAI_modelDefaults() {
-    return array(
-        'claude' => 'claude-sonnet-4-6',
-        'gemini' => 'gemini-2.0-flash',
-        'openai' => 'gpt-4o',
-        'ollama' => 'llama3.2',
-    );
+    return array_map(function($details) {
+        return $details['model'];
+    }, formulizeAI_providerDetails());
 }
 
-/**
- * Default history character limits per provider (conversation history only, not the
- * system prompt or tool definitions). Set near each model's actual context window,
- * leaving headroom. Claude 200K tokens -> 600K chars; gpt-4o 128K tokens -> 400K chars;
- * Ollama varies by model and available RAM.
- */
+/** Default history limit per provider, in characters. */
 function formulizeAI_contextWindowDefaults() {
-    return array(
-        'claude' => 600000,
-        'gemini' => 2000000,
-        'openai' => 400000,
-        'ollama' => 128000,
-    );
+    return array_map(function($details) {
+        return $details['contextWindow'];
+    }, formulizeAI_providerDetails());
 }
 
 // --------------------------------------------------------------------------
@@ -201,7 +245,7 @@ function formulizeAI_decodeSiteKeyMap($raw) {
 function formulizeAI_prepareApiKeyForConfigStorage($existingRawConfValue, $typedKey, $clearing, $provider) {
     $map = formulizeAI_decodeSiteKeyMap($existingRawConfValue);
 
-    if (!in_array($provider, formulizeAI_providers()) || $provider === 'ollama') {
+    if (!formulizeAI_providerNeedsKey($provider)) {
         return json_encode($map); // no key applies to this provider; leave the map untouched
     }
     if ($clearing) {
@@ -566,16 +610,27 @@ function formulizeAI_adminConfig() {
  */
 function formulizeAI_ollamaBaseUrl() {
     $default = 'http://localhost:11434';
-    $url = trim(formulizeAI_preference('formulizeAIOllamaBaseUrl', $default));
-    if ($url === '') {
-        return $default;
-    }
+    $url = formulizeAI_cleanBaseUrl(formulizeAI_preference('formulizeAIOllamaBaseUrl', $default));
+    return $url === '' ? $default : $url;
+}
+
+/**
+ * An address somebody typed, as a base URL the proxy can use.
+ *
+ * A /v1 on the end, which is how the address of an OpenAI-compatible service is usually
+ * written, is taken off, because the endpoints in ai/ai_providers.php add it.
+ *
+ * @param string $url
+ * @return string The base URL, or '' when it is not a web address
+ */
+function formulizeAI_cleanBaseUrl($url) {
+    $url = trim((string) $url);
     $parts = parse_url($url);
     if (!$parts || empty($parts['host']) || !isset($parts['scheme'])
         || !in_array(strtolower($parts['scheme']), array('http', 'https'))) {
-        return $default;
+        return '';
     }
-    return rtrim($url, '/');
+    return preg_replace('~/v1$~', '', rtrim($url, '/'));
 }
 
 /**
@@ -595,7 +650,7 @@ function formulizeAI_adminConfigForClient($uid) {
     // user's own keys, so the UI can tell "no key yet" from "ready to go".
     $keyPresent = array();
     foreach (formulizeAI_providers() as $provider) {
-        if ($provider === 'ollama') {
+        if (!formulizeAI_providerNeedsKey($provider)) {
             $keyPresent[$provider] = true; // keyless
         } elseif ($config['providerLocked']) {
             $keyPresent[$provider] = formulizeAI_hasKey(FORMULIZE_AI_SYSTEM_UID, $provider);
@@ -606,6 +661,7 @@ function formulizeAI_adminConfigForClient($uid) {
 
     $config['keyPresent'] = $keyPresent;
     $config['toolSets'] = formulizeAI_toolSets();
+    $config['providers'] = formulizeAI_providerDetails();
     $config['modelDefaults'] = formulizeAI_modelDefaults();
     $config['contextWindowDefaults'] = formulizeAI_contextWindowDefaults();
 

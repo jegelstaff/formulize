@@ -255,10 +255,11 @@ define("_MI_formulize_AIPROVIDER_USERSPECIFIED", "User Specified");
 define("_MI_formulize_AIPROVIDER_CLAUDE", "Claude (Anthropic)");
 define("_MI_formulize_AIPROVIDER_GEMINI", "Gemini (Google)");
 define("_MI_formulize_AIPROVIDER_OPENAI", "OpenAI");
+define("_MI_formulize_AIPROVIDER_OPENROUTER", "OpenRouter");
 define("_MI_formulize_AIPROVIDER_OLLAMA", "Ollama (local model)");
 
 define("_MI_formulize_AIMODEL", "Model");
-define("_MI_formulize_AIMODEL_DESC", "The exact model name to use, as the provider writes it - for example <i>claude-sonnet-4-6</i>, <i>gemini-2.0-flash</i>, <i>gpt-4o</i>, or <i>llama3.2</i>. Leave this blank to use a sensible default for the provider you chose.");
+define("_MI_formulize_AIMODEL_DESC", "The exact model name to use, as the provider writes it - for example <i>claude-sonnet-4-6</i>, <i>gemini-2.0-flash</i>, <i>gpt-4o</i>, <i>openrouter/auto</i>, or <i>llama3.2</i>. Leave this blank to use a sensible default for the provider you chose.");
 
 define("_MI_formulize_AIAPIKEY", "API key");
 define("_MI_formulize_AIAPIKEY_DESC", "The API key for the provider you chose. It is encrypted before it is stored, is never sent to anyone's browser, and cannot be read back out here - so if you lose it, replace it rather than looking it up. Ollama needs no key.");

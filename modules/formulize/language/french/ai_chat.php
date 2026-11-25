@@ -13,6 +13,7 @@ define('_MD_FORMULIZE_AI_PROVIDER_LABEL',         'Fournisseur');
 define('_MD_FORMULIZE_AI_PROVIDER_CLAUDE',        'Claude (Anthropic)');
 define('_MD_FORMULIZE_AI_PROVIDER_GEMINI',        'Gemini (Google)');
 define('_MD_FORMULIZE_AI_PROVIDER_OPENAI',        'GPT (OpenAI)');
+define('_MD_FORMULIZE_AI_PROVIDER_OPENROUTER',    'OpenRouter');
 define('_MD_FORMULIZE_AI_PROVIDER_OLLAMA',        'Ollama (Local)');
 define('_MD_FORMULIZE_AI_MODEL_LABEL',            'Modèle');
 define('_MD_FORMULIZE_AI_API_KEY_LABEL',          'Clé API');
@@ -118,8 +119,11 @@ define('_MD_FORMULIZE_AI_EVENT_ADMIN_PAGE',       'Page admin : ');
 define('_MD_FORMULIZE_AI_EVENT_SUBMITTED',        'Soumis : ');
 define('_MD_FORMULIZE_AI_CONTEXT_HEADER',         '[Activité Formulize récente sur tous les onglets ouverts (30 dernières min) :');
 
-// Messages de délai d'attente des fournisseurs compatibles OpenAI
-define('_MD_FORMULIZE_AI_OLLAMA_TIMEOUT',         'Délai d\'attente Ollama dépassé — Ollama est-il en cours d\'exécution ? Si votre page est servie via HTTPS, les navigateurs bloquent les requêtes vers localhost (politique d\'accès au réseau privé).');
+// Fournisseurs compatibles avec OpenAI. {provider} est le nom du fournisseur, tel qu'il est dans les paramètres
+define('_MD_FORMULIZE_AI_PROVIDER_TIMEOUT',       '{provider} a mis trop de temps à répondre.');
+define('_MD_FORMULIZE_AI_PROVIDER_ERROR',         '{provider} a renvoyé une erreur : {message}');
+define('_MD_FORMULIZE_AI_PROVIDER_EMPTY',         '{provider} a renvoyé une réponse vide.');
+define('_MD_FORMULIZE_AI_PDF_NOT_SENT',           '« {name} » n\'a pas été envoyé, car l\'assistant ne peut pas envoyer de PDF à {provider}. Utilisez Claude pour les PDF.');
 define('_MD_FORMULIZE_AI_OPENAI_TIMEOUT',         'Délai d\'attente de la requête OpenAI dépassé.');
 
 // Réponse venue du serveur web plutôt que du fournisseur d'IA
