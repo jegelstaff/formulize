@@ -985,6 +985,7 @@ function formulize_configSettingsScriptBlock() {
         var \$context  = $('#formulizeAIContextLimit');
         var contextDefaults = $contextDefaultsJs;
         var debounceTimer = null;
+        var discoverCount = 0; // how many times the models have been asked for, so a late answer to an earlier question is ignored
         var modelContext = {}; // this discovery's model id -> context window (chars), where the provider reports one
         // On page load, a saved non-zero limit is left alone - it may be a deliberate
         // choice, and there is no way to tell that apart from an old auto-filled value
@@ -1028,7 +1029,12 @@ function formulize_configSettingsScriptBlock() {
         function discover(){
             var provider = \$provider.val();
             var assistantOn = (fzGetSettingValue('formulizeAIAssistantEnabled') === '1');
-            if(!provider || provider === 'userspecified' || !assistantOn){ \$status.text(''); return; }
+            var thisDiscovery = ++discoverCount;
+            if(!provider || provider === 'userspecified' || !assistantOn){
+                \$status.text('');
+                \$select.removeAttr('disabled');
+                return;
+            }
 
             var params = { provider: provider, op: 'models', scope: 'system' };
             var headerKey = '';
@@ -1053,11 +1059,13 @@ function formulize_configSettingsScriptBlock() {
                     if(headerKey){ xhr.setRequestHeader('X-API-Key', headerKey); }
                 },
                 success: function(data){
+                    if(thisDiscovery !== discoverCount){ return; }
                     var models = (data && data.models) ? data.models : [];
                     populate(models, preferred);
                     \$status.text(models.length ? '' : $modelNoneFoundJs);
                 },
                 error: function(xhr){
+                    if(thisDiscovery !== discoverCount){ return; }
                     var msg = '';
                     try {
                         var parsed = $.parseJSON(xhr.responseText);
@@ -1070,6 +1078,7 @@ function formulize_configSettingsScriptBlock() {
                     applyContextDefault();
                 },
                 complete: function(){
+                    if(thisDiscovery !== discoverCount){ return; }
                     \$select.removeAttr('disabled');
                 }
             });
@@ -1093,8 +1102,9 @@ function formulize_configSettingsScriptBlock() {
             modelContext = {};
             discover();
         });
-        \$keyInput.bind('keyup', debouncedDiscover);
-        \$baseUrl.bind('keyup change', debouncedDiscover);
+        // input, and not keyup, because pasting with the mouse presses no keys
+        \$keyInput.bind('input', debouncedDiscover);
+        \$baseUrl.bind('input', debouncedDiscover);
         $('.formulize-config-settings input[name=formulizeAIAssistantEnabled]').bind('change', discover);
 
         discover(); // initial load: uses whatever key/base URL is already saved, if any
