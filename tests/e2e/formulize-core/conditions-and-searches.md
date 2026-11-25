@@ -63,6 +63,8 @@ A row says what should be on the page. This table says where to look for it, and
 - A `{ }` that holds several values, ie: checkboxes, is the same. With `LIKE`, any of them can be part of a value, so Iron finds Cast iron, the same as a term that's typed. Linked values are entry ids, so they're compared whole, and so are the stored values of an element with text people see that's different from what's stored, because 1 isn't part of 12.
 - A blank field is not equal to anything, so `!=` and `NOT LIKE` find it. Nothing is before or after a blank, so `>` and `<` don't.
 - NULL and an empty string are both blank.
+- `IN` with a list that's typed means any of the terms, each one a whole value, on an element with several values too.
+- `IN` with a `{ }` means the same as `LIKE`, if the element holds several values, or it's linked and the `{ }` holds several. On any other element, a `{ }` that holds several values is a list of whole values. An element with several values, and a keyword like `{USER}`, is the same as `=`.
 - A year or month in a date condition means all of that period: `= 2002` is any day in 2002, `> 2002` is after the end of it, and `< 2002` is before the start of it.
 - A term that can't be a date finds nothing with `=`, `>`, `<` and `LIKE`, and everything with `!=` and `NOT LIKE`.
 - `LIKE` and `NOT LIKE` on an element with text people see that's different from what's stored look in that text, and then compare whole stored values.
@@ -235,6 +237,10 @@ Set with `sourceEntryFilter` on `locations_subform_artifacts`, then open Main Va
 | S150 | Handling LIKE 1 |  | Roman Coin, Florentine Book, Silk Scroll | a stored value, which is whole, so not Keep flat, which is stored as 12 |
 | S151 | creation_datetime > 2000-01-01 00:00 |  | Everything | a term with a time is that moment |
 | S152 | creation_datetime < 2000-01-01 00:00 |  | Nothing | the same, before it |
+| S153 | Materials IN Iron, Wood |  | Chinese Sword, Egyptian Chariot, French Musket, Polynesian Canoe, Silk Scroll | IN on checkboxes, any of the list, whole values, so not Cast iron |
+| S154 | Materials IN Paper |  | Florentine Book, Candide - first edition | IN on checkboxes, one term |
+| S155 | Collections IN Coins, Weapons |  | Roman Coin, Chinese Sword, Egyptian Chariot, French Musket, Japanese Coin | IN on a linked element with several values |
+| S156 | Handling IN Gloves, Two people to lift |  | Roman Coin, Egyptian Chariot, Florentine Book, Polynesian Canoe, Silk Scroll | IN on checkboxes with text people see, so not Keep flat, which is 12 |
 
 ## 2. `{ }` in the Artifact list of a saved Loan Request
 
@@ -295,6 +301,13 @@ Set with `sourceEntryFilter` on `loans_artifact`, then open the Loan Request as 
 | R51 | University Library | On loan = {loans_approved} | Era = {loans_era}; Short name = Silk Scroll | Florentine Book, Silk Scroll | blank references, in both sets |
 | R52 | University Library | Storage = {loans_storage} |  | Roman Coin, Florentine Book | text people see that's different from what's stored, and the value behind it is compared |
 | R53 | University Library | Storage != {loans_storage} |  | Everything except Roman Coin | the same, with != |
+| R54 | Harbour Gallery | Materials IN {loans_materials} |  | Roman Coin, Chinese Sword, Egyptian Chariot, French Musket, American Bicycle, Polynesian Canoe, Silk Scroll | IN on checkboxes is LIKE, so the same as R21 |
+| R55 | Harbour Gallery | Collections IN {loans_collections} |  | Everything except Persian necklace, Babylonian Spoon, Persian necklace - number 2, Unknown Shard, Bronze Mirror | IN on linked values is LIKE, so the same as R28 |
+| R56 | University Library | Collections IN {loans_collections} |  | Florentine Book, Unknown Shard | IN with blank linked values finds blanks |
+| R57 | Harbour Gallery |  | Materials IN {loans_materials}; Short name = Bronze Mirror | Roman Coin, Chinese Sword, Egyptian Chariot, French Musket, American Bicycle, Polynesian Canoe, Silk Scroll, Bronze Mirror | IN on checkboxes, in Any of |
+| R58 | City Museum | Era IN {loans_eras} |  | Roman Coin, Persian necklace, Egyptian Chariot, Babylonian Spoon, Persian necklace - number 2, Unknown Shard, Bronze Mirror | IN on a field that holds one value, and checkboxes with one ticked |
+| R59 | Harbour Gallery | Era IN {loans_eras} |  | Everything except Persian necklace, Egyptian Chariot, Babylonian Spoon, Persian necklace - number 2, Unknown Shard, Bronze Mirror | the same, with CE and Undated ticked, and CE isn't found in BCE |
+| R60 | University Library | Era IN {loans_eras} |  | Florentine Book | the same, with nothing ticked, and no artifact has a blank era |
 
 ## 3. `{ }` in a new Loan Request
 
@@ -349,6 +362,12 @@ The same setting, on a new entry. With nothing on screen, a list that depends on
 | N45 | Collections != {loans_borrower} |  |  | Nothing | the same, with != |
 | N46 | Era IN {loans_era} |  |  | Everything | IN is ignored too, until there's a value |
 | N47 | Era IN {loans_era} |  | Era wanted: CE | Everything except Roman Coin, Persian necklace, Egyptian Chariot, Babylonian Spoon, Persian necklace - number 2, Unknown Shard, Bronze Mirror | IN with a value on screen |
+| N48 | Materials IN {loans_materials} |  | Materials they can display: Iron + Wood | Chinese Sword, Egyptian Chariot, French Musket, American Bicycle, Polynesian Canoe, Silk Scroll | IN with checkboxes on screen, the same as N23 |
+| N49 | Collections IN {loans_collections} |  | Collections wanted: Weapons + Coins | Roman Coin, Chinese Sword, Egyptian Chariot, French Musket, Japanese Coin | IN with linked checkboxes on screen, the same as N29 |
+| N50 | Materials IN {loans_materials} |  |  | Everything | IN on checkboxes is ignored until there's a value |
+| N51 | Collections IN {loans_collections} |  |  | Nothing | empty until a choice is made, with IN |
+| N52 | Era IN {loans_eras} |  |  | Everything | IN with checkboxes, on a field that holds one value, is ignored until there's a value |
+| N53 | Era IN {loans_eras} |  | Eras they can display: CE + Undated | Everything except Roman Coin, Persian necklace, Egyptian Chariot, Babylonian Spoon, Persian necklace - number 2, Unknown Shard, Bronze Mirror | the same, with two boxes ticked on screen |
 
 ## 4. Other surfaces
 
@@ -492,6 +511,10 @@ Set with `display_conditions` on `artifacts_curator_note`, then open each artifa
 | V54 | Era = {artifacts_materials} |  | Egyptian Chariot, Persian necklace | Nothing | the same, with = |
 | V55 | Materials LIKE {artifacts_materials} |  | French Musket, Egyptian Chariot | Everything | LIKE, with several values on both sides |
 | V56 | Materials != {artifacts_handling} |  | French Musket, Persian necklace | Everything | a blank reference, so != finds what isn't blank |
+| V57 | Materials IN Iron, Wood |  | French Musket, American Bicycle | French Musket | IN on checkboxes, whole values, so not Cast iron |
+| V58 | Collections IN Coins, Weapons |  | Roman Coin, Bronze Mirror | Roman Coin | IN on a linked element with several values |
+| V59 | Materials IN {artifacts_materials} |  | French Musket, Egyptian Chariot | Everything | IN, with several values on both sides |
+| V60 | Era IN {artifacts_materials} |  | Egyptian Chariot, Persian necklace | Nothing | IN on a field with one value, and a reference with several, none of them the same |
 
 ## 6. Fundamental filters
 
@@ -819,13 +842,13 @@ What a Donor list offers when it shows each donor's province, in section 13. Fra
 | Coins | Adults |
 | Weapons | Children, Adults |
 
-| Loan Request | Artifact | Collections wanted | Materials | Era | Made after | Donor contact | Start | End | Approved | Storage they have |
-|---|---|---|---|---|---|---|---|---|---|---|
-| City Museum | Roman Coin | Coins | Silver | BCE | 300 | François-Marie Arouet | 2026-01-15 | 2026-06-30 | Yes | Climate controlled |
-| Harbour Gallery | Roman Coin | Weapons, Modern History | Iron, Wood | CE | 1500 | Hart & Sons Antiques | 2003-01-01 |  | No | Standard |
-| University Library | Florentine Book |  |  |  |  |  |  |  |  | Climate controlled |
-| Regional Archive | Unknown Shard |  |  |  |  |  |  |  |  | Climate controlled |
-| Town Hall | Unknown Shard |  |  |  |  |  |  |  | No | Climate controlled |
+| Loan Request | Artifact | Collections wanted | Materials | Era | Made after | Donor contact | Start | End | Approved | Storage they have | Eras they can display |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| City Museum | Roman Coin | Coins | Silver | BCE | 300 | François-Marie Arouet | 2026-01-15 | 2026-06-30 | Yes | Climate controlled | BCE |
+| Harbour Gallery | Roman Coin | Weapons, Modern History | Iron, Wood | CE | 1500 | Hart & Sons Antiques | 2003-01-01 |  | No | Standard | CE, Undated |
+| University Library | Florentine Book |  |  |  |  |  |  |  |  | Climate controlled |  |
+| Regional Archive | Unknown Shard |  |  |  |  |  |  |  |  | Climate controlled |  |
+| Town Hall | Unknown Shard |  |  |  |  |  |  |  | No | Climate controlled |  |
 
 | Visit | Donor |
 |---|---|
@@ -931,6 +954,13 @@ The first complete run with coverage, 42561306189, ran 598 of the 668 changed li
 
 - **A value taken out on screen in a saved entry.** In a new entry, a value taken out on screen has no value, which is what master does (N19, N20, N25, N31 and N32). No row empties a field on screen in a saved entry, where the `{ }` could mean the blank on screen or the value that's saved. This branch changed one line that only that runs: `=` compared with the value that's saved, in `_nullAwareComparisonWithReference()` in `functions.php`, which the coverage run of 42561306189 shows no test reaching. To close: rows in section 2 with an On screen cell, which open a saved Loan Request and empty a date, checkboxes and linked checkboxes on screen, and expect what master does.
 
+- **IN with a `{ }` that holds several values, other than checkboxes.** R54 to R60 and N48 to N53 cover checkboxes and linked checkboxes. No row covers:
+  - a linked element that holds one value, with a `{ }` linked to the same form that holds several, which `formulize_operatorForINCondition()` reads as LIKE. No form with a `{ }` on it has a list of several donors or artifacts, and a second link from Loan Requests to either would be two links between one pair of forms.
+  - text, with a `{ }` linked to it that holds several, which `_valuesInReferenceForMultiValueElement()` turns into the text of the linked entries
+  - a list of users that holds several, on either side, and `IN {USER}` on one. Catalogued by holds one user.
+
+  To close: a form of the spec's own, with a list of several donors, a list of several users, and a subform or a list that its conditions narrow.
+
 - **Forms that link to themselves.** A form with a list of its own entries isn't in the museum. It was, as Part of a set with, a list on Artifacts of other artifacts, and section 4 had rows for it. But that link from Artifacts to itself was in the relationship the Catalogue list uses, and it broke every fundamental filter on that list: F1 to F11 and F23 to F26, in run 42398600775, on master, which has the same code. `formulize_parseFilter()` gives each form in a fundamental filter its alias in the query: `main` for the list's own form, then `f` and a number for each form linked to it. Artifacts was in both places, so `f2` replaced `main`, and the query that counts the entries failed with "Unknown column 'f2.artifacts_catalogued_by'". Forms that link to themselves are the subject of `self-referential-forms-plan.md`, at the root of the repository, which has this. To close: once that work is done, a form of its own with a list of its own entries, and rows like the ones that were here, ie: `Era = {artifacts_era}` and `Donor = {artifacts_donor}`. The list shouldn't offer the entry that's open, and should always offer the one that's selected.
 
 - **What a list's filters offer, beyond what MCP can set.** Section 13 sets a linked element's conditions and source with MCP, which has no setting for these, and no row covers them:
@@ -947,6 +977,6 @@ The first complete run with coverage, 42561306189, ran 598 of the 668 changed li
 
 - **A `<` or `>` search on a column of the Users page.** This comes from reading the code, not from a run. `formulize_parseFilter()` in `extract.php` now leaves blanks out of every search that compares order, including searches on columns that build their own clause, ie: Last login on the Users page. It decides what's blank with `formulize_blankValueComparison()`, which looks up the column's type in the form's own data table. The Users page's form keeps its data in the `users` table instead, so the type isn't found, the column is taken to be text, and 0 counts as blank. So `<2025-01-01` on Last login would leave out people who have never logged in, whose last login is 0, where master lists them. A few lines up, a negative search already leaves types that build their own clause out of the blank handling. Nothing in the tests searches the Users page this way.
 
-- **IN with a `{ }` in a saved entry.** This comes from reading the code, not from a run. In a saved entry, `_buildConditionsFilterSQL()` makes the comparison `curlybracketform.`handle` AND curlybracketform.`entry_id`=...`, and an IN list goes in brackets, so the condition becomes ``field IN ( curlybracketform.`loans_era` AND curlybracketform.`entry_id`=1 )``. That compares the field with true or false, so it finds nothing. In a new entry, a value on screen works (N47), because it goes in as a value. Master has the same code. In section 2, ie: `Era IN {loans_era}` on City Museum, the list would offer only Roman Coin, which is selected, on both branches.
+- **IN with a `{ }` in a saved entry, when both sides hold one value.** If either side can hold several, it works (R54 to R60). This comes from reading the code, not from a run. In a saved entry, `_buildConditionsFilterSQL()` makes the comparison `curlybracketform.`handle` AND curlybracketform.`entry_id`=...`, and an IN list goes in brackets, so the condition becomes ``field IN ( curlybracketform.`loans_era` AND curlybracketform.`entry_id`=1 )``. That compares the field with true or false, so it finds nothing. In a new entry, a value on screen works (N47), because it goes in as a value. Master has the same code. In section 2, ie: `Era IN {loans_era}` on City Museum, the list would offer only Roman Coin, which is selected, on both branches.
 
 - **`{BLANK}` in a per-group filter.** `!= {BLANK}` makes `` (`field` != '' OR `field` IS NOT NULL) ``, so an empty value matches. It needs AND. `NOT {BLANK}` makes `` `field` NOT '' ``, which isn't valid SQL, and NOT is one of the operators in the admin UI. A date field avoids both now, but no other field does. Master has the same code.

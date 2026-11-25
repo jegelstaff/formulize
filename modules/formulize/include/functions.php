@@ -9012,10 +9012,11 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
     $filterIsOnATime = (is_object($filterElementObject) AND elementTypeIsOrExtends($filterElementObject, 'time'));
     $filterHandle = is_object($filterElementObject) ? $filterElementObject->getVar('ele_handle') : ($filterElementIds[$filterId] ?? '');
     if ($filterOps[$filterId] == "NOT") { $filterOps[$filterId] = "!="; }
+    $filterOps[$filterId] = formulize_operatorForINCondition($filterOps[$filterId], $filterElementObject, $filterTerms[$filterId]);
     $likebits = "";
     $origlikebits = "";
 		$overrideReturnedOp = "";
-		$curlyBracketINNeedsSingleQuotes = false; // used to track whether we need to add single quotes back in around the terms in an IN statement, because we had to strip them out to get through the escaping process without mangling them
+		$curlyBracketINNeedsSingleQuotes = false; // used to track whether an IN term is a { } term for one value, which is quoted like any other value, and then put in brackets at the end
     if (strstr(strtoupper($filterOps[$filterId]), "LIKE")) {
         if(!strstr(trim($filterTerms[$filterId]), '%')) {
             $likebits = "%";
@@ -9025,12 +9026,24 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		} elseif (strstr(strtoupper($filterOps[$filterId]), "IN")) {
 				$likebits = '';
 				$quotes = '';
-				$filterTermParts = explode(',',$filterTerms[$filterId]);
-				foreach($filterTermParts as $i=>$ftp) {
-					$filterTermParts[$i] = trim(htmlspecialchars_decode($ftp, ENT_QUOTES), " \n\r\t\v\x00\"'"); // trim any white space and single or double quotes the user might have put on the terms
-					$filterTermParts[$i] = _convertLiteralTermForConditionsFilterSQL($filterElementObject, $filterTermParts[$i]);
+				// A reference to an element that holds several values is a list already, so its values are used as if they had been typed as the list.
+				// ie: era IN {eras} holding *=+*:BCE*=+*:CE becomes (t1.`era` IN ('BCE','CE')), and name IN {artifacts} holding ,4,3, is a list of the names of artifacts 4 and 3
+				$filterTermParts = _valuesInReferenceForINCondition($filterElementObject, $filterTerms[$filterId], $curlyBracketEntry, $asynchronousDataKey, $curlyBracketForm);
+				$termIsAListOfReferencedValues = is_array($filterTermParts);
+				if($filterTermParts === false) {
+					return array("-->>WHOLECONDITION<<-- 1=0 ", ""); // the entry being referred to doesn't exist
+				} elseif($filterTermParts === array()) {
+					return array(($curlyBracketEntry == 'new'
+						? _newEntryWithNoValueForConditionsFilterSQL($filterOps[$filterId])
+						: _blankComparisonForConditionsFilterSQL($filterElementObject, $filterElementIds[$filterId], $filterOps[$filterId])), "");
+				} elseif($filterTermParts === null) {
+					$filterTermParts = explode(',',$filterTerms[$filterId]);
+					foreach($filterTermParts as $i=>$ftp) {
+						$filterTermParts[$i] = trim(htmlspecialchars_decode($ftp, ENT_QUOTES), " \n\r\t\v\x00\"'"); // trim any white space and single or double quotes the user might have put on the terms
+						$filterTermParts[$i] = _convertLiteralTermForConditionsFilterSQL($filterElementObject, $filterTermParts[$i]);
+					}
 				}
-				if (substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
+				if (!$termIsAListOfReferencedValues AND substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}") {
 					$curlyBracketINNeedsSingleQuotes = true;
 				} elseif($filterIsOnADate AND !$filterTermParts = array_values(array_filter($filterTermParts, 'formulize_termIsADate'))) {
 					// Terms that aren't dates are removed from the list, because MySQL gives an error if a date is compared with text. With none left, it's decided here.
@@ -9390,6 +9403,25 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		}
 
 
+		// A LIST OF TERMS, WITH IN, ON AN ELEMENT THAT HOLDS SEVERAL VALUES, THAT ISN'T LINKED, IE: CHECKBOXES
+		// The field has any of the terms. Each one is a whole value, the same as IN on an element that holds one value, or on a linked element. A { } term isn't IN by this point,
+		// see formulize_operatorForINCondition.
+		// ie: materials IN Iron, Wood becomes
+		// ((( t1.`materials` LIKE '%*=+*:Iron*=+*:%' OR t1.`materials` LIKE '%*=+*:Iron' ) OR ( t1.`materials` LIKE '%*=+*:Wood*=+*:%' OR t1.`materials` LIKE '%*=+*:Wood' )))
+		if ($conditionsFilterComparisonValue === NULL
+			AND $overrideReturnedOp == "IN"
+			AND mustMatchOneOfMultiplePossibleValuesInElement($filterElementObject, '=')) {
+			$anyOfListedTerms = array();
+			foreach($filterTermParts as $listedTerm) {
+				$listedTerm = parseUserAndToday((string) $listedTerm, $filterElementIds[$filterId]);
+				if($listedTerm !== '') {
+					$anyOfListedTerms[] = formulize_multiValueItemComparison(" `$filterHandle` ", $listedTerm);
+				}
+			}
+			$conditionsFilterComparisonValue = _anyOfComparisonForConditionsFilterSQL($filterElementObject, $filterElementIds[$filterId], $anyOfListedTerms, false);
+			$nullClauseHandled = true;
+		}
+
 		// *** OPTION 3B: A DYNAMIC REFERENCE ON AN ELEMENT... ALL OTHER CASES
 		if ($conditionsFilterComparisonValue === NULL AND substr($filterTerms[$filterId],0,1) == "{" AND substr($filterTerms[$filterId],-1)=="}" AND (isMetaDataField($filterElementIds[$filterId]) OR !$targetElementObject->isLinked)) {
 
@@ -9407,16 +9439,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 					$curlyBracketTargetElementLinkedSourceElementObject = $element_handler->get($curlyBracketTargetElementEleValueProperties[1]);
 					if($curlyBracketTargetElementLinkedSourceElementObject AND $curlyBracketTargetElementLinkedSourceElementObject->getVar('ele_id') == $filterElementIds[$filterId] AND $curlyBracketTargetElementEleValue['snapshot'] != 1) {
 							$dataHandler = new formulizeDataHandler($curlyBracketTargetElementEleValueProperties[0]);
-							$literalToDBValueLookups = array($literalToDBValue);
-							// if we're doing IN on a multi value linked element, ugh, then we need to concatenate together the linked values
-							if($overrideReturnedOp == 'IN' AND substr($literalToDBValue,0,1) == "," AND substr($literalToDBValue,-1)==",") {
-								$literalToDBValueLookups = explode(",", trim($literalToDBValue, ","));
-							}
-							$lookupResults = array();
-							foreach($literalToDBValueLookups as $thisValueToLookup) {
-								$lookupResults[] = $dataHandler->getElementValueInEntry($thisValueToLookup, $filterElementIds[$filterId]);
-							}
-							$literalToDBValue = count($lookupResults) > 1 ? implode("','", array_map('formulize_db_escape', $lookupResults)) : $lookupResults[0];
+							$literalToDBValue = $dataHandler->getElementValueInEntry($literalToDBValue, $filterElementIds[$filterId]);
 					}
 				}
 
@@ -9507,7 +9530,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 			$nullClauseHandled = true;
 		}
 		// a literal IN list is already in brackets with placeholder quotes around each item, so it must not be quoted as a whole
-		// a { } IN term does need the quotes, they're fixed up into a list at the end
+		// a { } IN term for one value does need the quotes, and it's put in brackets at the end
 		$quotes = ((is_numeric($filterTerms[$filterId]) AND !$likebits) OR ($overrideReturnedOp == "IN" AND !$curlyBracketINNeedsSingleQuotes)) ? "" : "'";
 
 		// *** OPTION 4: IF WE HAVEN'T SET IT ALREADY, FIGURE OUT THE COMPARISON VALUE (POSSIBLY BASED ON THE PLAIN LITERAL AND LITERAL-TO-DB DETERMINATIONS ABOVE)
@@ -9581,7 +9604,7 @@ function _buildConditionsFilterSQL($filterId, &$filterOps, &$filterTerms, $filte
 		// convert any single quote placeholders we made, if we had to construct them into the filter term (since they don't go through formulize_db_escape cleanly after being put into the filter term)
 		// a { } IN term with nothing in it yet (a new entry) is left out of the query, rather than becoming IN ()
 		if($curlyBracketINNeedsSingleQuotes AND $conditionsFilterComparisonValue !== "") {
-			$conditionsFilterComparisonValue = "(".str_replace("\',\'","','",$conditionsFilterComparisonValue).")";
+			$conditionsFilterComparisonValue = "(".$conditionsFilterComparisonValue.")";
 		} else {
 			$conditionsFilterComparisonValue = str_replace('@#.&%$', "'", $conditionsFilterComparisonValue);
 		}
@@ -9730,17 +9753,19 @@ function _linkedEntryIdsComparisonForConditionsFilterSQL($filterElementObject, $
 }
 
 /**
- * Get the values that a { } reference holds, for comparing with an element that holds several values, and isn't linked. A linked reference is not handled here, its values are entry ids.
+ * Get the values that a { } reference holds, for comparing with an element that holds several values, and isn't linked. The values of a linked reference are entry ids, so it
+ * isn't handled here, unless what the linked entries hold in the source element is wanted instead.
  *
  * @param string $handle - The handle of the element being referred to
  * @param int|string $curlyBracketEntry - The entry being referred to, or 'new'
  * @param int|string $asynchronousDataKey - The key that any asynchronous values for the entry are under
  * @param object $curlyBracketForm - The form that { } references refer to
+ * @param bool $useSourceValues - Optional. True if a linked reference should be turned into the values its entries hold in the source element, as they're stored. Default is false.
  * @return array|false|null The values, with an empty array if the reference is blank, or false if the entry doesn't exist, or null if this isn't something that can be worked out here
  */
-function _valuesInReferenceForMultiValueElement($handle, $curlyBracketEntry, $asynchronousDataKey, $curlyBracketForm) {
+function _valuesInReferenceForMultiValueElement($handle, $curlyBracketEntry, $asynchronousDataKey, $curlyBracketForm, $useSourceValues = false) {
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
-	if(!$referenceElement = $element_handler->get($handle) OR $referenceElement->isLinked) {
+	if(!$referenceElement = $element_handler->get($handle) OR ($referenceElement->isLinked AND !$useSourceValues)) {
 		return null;
 	}
 	if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$asynchronousDataKey][$handle])) {
@@ -9757,8 +9782,41 @@ function _valuesInReferenceForMultiValueElement($handle, $curlyBracketEntry, $as
 		}
 		$value = $dataHandler->getElementValueInEntry($curlyBracketEntry, $handle);
 	}
+	if($referenceElement->isLinked) {
+		list($sourceFid, $sourceHandle) = array_pad(formulize_linkedSourceParts($referenceElement), 2, '');
+		$sourceElement = $sourceHandle ? $element_handler->get($sourceHandle) : false;
+		$linkedEntryIds = _entryIdsInLinkedValue(is_array($value) ? implode(',', $value) : $value);
+		// a snapshot holds text, and a source that's linked itself holds more entry ids
+		if(!$sourceElement OR $sourceElement->isLinked OR !empty($referenceElement->getVar('ele_value')['snapshot']) OR $linkedEntryIds === false) {
+			return null;
+		}
+		$sourceDataHandler = new formulizeDataHandler($sourceFid);
+		$value = array();
+		foreach($linkedEntryIds as $linkedEntryId) {
+			$value = array_merge($value, explode('*=+*:', (string) $sourceDataHandler->getElementValueInEntry($linkedEntryId, $sourceHandle)));
+		}
+	}
 	$values = is_array($value) ? $value : explode('*=+*:', (string) $value);
 	return array_values(array_filter(array_map('trim', $values), function($thisValue) { return $thisValue !== ''; }));
+}
+
+/**
+ * Get the list of values for IN with a { } reference to an element that holds several values, on a field that holds one value and isn't linked
+ * The other conditions with IN and a { } reference to an element that holds several values are read as LIKE, see formulize_operatorForINCondition
+ *
+ * @param object|false $filterElementObject - The element the condition is on, or false for a metadata field
+ * @param string $term - The term of the condition
+ * @param int|string $curlyBracketEntry - The entry being referred to, or 'new'
+ * @param int|string $asynchronousDataKey - The key that any asynchronous values for the entry are under
+ * @param object $curlyBracketForm - The form that { } references refer to
+ * @return array|false|null The values as they're stored, with an empty array if the reference is blank, or false if the entry doesn't exist, or null if the term isn't a reference like that
+ */
+function _valuesInReferenceForINCondition($filterElementObject, $term, $curlyBracketEntry, $asynchronousDataKey, $curlyBracketForm) {
+	$referenceElement = formulize_elementInReference($term);
+	if(!$referenceElement OR !$referenceElement->canHaveMultipleValues OR (is_object($filterElementObject) AND $filterElementObject->isLinked)) {
+		return null;
+	}
+	return _valuesInReferenceForMultiValueElement($referenceElement->getVar('ele_handle'), $curlyBracketEntry, $asynchronousDataKey, $curlyBracketForm, true);
 }
 
 /**
@@ -14556,9 +14614,48 @@ function formulize_multiValueItemComparison($column, $value) {
 }
 
 /**
+ * Get the element that a { } term refers to
+ *
+ * @param string $term The term of a condition
+ * @return object|false The element, or false if the term isn't a reference to an element, ie: it's not in { }, or it's a keyword like {USER}
+ */
+function formulize_elementInReference($term) {
+	$term = trim((string) $term);
+	if(substr($term, 0, 1) != "{" OR substr($term, -1) != "}") {
+		return false;
+	}
+	$handle = substr($term, 1, -1);
+	return ($handle === '' OR is_numeric($handle)) ? false : _getElementObject($handle);
+}
+
+/**
+ * Get the operator to use for a condition with IN, when the term is in { }, and the element or the { } reference can hold several values. An element with several values has
+ * them all in one column, so the database can't compare it with IN. LIKE and = already mean has any of the values, so IN is read as one of those.
+ * With a { } reference to an element, IN is LIKE, if the element the condition is on holds several values, or it's linked and the reference holds several values. An element
+ * that holds one value and isn't linked keeps IN, and the reference's values are the list (see _valuesInReferenceForINCondition).
+ * With a keyword like {USER}, the list has one value in it, so IN is =. And a list of terms that's typed keeps IN, and each term is one whole value.
+ * Conditions are checked with SQL (_buildConditionsFilterSQL) and against one entry (buildEvaluationCondition), and both use this, so they agree.
+ *
+ * @param string $operator The operator of the condition
+ * @param object|false $elementObject The element the condition is on, or false for a metadata field
+ * @param string $term The term of the condition, before any { } is resolved
+ * @return string The operator to use, which is the operator passed in, unless it's IN and one of these applies
+ */
+function formulize_operatorForINCondition($operator, $elementObject, $term) {
+	$term = trim((string) $term);
+	if(trim($operator) != 'IN' OR !is_object($elementObject) OR substr($term, 0, 1) != "{" OR substr($term, -1) != "}") {
+		return $operator;
+	}
+	if($referenceElement = formulize_elementInReference($term)) {
+		return ($elementObject->canHaveMultipleValues OR ($elementObject->isLinked AND $referenceElement->canHaveMultipleValues)) ? 'LIKE' : $operator;
+	}
+	return $elementObject->canHaveMultipleValues ? '=' : $operator;
+}
+
+/**
  * Whether LIKE and NOT LIKE with a { } reference look for a referenced value in part of a value of the element, ie: Iron finds Cast iron, the same as LIKE does with a term
- * that's typed. Otherwise the values are compared whole. They are on a linked element, because its values are entry ids. And they are on an element with text people see
- * that's different from what's stored, because a reference holds stored values, and a stored value of 1 is not part of 12.
+ * that's typed. Otherwise the values are compared whole. They are on a linked element, because its values are entry ids, and on a list of users, because its values are user
+ * ids. And they are on an element with text people see that's different from what's stored, because a reference holds stored values, and a stored value of 1 is not part of 12.
  * Conditions are checked with SQL (_buildConditionsFilterSQL) and against one entry (buildEvaluationCondition), and both use this, so they agree.
  *
  * @param object|false $elementObject The element the condition is on, or false for a metadata field
@@ -14569,6 +14666,7 @@ function formulize_referenceLikeLooksInPartOfAValue($elementObject, $operator) {
 	return (trim($operator) == 'LIKE' OR trim($operator) == 'NOT LIKE')
 		AND is_object($elementObject)
 		AND !$elementObject->isLinked
+		AND !$elementObject->isUserList
 		AND !formulize_elementUITexts($elementObject);
 }
 
@@ -15460,6 +15558,9 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 		if(!($evaluationCondition == "")) {
 			$evaluationCondition .= " $match ";
 		}
+		$operatorIsIN = ($filterOps[$i] == 'IN');
+		$filterOps[$i] = formulize_operatorForINCondition($filterOps[$i], (isMetaDataField($filterElements[$i]) ? false : $element_handler->get($filterElements[$i])), $filterTerms[$i]);
+		$referenceElement = formulize_elementInReference($filterTerms[$i]);
 		switch($filterOps[$i]) {
 			case "=";
 				$thisOp = "==";
@@ -15495,6 +15596,9 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 				$res = $xoopsDB->query($sql);
 				$row = $xoopsDB->fetchRow($res);
 				$filterTerms[$i] = $row[0];
+				if($operatorIsIN AND $referenceElement AND $referenceElement->canHaveMultipleValues AND !$referenceElement->isLinked) {
+					$referencedValues = explode('*=+*:', (string) $row[0]); // a list of users that holds several
+				}
 			} else { // comparing to user metadata field, entry is new
 					$filterTerms[$i] = 0;
 			}
@@ -15588,9 +15692,10 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 
 		// when a reference or the field holds several values, = and LIKE mean the field has any of the referenced values, and != and NOT LIKE mean it has none of them, the same as SQL
 		// (see _anyOfComparisonForConditionsFilterSQL). A blank reference means the field is blank, or not blank. LIKE can find a referenced value in part of one of the field's values,
-		// see formulize_referenceLikeLooksInPartOfAValue
+		// see formulize_referenceLikeLooksInPartOfAValue. IN is the same, when either side can hold several values, however many each one has in it now.
 		$referenceExpression = "";
-		if($referencedValues !== null AND (is_array($compValue) OR count($referencedValues) > 1) AND in_array($thisOp, array('==', '!=', 'LIKE', 'NOT LIKE'))) {
+		$referenceIsAListForIN = ($operatorIsIN AND $referenceElement AND ($thisOp == 'LIKE' OR $referenceElement->canHaveMultipleValues));
+		if($referencedValues !== null AND (is_array($compValue) OR count($referencedValues) > 1 OR $referenceIsAListForIN) AND in_array($thisOp, array('==', '!=', 'LIKE', 'NOT LIKE', 'IN'))) {
 			$withoutBlanks = function($thisValue) { return $thisValue !== ''; };
 			$referencedTexts = array_filter(array_map('strval', $referencedValues), $withoutBlanks);
 			$fieldTexts = array_filter(array_map('strval', (array) $compValue), $withoutBlanks);
@@ -15608,9 +15713,10 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			} else {
 				$fieldHasOne = count(array_intersect($fieldTexts, $referencedTexts)) > 0;
 			}
-			$referenceExpression = ($fieldHasOne == ($thisOp == '==' OR $thisOp == 'LIKE')) ? 'TRUE' : 'FALSE';
+			$referenceExpression = ($fieldHasOne == ($thisOp == '==' OR $thisOp == 'LIKE' OR $thisOp == 'IN')) ? 'TRUE' : 'FALSE';
 		}
 
+		$fieldValues = !is_array($compValue) ? array($compValue) : (empty($compValue) ? array('') : $compValue); // IN looks for each of the field's values in the list
 		if(is_array($compValue)) {
 			if($thisOp == "==") {
 				$thisOp = "LIKE";
@@ -15650,7 +15756,12 @@ function buildEvaluationCondition($match,$indexes,$filterElements,$filterOps,$fi
 			foreach(explode(',',$rawFilterTerms) as $ft) {
 				$cleanTerms[] = addslashes(trim(htmlspecialchars_decode($ft, ENT_QUOTES), " \n\r\t\v\x00\"'"));
 			}
-			$evaluationCondition .= "in_array(".$compValueQuoted.", array('".implode("','",$cleanTerms)."'))";
+			$fieldValuesInList = array();
+			foreach($fieldValues as $fieldValue) {
+				$fieldValueQuoted = is_numeric($fieldValue) ? $fieldValue : "'".addslashes((string) $fieldValue)."'";
+				$fieldValuesInList[] = "in_array(".$fieldValueQuoted.", array('".implode("','",$cleanTerms)."'))";
+			}
+			$evaluationCondition .= "(".implode(" OR ", $fieldValuesInList).")";
 		} else {
 			$filterTermToUse = is_numeric($filterTermToUse) ? $filterTermToUse : "'".$filterTermToUse."'";
 			$evaluationCondition .= "$compValueQuoted $thisOp $filterTermToUse";
