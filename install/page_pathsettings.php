@@ -30,6 +30,7 @@ $pageHasHelp = true;
 class PathStuffController {
 	var $xoopsRootPath = '';
 	var $xoopsTrustPath = '';
+	var $sitePath = '';
 	var $xoopsUrl = '';
 
 	var $validRootPath = false;
@@ -47,20 +48,10 @@ class PathStuffController {
 				$this->xoopsRootPath = $path;
 			}
 		}
-		if (isset( $_SESSION['settings']['TRUST_PATH'] )) {
-			$this->xoopsTrustPath = $_SESSION['settings']['TRUST_PATH'];
-		} else {
-			$web_root = dirname( $this->xoopsRootPath );
-			$arr = explode('/',$web_root);
-			$web_root = '';
-			for ($i = 0; $i < count($arr)-1; $i++) {
-				$web_root .= $arr[$i].'/';
-			}
-
-			$docroot = resolveDocumentRoot();
-
-			$this->xoopsTrustPath = $docroot . substr( md5( time() ), 0, 15);
-		}
+		// The site's own folder, which include/site.php found: sites/default, or the folder FORMULIZE_SITE_PATH names.
+		// The core's trust path is its private folder. See ai-context/site-directory.md.
+		$this->sitePath = FORMULIZE_SITE_PATH;
+		$this->xoopsTrustPath = FORMULIZE_SITE_PATH . '/private';
 		if (isset( $_SESSION['settings']['URL'] )) {
 			$this->xoopsUrl = $_SESSION['settings']['URL'];
 		} else {
@@ -75,6 +66,7 @@ class PathStuffController {
 		if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 			$_SESSION['settings']['ROOT_PATH'] = $this->xoopsRootPath;
 			$_SESSION['settings']['TRUST_PATH'] = $this->xoopsTrustPath;
+			$_SESSION['settings']['SITE_PATH'] = $this->sitePath;
 			$_SESSION['settings']['URL'] = $this->xoopsUrl;
 			if ($valid) {
 				$GLOBALS['wizard']->redirectToPage( '+1' );
@@ -102,13 +94,6 @@ class PathStuffController {
 				}
 				$this->xoopsRootPath = $request['ROOT_PATH'];
 			}
-			if (isset($request['TRUST_PATH'])) {
-				$request['TRUST_PATH'] = str_replace( "\\", "/", $request['TRUST_PATH'] );
-				if (substr( $request['TRUST_PATH'], -1 ) == '/') {
-					$request['TRUST_PATH'] = substr( $request['TRUST_PATH'], 0, -1 );
-				}
-				$this->xoopsTrustPath = $request['TRUST_PATH'];
-			}
 			if (isset( $request['URL'] )) {
 				if (substr( $request['URL'], -1 ) == '/') {
 					$request['URL'] = substr( $request['URL'], 0, -1 );
@@ -122,9 +107,7 @@ class PathStuffController {
 		if ($this->checkRootPath()) {
 			$this->checkPermissions();
 		}
-		if ($this->checkTrustPath()) {
-			$this->checkTrustPathPermissions();
-		}
+		$this->validTrustPath = (is_dir($this->sitePath) && is_writable($this->sitePath));
 		$this->validUrl = !empty($this->xoopsUrl);
 		return ( $this->validRootPath && $this->validTrustPath && $this->validUrl && empty( $this->permErrors ) );
 	}
@@ -144,42 +127,19 @@ class PathStuffController {
 	}
 
 	/**
-	 * Check if the specified folder is a valid "XOOPS_ROOT_PATH" value
+	 * The web server writes to the site's own folder, and to nothing in the code, except modules/ while the
+	 * installer still has to put the Protector module there. The site's folder is made if it doesn't exist.
 	 * @return bool
 	 */
-	function checkTrustPath() {
-		if (@is_dir( $this->xoopsTrustPath ) && @is_readable( $this->xoopsTrustPath )) {
-			return $this->validTrustPath = true;
-		}
-		return $this->validTrustPath = false;
-	}
-
-	function createTrustPath() {
-		if (@icms_core_Filesystem::mkdir($this->xoopsTrustPath, 0775, '', array('[', '?', '"', '<', '>', '|', ' ' ))) {
-			if (@is_dir( $this->xoopsTrustPath ) && @is_readable( $this->xoopsTrustPath )) {
-				$_SESSION['settings']['TRUST_PATH'] = $this->xoopsTrustPath;
-				return $this->validTrustPath = true;
-			}
-		}
-		return $this->validTrustPath = false;
-	}
-
 	function checkPermissions() {
 		$errors = array();
-		$writableFilesAndFolders = json_decode(file_get_contents('../writableFilesAndFolders.json'));
-		foreach ( $writableFilesAndFolders->paths as $path) {
-			$errors[$path] = $this->makeWritable( "$this->xoopsRootPath/$path" );
+		if (!is_dir($this->sitePath)) {
+			@mkdir($this->sitePath, 0775, true);
 		}
-		if (in_array( false, $errors )) {
-			$this->permErrors = $errors;
-			return false;
+		$errors[$this->sitePath] = $this->makeWritable($this->sitePath);
+		if (!is_dir("$this->xoopsRootPath/modules/protector")) {
+			$errors['modules'] = $this->makeWritable("$this->xoopsRootPath/modules");
 		}
-		return true;
-	}
-
-	function checkTrustPathPermissions() {
-		$errors = array();
-		$errors['trustpath'] = $this->makeWritable( "$this->xoopsTrustPath" );
 		if (in_array( false, $errors )) {
 			$this->permErrors = $errors;
 			return false;
@@ -283,42 +243,11 @@ function genRootCheckHtml( $valid) {
 }
 
 
-function genTrustPathCheckHtml( $valid) {
-	if ($valid) {
-		return '<img src="img/yes.png" alt="Success" class="rootimg" />' . _INSTALL_TRUST_PATH_FOUND;
-	}  else {
-		return '<img src="img/no.png" alt="Error" class="rootimg" />' . _INSTALL_ERR_NO_TRUST_PATH_FOUND;
-	}
-}
-
-function genCreateTrustPathHtml($valid) {
-	if (!$valid) {
-		?>
-<p><?php echo TRUST_PATH_NEED_CREATED_MANUALLY . '</p>'; ?>
-<button type="button"
-	onclick="createTrustPath(this.form.elements.trustpath.value);"><?php echo BUTTON_REFRESH; ?></button>
-		<?
-	} else {
-		?>
-<p><?php echo TRUST_PATH_SUCCESSFULLY_CREATED . '</p>';
-	}
-}
-
 $ctrl = new PathStuffController();
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET' && @$_GET['action'] == 'checkrootpath') {
 	$ctrl->xoopsRootPath = $_GET['path'];
 	echo genRootCheckHtml( $ctrl->checkRootPath() );
-	exit();
-}
-if ($_SERVER['REQUEST_METHOD'] == 'GET' && @$_GET['action'] == 'checktrustpath') {
-	$ctrl->xoopsTrustPath = $_GET['path'];
-	echo genTrustPathCheckHtml( $ctrl->checkTrustPath() );
-	exit();
-}
-if ($_SERVER['REQUEST_METHOD'] == 'GET' && @$_GET['action'] == 'createtrustpath') {
-	$ctrl->xoopsTrustPath = $_GET['path'];
-	echo genCreateTrustPathHtml( $ctrl->createTrustPath() );
 	exit();
 }
 $ctrl->execute();
@@ -382,20 +311,16 @@ if ($ctrl->validRootPath) {
 </div>
 <div class="blokx">
 <fieldset>
-<h3><?php echo _INSTALL_TRUST_PATH; ?></h3>
-<label for="trustpath"><?php echo _INSTALL_TRUST_PATH_LABEL; ?></label>
-<div class="xoform-help"><?php echo _INSTALL_TRUST_PATH_HELP; ?></div>
+<h3><?php echo _INSTALL_SITE_PATH; ?></h3>
+<label for="sitepath"><?php echo _INSTALL_SITE_PATH_LABEL; ?></label>
+<div class="xoform-help"><?php echo _INSTALL_SITE_PATH_HELP; ?></div>
 <div class="clear">&nbsp;</div>
-<input type="text" name="TRUST_PATH" id="trustpath"
-	value="<?php echo $ctrl->xoopsTrustPath; ?>" /> <span id="trustpathimg"><?php echo genTrustPathCheckHtml( $ctrl->validTrustPath ); ?></span>
-<?php if (!$ctrl->validTrustPath && $ctrl->xoopsTrustPath != '') { ?>
-<div id="trustperms">
-<p><?php echo TRUST_PATH_VALIDATE . '</p>'; ?>
-<button type="button" id="createtrustpath"><?php echo BUTTON_CREATE_TUST_PATH; ?></button>
-
-</div>
-<?php
-}?></fieldset>
+<input type="text" id="sitepath" readonly="readonly"
+	value="<?php echo htmlspecialchars($ctrl->sitePath); ?>" /> <span id="sitepathimg"><?php
+	echo $ctrl->validTrustPath
+		? '<img src="img/yes.png" alt="Success" class="rootimg" />' . _INSTALL_SITE_PATH_FOUND
+		: '<img src="img/no.png" alt="Error" class="rootimg" />' . sprintf(_INSTALL_ERR_SITE_PATH_NOT_WRITABLE, htmlspecialchars($ctrl->sitePath)); ?></span>
+</fieldset>
 </div>
 <?php
 $content = ob_get_contents();

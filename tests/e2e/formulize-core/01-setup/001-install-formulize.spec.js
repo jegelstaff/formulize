@@ -13,7 +13,10 @@ test.describe('Installation of Formulize', () => {
 		await page.getByRole('button', { name: 'Next' }).click();
 		// Path settings
 		await expect(page.locator('h2')).toContainText('Paths settings');
-  	await page.getByLabel('ImpressCMS physical trust path').fill('/var/www/html/trust');
+		// The site's own folder is sites/default, since the test containers don't name another with FORMULIZE_SITE_PATH.
+		// Its settings and everything else the site writes go in it, rather than in the code.
+		await expect(page.getByLabel("The folder for this site's own files")).toHaveValue('/var/www/html/sites/default');
+		await expect(page.locator('#sitepathimg')).toContainText('The web server can write to the site folder.');
   	await page.getByRole('button', { name: 'Next' }).click();
 		// Database connection
 		await expect(page.locator('h2')).toContainText('Database connection');
@@ -27,7 +30,7 @@ test.describe('Installation of Formulize', () => {
   	await page.getByRole('button', { name: 'Next' }).click();
 		// Saving configuration
 		await expect(page.locator('h2')).toContainText('Saving your system configuration');
-  	await expect(page.getByRole('paragraph')).toContainText('The installer is now ready to save the specified settings to mainfile.php.Press next to proceed.');
+  	await expect(page.getByRole('paragraph')).toContainText('The installer is now ready to save the specified settings to settings.php, in the site folder.Press next to proceed.');
   	await page.getByRole('button', { name: 'Next' }).click();
 		// DB table creation
 		await expect(page.locator('h2')).toContainText('Database tables creation');

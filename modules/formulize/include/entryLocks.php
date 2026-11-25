@@ -25,15 +25,16 @@
 // after the list has loaded, is locked for the list's page load and added to the list's list file, so those
 // releases cover it too. The list releases it on its own when the element is saved or closed.
 //
-// formulize_deleteEntryLock.php is requested on its own, without the rest of Formulize, so this file needs nothing
-// else, and has nothing in it but functions. functions.php requires it, so the functions are available wherever
+// formulize_deleteEntryLock.php is requested on its own, with only the site's settings and folders, so this file needs
+// nothing else, and has nothing in it but functions. functions.php requires it, so the functions are available wherever
 // functions.php is.
 //
 // See ai-context/filesystem-dependencies.md.
 
 /**
- * The folder lock files are kept in. formulize_deleteEntryLock.php can be requested without the rest of Formulize,
- * so FORMULIZE_TEMP_PATH may not be defined. Then the folder is the module's own temp folder.
+ * The folder lock files are kept in, FORMULIZE_TEMP_PATH. formulize_deleteEntryLock.php loads the site's folders
+ * itself, without the rest of Formulize. Should something include this file with no site loaded at all, the folder is
+ * the module's own temp folder, where it has always been.
  *
  * @return string The folder, with no trailing slash
  */

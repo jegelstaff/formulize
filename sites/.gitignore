@@ -1,0 +1,5 @@
+# A site's own files are never part of the code
+*
+!.gitignore
+!.htaccess
+!README.md

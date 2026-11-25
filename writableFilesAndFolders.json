@@ -1,20 +1,6 @@
 {
 	"paths": [
-		"mainfile.php",
-		"cache",
-		"modules",
-		"templates_c",
-		"themes",
-		"tokens",
-		"uploads",
-		"modules/formulize/cache",
-		"modules/formulize/code",
-		"modules/formulize/export",
-		"modules/formulize/language/english/mail_template",
-		"modules/formulize/language/english/formulize_dateformats.php",
-		"modules/formulize/queue",
-		"modules/formulize/temp",
-		"modules/formulize/templates/screens",
-		"modules/formulize/upload"
+		"sites",
+		"modules"
 	]
 }

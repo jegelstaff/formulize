@@ -10,9 +10,9 @@ Formulize keeps some working state in files on purpose. It runs on an ordinary L
 | `modules/formulize/code/` | `FORMULIZE_CODE_PATH` | Custom code, and the text and HTML admins write for static content and form screens. Its `.htaccess` refuses every web request, because a file run on its own would run outside Formulize. See [derived-values-and-custom-code](derived-values-and-custom-code.md). |
 | `modules/formulize/templates/screens/<theme>/<sid>/` | `FORMULIZE_SCREEN_TEMPLATES_PATH` | A screen's own templates |
 
-Each of these is named once, in `include/sitepaths.php`, and a site can keep them somewhere other than the code. Use the constant, never a path built from `XOOPS_ROOT_PATH`. See [site-directory](site-directory.md) for all of them.
+Each of these is named once, in `include/sitepaths.php`. A site installed since the site folder came in keeps them all in its site folder, `sites/default/` unless `FORMULIZE_SITE_PATH` says otherwise, and the defaults above are for a site installed before. Use the constant, never a path built from `XOOPS_ROOT_PATH`. See [site-directory](site-directory.md) for all of them.
 
-The web server must be able to write to these. `writableFilesAndFolders.json` at the repo root is the full list of what must be writable. See [Writable files and folders](../docs/writable_folders.md).
+The web server must be able to write to these. `writableFilesAndFolders.json` at the repo root lists what must be writable for a new install: `sites`, and `modules` while the installer adds Protector. See [Writable files and folders](../docs/writable_folders.md).
 
 **Who can delete a lock:** a lock file holds the uid, the token of the page load that drew the entry, and the username, and `include/entryLocks.php` is the only code that names, writes or reads one. A release only deletes a lock its own page load still holds: the uid and the token both have to match.
 - A page's release is sent as the page goes away, after the server has drawn the next page. A reload, or a link to the same entry, is a new page load that has already rewritten the lock with its own token, so the old page's late release leaves it alone. Matching on the uid alone used to let that release delete the new page's lock, and then a second person could open the entry for editing as well.

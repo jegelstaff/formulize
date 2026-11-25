@@ -69,7 +69,7 @@ foreach($screen_handler->variableTemplateFiles($screen->getVar('sid'), $theme) a
 }
 
 if($failed) {
-  print sprintf(_AM_FORMULIZE_SCREEN_VARIABLES_SAVE_FAILED, implode(', ', $failed));
+  print sprintf(_AM_FORMULIZE_SCREEN_VARIABLES_SAVE_FAILED, implode(', ', $failed), formulize_folderForPeople(FORMULIZE_SCREEN_TEMPLATES_PATH));
 } elseif($removedOne) {
   // so the tab goes once the last of them is cleared, and the Templates tab offers to customize again
   print "/* eval */ reloadWithScrollPosition();";

@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
+const { sitePath, hostPath } = require('../../site-paths');
 const path = require('path');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD } from '../config';
 import {
@@ -26,7 +27,8 @@ import {
  * says so in a dialog when the handle is saved; every rename here checks that it says so exactly when it should.
  */
 
-const codeDir = path.resolve(__dirname, '../../../../modules/formulize/code');
+// The code folder on this machine, wherever the site keeps it (see site-paths.js)
+const codeDir = () => hostPath(sitePath('FORMULIZE_CODE_PATH'));
 
 function eleValueOf(handleOrId) {
 	const where = /^\d+$/.test(String(handleOrId)) ? `ele_id = ${handleOrId}` : `ele_handle = '${handleOrId}'`;
@@ -69,7 +71,7 @@ test.describe.serial('Renaming element handles', () => {
 
 	test('Year: the Year-Era formula follows the rename, and keeps working', async ({ page }) => {
 		test.setTimeout(300000);
-		const formulaFile = path.join(codeDir, 'derived_artifacts_year_era.php');
+		const formulaFile = path.join(codeDir(), 'derived_artifacts_year_era.php');
 		const formula = () => fs.readFileSync(formulaFile, 'utf8').replace(/\r\n/g, '\n'); // a form posts a textarea's lines with \r\n
 		expect(formula()).toBe('$value = $artifacts_year.$artifacts_era;');
 		await asAdmin(page);
@@ -91,7 +93,7 @@ test.describe.serial('Renaming element handles', () => {
 		test.setTimeout(300000);
 		// The procedure names ID Number twice: as the $artifacts_id_number variable, which Formulize gives the
 		// Artifacts form's own procedures, and as the key of the array it gives formulize_writeEntry()
-		const procedureFile = path.join(codeDir, 'on_after_save_artifacts.php');
+		const procedureFile = path.join(codeDir(), 'on_after_save_artifacts.php');
 		const procedure = () => fs.readFileSync(procedureFile, 'utf8').replace(/\r\n/g, '\n');
 		const namesIdNumberAs = handle => [
 			`if(!$${handle} || !preg_match('/^M\\d{3}$/', $${handle})) {`,
@@ -127,14 +129,14 @@ test.describe.serial('Renaming element handles', () => {
 		await asAdmin(page);
 		expect(await renameElementHandle(page, 'donors_name', 'donors_full_name')).toBeNull();
 		expect(eleValueOf('artifacts_donor')).toContain(`"${source}"`); // which a rename does not change
-		expect(fs.existsSync(path.join(codeDir, 'derived_donors_full_name.php'))).toBe(true);
-		expect(fs.existsSync(path.join(codeDir, 'derived_donors_name.php'))).toBe(false);
+		expect(fs.existsSync(path.join(codeDir(), 'derived_donors_full_name.php'))).toBe(true);
+		expect(fs.existsSync(path.join(codeDir(), 'derived_donors_name.php'))).toBe(false);
 		await expectTheDonorListToWork(page);
 		// and back
 		await asAdmin(page);
 		expect(await renameElementHandle(page, 'donors_full_name', 'donors_name')).toBeNull();
 		expect(eleValueOf('artifacts_donor')).toContain(`"${source}"`);
-		expect(fs.existsSync(path.join(codeDir, 'derived_donors_name.php'))).toBe(true);
+		expect(fs.existsSync(path.join(codeDir(), 'derived_donors_name.php'))).toBe(true);
 	});
 
 	test('Exhibit collections and Survey exhibit: the {handle} terms in linked list filters follow the rename, and still filter', async ({ page }) => {

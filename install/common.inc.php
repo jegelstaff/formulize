@@ -43,8 +43,9 @@ icms_Autoloader::setup();
 
 error_reporting( E_ALL );
 
-// Exit early if the system has already been installed
-if (file_exists(ICMS_ROOT_PATH.'/install.lock')) {
+// Exit early if the system has already been installed: a site with a folder of its own has the lock there, and a site
+// installed before sites had their own folders has it in the root
+if (file_exists(FORMULIZE_SITE_PATH.'/install.lock') OR file_exists(ICMS_ROOT_PATH.'/install.lock')) {
 	header('Location: /');
 	exit();
 }

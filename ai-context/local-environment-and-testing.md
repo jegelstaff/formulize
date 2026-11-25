@@ -6,7 +6,7 @@ How to reach a local copy of Formulize, run the tests against it, and debug what
 
 The tracked `mainfile.php` on `master` is an uninstalled placeholder, so the site isn't running until someone has installed it or set up a local copy. Until the user tells you it's ready, assume the site is down. Don't try to verify changes in a browser, run Playwright specs, or `curl` pages expecting them to work. Ask the user to set it up or confirm it first.
 
-**It's not set up** if `mainfile.php` still contains the literal `sdata#--#` placeholder. `XOOPS_INSTALL` is then undefined and every request redirects to `install/index.php`, which Playwright reports as `net::ERR_TOO_MANY_REDIRECTS`. The MariaDB container can still answer queries while the app is down, so a working database query doesn't mean the app is up.
+**It's not set up** if there's no `sites/default/settings.php`, or, for a site installed before the site folder, if `mainfile.php` still contains the literal `sdata#--#` placeholder. Every request then redirects to `install/index.php`, which Playwright reports as `net::ERR_TOO_MANY_REDIRECTS`. The MariaDB container can still answer queries while the app is down, so a working database query doesn't mean the app is up.
 
 **It's only partly set up** if requests fail with something like `Theme '' is not valid`. The usual cause is that `mainfile.php` and the database don't match. Every installation has its own table prefix, so a prefix that doesn't match the tables means every query hits tables that don't exist, config rows come back empty, and the theme name is blank. Treat this as down, and ask the user to align them.
 
@@ -60,10 +60,10 @@ The e2e tests build a system in order and then check it, so what a spec needs de
 This replaces the site you're working on, so ask the user first.
 
 1. Snapshot the database.
-2. Back up `mainfile.php` and `install.lock`.
-3. Put the placeholder mainfile in place with `git show HEAD:mainfile.php > mainfile.php`, and remove `install.lock`.
+2. Back up the site folder, `sites/default`. For a site installed before the site folder, back up `mainfile.php` and `install.lock` instead.
+3. Delete `sites/default`. For a site installed before the site folder, put the tracked mainfile in place with `git checkout mainfile.php`, and remove `install.lock`.
 4. Drop and create the `formulize` database.
-5. Delete the untracked files in `modules/formulize/code/` and `modules/formulize/templates/screens/<theme>/<sid>/`, then clear `templates_c/`.
+5. For a site installed before the site folder, delete the untracked files in `modules/formulize/code/` and `modules/formulize/templates/screens/<theme>/<sid>/`, then clear `templates_c/`. A site folder holds all of these, so deleting it was enough.
 6. Run `001-install-formulize.spec.js`, then take `snap_after_001.sql`.
 
 The installer spec can need a longer timeout on a slow machine.
@@ -134,9 +134,9 @@ curl -s -b cookies.txt "http://127.0.0.1:8080/modules/formulize/groups.php" | gr
 
 For a quick DOM check, write a small Playwright script and run it from `tests/e2e`, where Playwright is installed. From a script elsewhere, `require()` it by its full path. Check browser features in Firefox as well as Chromium.
 
-## Screen template saves write into the repository
+## The site's files are in the repository folder
 
-Saving a screen's template in the admin UI writes to `modules/formulize/templates/screens/<theme>/<sid>/`, inside the repository, and custom code goes to `modules/formulize/code/`. Running the suite creates files like this. They're not changes to commit.
+A local site keeps its files in `sites/default/`, which git ignores. Saving a screen's template writes to `sites/default/private/screens/<theme>/<sid>/`, and custom code goes to `sites/default/private/code/`. A site installed before the site folder writes them to `modules/formulize/templates/screens/<theme>/<sid>/` and `modules/formulize/code/` instead, which are untracked files, not changes to commit. Specs find them with `tests/e2e/site-paths.js`.
 
 ## Known Quirks
 

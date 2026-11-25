@@ -1394,7 +1394,7 @@ function entriesInLockList(file) {
 	let list = '';
 	try {
 		// cat's complaint about a file that isn't there stays out of the log, since that's an answer here, not a problem
-		list = execFileSync('docker', ['exec', webContainer(), 'cat', `/var/www/html/modules/formulize/temp/${file}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+		list = execFileSync('docker', ['exec', webContainer(), 'cat', `${sitePath('FORMULIZE_TEMP_PATH')}/${file}`], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
 	} catch (e) {
 		return [];
 	}
@@ -1448,7 +1448,7 @@ async function entryLockListFiles(page) {
 }
 
 function serverTempFiles() {
-	return execFileSync('docker', ['exec', webContainer(), 'ls', '/var/www/html/modules/formulize/temp'], { encoding: 'utf8' }).split('\n');
+	return execFileSync('docker', ['exec', webContainer(), 'ls', sitePath('FORMULIZE_TEMP_PATH')], { encoding: 'utf8' }).split('\n');
 }
 
 /**
@@ -1926,6 +1926,8 @@ export async function openFormScreenTab(page, title) {
 
 const { execFileSync } = require('child_process');
 const { dbContainer, webContainer } = require('./docker-containers');
+// Where the site keeps its own files, which can be in a folder of its own rather than in the code (see site-paths.js)
+const { sitePath, appearanceDir, appearanceUrlPath } = require('./site-paths');
 
 const DB_ROOT_PASS = process.env.E2E_DB_ROOT_PASS || 'abc123';
 const DB_NAME = process.env.E2E_DB_NAME || 'formulize';
@@ -2197,7 +2199,7 @@ export async function chooseSiteThemes(page, site, admin) {
 export function themeHasBeenActivated(theme) {
 	if (!SAFE_THEME.test(theme)) throw new Error(`Not a theme name: ${theme}`);
 	try {
-		execFileSync('docker', ['exec', webContainer(), 'test', '-e', `/var/www/html/themes/${theme}/appearance/activated.lock`], { stdio: 'ignore' });
+		execFileSync('docker', ['exec', webContainer(), 'test', '-e', `${appearanceDir(theme)}/activated.lock`], { stdio: 'ignore' });
 		return true;
 	} catch (e) {
 		return false;
@@ -2220,7 +2222,7 @@ export function themeHasBeenActivated(theme) {
 export function screenTemplateFolderExists(theme, sid, inside = '') {
 	if (!SAFE_THEME.test(theme)) throw new Error(`Not a theme name: ${theme}`);
 	if (inside && !/^[A-Za-z0-9_./-]+$/.test(inside)) throw new Error(`Not a path: ${inside}`);
-	const path = `/var/www/html/modules/formulize/templates/screens/${theme}/${parseInt(sid, 10)}${inside ? '/' + inside : ''}`;
+	const path = `${sitePath('FORMULIZE_SCREEN_TEMPLATES_PATH')}/${theme}/${parseInt(sid, 10)}${inside ? '/' + inside : ''}`;
 	try {
 		execFileSync('docker', ['exec', webContainer(), 'test', '-e', path], { stdio: 'ignore' });
 		return true;
@@ -2321,7 +2323,7 @@ export async function emptyScreenTemplates(page, screen) {
  */
 export function forgetThemeActivated(theme) {
 	if (!SAFE_THEME.test(theme)) throw new Error(`Not a theme name: ${theme}`);
-	execFileSync('docker', ['exec', webContainer(), 'rm', '-f', `/var/www/html/themes/${theme}/appearance/activated.lock`]);
+	execFileSync('docker', ['exec', webContainer(), 'rm', '-f', `${appearanceDir(theme)}/activated.lock`]);
 }
 
 /**
@@ -2504,7 +2506,7 @@ export async function deleteLooksNamed(page, prefix) {
  * @returns {Promise<{record: Object<string, string>, css: string}|null>}
  */
 export async function readLookFile(page, key) {
-	const response = await page.request.get(`/themes/Lyris/appearance/looks/${key}.css?e2e=${Date.now()}`);
+	const response = await page.request.get(`${appearanceUrlPath('Lyris')}/looks/${key}.css?e2e=${Date.now()}`);
 	if (response.status() === 404) {
 		return null;
 	}

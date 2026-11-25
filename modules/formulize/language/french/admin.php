@@ -883,7 +883,7 @@ define("_AM_FORMULIZE_SITE_THEME_NOT_INSTALLED", "Le thème %s n'est pas install
 define("_AM_FORMULIZE_SITE_THEME_NOT_SAVED", "Les réglages du thème n'ont pas pu être enregistrés. Réessayez dans Admin > Appearance > Settings.");
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FROM", "Copier les templates de cet écran depuis %s");
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_DESC", "Cet écran a ses propres templates dans un autre thème. Vous pouvez partir d'une copie de ceux-ci. Ils gardent le balisage de cet autre thème, que ce thème-ci ne mettra peut-être pas entièrement en forme.");
-define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FAILED", "Les templates de l'écran n'ont pas pu être copiés depuis le thème %s. Vérifiez que le serveur web peut écrire dans le dossier modules/formulize/templates/screens.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FAILED", "Les templates de l'écran n'ont pas pu être copiés depuis le thème %s. Vérifiez que le serveur web peut écrire dans le dossier %s.");
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_NOT_SITE_THEME", "Votre site utilise %1\$s. Voici les templates %2\$s de cet écran, qui ne servent que là où le thème est %2\$s.");
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_ONLY_VARIABLES", "Cet écran a encore ses propres templates de variables, dans l'onglet Variables. Une fois que vous les aurez tous vidés et enregistrés, vous pourrez de nouveau personnaliser les templates.");
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_NOT_ALLOWED", "Vous n'avez pas la permission de modifier les templates de cet écran, ou son formulaire est verrouillé : rien n'a été changé.");
@@ -891,7 +891,7 @@ define("_AM_FORMULIZE_SCREEN_TEMPLATES_NOT_ALLOWED", "Vous n'avez pas la permiss
 define("_AM_FORMULIZE_SCREEN_VARIABLES", "Variables");
 define("_AM_FORMULIZE_SCREEN_VARIABLES_THEME", "Voici les templates de variables de cet écran dans le thème %s. Ils dessinent des parties de l'écran, comme les numéros de page. Le thème se choisit dans l'onglet Mise en page.");
 define("_AM_FORMULIZE_SCREEN_VARIABLES_EMPTY", "Videz une case et enregistrez : cette partie de l'écran reprend alors le template par défaut.");
-define("_AM_FORMULIZE_SCREEN_VARIABLES_SAVE_FAILED", "Ces templates de variables n'ont pas pu être enregistrés : %s. Vérifiez que le serveur web peut écrire dans le dossier modules/formulize/templates/screens.");
+define("_AM_FORMULIZE_SCREEN_VARIABLES_SAVE_FAILED", "Ces templates de variables n'ont pas pu être enregistrés : %s. Vérifiez que le serveur web peut écrire dans le dossier %s.");
 
 // La page de mise à jour
 define("_AM_FORMULIZE_UPDATE_TOKEN_FAILED", "La mise à jour ne s'est pas faite, car la page avait expiré. Rien n'a changé.");
@@ -959,7 +959,7 @@ define("_AM_FORMULIZE_LYRIS_SETTING_MULTIPAGE_DISPLAYCOLUMNS_1", "Mettre les lib
 define("_AM_FORMULIZE_LYRIS_APPLY_NO_LYRIS", "Le thème Lyris n'est pas installé, rien n'a donc été changé à son sujet.");
 define("_AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_DONE", "Les templates de %s écrans ont été copiés pour Lyris.");
 define("_AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_DONE_ONE", "Les templates d'un écran ont été copiés pour Lyris.");
-define("_AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_FAILED", "Les templates de l'écran « %1\$s » n'ont pas pu être copiés depuis le thème %2\$s. Vérifiez que le serveur web peut écrire dans le dossier modules/formulize/templates/screens, puis relancez la mise à jour.");
+define("_AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_FAILED", "Les templates de l'écran « %1\$s » n'ont pas pu être copiés depuis le thème %2\$s. Vérifiez que le serveur web peut écrire dans le dossier %3\$s, puis relancez la mise à jour.");
 define("_AM_FORMULIZE_LYRIS_APPLY_SETTINGS_DONE", "%s écrans ont reçu les réglages d'écran de Lyris.");
 define("_AM_FORMULIZE_LYRIS_APPLY_SETTINGS_DONE_ONE", "Un écran a reçu les réglages d'écran de Lyris.");
 define("_AM_FORMULIZE_LYRIS_APPLY_SETTINGS_FAILED", "Les réglages de l'écran « %s » n'ont pas pu être changés. Relancez la mise à jour.");
@@ -992,7 +992,7 @@ define("_AM_FORMULIZE_LYRIS_SWITCH_PLAIN", "Passer à Lyris sans ces changements
 define("_AM_FORMULIZE_LYRIS_SWITCH_BUTTON", "Passer à Lyris");
 define("_AM_FORMULIZE_LYRIS_SWITCH_PROBLEMS", "Votre site n'est pas passé à Lyris");
 define("_AM_FORMULIZE_LYRIS_SWITCH_NOT_SWITCHED", "Votre site utilise encore %s. Les autres changements ont été faits : quand vous réessaierez, seul ce qui reste à faire sera proposé.");
-define("_AM_FORMULIZE_LYRIS_SWITCH_TEMPLATES_FAILED", "Les templates de l'écran « %1\$s » n'ont pas pu être copiés depuis le thème %2\$s. Vérifiez que le serveur web peut écrire dans le dossier modules/formulize/templates/screens.");
+define("_AM_FORMULIZE_LYRIS_SWITCH_TEMPLATES_FAILED", "Les templates de l'écran « %1\$s » n'ont pas pu être copiés depuis le thème %2\$s. Vérifiez que le serveur web peut écrire dans le dossier %3\$s.");
 define("_AM_FORMULIZE_LYRIS_SWITCH_SETTINGS_FAILED", "Les réglages de l'écran « %s » n'ont pas pu être changés.");
 define("_AM_FORMULIZE_LYRIS_SWITCH_NOT_ASKED", "Rien n'a été changé, car ces questions ne s'appliquent plus à votre site. Rechargez la page, puis enregistrez de nouveau vos réglages.");
 define("_AM_FORMULIZE_LYRIS_SWITCH_TOKEN_FAILED", "Rien n'a été changé, car la page avait expiré. Rechargez la page, puis enregistrez de nouveau vos réglages.");

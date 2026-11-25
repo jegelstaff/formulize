@@ -192,7 +192,13 @@ try {
 		}
 		$queueIncludeFile = XOOPS_ROOT_PATH.'/modules/formulize/include/queue.php';
 		if(!$synchronous AND isEnabled('exec')) {
-			exec('php -f '.$queueIncludeFile.' '.escapeshellarg($queueHandle).' > /dev/null 2>&1 & echo $!');
+			// The command line has no request to find the site from, so it's told which site folder to use, which the
+			// web server may have named with SetEnv where a new process can't see it, and the site's address
+			$siteEnvironment = 'FORMULIZE_URL='.escapeshellarg(XOOPS_URL).' ';
+			if(defined('FORMULIZE_SITE_PATH')) {
+				$siteEnvironment .= 'FORMULIZE_SITE_PATH='.escapeshellarg(FORMULIZE_SITE_PATH).' ';
+			}
+			exec($siteEnvironment.'php -f '.$queueIncludeFile.' '.escapeshellarg($queueHandle).' > /dev/null 2>&1 & echo $!');
 			return true;
 		} else {
 			include $queueIncludeFile; // sets processedFiles

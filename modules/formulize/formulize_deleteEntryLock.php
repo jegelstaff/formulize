@@ -7,10 +7,18 @@
 // IF THE WEBMASTER IS BUILDING A CUSTOM INTERFACE RELYING ON RENDERING ELEMENTS ON THEIR OWN, LOCKS WILL NOT WORK RIGHT
 // Custom screens (and template screens?) won't have the release in place for when the window goes away, and they don't pass the token through POST like a standard screen does
 
-// requested on its own, the rest of Formulize isn't loaded
+// Requested on its own, the rest of Formulize isn't loaded, only the site's settings and the folders it keeps its files
+// in, so the lock files can be found wherever the site keeps them (see include/sitepaths.php). Nothing else is
+// started: a session saved here could overwrite the one the next page is using.
+$formulizeLockReleaseOnItsOwn = !defined('XOOPS_MAINFILE_INCLUDED');
+if($formulizeLockReleaseOnItsOwn) {
+	$xoopsOption['nocommon'] = true;
+	include_once __DIR__.'/../../mainfile.php';
+	include_once XOOPS_ROOT_PATH.'/include/sitepaths.php';
+}
 require_once __DIR__.'/include/entryLocks.php';
 
-if(!defined('XOOPS_MAINFILE_INCLUDED')) {
+if($formulizeLockReleaseOnItsOwn) {
 	ignore_user_abort(true);
 	header("Access-Control-Allow-Origin: *");
 	// a request on its own must say whose page load it was, or it's not valid

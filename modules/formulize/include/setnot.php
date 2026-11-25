@@ -304,7 +304,7 @@ print formulize_popupField(_formulize_DE_SETNOT_FOR, "<div class='fz-choice-grou
 	. $conditionui);
 
 if($canSetNots) {
-	print formulize_popupField(_formulize_DE_SETNOT_TEMP, "<input type='text' class='fz-input' name='template' id='template' size='50' maxlength='255' value='" . htmlspecialchars($_POST['template']) . "' />", _formulize_DE_SETNOT_TEMP_DESC, 'template');
+	print formulize_popupField(_formulize_DE_SETNOT_TEMP, "<input type='text' class='fz-input' name='template' id='template' size='50' maxlength='255' value='" . htmlspecialchars($_POST['template']) . "' />", sprintf(_formulize_DE_SETNOT_TEMP_DESC, htmlspecialchars(formulize_folderForPeople(formulize_siteMailTemplateFolder($xoopsConfig['language'])))), 'template');
 	print formulize_popupField(_formulize_DE_SETNOT_SUBJ, "<input type='text' class='fz-input' name='subject' id='subject' size='50' maxlength='255' value='" . htmlspecialchars($_POST['subject']) . "' />", '', 'subject');
 }
 

@@ -27,7 +27,7 @@ __If you're trying to update an existing Formulize system__, check out the [Upda
 - if you want Formulize to exist at ```https://www.mysite.com``` then put the files in the web root.
 - if you want Formulize to be in a subfolder like ```https://www.mysite.com/formulize``` then put the files in the ```/formulize``` folder, inside the web root.
 
-3. __Make sure [the folders that need to be writable](../deploying_a_website/writable_folders) are writable by the web server user.__
+3. __Make sure [the folders that need to be writable](../deploying_a_website/writable_folders) are writable by the web server user.__ Your site's settings and files will go in [the site folder](../deploying_a_website/site_folder), which is ```sites/default``` unless you choose another.
 
 4. __Open a web browser and go to the location where you put Formulize.__ The installer will appear. [Follow the steps for using the installer](../deploying_a_website/installing_formulize)
 

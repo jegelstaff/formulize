@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { appearanceUrlPath } = require('../../site-paths');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import { login, getSiteTheme, aDayPassesForTheWorker, chooseSiteThemes, expectSiteTheme, dbQuery, dbPrefix, waitForAdminPageReady, NO_SERVICE_WORKERS } from '../../utils';
 
@@ -82,7 +83,7 @@ test.describe('Switching the site to Lyris and back', () => {
 		expect(await templatesTabTheme(admin)).toBe('Lyris');
 		await expectSiteTheme(admin, 'Lyris');
 		// and Lyris has its looks: its appearance stylesheet, written for its site look
-		await expect(admin.locator('link[rel="stylesheet"][href*="/themes/Lyris/appearance/"]').first()).toBeAttached();
+		await expect(admin.locator(`link[rel="stylesheet"][href*="${appearanceUrlPath('Lyris')}/"]`).first()).toBeAttached();
 		// for everyone, not only webmasters
 		const curator = await signIn(browser, 'curator1');
 		await expectSiteTheme(curator, 'Lyris');

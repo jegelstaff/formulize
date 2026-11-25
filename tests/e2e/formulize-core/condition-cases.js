@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 const { webContainer } = require('../docker-containers');
+const { sitePath } = require('../site-paths');
 import { waitForWorkingMessage, showListSearches } from '../utils';
 
 // Reads conditions-and-searches.md, for the specs that check what it says. That file is the test data: this only knows how
@@ -309,7 +310,7 @@ export function searchesFor(row, elements) {
 export function phpErrorsSince(since) {
 	let log = '';
 	try {
-		log = execSync(`docker exec ${webContainer()} tail -n 500 /var/www/html/logs/formulize_log_active.log`, { encoding: 'utf8', timeout: 10000, maxBuffer: 5 * 1024 * 1024 });
+		log = execSync(`docker exec ${webContainer()} tail -n 500 ${sitePath('FORMULIZE_LOG_PATH')}/formulize_log_active.log`, { encoding: 'utf8', timeout: 10000, maxBuffer: 5 * 1024 * 1024 });
 	} catch (e) {
 		return []; // no log, or no container to read it from, which is no reason to stop the row
 	}

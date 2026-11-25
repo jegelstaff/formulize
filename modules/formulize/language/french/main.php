@@ -462,7 +462,7 @@ define("_formulize_DE_SETNOT_NOLINKCREATOROPTIONS", "Aucun élément lié dans c
 define("_formulize_DE_SETNOT_SAVE", "Sauver cette notification");
 define("_formulize_DE_SETNOT_SUBJ", "Utiliser un sujet de message spécifique?  Si oui, remplissez ici le sujet du mail.");
 define("_formulize_DE_SETNOT_TEMP", "Utiliser un modèle de message?  Si oui, nommer le fichier utilisé (pour administrateur uniquement).");
-define("_formulize_DE_SETNOT_TEMP_DESC", "Envoyez votre modèle de message dans le répertoire suivant 'modules/formulize/language/french/mail_template/'.");
+define("_formulize_DE_SETNOT_TEMP_DESC", "Envoyez votre modèle de message dans le répertoire suivant '%s'.");
 define("_formulize_DE_SETNOT_TOME_WHEN", "Envoyez moi cette notification lorsque:");
 define("_formulize_DE_SETNOT_WHEN", "Envoyer cette notification lorsque:");
 define("_formulize_DE_SETNOT_WHEN_DELETE", "une entrée est effacée");

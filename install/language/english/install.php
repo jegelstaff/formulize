@@ -127,7 +127,7 @@ define( "UPLOADS_EXECUTABLE_WARNING", "This server will run a program saved in t
 define( "READY_CREATE_TABLES", "No ImpressCMS tables were detected.<br />The installer is now ready to create the ImpressCMS system tables.<br />Press <em>next</em> to proceed." );
 define( "XOOPS_TABLES_FOUND", "The ImpressCMS system tables already exists in your database.<br />Press <em>next</em> to go to the next step." ); // L131
 define( "READY_INSERT_DATA", "The installer is now ready to insert initial data into your database." );
-define( "READY_SAVE_MAINFILE", "The installer is now ready to save the specified settings to <em>mainfile.php</em>.<br />Press <em>next</em> to proceed." );
+define( "READY_SAVE_MAINFILE", "The installer is now ready to save the specified settings to <em>settings.php</em>, in the site folder.<br />Press <em>next</em> to proceed." );
 define( "DATA_ALREADY_INSERTED", "ImpressCMS data is stored in your database already. No further data will be stored by this action.<br />Press <em>next</em> to go to the next step." );
 
 // %s is database name
@@ -196,6 +196,12 @@ define("_INSTALL_PHYSICAL_PATH","Physical path");
 define("TRUST_PATH_VALIDATE","A suggested name for the Trust path has been created above for you. If you wish to use an alternative name, please replace the above location with your choice of name.<br /><br />When done, please click on the Create Trust Path button.");
 define("TRUST_PATH_NEED_CREATED_MANUALLY","It was not possible to create the trust path. Please create it manually and click on the following Refresh button.");
 define("BUTTON_CREATE_TUST_PATH","Create Trust Path");
+define("_INSTALL_SITE_PATH", "Site folder");
+define("_INSTALL_SITE_PATH_LABEL", "The folder for this site's own files");
+define("_INSTALL_SITE_PATH_HELP", "Everything that belongs to this site, rather than to Formulize, is kept in this folder: its settings, the files people upload, the code and templates people write, and what Formulize generates. Back it up, along with the database, to keep a copy of the site. To keep it somewhere else, such as outside the web root or in a container's volume, set a FORMULIZE_SITE_PATH variable in the web server or the environment to the folder, and start the installation again.");
+define("_INSTALL_SITE_PATH_FOUND", "The web server can write to the site folder.");
+define("_INSTALL_ERR_SITE_PATH_NOT_WRITABLE", "The web server can't write to the site folder, %s. Make the folder, let the web server write to it, and click Next again.");
+define("_INSTALL_ERR_SITE_PATH_NOT_MADE", "The site folder, %s, couldn't be made. Make the folder, let the web server write to it, and click Next again.");
 define("TRUST_PATH_SUCCESSFULLY_CREATED", "The trust path was successfully created.");
 
 // welcome custom blocks

@@ -45,10 +45,10 @@ $expectedConstants = array(
 
 // Run sitepaths.php in a separate process, so the constants it defines don't collide with this script's,
 // and so a value set before it can be checked.
-function sitePathsDefinedBy($root, $preamble) {
+function sitePathsDefinedBy($root, $preamble, $trustPath = '/srv/trust') {
 	$script = '<?php ' . $preamble . '
 		define("XOOPS_ROOT_PATH", "/srv/formulize");
-		define("XOOPS_TRUST_PATH", "/srv/trust");
+		define("XOOPS_TRUST_PATH", ' . var_export($trustPath, true) . ');
 		define("XOOPS_URL", "https://example.com");
 		include ' . var_export($root . '/include/sitepaths.php', true) . ';
 		$c = get_defined_constants(true);
@@ -89,6 +89,37 @@ foreach ($legacyDefaults as $name => $value) {
 $overridden = sitePathsDefinedBy($root, 'define("FORMULIZE_CODE_PATH", "/elsewhere/code");');
 if (!isset($overridden['FORMULIZE_CODE_PATH']) OR $overridden['FORMULIZE_CODE_PATH'] !== '/elsewhere/code') {
 	$failures[] = 'include/sitepaths.php replaced a FORMULIZE_CODE_PATH that was set before it';
+}
+
+// A site with a folder of its own keeps everything in it: settings and what its people wrote in private/, which is
+// the trust path, served files in uploads/, and generated files in var/
+$siteDefined = sitePathsDefinedBy($root, 'define("FORMULIZE_SITE_PATH", "/srv/formulize/sites/default");', '/srv/formulize/sites/default/private');
+$siteLayout = array(
+	'FORMULIZE_CODE_PATH' => '/srv/formulize/sites/default/private/code',
+	'FORMULIZE_SCREEN_TEMPLATES_PATH' => '/srv/formulize/sites/default/private/screens',
+	'FORMULIZE_SCREEN_DEFAULTS_PATH' => '/srv/formulize/modules/formulize/templates/screens',
+	'FORMULIZE_SITE_LANGUAGE_PATH' => '/srv/formulize/sites/default/private/language',
+	'ICMS_UPLOAD_PATH' => '/srv/formulize/sites/default/uploads',
+	'ICMS_UPLOAD_URL' => 'https://example.com/sites/default/uploads',
+	'FORMULIZE_DOWNLOADS_URL' => 'https://example.com/sites/default/uploads/downloads',
+	'ICMS_COMPILE_PATH' => '/srv/formulize/sites/default/var/templates_c',
+	'FORMULIZE_TEMP_PATH' => '/srv/formulize/sites/default/var/temp',
+	'ICMS_PURIFIER_CACHE' => '/srv/formulize/sites/default/var/htmlpurifier',
+);
+foreach ($siteLayout as $name => $value) {
+	if (!isset($siteDefined[$name]) OR $siteDefined[$name] !== $value) {
+		$failures[] = "With a site folder, $name is " . (isset($siteDefined[$name]) ? $siteDefined[$name] : 'not defined') . ", expected $value";
+	}
+}
+// A site folder outside the web root, such as a container's volume, has its uploads served at /uploads, by an alias
+$outsideDefined = sitePathsDefinedBy($root, 'define("FORMULIZE_SITE_PATH", "/site");', '/site/private');
+if (!isset($outsideDefined['ICMS_UPLOAD_URL']) OR $outsideDefined['ICMS_UPLOAD_URL'] !== 'https://example.com/uploads') {
+	$failures[] = 'With a site folder outside the web root, ICMS_UPLOAD_URL is ' . (isset($outsideDefined['ICMS_UPLOAD_URL']) ? $outsideDefined['ICMS_UPLOAD_URL'] : 'not defined') . ', expected https://example.com/uploads';
+}
+// FORMULIZE_VAR_PATH moves the generated files on their own
+$varDefined = sitePathsDefinedBy($root, 'define("FORMULIZE_SITE_PATH", "/site"); define("FORMULIZE_VAR_PATH", "/fast/var");', '/site/private');
+if (!isset($varDefined['ICMS_CACHE_PATH']) OR $varDefined['ICMS_CACHE_PATH'] !== '/fast/var/cache' OR $varDefined['FORMULIZE_CODE_PATH'] !== '/site/private/code') {
+	$failures[] = 'FORMULIZE_VAR_PATH did not move only the generated files';
 }
 
 // 2. No site folder built from the root ---------------------------------------------------------------------------
