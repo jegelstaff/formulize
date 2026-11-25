@@ -4,7 +4,7 @@ People write PHP in Formulize: derived value formulas, form procedures, code in 
 
 ## Where the code lives
 
-Everything here is in `modules/formulize/code/`, which holds only `index.html` in the repository. Each site's files are its own.
+Everything here is in the code folder, `FORMULIZE_CODE_PATH`, which is `modules/formulize/code/` unless the site's files are kept elsewhere. See [site-directory](site-directory.md). In the repository it holds only `index.html`. Each site's files are its own.
 
 | What | File |
 |---|---|
@@ -16,7 +16,7 @@ Everything here is in `modules/formulize/code/`, which holds only `index.html` i
 | A list screen's custom button code | `custom_code_<effect>_<button handle>_<screen handle>.php`, `custom_html_...` |
 | Application code, which runs on every page of the application | `application_custom_code_<application id>.php` |
 
-A template screen's code is different. It's in `templates/screens/<theme>/<sid>/code.php`, with the screen's other templates.
+A template screen's code is different. It's in `<theme>/<sid>/code.php` in `FORMULIZE_SCREEN_TEMPLATES_PATH`, with the screen's other templates.
 
 **The file is the source of truth.** `getVar()` reads the file, and saving writes it through `formulize_writeCodeToFile()`. Text that is empty, or only an opening `<?php`, has no file: see `formulize_authoredTextIsEmpty()`. For elements, a copy can still be in `ele_value`, which `getVar()` uses only when there's no file. Code can be in `ele_value` with no file, for example from before a site's code folder was restored, or on an element saved before it had a handle. That's why a handler's `clearEleValueFileKeysForInsert` only blanks the database copy when `codeFileHasContentForElement()` says the file holds it. Otherwise a save that had nothing to do with the code would destroy the only copy.
 
@@ -47,7 +47,7 @@ A recompute through a relationship also recomputes every derived value in the co
 
 ## How a formula runs
 
-`formulize_includeDerivedValueFormulas()` in `include/extract.php` wraps each formula in a function, in `modules/formulize/cache/Derived_value_formula_for_*.php`. It writes the file when a request needs it, and clears files more than an hour old, so don't edit them.
+`formulize_includeDerivedValueFormulas()` in `include/extract.php` wraps each formula in a function, in `Derived_value_formula_for_*.php` in `FORMULIZE_CACHE_PATH`. The file is named with a hash of what's in it and written aside, then moved into place, so a changed formula is a new file that opcache can't have an old copy of, and no request includes half a file. It writes the file when a request needs it, and clears files more than an hour old, so don't edit them. Every version of a formula defines the same function, so a request uses the first one it includes.
 
 - A formula sets `$value`, which starts as the stored value.
 - **A variable named after an element handle or a metadata field is filled in for you,** from the entry, with `getValue()`. Any other variable is an ordinary PHP variable. `$value`, `$entry`, `$form_id`, `$entry_id` and `$relationship_id` are reserved.

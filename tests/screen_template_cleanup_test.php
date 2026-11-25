@@ -157,6 +157,9 @@ function runCleanup($types) {
 
 $base = sys_get_temp_dir() . '/formulize_screen_template_cleanup_test_' . getmypid();
 define('XOOPS_ROOT_PATH', $base); // the functions find templates/screens under it, as on a site
+// where include/sitepaths.php puts a site's own screen templates, and the ones that ship, when both are in the code
+define('FORMULIZE_SCREEN_TEMPLATES_PATH', $base . '/modules/formulize/templates/screens');
+define('FORMULIZE_SCREEN_DEFAULTS_PATH', $base . '/modules/formulize/templates/screens');
 $screens = "$base/modules/formulize/templates/screens";
 
 try {

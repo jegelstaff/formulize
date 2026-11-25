@@ -19,6 +19,9 @@ behaviour. CI runs them *before* the e2e suite, since they have nothing to wait 
 * `blocked_extensions_sync_test.php` - the list of never-executable script extensions, written out in
   `BLOCKED_EXTENSIONS`, `uploads/.htaccess`, the fallback copy in `uploads_execution_probe.php` and the copy
   in `docs/uploads_not_executable.md`, is the same set everywhere. Fails if any copy drifts from the constant.
+* `site_paths_test.php` - every folder a site writes to, such as custom code, screen templates, uploads, caches
+  and logs, is named once in `include/sitepaths.php`, which defines each with no trailing slash and keeps a value
+  set before it. Fails if any PHP file builds one of those folders from `XOOPS_ROOT_PATH` or `XOOPS_URL` instead.
 * `screen_defaults_test.php` - every theme's `screen-defaults.json` lists every setting in Formulize's own
   `include/screen_defaults.json`, and every file names only settings its screen type has and a theme can set,
   with a list only where the setting takes one. Lyris and Anari must each have a file.
