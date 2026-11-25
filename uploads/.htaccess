@@ -5,6 +5,17 @@
 # NOT php_admin_flag: the php_admin_* forms are rejected in .htaccess context and raise a fatal parse error
 # that makes the WHOLE folder return 500 (every file, not just scripts). Do not un-guard these lines.
 
+# 0) Everything else in here is served. A site's own uploads folder can be inside sites/, whose .htaccess refuses
+# everything, so this lets its files through. The script types below are still refused, since <FilesMatch> is
+# applied after this. See ai-context/site-directory.md.
+<IfModule mod_authz_core.c>
+	Require all granted
+</IfModule>
+<IfModule !mod_authz_core.c>
+	Order allow,deny
+	Allow from all
+</IfModule>
+
 # 1) Deny direct web access to server-side script types (matches double extensions too, e.g. x.php.jpg).
 # This list is kept in step with formulizeFileUploadElementHandler::BLOCKED_EXTENSIONS (the set refused on
 # upload); tests/blocked_extensions_sync_test.php fails if they drift. Update both together.

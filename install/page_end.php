@@ -94,8 +94,9 @@ formulize_update_timezone_options($xoopsDB);
 // Populate the SMS provider choices from the provider classes in libraries/icms/messaging/sms/
 formulize_update_sms_provider_options($xoopsDB);
 
-// write a lock file so the install folder is inaccessible (if not deleted automatically)
-file_put_contents(ICMS_ROOT_PATH . '/install.lock', '');
+// write a lock file so the install folder is inaccessible (if not deleted automatically). It's kept with the site's
+// own files, since the code can be read-only.
+file_put_contents(FORMULIZE_SITE_PATH . '/install.lock', '');
 
 // END OF MODIFIED CODE
 include 'install_tpl.php';

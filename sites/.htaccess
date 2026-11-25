@@ -1,0 +1,11 @@
+# Each folder in sites/ holds one site's own files: its settings.php, with the database password, its private/
+# folder, and the var/ folder of what Formulize generates. None of it is served. A site's uploads/ folder has a
+# .htaccess of its own that lets its files be served, and keeps scripts in it from running.
+# See ai-context/site-directory.md.
+<IfModule mod_authz_core.c>
+	Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+	Order allow,deny
+	Deny from all
+</IfModule>

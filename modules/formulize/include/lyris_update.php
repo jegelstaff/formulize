@@ -532,7 +532,7 @@ function formulize_lyrisUpdateApply($choices) {
         if ($screen_handler->copyTemplateFilesToTheme($screen, $fromTheme, FORMULIZE_LYRIS_UPDATE_TO)) {
             $copied++;
         } else {
-            echo '<p>' . sprintf($report ? _AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_FAILED : _AM_FORMULIZE_LYRIS_SWITCH_TEMPLATES_FAILED, $screen->getVar('title'), htmlspecialchars($fromTheme)) . '</p>';
+            echo '<p>' . sprintf($report ? _AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_FAILED : _AM_FORMULIZE_LYRIS_SWITCH_TEMPLATES_FAILED, $screen->getVar('title'), htmlspecialchars($fromTheme), htmlspecialchars(formulize_folderForPeople(FORMULIZE_SCREEN_TEMPLATES_PATH))) . '</p>';
             $ok = false;
         }
     }

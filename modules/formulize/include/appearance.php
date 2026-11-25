@@ -419,6 +419,7 @@ function formulize_getAppearanceLooks($theme = null, $reload = false) {
     if (isset($cache[$theme]) AND !$reload) {
         return $cache[$theme];
     }
+    formulize_seedAppearanceLooks($theme);
     $looks = array();
     foreach (glob(formulize_getAppearanceLooksDir($theme) . '/*.css') ?: array() as $file) {
         $key = basename($file, '.css');
@@ -469,6 +470,29 @@ function formulize_getAppearanceLooks($theme = null, $reload = false) {
     });
     $cache[$theme] = $looks;
     return $looks;
+}
+
+/**
+ * Give a site the looks that come with a theme, the first time the theme's looks are read. A theme can ship looks in
+ * its own appearance/looks folder. When the site keeps its appearance files in its own folder, apart from the theme
+ * (see formulize_getAppearanceDir), they're copied there, where the site can change them, as it can when the two
+ * folders are the same. Only while the site has no looks folder for the theme, so a look the site deleted stays gone.
+ *
+ * @param string $theme theme folder name
+ * @return void
+ */
+function formulize_seedAppearanceLooks($theme) {
+    $shippedLooksDir = ICMS_THEME_PATH . '/' . $theme . '/appearance/looks';
+    $looksDir = formulize_getAppearanceLooksDir($theme);
+    if ($looksDir == $shippedLooksDir OR is_dir($looksDir) OR !is_dir($shippedLooksDir)) {
+        return;
+    }
+    if (!@mkdir($looksDir, 0775, true)) {
+        return;
+    }
+    foreach (glob($shippedLooksDir . '/*.css') ?: array() as $file) {
+        @copy($file, $looksDir . '/' . basename($file));
+    }
 }
 
 /**
@@ -1657,12 +1681,18 @@ function formulize_getAppearancePreviewLogoUrl($theme, $look = null, $logoTheme 
 function formulize_getAppearancePreviewLookCssUrl($theme, $look = null) {
     $theme = formulize_resolveAppearanceTheme($theme);
     $looks = formulize_getAppearanceLooks($theme);
-    $path = isset($looks[(string) $look]) ? formulize_getAppearanceLooksDir($theme) . '/' . $look . '.css' : formulize_getAppearanceCssPath($theme);
+    if (isset($looks[(string) $look])) {
+        $path = formulize_getAppearanceLooksDir($theme) . '/' . $look . '.css';
+        $url = formulize_getAppearanceUrl($theme) . '/looks/' . $look . '.css';
+    } else {
+        $path = formulize_getAppearanceCssPath($theme);
+        $url = formulize_getAppearanceUrl($theme) . '/appearance.css';
+    }
     if (!$path OR !is_file($path)) {
         return '';
     }
-    $path = substr($path, strlen(XOOPS_ROOT_PATH));
-    return XOOPS_URL . $path . '?v=' . formulize_get_file_version($path);
+    // the appearance folder needn't be inside the code, so the URL isn't the path with the root taken off
+    return $url . '?v=' . filemtime($path);
 }
 
 /**
@@ -2426,7 +2456,13 @@ function formulize_getAppearanceFont($settings = null, $theme = null) {
  * @return string filesystem path of the appearance folder, no trailing slash
  */
 function formulize_getAppearanceDir($theme = null) {
-    return ICMS_THEME_PATH . '/' . formulize_resolveAppearanceTheme($theme) . '/appearance';
+    $theme = formulize_resolveAppearanceTheme($theme);
+    if (defined('FORMULIZE_SITE_PATH')) {
+        // a site with a folder of its own keeps appearance files with its uploads, apart from the theme, which is
+        // part of the code. See include/sitepaths.php.
+        return ICMS_UPLOAD_PATH . '/appearance/' . $theme;
+    }
+    return ICMS_THEME_PATH . '/' . $theme . '/appearance';
 }
 
 /**
@@ -2436,7 +2472,11 @@ function formulize_getAppearanceDir($theme = null) {
  * @return string URL of the appearance folder, no trailing slash
  */
 function formulize_getAppearanceUrl($theme = null) {
-    return ICMS_THEME_URL . '/' . formulize_resolveAppearanceTheme($theme) . '/appearance';
+    $theme = formulize_resolveAppearanceTheme($theme);
+    if (defined('FORMULIZE_SITE_PATH')) {
+        return ICMS_UPLOAD_URL . '/appearance/' . rawurlencode($theme);
+    }
+    return ICMS_THEME_URL . '/' . $theme . '/appearance';
 }
 
 /**
@@ -2595,6 +2635,10 @@ function formulize_prepareAppearanceDir($theme = null) {
     }
     $dir = formulize_getAppearanceDir($theme);
     if (!is_dir($dir)) {
+        if (defined('FORMULIZE_SITE_PATH') AND !is_dir(dirname($dir))) {
+            // uploads/appearance, which a new site doesn't have yet
+            @mkdir(dirname($dir), 0775, true);
+        }
         if (!is_dir(dirname($dir)) OR !is_writable(dirname($dir))) {
             return false;
         }

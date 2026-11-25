@@ -14879,16 +14879,29 @@ function setTitleOfPageInTemplate($entryId = null, $renderedFormulizeScreen = nu
 }
 
 /**
- * The file on disk for a path in the site's URL. A site's own files keep their URLs wherever the files are kept,
- * so /uploads/... is in the uploads folder, which needn't be inside the code. Everything else is in the code.
- * See include/sitepaths.php.
+ * Where uploaded files are in the site's URL: /uploads, or /sites/default/uploads when the site's own folder is in
+ * the web root. See include/sitepaths.php.
  *
- * @param string $urlPath Path relative to XOOPS_URL, starting with a slash (e.g., '/uploads/pwa/icon-512.png')
+ * @return string Path relative to XOOPS_URL, starting with a slash and with no slash at the end
+ */
+function formulize_uploadsUrlPath() {
+	if (strpos(ICMS_UPLOAD_URL, XOOPS_URL . '/') === 0) {
+		return substr(ICMS_UPLOAD_URL, strlen(XOOPS_URL));
+	}
+	return '/uploads';
+}
+
+/**
+ * The file on disk for a path in the site's URL. Uploaded files are in the uploads folder, which needn't be inside
+ * the code. Everything else is in the code. See include/sitepaths.php.
+ *
+ * @param string $urlPath Path relative to XOOPS_URL, starting with a slash (e.g., formulize_uploadsUrlPath().'/pwa/icon-512.png')
  * @return string The full path of the file
  */
 function formulize_fileForUrlPath($urlPath) {
-	if (strpos($urlPath, '/uploads/') === 0) {
-		return ICMS_UPLOAD_PATH . substr($urlPath, strlen('/uploads'));
+	$uploadsUrlPath = formulize_uploadsUrlPath();
+	if (strpos($urlPath, $uploadsUrlPath . '/') === 0) {
+		return ICMS_UPLOAD_PATH . substr($urlPath, strlen($uploadsUrlPath));
 	}
 	return XOOPS_ROOT_PATH . $urlPath;
 }
@@ -14907,6 +14920,19 @@ function formulize_siteMailTemplateFolder($language) {
 		@mkdir($folder, 0777, true);
 	}
 	return $folder . '/';
+}
+
+/**
+ * A folder as people should see it in a message: from the top of the Formulize files when it's in them, such as
+ * modules/formulize/code, and in full when the site keeps it somewhere else. Escape it for HTML when showing it.
+ *
+ * @param string $path The folder's full path
+ * @return string The folder as shown
+ */
+function formulize_folderForPeople($path) {
+	$root = rtrim(str_replace('\\', '/', XOOPS_ROOT_PATH), '/') . '/';
+	$path = rtrim(str_replace('\\', '/', (string) $path), '/');
+	return strpos($path . '/', $root) === 0 ? substr($path, strlen($root)) : $path;
 }
 
 /**

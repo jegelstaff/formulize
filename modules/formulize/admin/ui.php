@@ -255,7 +255,7 @@ if($templateActionScreen AND isset($_POST['copytemplatesfrom']) AND $_POST['copy
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
     $screen = $templateActionScreen;
     if(!$screen_handler->copyTemplateFilesToTheme($screen, $_POST['copytemplatesfrom'], $screen->getVar('theme'))) {
-        print "<p>".sprintf(_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FAILED, htmlspecialchars($_POST['copytemplatesfrom']))."</p>";
+        print "<p>".sprintf(_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FAILED, htmlspecialchars($_POST['copytemplatesfrom']), htmlspecialchars(formulize_folderForPeople(FORMULIZE_SCREEN_TEMPLATES_PATH)))."</p>";
     }
 }
 

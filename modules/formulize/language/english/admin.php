@@ -1384,7 +1384,7 @@ define("_AM_FORMULIZE_SITE_THEME_NOT_INSTALLED", "The %s theme isn't installed, 
 define("_AM_FORMULIZE_SITE_THEME_NOT_SAVED", "The theme settings could not be saved. Try again on Admin > Appearance > Settings.");
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FROM", "Copy this screen's templates from %s");
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_DESC", "This screen has templates of its own in another theme. You can start from a copy of them. They keep that theme's markup, which this theme may not style completely.");
-define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FAILED", "The screen's templates could not be copied from the %s theme. Check that the web server can write to the modules/formulize/templates/screens folder.");
+define("_AM_FORMULIZE_SCREEN_TEMPLATES_COPY_FAILED", "The screen's templates could not be copied from the %s theme. Check that the web server can write to the %s folder.");
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_NOT_SITE_THEME", "Your site uses %1\$s. These are this screen's %2\$s templates, which are only used where %2\$s is the theme.");
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_ONLY_VARIABLES", "This screen still has variable templates of its own, on the Variables tab. Once you've emptied them all and saved, you can customize the templates again.");
 define("_AM_FORMULIZE_SCREEN_TEMPLATES_NOT_ALLOWED", "You don't have permission to change this screen's templates, or its form is locked, so nothing was changed.");
@@ -1392,7 +1392,7 @@ define("_AM_FORMULIZE_SCREEN_TEMPLATES_NOT_ALLOWED", "You don't have permission 
 define("_AM_FORMULIZE_SCREEN_VARIABLES", "Variables");
 define("_AM_FORMULIZE_SCREEN_VARIABLES_THEME", "These are this screen's variable templates in the %s theme. They draw parts of the screen, such as the page numbers. You choose the theme on the Templates tab.");
 define("_AM_FORMULIZE_SCREEN_VARIABLES_EMPTY", "Empty a box and save, and that part of the screen goes back to the default.");
-define("_AM_FORMULIZE_SCREEN_VARIABLES_SAVE_FAILED", "These variable templates could not be saved: %s. Check that the web server can write to the modules/formulize/templates/screens folder.");
+define("_AM_FORMULIZE_SCREEN_VARIABLES_SAVE_FAILED", "These variable templates could not be saved: %s. Check that the web server can write to the %s folder.");
 
 // The update page
 define("_AM_FORMULIZE_UPDATE_TOKEN_FAILED", "The update didn't run, because the page had expired. Nothing has changed.");
@@ -1461,7 +1461,7 @@ define("_AM_FORMULIZE_LYRIS_SETTING_MULTIPAGE_DISPLAYCOLUMNS_1", "Put labels abo
 define("_AM_FORMULIZE_LYRIS_APPLY_NO_LYRIS", "The Lyris theme isn't installed, so nothing was changed about it.");
 define("_AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_DONE", "Copied the templates of %s screens for Lyris.");
 define("_AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_DONE_ONE", "Copied the templates of 1 screen for Lyris.");
-define("_AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_FAILED", "Could not copy the templates of the screen \"%1\$s\" from the %2\$s theme. Check that the web server can write to the modules/formulize/templates/screens folder, and run the update again.");
+define("_AM_FORMULIZE_LYRIS_APPLY_TEMPLATES_FAILED", "Could not copy the templates of the screen \"%1\$s\" from the %2\$s theme. Check that the web server can write to the %3\$s folder, and run the update again.");
 define("_AM_FORMULIZE_LYRIS_APPLY_SETTINGS_DONE", "Gave %s screens Lyris's screen settings.");
 define("_AM_FORMULIZE_LYRIS_APPLY_SETTINGS_DONE_ONE", "Gave 1 screen Lyris's screen settings.");
 define("_AM_FORMULIZE_LYRIS_APPLY_SETTINGS_FAILED", "Could not change the settings of the screen \"%s\". Run the update again.");
@@ -1494,7 +1494,7 @@ define("_AM_FORMULIZE_LYRIS_SWITCH_PLAIN", "Switch without these changes");
 define("_AM_FORMULIZE_LYRIS_SWITCH_BUTTON", "Switch to Lyris");
 define("_AM_FORMULIZE_LYRIS_SWITCH_PROBLEMS", "Your site hasn't switched to Lyris");
 define("_AM_FORMULIZE_LYRIS_SWITCH_NOT_SWITCHED", "Your site still uses %s. The other changes were made, so when you try again, only what's left is offered.");
-define("_AM_FORMULIZE_LYRIS_SWITCH_TEMPLATES_FAILED", "Could not copy the templates of the screen \"%1\$s\" from the %2\$s theme. Check that the web server can write to the modules/formulize/templates/screens folder.");
+define("_AM_FORMULIZE_LYRIS_SWITCH_TEMPLATES_FAILED", "Could not copy the templates of the screen \"%1\$s\" from the %2\$s theme. Check that the web server can write to the %3\$s folder.");
 define("_AM_FORMULIZE_LYRIS_SWITCH_SETTINGS_FAILED", "Could not change the settings of the screen \"%s\".");
 define("_AM_FORMULIZE_LYRIS_SWITCH_NOT_ASKED", "Nothing was changed, because these questions don't apply to your site any more. Reload the page, and save your settings again.");
 define("_AM_FORMULIZE_LYRIS_SWITCH_TOKEN_FAILED", "Nothing was changed, because the page had expired. Reload the page, and save your settings again.");

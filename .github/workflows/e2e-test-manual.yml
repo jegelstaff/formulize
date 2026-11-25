@@ -163,6 +163,8 @@ jobs:
     # server gets in through its group.
     - name: Set file/directory permissions
       run: |
+        # sites: the installer makes the site's own folder, sites/default, and everything the site writes goes in it
+        sudo chown 33:33 sites
         sudo chown 33:33 trust uploads modules templates_c cache tokens logs modules/formulize/cache modules/formulize/code modules/formulize/export modules/formulize/language/english/mail_template modules/formulize/language/english/formulize_dateformats.php modules/formulize/queue modules/formulize/temp modules/formulize/upload mainfile.php
         sudo chown -R 33:33 themes
         sudo chown -R 33:33 modules/formulize/templates/screens
@@ -440,6 +442,12 @@ jobs:
         # The web server's own output: Apache's access log, with every request it answered, and its error log. The
         # activity log doesn't record requests for formulize_deleteEntryLock.php, so this is where to see whether a release arrived
         docker logs formulize-web-1 > tests/e2e/final-state/logs/web-server.log 2>&1 || echo "web server log not available"
+
+        # The site's own folder: its settings, code, screen templates, uploads, logs and generated files
+        if [ -d "sites/default" ]; then
+          sudo cp -r sites/default tests/e2e/final-state/site || echo "site folder not accessible"
+          sudo chown -R "$(id -u):$(id -g)" tests/e2e/final-state/site || true
+        fi
 
         # Copy code folder contents
         if [ -d "modules/formulize/code" ]; then

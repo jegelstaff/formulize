@@ -766,11 +766,11 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 			$isFile = (is_array($value) AND isset($value['isfile'])) ? $value['isfile'] : '';
 			if($isFile) {
 				$ele_value = $element->getVar('ele_value');
-				$basePath = "/uploads/formulize_".$element->getVar('id_form')."_".$entry_id."_".$element->getVar('ele_id')."/";
+				$entryFolder = "formulize_".$element->getVar('id_form')."_".$entry_id."_".$element->getVar('ele_id')."/";
 				if($ele_value[2]) { // users can connect directly to file or not?
-					return XOOPS_URL.$basePath.rawurlencode($fileName);
+					return ICMS_UPLOAD_URL."/".$entryFolder.rawurlencode($fileName);
 				} else {
-					$fileModTime = fileatime(formulize_fileForUrlPath($basePath.$fileName)); // add mod time to change the URL so we don't serve an old file because of browser caching
+					$fileModTime = fileatime(ICMS_UPLOAD_PATH."/".$entryFolder.$fileName); // add mod time to change the URL so we don't serve an old file because of browser caching
 					return XOOPS_URL."/modules/formulize/download.php?element=".$element->getVar('ele_id')."&entry_id=$entry_id&m=$fileModTime";
 				}
 			} else {
