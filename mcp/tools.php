@@ -520,7 +520,7 @@ Example, donors with no BCE artifact:
 
 			$this->tools['create_form'] = [
 				'name' => 'create_form',
-				'description' => 'Create a new form in Formulize. This creates the form, including default screens and setting basic permissions and menu entries. After creating a form, there are other tools you can use to add user interface elements to the form, such as create_text_box_element, create_list_element, create_linked_list_element, create_user_list_element, create_derived_value_element, create_selector_element, etc. Also, you can use create_subform_interface to provide a way to interact with data from connected forms. See the tool descriptions for more information. To change a form after it exists, use update_form.
+				'description' => 'Create a new form in Formulize. This creates the form, including default screens. It also create a menu entry for the form. After creating the form, there are other tools you can use to add user interface elements to it, such as create_text_box_element, create_list_element, create_linked_list_element, create_user_list_element, create_derived_value_element, create_selector_element, etc. Also, you can use create_subform_interface to provide a way to interact with data from connected forms. See the tool descriptions for more information. To change a form after it exists, use update_form.
 
 It is worth filling in \'entry_description\', \'usage_notes\' and \'data_conventions\' when you know the answers, because they are what a future AI assistant will read to understand what the form is for. If you are not sure, leave them out rather than guessing, and ask the person you are working with.',
 				'inputSchema' => [
@@ -805,11 +805,11 @@ Groups generated from the entries in a form cannot be given menu permissions dir
 				'name' => 'create_menu_item',
 				'description' => 'Add an item to an application\'s menu, or to the top level of the menu, beside the applications. Menu items are grouped by application. New items go to the bottom; use change_menu_item_order to move them within an application, and change_menu_order to move a top-level item.
 
-Give application_id to add the item to that application, or top_level: true to add it to the top level of the menu instead, as a link of its own beside the applications. A top-level item is for something that does not belong to any one application, such as a help page or a dashboard everyone uses.
+When forms are created, they automatically get a menu item leading to the form, visible to whichever groups were given permission to edit the form - usually just Webmasters. Use list_menu_items with the form_id to find the form\'s menu item if you want to change its wording or visibility or destination.
+
+Give application_id to add the item to that application, or give top_level: true to add it to the top level of the menu instead, as a link of its own beside the applications. A top-level item is for something that does not belong to any one application, such as a help page or a dashboard everyone uses.
 
 A menu item gives users an easy way to reach a form. When selecting the groups that should see the menu item, take into account which groups have permission to interact with the form. The menu item itself does not affect user permissions in any way, it only provides a convenient link in the user interface. Use get_form_permissions_by_group if you need to learn who can actually use the form.
-
-When forms are created, they automatically get a menu item leading to the form, visible to whichever groups were given permission to edit the form - usually just Webmasters - and one such item in each application the form belongs to. Use list_menu_items with the form_id to find the form\'s menu item if you want to change its wording or visibility or destination.
 
 Often it is useful to make common menu items, that everyone should be able to reach, visible to the Registered Users group. Even if there are multiple narrower groups in the system, each one providing specialized access to only certain entries in a form, those behaviours will be handled by the form when users reach it; the menu item can be given to everyone. By using the Registered Users group, you avoid the need to update the visibility settings of the menu item later if new groups are created.
 
