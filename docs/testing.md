@@ -15,7 +15,7 @@ Formulize has two kinds of automated test, both of which live in the repository 
 
 Between them they install Formulize from scratch, build a complete sample application, and then check that it behaves. If they pass, the branch has not broken anything the suite covers.
 
-[Learn how to write a new test](creating_tests). For how the suite is wired into GitHub Actions, see [Continuous Integration](../../ci).
+[Learn how to write a new test](creating_tests). For how the suite is wired into GitHub Actions, see [Continuous Integration](../../ci). The same tools can also [record walkthrough videos](recording_walkthroughs) of an application in use.
 
 ## The museum system
 

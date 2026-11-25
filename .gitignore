@@ -33,3 +33,7 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Walkthrough videos and their working files
+tests/e2e/walkthroughs/videos
+tests/e2e/walkthroughs/results

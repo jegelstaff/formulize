@@ -6,7 +6,8 @@
   "scripts": {
     "test": "playwright test",
     "test:debug": "playwright test --headed --timeout=0",
-    "test:core": "playwright test formulize-core"
+    "test:core": "playwright test formulize-core",
+    "walkthrough": "playwright test -c walkthroughs/playwright.config.js"
   },
   "keywords": [],
   "author": "",
