@@ -110,22 +110,23 @@ if ($systemScope && isset($_GET['baseUrl']) && is_string($_GET['baseUrl'])
 // the provider, and the person's own key when they did.
 $apiKey = '';
 if (formulizeAI_providerNeedsKey($provider)) {
-    if ($systemScope) {
-        $apiKey = formulizeAI_loadKey(FORMULIZE_AI_SYSTEM_UID, $provider);
-    } else {
-        $apiKey = $adminConfig['providerLocked']
-            ? formulizeAI_loadKey(FORMULIZE_AI_SYSTEM_UID, $provider)
-            : formulizeAI_loadKey($uid, $provider);
-    }
-
-    // Before a key has ever been saved there is nothing to look up, and both the
-    // assistant's own first-time setup and the admin settings page still need to list
-    // models so the key being typed can be previewed before it is saved. Only then, and
-    // only for that: a chat turn always uses a stored key, so a header can never be used
-    // to drive the proxy with an arbitrary key.
-    if (!$apiKey && $op === 'models' && ($systemScope || !$adminConfig['providerLocked'])
+    // Both the assistant's own settings and the admin settings page list the models for a
+    // key that has been entered and not saved yet. It comes before a saved key, because it
+    // is the one that will replace it. This is only for listing models: a chat turn always
+    // uses a stored key, so a header can never be used to drive the proxy with an arbitrary key.
+    if ($op === 'models' && ($systemScope || !$adminConfig['providerLocked'])
         && isset($_SERVER['HTTP_X_API_KEY'])) {
         $apiKey = trim($_SERVER['HTTP_X_API_KEY']);
+    }
+
+    if (!$apiKey) {
+        if ($systemScope) {
+            $apiKey = formulizeAI_loadKey(FORMULIZE_AI_SYSTEM_UID, $provider);
+        } else {
+            $apiKey = $adminConfig['providerLocked']
+                ? formulizeAI_loadKey(FORMULIZE_AI_SYSTEM_UID, $provider)
+                : formulizeAI_loadKey($uid, $provider);
+        }
     }
 
     if (!$apiKey) {

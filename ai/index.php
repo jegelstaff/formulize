@@ -1072,7 +1072,10 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     // Every provider's model list comes back through the proxy in one shape,
     // {models:[{id,name}]}, so there is nothing provider-specific left to do here.
     // Talking to providers directly is what used to require the key in the browser.
+    let discoverCount = 0; // how many times models have been asked for, so a late answer to an earlier question is ignored
+
     async function discoverModels() {
+        const thisDiscovery = ++discoverCount;
         const provider = providerSelect.value;
         const savedModel = settingsForProvider(provider).model || MODEL_DEFAULTS[provider] || '';
 
@@ -1090,12 +1093,12 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         modelNameInput.disabled = true;
 
         try {
-            // The one case where a key is sent from the browser: the very first setup,
-            // before any key has been stored for the proxy to find. The proxy accepts it
-            // for listing models and nothing else.
+            // The one case where a key is sent from the browser: one that has been entered
+            // and not saved yet, so there is nothing stored for the proxy to find, or only
+            // the key it will replace. The proxy accepts it for listing models and nothing else.
             const discoverHeaders = {};
             const typedKey = apiKeyInput.value.trim();
-            if (typedKey && !hasStoredKey(provider) && !adminConfig.providerLocked) {
+            if (typedKey && needsKey(provider)) {
                 discoverHeaders['X-API-Key'] = typedKey;
             }
 
@@ -1104,6 +1107,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             });
             if (resp.ok) {
                 const data = await resp.json();
+                if (thisDiscovery !== discoverCount) return;
                 const models = data.models || [];
                 if (models.length > 0) populateModelSelect(models, savedModel);
             }
@@ -1111,6 +1115,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             console.error('Model discovery error:', e);
         }
 
+        if (thisDiscovery !== discoverCount) return;
         modelNameInput.disabled = false;
         updateInputState();
     }
@@ -1138,10 +1143,15 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         updateProviderHints();
         refreshSettingsUI();
     });
-    apiKeyInput.addEventListener('blur', () => {
-        if (apiKeyInput.value.trim()) discoverModels();
-        refreshSettingsUI();
+    // Typed, or pasted by any means. After a pause, so that it isn't done for every letter.
+    let keyEnteredTimer = null;
+    apiKeyInput.addEventListener('input', () => {
+        clearTimeout(keyEnteredTimer);
+        keyEnteredTimer = setTimeout(() => {
+            if (apiKeyInput.value.trim()) discoverModels();
+        }, 600);
     });
+    apiKeyInput.addEventListener('blur', () => refreshSettingsUI());
 
     let historyLimitWarningShown = false;
     document.getElementById('context-limit').addEventListener('focus', function() {
