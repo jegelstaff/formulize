@@ -1,11 +1,11 @@
 <?php
 
-// Loaded first so the cache folder is known: it can be outside the code tree. See include/sitepaths.php.
+// Only the site's settings and the folders it keeps its files in, so the cache folder is known wherever it is (see
+// include/sitepaths.php). Nothing else is started: a request for each keystroke that saved the session could
+// overwrite what the page it came from saved there in the meantime.
+$xoopsOption['nocommon'] = true;
 include_once "../../../mainfile.php";
-icms::$logger->disableLogger();
-while(ob_get_level()) {
-    ob_end_clean();
-}
+include_once XOOPS_ROOT_PATH."/include/sitepaths.php";
 
 $cache = strstr($_GET['cache'], ".") ? "" : $_GET['cache']; // don't allow inclusion of badly formed cache filenames, could be hacking attempt
 $term = $_GET['term'];
@@ -36,6 +36,11 @@ if (isset($$cache)) {
         // allow adding new values, so allow this as a new value, except if it matches an existing value
         if (!$match_existing_value AND trim($term)) {
             // write the $term and newterm:$term as the key/value
+            include_once XOOPS_ROOT_PATH."/include/common.php"; // for the site's language
+            icms::$logger->disableLogger();
+            while(ob_get_level()) {
+                ob_end_clean();
+            }
             global $xoopsConfig;
             if (file_exists("../language/".$xoopsConfig['language']."/main.php")) {
                 include_once "../language/".$xoopsConfig['language']."/main.php";
@@ -48,6 +53,11 @@ if (isset($$cache)) {
 }
 
 if (0 == count((array) $found)) {
+    include_once XOOPS_ROOT_PATH."/include/common.php"; // for the site's language
+    icms::$logger->disableLogger();
+    while(ob_get_level()) {
+        ob_end_clean();
+    }
     global $xoopsConfig;
     if (file_exists("../language/".$xoopsConfig['language']."/main.php")) {
         include_once "../language/".$xoopsConfig['language']."/main.php";
