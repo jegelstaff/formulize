@@ -1576,7 +1576,8 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             stopBtn.hidden = true;
             updateInputState();
             if (!userInput.disabled) userInput.focus();
-            // One save per turn, whatever happened: on success it captures the reply, and
+            // Saved at the end of every turn, whatever happened: on success it captures any
+            // notice that followed the reply (renderFinalReply() saved the reply itself), and
             // on failure it still keeps the user's message and the rolled-back history.
             persistConversation();
         }
@@ -1591,12 +1592,15 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     async function renderFinalReply(text, { cutOff = false, toolsRan = 0 } = {}) {
         const hasText = text.trim() !== '';
         if (hasText) {
+            // Saved before it is shown, because showing it takes a while, and the page can be
+            // reloaded in the middle of that.
+            recordMessage(S.senderAI, text, 'ai');
+            persistConversation();
             const scrollBefore = chatWindow.scrollTop;
             const heightBefore = chatWindow.scrollHeight;
             const aiMsg = addMessage(S.senderAI, S.thinking + '...', 'ai');
             chatWindow.scrollTop = scrollBefore + (chatWindow.scrollHeight - heightBefore);
             await typewriterEffect(aiMsg.querySelector('.formulize-ai-reply') || aiMsg.lastElementChild, text);
-            recordMessage(S.senderAI, text, 'ai');
         }
         let notice = '';
         if (cutOff) {
