@@ -112,6 +112,7 @@ const ON_SCREEN = {
 	'Made after year': { handle: 'loans_made_after', kind: 'typed', role: 'spinbutton' },
 	'Start date': { handle: 'loans_start_date', kind: 'typed', role: 'textbox', value: '2003-01-01' },
 	'Materials they can display': { handle: 'loans_materials', kind: 'checkboxes', value: 'Iron' },
+	'Eras they can display': { handle: 'loans_eras', kind: 'checkboxes', value: 'CE' },
 	'Collections wanted': { handle: 'loans_collections', kind: 'checkboxes', value: 'Coins' },
 	'Donor contact': { handle: 'loans_donor', kind: 'list' },
 	'Borrower': { handle: 'loans_borrower', kind: 'typed', role: 'textbox' },

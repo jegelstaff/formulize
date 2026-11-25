@@ -200,6 +200,9 @@ async function addLoanRequest(page, request) {
 	if (request.era) {
 		await entryArea(page).locator('.form-row:has(.formulize-label-loans_era)').getByRole('radio', { name: request.era, exact: true }).check();
 	}
+	for (const era of request.eras ?? []) {
+		await entryArea(page).locator('.form-row:has(.formulize-label-loans_eras)').getByRole('checkbox', { name: era, exact: true }).check();
+	}
 	if (request.madeAfter) {
 		await entryArea(page).locator('.form-row:has(.formulize-label-loans_made_after)').getByRole('spinbutton').fill(request.madeAfter);
 	}
@@ -343,6 +346,13 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 		await finishElement(page, 'Era wanted');
 	});
 
+	test('Create Eras they can display Element', async ({ page }) => {
+		// no artifact is Undated, so a request with CE and Undated shows that each value is looked for, and that CE isn't found in BCE
+		await startElement(page, 'Loan Requests', 'checkbox', 'Eras they can display', 'loans_eras');
+		await fillOptions(page, ['CE', 'BCE', 'Undated']);
+		await finishElement(page, 'Eras they can display');
+	});
+
 	test('Create Made after year Element', async ({ page }) => {
 		await createNoThousandsSeparatorNumber(page, 'Loan Requests', 'Made after year', 'loans_made_after');
 	});
@@ -414,6 +424,7 @@ test.describe('Build the Locations and Loan Requests forms', () => {
 			'Loan Requests: Collections wanted',
 			'Loan Requests: Materials',
 			'Loan Requests: Era wanted',
+			'Loan Requests: Eras they can display',
 			'Loan Requests: Made after year',
 			'Loan Requests: Donor contact',
 			'Loan Requests: Start date',
@@ -651,6 +662,7 @@ test.describe('Data entry for Loan Requests', () => {
 			collections: ['Coins'],
 			materials: ['Silver'],
 			era: 'BCE',
+			eras: ['BCE'],
 			madeAfter: '300',
 			donor: 'François-Marie Arouet',
 			start: '2026-01-15',
@@ -666,6 +678,7 @@ test.describe('Data entry for Loan Requests', () => {
 			collections: ['Weapons', 'Modern History'],
 			materials: ['Iron', 'Wood'],
 			era: 'CE',
+			eras: ['CE', 'Undated'],
 			madeAfter: '1500',
 			donor: 'Hart & Sons Antiques',
 			start: '2003-01-01',
@@ -715,6 +728,11 @@ test.describe('What was built', () => {
 	test('Every loan request has the storage they have, which is the default unless they said otherwise', () => {
 		const storage = Object.fromEntries(dbQuery(`SELECT loans_borrower, IFNULL(loans_storage, 'NULL') FROM ${dbPrefix()}_formulize_loan_requests`));
 		expect(storage).toEqual({ 'City Museum': '11', 'Harbour Gallery': '1', 'University Library': '11', 'Regional Archive': '11', 'Town Hall': '11' });
+	});
+
+	test('Two loan requests say which eras they can display, and the rest are blank', () => {
+		const eras = Object.fromEntries(dbQuery(`SELECT loans_borrower, IFNULL(loans_eras, 'NULL') FROM ${dbPrefix()}_formulize_loan_requests`));
+		expect(eras).toEqual({ 'City Museum': '*=+*:BCE', 'Harbour Gallery': '*=+*:CE*=+*:Undated', 'University Library': 'NULL', 'Regional Archive': 'NULL', 'Town Hall': 'NULL' });
 	});
 
 	test('Hart & Sons Antiques are in Prince Edward Island, which is stored as 10', () => {

@@ -3569,7 +3569,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 					],
 					'value' => [
 						'type' => 'string',
-						'description' => 'The value to compare against. Do _not_ use foreign keys to filter linked elements, and instead use the readable value which this tool understands automatically. For dates use YYYY-MM-DD format, for times use hh:mm (24 hour) format, and for durations use minutes as an integer. Use the special value "{BLANK}" (without quotes) to match blank values. You can also use dynamic values such as {TODAY} for the current date, {TODAY+7} for a week from today, {NOW} for the current time, and {USER} for the current user (when comparing against a list of users). For the IN operator, provide a comma-separated list of values.'
+						'description' => 'The value to compare against. Do _not_ use foreign keys to filter linked elements, and instead use the readable value which this tool understands automatically. For dates use YYYY-MM-DD format, for times use hh:mm (24 hour) format, and for durations use minutes as an integer. Use the special value "{BLANK}" (without quotes) to match blank values. You can also use dynamic values such as {TODAY} for the current date, {TODAY+7} for a week from today, {NOW} for the current time, and {USER} for the current user (when comparing against a list of users). For the IN operator, provide a comma-separated list of values. With an element that can hold several values, such as checkboxes, IN matches when it holds any of the values in the list.'
 					],
 					'type' => [
 						'type' => 'string',
