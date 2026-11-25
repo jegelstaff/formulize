@@ -717,8 +717,7 @@ function formulize_getAppearanceEffectiveSettings($theme = null, $lookKey = null
 function formulize_getAppearanceSiteLook($theme = null) {
     $theme = formulize_resolveAppearanceTheme($theme);
     $looks = formulize_getAppearanceLooks($theme);
-    $values = formulize_readAppearanceCssValues(formulize_getAppearanceCssPath($theme));
-    $key = ($values !== false AND isset($values['appearance_look'])) ? strtolower($values['appearance_look']) : '';
+    $key = formulize_getAppearanceRecordedLook($theme);
     if (isset($looks[$key])) {
         return $key;
     }
@@ -727,6 +726,19 @@ function formulize_getAppearanceSiteLook($theme = null) {
     }
     $roots = formulize_appearanceLookChildren($looks, '');
     return $roots ? $roots[0] : (string) key($looks);
+}
+
+/**
+ * The look a theme's appearance.css records, whose CSS the file is. The theme may not
+ * have that look any more, if its file was removed some way other than the Looks tab,
+ * and then the site uses another (see formulize_getAppearanceSiteLook).
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string the look's key, or '' when none is recorded
+ */
+function formulize_getAppearanceRecordedLook($theme = null) {
+    $values = formulize_readAppearanceCssValues(formulize_getAppearanceCssPath($theme));
+    return ($values !== false AND isset($values['appearance_look'])) ? strtolower($values['appearance_look']) : '';
 }
 
 // ---------------------------------------------------------------------------
@@ -2892,6 +2904,11 @@ function formulize_regenerateAppearanceCss($theme = null) {
  * same CSS is emitted inline instead, so the configured appearance is never
  * simply lost.
  *
+ * The site look's CSS is inline too when appearance.css records a look the theme
+ * doesn't have, so pages match the look the Looks tab says the site uses. The file is
+ * left as it is: the look may only be missing for a moment, while a site's code is
+ * being updated, and the record is what has the site use it again when it is back.
+ *
  * @return string HTML to print in the head, after the theme stylesheet links
  */
 function formulize_renderAppearanceHead() {
@@ -2924,7 +2941,7 @@ function formulize_renderAppearanceHead() {
         $html .= '<link rel="stylesheet" type="text/css" media="all" href="' . formulize_getAppearanceUrl($theme) . '/looks/' . $pageLook . '.css?v=' . filemtime($lookCssPath) . '" />' . "\n";
     } elseif ($lookCssPath) {
         $html .= '<style type="text/css" media="all">' . "\n" . formulize_buildAppearanceCssRules(formulize_getAppearanceEffectiveSettings($theme, $pageLook), $theme) . "\n" . '</style>' . "\n";
-    } elseif ($cssExists) {
+    } elseif ($cssExists AND formulize_getAppearanceRecordedLook($theme) === formulize_getAppearanceSiteLook($theme)) {
         $html .= '<link rel="stylesheet" type="text/css" media="all" href="' . formulize_getAppearanceUrl($theme) . '/appearance.css?v=' . filemtime($cssPath) . '" />' . "\n";
     } else {
         $html .= '<style type="text/css" media="all">' . "\n" . formulize_buildAppearanceCssRules(formulize_getAppearanceSettings($theme), $theme) . "\n" . '</style>' . "\n";
