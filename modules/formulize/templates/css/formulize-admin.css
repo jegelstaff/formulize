@@ -1994,7 +1994,7 @@ div.flex-box {
 	position: absolute;
 	right: 4em;
 	top: 3em;
-  z-index: 1;
+  z-index: 0;
   background-color: white;
   padding: 0.5em;
 	border: 1px solid #d3d3d3;
@@ -2034,10 +2034,9 @@ form.formulize-admin-form input[type=text].filter-forms {
 	border: 3px solid #6eac2c;
 	border-radius: 7px;
 	padding: 0.5em;
-	z-index: 100;
 	background-color: #fff;
 	height: 78%;
-	z-index: 100;
+	z-index: 1;
 	overflow-y: auto;
 }
 
@@ -2062,9 +2061,10 @@ p.form-listing-id {
 div.form-name {
 	height: 31px;
 }
+/* No z-index here. Each form's details panel is inside its box, so a z-index on the boxes would trap the panels in them, */
+/* and the later boxes would cover the panels of the earlier ones. */
 div[id^=form-details-box-] {
 	height: auto;
-	z-index: 1;
 	background-color: white;
 }
 div[id^=form-details-box-].open-accordion-listing {

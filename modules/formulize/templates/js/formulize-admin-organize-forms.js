@@ -322,6 +322,6 @@ function applyCSSCustom() {
 	$('div.form-name').css('width', 'auto');
 	$('div.form-screen-list').css('width', 'auto');
 	$('div.form-data').css('display', 'none');
-	$('.organize-toggle').css('z-index', '1');
+	$('.organize-toggle').css('z-index', '0');
 
 }
