@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
-import { login, saveAdminForm, saveAdminSettings, openMenuAccordion, openElementAccordion, waitForAdminPageReady, editScreenPage, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape, showPermissionsFor, openApplicationAccordion, waitForJQueryAnimations, signOutLink } from '../../utils';
+import { login, saveAdminForm, saveAdminSettings, openMenuAccordion, openElementAccordion, waitForAdminPageReady, editScreenPage, setMenuEntryGroups, selectAutocompleteOption, setCodeMirrorValue, dbQuery, dbPrefix, sqlEscape, showPermissionsFor, showPermissionsForUser, openApplicationAccordion, waitForJQueryAnimations, signOutLink } from '../../utils';
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -132,13 +132,7 @@ test.describe('Set Permissions', () => {
 		await saveAdminForm(page);
 		// Verify the per-user effective scope resolves from the standard permissions.
 		// (Donors/Collections/Exhibits inherit these same perms, so the scopes apply there too.)
-		await selectAutocompleteOption(page, page.locator('#submitted_user_user'), 'Modern History Staff', { searchText: 'hist' });
-		// The jQuery-UI autocomplete dropdown and the fixed #admin_toolbar can both
-		// intercept the button click (a UI/Playwright timing race). Wait for the
-		// dropdown to close, then force past any fixed-toolbar overlap.
-		await expect(page.locator('ul.ui-autocomplete:visible')).toHaveCount(0);
-		await page.getByRole('button', { name: 'Show permissions for the user' }).click({ force: true });
-		await waitForAdminPageReady(page);
+		await showPermissionsForUser(page, 'Modern History Staff', 'hist');
 		// The permissions redesign reworded the visibility labels:
 		//   groupscope  -> "View entries made by their group(s):"
 		//   globalscope -> "View entries made by anyone"
@@ -146,10 +140,7 @@ test.describe('Set Permissions', () => {
 		// groupscope line but not the global one.
 		await expect(page.getByText('View entries made by their group(s)')).toBeVisible();
 		await expect(page.getByText('View entries made by anyone')).not.toBeVisible();
-		await selectAutocompleteOption(page, page.locator('#submitted_user_user'), 'Curator One', { searchText: 'cur' });
-		await expect(page.locator('ul.ui-autocomplete:visible')).toHaveCount(0);
-		await page.getByRole('button', { name: 'Show permissions for the user' }).click({ force: true });
-		await waitForAdminPageReady(page);
+		await showPermissionsForUser(page, 'Curator One', 'cur');
 		// Curator One is in the Curators groups (globalscope).
 		await expect(page.getByText('View entries made by anyone')).toBeVisible();
 		await expect(page.getByText('View entries made by their group(s)')).not.toBeVisible();

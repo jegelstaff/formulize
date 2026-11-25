@@ -711,6 +711,28 @@ export async function showPermissionsFor(page, groups) {
 }
 
 /**
+ * On a form's Permissions tab, show the permissions a user has, the way an admin does: pick the user in "Review
+ * permissions for a user", then Show permissions for the user. The button saves the tab and then draws the page again,
+ * so this waits for the new page and the user's panel on it. Until then the page is the one from before the click,
+ * with the group panels that were showing, and it looks ready.
+ * @param {object} page Playwright page
+ * @param {string} name the user's name, as the autocomplete lists it
+ * @param {string} searchText what to type to find them
+ */
+export async function showPermissionsForUser(page, name, searchText) {
+	await selectAutocompleteOption(page, page.locator('#submitted_user_user'), name, { searchText });
+	// The autocomplete's list and the fixed #admin_toolbar can both be over the button, so wait for the list to close,
+	// then click past the toolbar
+	await expect(page.locator('ul.ui-autocomplete:visible')).toHaveCount(0);
+	await Promise.all([
+		page.waitForEvent('load', { timeout: 60000 }),
+		page.getByRole('button', { name: 'Show permissions for the user' }).click({ force: true }),
+	]);
+	await waitForAdminPageReady(page);
+	await expect(page.getByRole('group', { name: `User Permissions for ${name}` })).toBeVisible();
+}
+
+/**
  * Waits for a conditional element to appear or be updated after a trigger action
  * Does not work for conditional elements that disappear on a trigger action - will need a different function for that
  * @param {Page} page - Playwright page object
