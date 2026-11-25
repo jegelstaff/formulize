@@ -373,6 +373,11 @@ jobs:
       if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || steps.setup.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/element_code_files_test.php
 
+    # Needs the application booted too, and writes nothing of the system's
+    - name: PHP integrity tests (the looks that come with a theme, and writing look files)
+      if: ${{ matrix.php && !inputs.test_filter && !cancelled() && (success() || steps.setup.outcome == 'success') }}
+      run: docker exec formulize-web-1 php /var/www/html/tests/appearance_looks_test.php
+
     # Before the containers come down, since the report is made in the web container, with the PHP the tests ran on. Also
     # after a failure, for the tests that did run. The run has only the commit it tests, so the lines that changed come from
     # the commit where this branch left the base branch, which GitHub finds, and which is fetched on its own.

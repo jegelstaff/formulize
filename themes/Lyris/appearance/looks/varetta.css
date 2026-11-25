@@ -13,7 +13,7 @@
  * appearance_customfont: IBM Plex Sans
  * appearance_headingfont: custom
  * appearance_headingcustomfont: IBM Plex Mono
- * appearance_overrides: {"--fz-title-text":"lg","--fz-label-text":"xs","--fz-label-weight":500,"--fz-field-text":"xs-plus","--fz-help-text":"xs","--fz-field-height":8,"--fz-field-padding-x":2.5,"--fz-field-gap":3.5,"--fz-label-gap":1,"--fz-help-gap":1,"--fz-option-gap":0,"--fz-control-height":7,"--fz-control-padding-x":2.5,"--fz-menu-item-height":6.5,"--fz-tab-padding-y":0.5,"--fz-tab-padding-x":2.5,"--fz-row-height":7.5,"--fz-cell-padding-x":2.5,"--fz-table-header-height":8,"--fz-toolbar-height":11,"--fz-toolbar-padding-x":3,"--fz-card-padding":3,"--fz-card-gap":2,"--fz-form-padding":4,"--fz-drawer-padding-x":4,"--fz-drawer-padding-y":3,"--fz-page-padding":3,"--fz-table-header-font":"secondary","--fz-label-color":"text-muted","--fz-tab-bg":"surface-2","--fz-toolbar-bg":"surface-2","--fz-header-text":"text","--fz-header-bg":"surface-3","--fz-row-hover":"primary-soft","--fz-field-radius":3,"--fz-button-radius":3,"--fz-tab-radius":3,"--fz-form-radius":4,"--fz-card-radius":4,"--fz-menu-radius":4,"--fz-sidemenu-bg":"surface","--fz-sidemenu-item-radius":3,"--fz-sidemenu-active-bg":"primary-soft"}
+ * appearance_overrides: {"--fz-title-text":"lg","--fz-label-text":"xs","--fz-label-weight":500,"--fz-field-text":"xs-plus","--fz-help-text":"xs","--fz-field-height":8,"--fz-field-padding-x":2.5,"--fz-field-gap":3.5,"--fz-label-gap":1,"--fz-help-gap":1,"--fz-option-gap":0,"--fz-control-height":7,"--fz-control-padding-x":2.5,"--fz-menu-item-height":6.5,"--fz-tab-padding-y":0.5,"--fz-tab-padding-x":2.5,"--fz-row-height":7.5,"--fz-cell-padding-x":2.5,"--fz-table-header-height":8,"--fz-toolbar-height":11,"--fz-toolbar-padding-x":3,"--fz-card-padding":3,"--fz-card-gap":2,"--fz-form-padding":4,"--fz-drawer-padding-x":4,"--fz-drawer-padding-y":3,"--fz-page-padding":3,"--fz-table-header-font":"secondary","--fz-label-color":"text-muted","--fz-tab-bg":"surface-2","--fz-toolbar-bg":"surface-2","--fz-header-text":"text","--fz-header-bg":"surface-3","--fz-row-hover":"primary-soft","--fz-field-radius":3,"--fz-button-radius":3,"--fz-tab-radius":3,"--fz-form-radius":4,"--fz-card-radius":4,"--fz-menu-radius":4,"--fz-sidemenu-bg":"surface","--fz-sidemenu-item-radius":3}
  * appearance_primary: #0e6070
  * appearance_background: #eceff2
  * appearance_text: #0f1419
@@ -68,7 +68,6 @@
   --fz-menu-radius: 4px;
   --fz-sidemenu-bg: var(--fz-color-surface);
   --fz-sidemenu-item-radius: 3px;
-  --fz-sidemenu-active-bg: var(--fz-color-accent-soft);
   --fz-color-accent: #0e6070;
   --fz-color-accent-text: #0e6070;
   --fz-color-accent-hover: color-mix(in srgb, #0e6070 85%, #000);

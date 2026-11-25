@@ -717,8 +717,7 @@ function formulize_getAppearanceEffectiveSettings($theme = null, $lookKey = null
 function formulize_getAppearanceSiteLook($theme = null) {
     $theme = formulize_resolveAppearanceTheme($theme);
     $looks = formulize_getAppearanceLooks($theme);
-    $values = formulize_readAppearanceCssValues(formulize_getAppearanceCssPath($theme));
-    $key = ($values !== false AND isset($values['appearance_look'])) ? strtolower($values['appearance_look']) : '';
+    $key = formulize_getAppearanceRecordedLook($theme);
     if (isset($looks[$key])) {
         return $key;
     }
@@ -727,6 +726,19 @@ function formulize_getAppearanceSiteLook($theme = null) {
     }
     $roots = formulize_appearanceLookChildren($looks, '');
     return $roots ? $roots[0] : (string) key($looks);
+}
+
+/**
+ * The look a theme's appearance.css records, whose CSS the file is. The theme may not
+ * have that look any more, if its file was removed some way other than the Looks tab,
+ * and then the site uses another (see formulize_getAppearanceSiteLook).
+ *
+ * @param string|null $theme theme folder name, defaults to the active theme
+ * @return string the look's key, or '' when none is recorded
+ */
+function formulize_getAppearanceRecordedLook($theme = null) {
+    $values = formulize_readAppearanceCssValues(formulize_getAppearanceCssPath($theme));
+    return ($values !== false AND isset($values['appearance_look'])) ? strtolower($values['appearance_look']) : '';
 }
 
 // ---------------------------------------------------------------------------
@@ -951,7 +963,8 @@ function formulize_appearanceLookChanges($looks, $key, $theme) {
 /**
  * Write a theme's looks: each look's stylesheet, and the theme's appearance.css,
  * which records the look the site uses and is that look's CSS. Every one is
- * written, since a change to a look reaches every look based on it.
+ * gone through, since a change to a look reaches every look based on it, and
+ * written if it comes out different.
  *
  * @param string $theme theme folder name
  * @param array $looks the theme's looks, as they are to be
@@ -965,12 +978,49 @@ function formulize_writeAppearanceLookFiles($theme, $looks, $siteLook) {
     }
     $written = true;
     foreach ($looks as $key => $look) {
-        $written = (file_put_contents($dir . '/' . $key . '.css', formulize_buildAppearanceLookCss($key, $looks, $theme)) !== false) AND $written;
+        if (!formulize_writeAppearanceFile($dir . '/' . $key . '.css', formulize_buildAppearanceLookCss($key, $looks, $theme))) {
+            $written = false;
+        }
     }
-    $cssPath = formulize_getAppearanceCssPath($theme);
-    $written = (file_put_contents($cssPath, formulize_buildAppearanceCss($theme, $looks, $siteLook)) !== false) AND $written;
-    clearstatcache(true, $cssPath); // the file's mtime is read right after this
+    if (!formulize_writeAppearanceFile(formulize_getAppearanceCssPath($theme), formulize_buildAppearanceCss($theme, $looks, $siteLook))) {
+        $written = false;
+    }
     return $written;
+}
+
+/**
+ * Write one of a theme's appearance files, if its contents are changing. The looks
+ * that come with a theme are in version control, so a file that would come out the
+ * same is left alone, and only a real change shows up as one.
+ *
+ * Written to a temporary file and renamed into place, because rename is atomic:
+ * another request reading the file sees the old one or the whole new one. Each of
+ * these files is a record, and half of one reads as a look that isn't there.
+ *
+ * @param string $path the file's path
+ * @param string $css what it is to contain
+ * @return boolean whether the file has those contents now
+ */
+function formulize_writeAppearanceFile($path, $css) {
+    if (is_file($path) AND file_get_contents($path) === $css) {
+        return true;
+    }
+    $temporaryFile = $path . '.' . getmypid() . '.tmp'; // not .css, so it's never taken for a look
+    if (file_put_contents($temporaryFile, $css) !== strlen($css)) {
+        if (is_file($temporaryFile)) { // part of it, on a full disk
+            @unlink($temporaryFile);
+        }
+        return false;
+    }
+    if (is_file($path)) {
+        @chmod($temporaryFile, fileperms($path) & 0777);
+    }
+    if (!rename($temporaryFile, $path)) {
+        @unlink($temporaryFile);
+        return false;
+    }
+    clearstatcache(true, $path); // the file's mtime is read right after this
+    return true;
 }
 
 /**
@@ -2854,6 +2904,11 @@ function formulize_regenerateAppearanceCss($theme = null) {
  * same CSS is emitted inline instead, so the configured appearance is never
  * simply lost.
  *
+ * The site look's CSS is inline too when appearance.css records a look the theme
+ * doesn't have, so pages match the look the Looks tab says the site uses. The file is
+ * left as it is: the look may only be missing for a moment, while a site's code is
+ * being updated, and the record is what has the site use it again when it is back.
+ *
  * @return string HTML to print in the head, after the theme stylesheet links
  */
 function formulize_renderAppearanceHead() {
@@ -2886,7 +2941,7 @@ function formulize_renderAppearanceHead() {
         $html .= '<link rel="stylesheet" type="text/css" media="all" href="' . formulize_getAppearanceUrl($theme) . '/looks/' . $pageLook . '.css?v=' . filemtime($lookCssPath) . '" />' . "\n";
     } elseif ($lookCssPath) {
         $html .= '<style type="text/css" media="all">' . "\n" . formulize_buildAppearanceCssRules(formulize_getAppearanceEffectiveSettings($theme, $pageLook), $theme) . "\n" . '</style>' . "\n";
-    } elseif ($cssExists) {
+    } elseif ($cssExists AND formulize_getAppearanceRecordedLook($theme) === formulize_getAppearanceSiteLook($theme)) {
         $html .= '<link rel="stylesheet" type="text/css" media="all" href="' . formulize_getAppearanceUrl($theme) . '/appearance.css?v=' . filemtime($cssPath) . '" />' . "\n";
     } else {
         $html .= '<style type="text/css" media="all">' . "\n" . formulize_buildAppearanceCssRules(formulize_getAppearanceSettings($theme), $theme) . "\n" . '</style>' . "\n";
