@@ -951,7 +951,8 @@ function formulize_appearanceLookChanges($looks, $key, $theme) {
 /**
  * Write a theme's looks: each look's stylesheet, and the theme's appearance.css,
  * which records the look the site uses and is that look's CSS. Every one is
- * written, since a change to a look reaches every look based on it.
+ * gone through, since a change to a look reaches every look based on it, and
+ * written if it comes out different.
  *
  * @param string $theme theme folder name
  * @param array $looks the theme's looks, as they are to be
@@ -965,12 +966,49 @@ function formulize_writeAppearanceLookFiles($theme, $looks, $siteLook) {
     }
     $written = true;
     foreach ($looks as $key => $look) {
-        $written = (file_put_contents($dir . '/' . $key . '.css', formulize_buildAppearanceLookCss($key, $looks, $theme)) !== false) AND $written;
+        if (!formulize_writeAppearanceFile($dir . '/' . $key . '.css', formulize_buildAppearanceLookCss($key, $looks, $theme))) {
+            $written = false;
+        }
     }
-    $cssPath = formulize_getAppearanceCssPath($theme);
-    $written = (file_put_contents($cssPath, formulize_buildAppearanceCss($theme, $looks, $siteLook)) !== false) AND $written;
-    clearstatcache(true, $cssPath); // the file's mtime is read right after this
+    if (!formulize_writeAppearanceFile(formulize_getAppearanceCssPath($theme), formulize_buildAppearanceCss($theme, $looks, $siteLook))) {
+        $written = false;
+    }
     return $written;
+}
+
+/**
+ * Write one of a theme's appearance files, if its contents are changing. The looks
+ * that come with a theme are in version control, so a file that would come out the
+ * same is left alone, and only a real change shows up as one.
+ *
+ * Written to a temporary file and renamed into place, because rename is atomic:
+ * another request reading the file sees the old one or the whole new one. Each of
+ * these files is a record, and half of one reads as a look that isn't there.
+ *
+ * @param string $path the file's path
+ * @param string $css what it is to contain
+ * @return boolean whether the file has those contents now
+ */
+function formulize_writeAppearanceFile($path, $css) {
+    if (is_file($path) AND file_get_contents($path) === $css) {
+        return true;
+    }
+    $temporaryFile = $path . '.' . getmypid() . '.tmp'; // not .css, so it's never taken for a look
+    if (file_put_contents($temporaryFile, $css) !== strlen($css)) {
+        if (is_file($temporaryFile)) { // part of it, on a full disk
+            @unlink($temporaryFile);
+        }
+        return false;
+    }
+    if (is_file($path)) {
+        @chmod($temporaryFile, fileperms($path) & 0777);
+    }
+    if (!rename($temporaryFile, $path)) {
+        @unlink($temporaryFile);
+        return false;
+    }
+    clearstatcache(true, $path); // the file's mtime is read right after this
+    return true;
 }
 
 /**

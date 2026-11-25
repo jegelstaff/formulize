@@ -71,6 +71,9 @@ them *after* the e2e suite, when the setup specs have finished building the muse
   renaming: PHP can be written many more ways than the museum system happens to. It boots the application, and
   reads and writes nothing of the system. What renaming and the update patch do to a real system is tested through
   the application, in `03-validate-sequential/`.
+* `appearance_looks_test.php` - each look that comes with a theme is exactly what a save of the theme's looks writes,
+  so a save never leaves a site with a changed file nobody touched, and a look file is only written when it changes.
+  It boots the application, and the files it writes are in a folder of its own.
 
 To run one against a local docker environment:
 
