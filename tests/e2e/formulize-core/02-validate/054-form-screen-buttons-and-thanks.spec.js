@@ -4,6 +4,7 @@ import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementTyp
 	waitForJQueryAnimations } from '../../utils';
 const { execFileSync } = require('child_process');
 const { webContainer } = require('../../docker-containers');
+const { sitePath } = require('../../site-paths');
 
 // A form screen's navigation buttons, its Thank You page, and where its intro and thanks text are kept.
 //
@@ -48,11 +49,11 @@ test.afterAll(async ({ browser }) => {
 
 const screenTab = (tab) => `/modules/formulize/admin/ui.php?page=screen&fid=${fid}&sid=${formSid}&tab=${tab}`;
 
-// What a file in modules/formulize/code/ holds, or null if there is no such file. Read only. A box's text is posted
+// What a file in the code folder (FORMULIZE_CODE_PATH) holds, or null if there is no such file. Read only. A box's text is posted
 // with \r\n line breaks, the way browsers send a textarea, so line breaks are compared as \n.
 function codeFile(name) {
 	const out = execFileSync('docker', ['exec', webContainer(), 'sh', '-c',
-		`f='/var/www/html/modules/formulize/code/${name.replace(/[^A-Za-z0-9_.]/g, '')}'; if [ -f "$f" ]; then printf 'FOUND:'; cat "$f"; fi`], { encoding: 'utf8' });
+		`f='${sitePath('FORMULIZE_CODE_PATH')}/${name.replace(/[^A-Za-z0-9_.]/g, '')}'; if [ -f "$f" ]; then printf 'FOUND:'; cat "$f"; fi`], { encoding: 'utf8' });
 	return out.startsWith('FOUND:') ? out.substring(6).replace(/\r\n/g, '\n') : null;
 }
 

@@ -19,7 +19,8 @@ Every request needs steps 1 and 2. A normal webpage in the active theme goes thr
 
 ```
 1. mainfile.php
-   ↓ Defines paths, database credentials, security constants
+   ↓ Requires include/site.php: finds the site folder, reads its settings.php (database login),
+     defines paths and security constants. See site-directory.md
    ↓ Auto-includes include/common.php
 
 2. include/common.php
@@ -136,7 +137,8 @@ Core events fire through `icms::$preload->triggerEvent()`, and the handlers are 
 
 ```
 /
-├── mainfile.php              # Bootstrap entry point. The tracked copy is an uninstalled placeholder
+├── mainfile.php              # Bootstrap entry point. Never edited: it requires include/site.php
+├── sites/                    # Each site's own files: sites/default/settings.php, private/, uploads/, var/
 ├── header.php                # Theme/template initialization
 ├── footer.php                # Output rendering
 ├── index.php                 # Homepage routing
@@ -197,7 +199,7 @@ Class names map directly to file paths, with each underscore becoming a folder: 
 
 ### Where database credentials are
 
-`mainfile.php` names a trust file, in a folder that should be outside the webroot in production. It holds the database credentials as `SDATA_DB_*` constants, which `mainfile.php` copies to `XOOPS_DB_*`. Never change `SDATA_DB_SALT` after an install. Every installation has its own table prefix, so don't hardcode one.
+A site's `settings.php`, in its site folder, holds the database credentials as `SDATA_DB_*` constants, which `include/site.php` copies to `XOOPS_DB_*`. Each can come from an environment variable instead. A site installed before the site folder has its own `mainfile.php`, which names a trust file holding the same constants. See [site-directory](site-directory.md). Never change `SDATA_DB_SALT` after an install. Every installation has its own table prefix, so don't hardcode one.
 
 ---
 

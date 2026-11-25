@@ -8,15 +8,22 @@ title: Folders in Formulize that need to be writable
 
 # Folders in Formulize that need to be writable
 
-There are certain folders in Formulize which must be writable by the web server. If they are not, Formulize will not work properly.
+The web server writes to one folder: the [site folder](../site_folder), which holds everything that belongs to your site rather than to Formulize. It's `sites/default` unless you've put it somewhere else. If the web server can't write there, Formulize won't work properly.
 {% for path in site.data.writableFilesAndFolders.paths %}
-- /{{ path }}{% if path == 'mainfile.php' %} &mdash; only needs to be writable during installation!{% endif %}{% endfor %}
+- /{{ path }}{% if path == 'modules' %} &mdash; only during installation, while the installer adds the Protector module. It can be read-only afterwards.{% endif %}{% endfor %}
 
-Note that the mail_templates folder in other language might need to be writable too, of course.
+Nothing else in Formulize needs to be writable, so the rest of the files can belong to another user, or be read-only.
 
-## Make mainfile.php read-only after installation
+If you put the site folder somewhere else, with `FORMULIZE_SITE_PATH`, that folder needs to be writable instead of `/sites`.
 
-If you're going through [the installer to setup Formulize](../installing_formulize) for the first time, make sure that ```mainfile.php``` in the root of the website is writable by the web server. After installation, ```mainfile.php``` can be made read-only.
+## Sites installed before the site folder
+
+A site installed with an earlier version of Formulize keeps its files in folders throughout the code, and the web server has to be able to write to all of them:
+
+- /mainfile.php &mdash; only during installation
+- /cache, /templates_c, /tokens, /uploads, /logs, /themes
+- /modules/formulize/cache, /modules/formulize/code, /modules/formulize/export, /modules/formulize/queue, /modules/formulize/temp, /modules/formulize/templates/screens
+- /modules/formulize/language/english/mail_template and /modules/formulize/language/english/formulize_dateformats.php, and the same in any other language your site uses
 
 ## File Permissions and Git
 

@@ -107,13 +107,15 @@ function old_put($path, $contents) {
 
 function old_files() {
 	$folders = array_merge(
-		array(XOOPS_ROOT_PATH . '/modules/formulize/code', XOOPS_ROOT_PATH . '/modules/formulize/templates/screens'),
-		glob(XOOPS_ROOT_PATH . '/modules/formulize/language/*/mail_template', GLOB_ONLYDIR));
+		array(FORMULIZE_CODE_PATH, FORMULIZE_SCREEN_TEMPLATES_PATH),
+		glob(FORMULIZE_SITE_LANGUAGE_PATH . '/*/mail_template', GLOB_ONLYDIR));
 	$files = array();
 	foreach ($folders as $folder) {
 		foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($folder, FilesystemIterator::SKIP_DOTS)) as $file) {
 			if ($file->isFile()) {
-				$files[substr($file->getPathname(), strlen(XOOPS_ROOT_PATH))] = str_replace("\r\n", "\n", file_get_contents($file->getPathname()));
+				// named from the root when they're in the code, and in full when the site keeps them in a folder of its own outside it
+				$name = strpos($file->getPathname(), XOOPS_ROOT_PATH . '/') === 0 ? substr($file->getPathname(), strlen(XOOPS_ROOT_PATH)) : $file->getPathname();
+				$files[$name] = str_replace("\r\n", "\n", file_get_contents($file->getPathname()));
 			}
 		}
 	}
@@ -329,7 +331,7 @@ if ($command == 'compare') {
 	exit(0);
 }
 
-$codeFolder = XOOPS_ROOT_PATH . '/modules/formulize/code/';
+$codeFolder = FORMULIZE_CODE_PATH . '/';
 $revisionsOfArtifacts = old_table('formulize_artifacts_revisions');
 $plantedCaption = 'See Artifacts_Year and Artifacts-Era here';
 $plantedKey = "\n\$oldKey = \$anArray['Artifacts_Year'];\n";
@@ -578,7 +580,7 @@ if ($command == 'break') {
 	}
 
 	// what is in the code files and the screens' own templates
-	$codeFiles = array_filter(array_merge(glob($codeFolder . '*.php'), glob(XOOPS_ROOT_PATH . '/modules/formulize/templates/screens/*/[0-9]*/*')), 'is_file');
+	$codeFiles = array_filter(array_merge(glob($codeFolder . '*.php'), glob(FORMULIZE_SCREEN_TEMPLATES_PATH . '/*/[0-9]*/*')), 'is_file');
 	foreach ($codeFiles as $path) {
 		$contents = $original = file_get_contents($path);
 		foreach ($misspelled as $handle => $spelling) {

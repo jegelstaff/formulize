@@ -4,6 +4,7 @@ import { login, saveAdminForm, waitForAdminPageReady, addElementForm, ElementTyp
 	screenTemplatesForm } from '../../utils';
 const { execFileSync } = require('child_process');
 const { webContainer } = require('../../docker-containers');
+const { sitePath } = require('../../site-paths');
 
 // What an admin types into a form screen's intro and thanks text, a screen's templates, a text box's default value
 // and a block of static content has to come back exactly as it was typed, however many times it is saved, and be
@@ -73,7 +74,7 @@ function editorValue(page, boxName) {
 // The folders of a screen's own templates on the server, in every theme. Read only, to check what the application did.
 function screenTemplateFolders(sid) {
 	const out = execFileSync('docker', ['exec', webContainer(), 'sh', '-c',
-		`ls -d /var/www/html/modules/formulize/templates/screens/*/${parseInt(sid, 10)} 2>/dev/null || true`], { encoding: 'utf8' });
+		`ls -d ${sitePath('FORMULIZE_SCREEN_TEMPLATES_PATH')}/*/${parseInt(sid, 10)} 2>/dev/null || true`], { encoding: 'utf8' });
 	return out.split('\n').filter(line => line.trim());
 }
 

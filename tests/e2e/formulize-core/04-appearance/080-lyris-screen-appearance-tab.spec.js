@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { appearanceUrlPath } = require('../../site-paths');
 import { E2E_TEST_ADMIN_USERNAME, E2E_TEST_ADMIN_PASSWORD, E2E_TEST_BASE_URL } from '../config';
 import {
 	login, dbQuery, dbPrefix, getSiteTheme, setSiteThemeInDb, restoreSiteTheme, createLook, deleteLooksNamed,
@@ -116,13 +117,13 @@ test.describe("A screen's Appearance tab", () => {
 		// the screen's page: the look's stylesheet, with its sizes, and the full width
 		const compact = (await createdLookValues(page))['--fz-control-height'];
 		await page.goto(`/modules/formulize/index.php?sid=${screens.listOfEntries}`);
-		await expect(page.locator(`link[rel="stylesheet"][href*="/themes/Lyris/appearance/looks/${key}.css"]`)).toBeAttached();
+		await expect(page.locator(`link[rel="stylesheet"][href*="${appearanceUrlPath('Lyris')}/looks/${key}.css"]`)).toBeAttached();
 		expect(await rootValue(page, '--fz-control-height')).toMatch(new RegExp(`\\*\\s*${compact}\\)$`));
 		expect(await rootValue(page, '--formulize-content-max-width')).toBe('100%');
 
 		// a screen left to follow the site doesn't have them
 		await page.goto(`/modules/formulize/index.php?sid=${screens.multiPage}`);
-		await expect(page.locator('link[rel="stylesheet"][href*="/themes/Lyris/appearance/"]').first()).toBeAttached();
+		await expect(page.locator(`link[rel="stylesheet"][href*="${appearanceUrlPath('Lyris')}/"]`).first()).toBeAttached();
 		await expect(page.locator(`link[rel="stylesheet"][href*="/looks/${key}.css"]`)).toHaveCount(0);
 		expect(await rootValue(page, '--fz-control-height')).not.toMatch(new RegExp(`\\*\\s*${compact}\\)$`));
 		expect(await rootValue(page, '--formulize-content-max-width')).not.toBe('100%');
@@ -155,7 +156,7 @@ test.describe("A screen's Appearance tab", () => {
 
 // The values the look, Compact, gives the sizes, read off its stylesheet
 async function createdLookValues(page) {
-	const response = await page.request.get(`/themes/Lyris/appearance/looks/${key}.css?e2e=${Date.now()}`);
+	const response = await page.request.get(`${appearanceUrlPath('Lyris')}/looks/${key}.css?e2e=${Date.now()}`);
 	const css = await response.text();
 	const overrides = css.match(/appearance_overrides:\s*(\{.*\})/)[1];
 	return JSON.parse(overrides);

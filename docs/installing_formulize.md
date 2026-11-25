@@ -12,9 +12,9 @@ If you're setting up a Formulize site for the first time, you will need to follo
 
 1. Create a database on your server, note the name, and the username and password used to access the database. Make sure the database user has full rights to the database, including the ability to ALTER tables, etc.
 
-2. Create a "trust" folder on the website, preferrably outside the web root (but some server configurations can't read a folder outside the web root). This folder will be used by Formulize to store the database name, and the username and password for accessing the database.
+2. Get the Formulize files onto your server and into the webroot folder. Make sure the web server can write to the ```sites``` folder, and to ```modules``` while you install. See [folders that need to be writable](../writable_folders).
 
-3. Get the Formulize files onto your server and into the webroot folder. Make sure the [folders that need to be writable](../writable_folders) by the server, are writable. Also, make sure that ```mainfile.php``` in the root of the website, is writable by the server.
+3. Decide where your [site folder](../site_folder) goes. It holds your site's settings, including the database password, and everything else that belongs to your site. It's ```sites/default```, inside the Formulize files, unless you set ```FORMULIZE_SITE_PATH``` in the web server or the environment to another folder, such as one outside the web root.
 
 4. In a web browser, browse to the folder where you placed the Formulize files. ie: ```https://mysite.com``` if you put the Formulize files in the root of your website, or ```https://mysite.com/formulize/``` if you put the Formulize files in a subfolder named _formulize_, for example.
 
@@ -26,9 +26,9 @@ If you're setting up a Formulize site for the first time, you will need to follo
 
 	![Installer Page 2](../../../images/installer2.png)
 
-6. The installer will automatically fill in the URL and physical path for you. You need to specify the _trust path_ yourself. This should be the full path to the folder you created in step 2 above. Ideally, this folder should be outside the web root.
+6. The installer will automatically fill in the URL and physical path for you, and show the site folder. If it says the web server can't write to the site folder, make the folder writable and click the arrow again.
 
-	Once you've put in the correct _trust path_, click the arrow in the bottom right to continue.
+	Once everything is correct, click the arrow in the bottom right to continue.
 
 	![Installer Page 3](../../../images/installer3.png)
 
@@ -44,7 +44,7 @@ If you're setting up a Formulize site for the first time, you will need to follo
 
 	![Installer Page 5](../../../images/installer5.png)
 
-9. On the next page, the installer shows the system configuration details it is about to save in ```mainfile.php``` and in the _trust path_. Click the arrow in the bottom right to continue.
+9. On the next page, the installer shows the system configuration details it is about to save in ```settings.php```, in the site folder. Click the arrow in the bottom right to continue.
 
 	![Installer Page 6](../../../images/installer6.png)
 
@@ -84,4 +84,4 @@ If you're setting up a Formulize site for the first time, you will need to follo
 
 	![Installer Page 15](../../../images/installer15.png)
 
-19. Now that everything is installed, set 400 permission (read-only, owner-only) on the ```mainfile.php``` and the "trust" folder and its contents. If for whatever reason the web server user is not the owner of those files, make the web server the owner of the files.
+19. Now that everything is installed, the ```modules``` folder can be read-only again. ```settings.php``` in the site folder is only readable by the web server's user and group. Keep it that way: it holds your database password. If your site folder is inside the web root, check that your web server won't serve ```settings.php```, as described in [the site folder](../site_folder).

@@ -7,6 +7,7 @@ import {
 
 const { execFileSync } = require('child_process');
 const { webContainer } = require('../../docker-containers');
+const { appearanceDir, appearanceUrlPath } = require('../../site-paths');
 
 test.use({ baseURL: E2E_TEST_BASE_URL });
 
@@ -100,7 +101,7 @@ async function uploadLogoAndFavicon(page) {
 function deleteLeftoverUploads() {
 	for (const file of uploaded) {
 		if (/^formulize-appearance-(logo|favicon)-[0-9a-f-]+\.png$/.test(file)) {
-			execFileSync('docker', ['exec', webContainer(), 'rm', '-f', `/var/www/html/themes/Lyris/appearance/${file}`]);
+			execFileSync('docker', ['exec', webContainer(), 'rm', '-f', `${appearanceDir('Lyris')}/${file}`]);
 		}
 	}
 }
@@ -250,8 +251,8 @@ test.describe('The simple editor', () => {
 		await expect(logo).toHaveAttribute('src', themeLogo);
 
 		const saved = await uploadLogoAndFavicon(page);
-		expect((await page.request.get(`/themes/Lyris/appearance/${saved.appearance_logo}`)).status()).toBe(200);
-		expect((await page.request.get(`/themes/Lyris/appearance/${saved.appearance_favicon}`)).status()).toBe(200);
+		expect((await page.request.get(`${appearanceUrlPath('Lyris')}/${saved.appearance_logo}`)).status()).toBe(200);
+		expect((await page.request.get(`${appearanceUrlPath('Lyris')}/${saved.appearance_favicon}`)).status()).toBe(200);
 
 		await openAppearanceEditor(page, key);
 		await expect(logo).toHaveAttribute('src', new RegExp(`/${saved.appearance_logo.replace(/\./g, '\\.')}(\\?|$)`));
@@ -276,8 +277,8 @@ test.describe('The simple editor', () => {
 		await page.locator('button[data-upload-remove="appearance_logo"]').click();
 		await page.locator('button[data-upload-remove="appearance_favicon"]').click();
 		await saveAppearanceEditor(page, LOOK);
-		expect((await page.request.get(`/themes/Lyris/appearance/${saved.appearance_logo}`)).status()).toBe(404);
-		expect((await page.request.get(`/themes/Lyris/appearance/${saved.appearance_favicon}`)).status()).toBe(404);
+		expect((await page.request.get(`${appearanceUrlPath('Lyris')}/${saved.appearance_logo}`)).status()).toBe(404);
+		expect((await page.request.get(`${appearanceUrlPath('Lyris')}/${saved.appearance_favicon}`)).status()).toBe(404);
 	});
 });
 
