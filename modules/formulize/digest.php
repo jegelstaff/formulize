@@ -88,7 +88,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
                     $revisionDescriptor = "changed:";
                     break;
             }
-            $thisMailTemplate = file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/".$thisMailTemplate);
+            $thisMailTemplate = file_get_contents(formulize_mailTemplateFolder($xoopsConfig['language'], $thisMailTemplate).$thisMailTemplate);
             $revisionsNeeded = false;
             $groupTitle = "";
             if (strstr($thisMailTemplate, "{")) {
@@ -196,7 +196,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
             $mailTemplate .= $groupedMailTemplate."\n\n---\n\n";
         }
         $mailSubject = $xoopsConfig['sitename']." "._formulize_DE_NOT_DIGEST_SUBJECT." - ".date(_SHORTDATESTRING);
-        file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/digestTemplate.tpl", $mailTemplate);
+        file_put_contents(formulize_siteMailTemplateFolder($xoopsConfig['language'])."digestTemplate.tpl", $mailTemplate);
         // Don't send the digest if the address belongs to a disabled/pending account. Addresses with
         // no matching account (e.g. an admin-configured notification email) are still sent to.
         if (!$targetUser || $targetUser->isActive()) {

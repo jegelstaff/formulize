@@ -69,8 +69,8 @@ abstract class formulizeStaticContentElement extends formulizeElement {
 				if(!formulize_authoredTextIsEmpty($valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT])) {
 					formulize_writeCodeToFile($filename, $valueToWrite[ELE_VALUE_STATICCONTENT_CONTENT]);
 				// an element with no content has no file
-				} elseif(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
-					unlink(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
+				} elseif(file_exists(FORMULIZE_CODE_PATH . '/'.$filename)) {
+					unlink(FORMULIZE_CODE_PATH . '/'.$filename);
 				}
 			}
 		}
@@ -83,7 +83,7 @@ abstract class formulizeStaticContentElement extends formulizeElement {
 		$value = parent::getVar($key, $format);
 		if($key == 'ele_value' AND is_array($value)) {
 			$filename = $this->getVar('ele_type').'_'.$this->getVar('ele_handle').'.php';
-			$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename;
+			$filePath = FORMULIZE_CODE_PATH . '/'.$filename;
 			if(file_exists($filePath)) {
 				$fileValue = strval(file_get_contents($filePath));
 				$value[ELE_VALUE_STATICCONTENT_CONTENT] = $fileValue ? $fileValue : $value[ELE_VALUE_STATICCONTENT_CONTENT];

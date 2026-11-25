@@ -129,8 +129,8 @@ if(!empty(\$bookings_name)) {
 				if(trim((string)$valueToWrite[0]) != '') {
 					formulize_writeCodeToFile($filename, $valueToWrite[0]);
 				// delete the code file if it exists but the code has been cleared out
-				} elseif(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
-					unlink(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
+				} elseif(file_exists(FORMULIZE_CODE_PATH . '/'.$filename)) {
+					unlink(FORMULIZE_CODE_PATH . '/'.$filename);
 				}
 			}
 		}
@@ -144,7 +144,7 @@ if(!empty(\$bookings_name)) {
 		// than creating the key so it can blank it, so fall back to an empty formula rather than an undefined key
 		if($key == 'ele_value' AND is_array($value)) {
 			$filename = 'derived_'.$this->getVar('ele_handle').'.php';
-			$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename;
+			$filePath = FORMULIZE_CODE_PATH . '/'.$filename;
 			$fileValue = "";
 			if(file_exists($filePath)) {
 				$fileValue = strval(file_get_contents($filePath));

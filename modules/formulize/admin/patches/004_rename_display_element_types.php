@@ -36,7 +36,7 @@ function formulize_patch_004_rename_display_element_types($prev_dbversion, $requ
 
     // rename the /code/ files for any of these elements that store PHP code:
     //   <oldtype>_<handle>.php -> <newtype>_<handle>.php
-    $codeDir = XOOPS_ROOT_PATH . '/modules/formulize/code';
+    $codeDir = FORMULIZE_CODE_PATH;
     $renamedFiles = 0;
     $notWritable = array();
     foreach ($typeMap as $oldType => $newType) {

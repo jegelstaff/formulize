@@ -7,7 +7,7 @@
 ##  this distribution for details.                                           ##
 ###############################################################################
 
-// Entry locks. While someone has an entry open in a form, a file in modules/formulize/temp/ says who has it, and
+// Entry locks. While someone has an entry open in a form, a file in the temp folder (FORMULIZE_TEMP_PATH) says who has it, and
 // which page load drew it for them. displayElement() writes the lock, and formulize_deleteEntryLock.php releases it
 // when that page goes away. These functions are the only things that name, write or read a lock file.
 //
@@ -32,6 +32,16 @@
 // See ai-context/filesystem-dependencies.md.
 
 /**
+ * The folder lock files are kept in. formulize_deleteEntryLock.php can be requested without the rest of Formulize,
+ * so FORMULIZE_TEMP_PATH may not be defined. Then the folder is the module's own temp folder.
+ *
+ * @return string The folder, with no trailing slash
+ */
+function formulize_entryLockFolder() {
+	return defined('FORMULIZE_TEMP_PATH') ? FORMULIZE_TEMP_PATH : dirname(__DIR__).'/temp';
+}
+
+/**
  * The file that holds the lock on an entry
  *
  * @param int $entry_id The entry
@@ -39,7 +49,7 @@
  * @return string The path of the lock file
  */
 function formulize_entryLockFileName($entry_id, $fid) {
-	return __DIR__."/../temp/entry_".intval($entry_id)."_in_form_".intval($fid)."_is_locked_for_editing";
+	return formulize_entryLockFolder()."/entry_".intval($entry_id)."_in_form_".intval($fid)."_is_locked_for_editing";
 }
 
 /**
@@ -124,7 +134,7 @@ function formulize_entryLockListFileName($token, $uid) {
 	if(!formulize_isEntryLockToken($token)) {
 		return false;
 	}
-	return __DIR__."/../temp/".$token.intval($uid).".token";
+	return formulize_entryLockFolder()."/".$token.intval($uid).".token";
 }
 
 /**

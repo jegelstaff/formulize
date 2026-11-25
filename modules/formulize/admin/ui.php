@@ -79,18 +79,18 @@ if (!isset($xoopsTpl)) {
 // before anything else. If it can't be fixed, the warning becomes the opResults panel and op.php
 // will refuse to run any op (including the DB patch) until the environment is healthy.
 ob_start();
-if (!file_exists(XOOPS_ROOT_PATH . '/tokens')) {
-    if (mkdir(XOOPS_ROOT_PATH . '/tokens', 0755) === false) {
-        print '<h1>Your system is missing the ' . XOOPS_ROOT_PATH . '/tokens folder.</h1>'
+if (!file_exists(ICMS_TOKEN_PATH)) {
+    if (mkdir(ICMS_TOKEN_PATH, 0755, true) === false) {
+        print '<h1>Your system is missing the ' . ICMS_TOKEN_PATH . ' folder.</h1>'
             . '<p>Formulize will not work until this folder exists <b>and</b> is writable by the web server.</p>';
     } else {
-        file_put_contents(XOOPS_ROOT_PATH . '/tokens/index.html', '<script>history.go(-1);</script>');
-        file_put_contents(XOOPS_ROOT_PATH . '/tokens/.gitignore', '*');
+        file_put_contents(ICMS_TOKEN_PATH . '/index.html', '<script>history.go(-1);</script>');
+        file_put_contents(ICMS_TOKEN_PATH . '/.gitignore', '*');
     }
 }
-if (file_exists(XOOPS_ROOT_PATH . '/tokens') && !is_writable(XOOPS_ROOT_PATH . '/tokens')) {
-    if (chmod(XOOPS_ROOT_PATH . '/tokens', 0755) === false) {
-        print '<h1>The ' . XOOPS_ROOT_PATH . '/tokens folder is not writable by the web server.</h1>'
+if (file_exists(ICMS_TOKEN_PATH) && !is_writable(ICMS_TOKEN_PATH)) {
+    if (chmod(ICMS_TOKEN_PATH, 0755) === false) {
+        print '<h1>The ' . ICMS_TOKEN_PATH . ' folder is not writable by the web server.</h1>'
             . '<p>Formulize will not work until this folder is writable by the web server.</p>';
     }
 }
@@ -263,17 +263,17 @@ if($templateActionScreen AND isset($_POST['copytemplatesfrom']) AND $_POST['copy
 // templates in its theme, which is when the Templates tab offers it, so nothing that's there is ever copied over
 if($templateActionScreen AND isset($_POST['seedtemplates']) AND $_POST['seedtemplates']
     AND isset(formulize_selectableThemesList()[$templateActionScreen->getVar('theme')])
-    AND !file_exists(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$templateActionScreen->getVar('theme')."/".intval($templateActionScreen->getVar('sid')))) {
+    AND !file_exists(FORMULIZE_SCREEN_TEMPLATES_PATH."/".$templateActionScreen->getVar('theme')."/".intval($templateActionScreen->getVar('sid')))) {
     $screen_handler = xoops_getmodulehandler('screen', 'formulize');
     $screen = $templateActionScreen;
-    $themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/default/".$screen->getVar('type')."/";
+    $themeDefaultPath = FORMULIZE_SCREEN_DEFAULTS_PATH."/".$screen->getVar('theme')."/default/".$screen->getVar('type')."/";
     if(!file_exists($themeDefaultPath)) {
         $themeDefaultPath = str_replace($screen->getVar('theme'), '', $themeDefaultPath);
     }
     if(!file_exists($themeDefaultPath)) {
         exit('Error: could not locate a valid default template path for "'.$screen->getVar('type').'" screens.');
     }
-    recurse_copy($themeDefaultPath, XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/".$screen->getVar('sid')."/");
+    recurse_copy($themeDefaultPath, FORMULIZE_SCREEN_TEMPLATES_PATH."/".$screen->getVar('theme')."/".$screen->getVar('sid')."/");
 }
 
 

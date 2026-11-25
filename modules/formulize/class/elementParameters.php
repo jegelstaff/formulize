@@ -77,7 +77,7 @@ class formulizeElementParameters {
 			return $parameters;
 		}
 		$moduleRoot = XOOPS_ROOT_PATH.'/modules/formulize/';
-		$cacheFile = $moduleRoot.'cache/element_parameters.php';
+		$cacheFile = FORMULIZE_CACHE_PATH.'/element_parameters.php';
 		$cached = is_readable($cacheFile) ? include $cacheFile : array();
 		$cached = is_array($cached) ? $cached : array();
 		$files = array();

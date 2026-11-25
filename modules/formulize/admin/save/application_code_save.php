@@ -15,7 +15,7 @@ $appId = intval($_POST['formulize_admin_key']);
 if(!$appId) {
     return;
 }
-$filename = XOOPS_ROOT_PATH."/modules/formulize/code/application_custom_code_".$appId.".php";
+$filename = FORMULIZE_CODE_PATH . "/application_custom_code_".$appId.".php";
 
 // A submission that does not carry the field at all is not a request to empty the file. This used to write
 // whatever was in $processedValues unconditionally, so anything reaching this handler without a populated
@@ -32,4 +32,6 @@ if(trim($code) === '') {
     }
 } elseif(file_put_contents($filename, $code) === false) {
     print "Error: could not save the custom code for this application.";
+} else {
+    formulize_phpFileChanged($filename);
 }

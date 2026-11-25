@@ -49,7 +49,7 @@ $xoopsDB->allowWebChanges = true;
 define('FORMULIZE_QUEUE_PROCESSING', true);
 $queueHandler = xoops_getmodulehandler('queue', 'formulize');
 $queueDir = $queueHandler->queueDir;
-$tempDir = XOOPS_ROOT_PATH."/modules/formulize/temp";
+$tempDir = FORMULIZE_TEMP_PATH;
 $queueHandle = !$queueHandle ? 'all' : $queueHandle;
 
 // Clear the active flag for queues that started processing over 10 minutes ago and didn't finish... can't have them hanging around forever, need to try again.

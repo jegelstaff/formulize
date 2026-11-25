@@ -428,7 +428,7 @@ class formulizeListOfEntriesScreenHandler extends formulizeScreenHandler {
         if(!is_array($buttons) OR $fromHandle === $toHandle) {
             return;
         }
-        $codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+        $codeDir = FORMULIZE_CODE_PATH . '/';
         foreach($buttons as $button) {
             if(!is_array($button) OR !isset($button['handle'])) {
                 continue;

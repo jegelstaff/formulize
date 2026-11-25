@@ -46,8 +46,8 @@ if(isset($_POST['body']) AND
     $attachmentSuccess = false;
 		$attachmentStatus = '';
     if($_FILES['attachment']['error'] == 0) {
-			if($moveResult = move_uploaded_file($_FILES['attachment']['tmp_name'],XOOPS_ROOT_PATH."/modules/formulize/temp/".$_FILES['attachment']['name'])) {
-				formulize_scandirAndClean(XOOPS_ROOT_PATH.'/modules/formulize/temp/');
+			if($moveResult = move_uploaded_file($_FILES['attachment']['tmp_name'],FORMULIZE_TEMP_PATH . "/".$_FILES['attachment']['name'])) {
+				formulize_scandirAndClean(FORMULIZE_TEMP_PATH . '/');
 				$attachmentSuccess = true;
 			} else {
 				$attachmentStatus = _AM_UPLOAD_LOST;
@@ -78,13 +78,13 @@ if(isset($_POST['body']) AND
 		if($attachment AND !$attachmentSuccess) {
 			$mailStatus .= "<p><b>$attachmentStatus</b></p>";
 		} elseif($attachment) {
-			$extra_tags['ATTACHFILE-'.$_FILES['attachment']['name']] = XOOPS_ROOT_PATH."/modules/formulize/temp/".$_FILES['attachment']['name'];
+			$extra_tags['ATTACHFILE-'.$_FILES['attachment']['name']] = FORMULIZE_TEMP_PATH . "/".$_FILES['attachment']['name'];
 		}
 
 		if(!$attachment OR $attachmentSuccess) {
 
 			// write the template to a file we will use when the notifications go out
-			file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/tempmailbody.tpl", $_POST['body']);
+			file_put_contents(formulize_siteMailTemplateFolder($xoopsConfig['language'])."tempmailbody.tpl", $_POST['body']);
 
 			$event = 'new_entry'; // doesn't matter since we're sending direct mail with its own subject and template
 			$extra_tags = $extra_tags;

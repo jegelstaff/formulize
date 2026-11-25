@@ -280,7 +280,7 @@ class formulizeScreen extends FormulizeObject {
         static $templates = array();
         if (!isset($templates[$theme][$this->getVar('sid')][$templateName])) {
             // there is no template saved in memory, read it from the file
-            $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$this->getVar('sid')."/".$templateName.".php";
+            $pathname = FORMULIZE_SCREEN_TEMPLATES_PATH."/".$theme."/".$this->getVar('sid')."/".$templateName.".php";
             if (file_exists($pathname)) {
                 // a template that says nothing is no template, and the screen is drawn with the default
                 $template = file_get_contents($pathname);
@@ -303,7 +303,7 @@ class formulizeScreen extends FormulizeObject {
             global $xoopsConfig;
             $theme = $xoopsConfig['theme_set'];
         }
-        $pathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$this->getVar('sid')."/";
+        $pathname = FORMULIZE_SCREEN_TEMPLATES_PATH."/".$theme."/".$this->getVar('sid')."/";
         $filename = $pathname.$template_name.".php";
 
         // a template that says nothing is the screen having no template of its own, and it is drawn with the
@@ -331,6 +331,7 @@ class formulizeScreen extends FormulizeObject {
             error_log("ERROR: Could not write to template cache file: $filename");
             return false;
         }
+        formulize_phpFileChanged($filename);
 
         return true;
     }
@@ -350,7 +351,7 @@ class formulizeScreen extends FormulizeObject {
         if (!$sid OR !preg_match('/^[A-Za-z0-9_]+$/', (string) $name) OR !isset(formulize_selectableThemesList()[$theme])) {
             return false;
         }
-        $sidFolder = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$sid;
+        $sidFolder = FORMULIZE_SCREEN_TEMPLATES_PATH."/".$theme."/".$sid;
         $filename = $sidFolder."/variables/".$name.".php";
         if (formulize_screenTemplateIsEmpty($content)) {
             if (file_exists($filename) AND !unlink($filename)) {
@@ -368,6 +369,7 @@ class formulizeScreen extends FormulizeObject {
             error_log("ERROR: Could not write to variable template file: $filename");
             return false;
         }
+        formulize_phpFileChanged($filename);
         return true;
     }
 
@@ -903,7 +905,7 @@ class formulizeScreenHandler {
      * @return void
      */
     function copyTemplateFiles($sid, $newsid) {
-        $screensDir = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/";
+        $screensDir = FORMULIZE_SCREEN_TEMPLATES_PATH."/";
         foreach((array) glob($screensDir."*/".intval($sid), GLOB_ONLYDIR) as $sourceDir) {
             $targetDir = dirname($sourceDir)."/".intval($newsid);
             if(!is_dir($targetDir) AND !mkdir($targetDir, 0777, true)) {
@@ -944,7 +946,7 @@ class formulizeScreenHandler {
             return array();
         }
         $files = array();
-        foreach((array) glob(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$sid."/variables/*.php") as $file) {
+        foreach((array) glob(FORMULIZE_SCREEN_TEMPLATES_PATH."/".$theme."/".$sid."/variables/*.php") as $file) {
             $name = basename($file, '.php');
             if(is_file($file) AND preg_match('/^[A-Za-z0-9_]+$/', $name)) {
                 $files[$name] = $file;
@@ -984,7 +986,7 @@ class formulizeScreenHandler {
         if(!$sid OR !isset(formulize_selectableThemesList()[$theme])) {
             return array();
         }
-        $folder = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$sid;
+        $folder = FORMULIZE_SCREEN_TEMPLATES_PATH."/".$theme."/".$sid;
         if(!is_dir($folder)) {
             return array();
         }
@@ -1012,7 +1014,7 @@ class formulizeScreenHandler {
         if($type == 'template' OR !$files) {
             return $files;
         }
-        return formulize_screenTemplatesChanged($files, formulize_screenTemplateDefaults(XOOPS_ROOT_PATH."/modules/formulize/templates/screens", $theme, $type));
+        return formulize_screenTemplatesChanged($files, formulize_screenTemplateDefaults(FORMULIZE_SCREEN_DEFAULTS_PATH, $theme, $type));
     }
 
     /**
@@ -1045,10 +1047,9 @@ class formulizeScreenHandler {
         if($this->templateFilesInTheme($sid, $toTheme)) {
             return true;
         }
-        $screensFolder = XOOPS_ROOT_PATH."/modules/formulize/templates/screens";
-        $targetFolder = $screensFolder."/".$toTheme."/".$sid;
+        $targetFolder = FORMULIZE_SCREEN_TEMPLATES_PATH."/".$toTheme."/".$sid;
         $copied = true;
-        $filesToTake = formulize_screenTemplatesToTake($this->templateFilesInTheme($sid, $fromTheme), formulize_screenTemplateDefaults($screensFolder, $fromTheme, $screen->getVar('type')));
+        $filesToTake = formulize_screenTemplatesToTake($this->templateFilesInTheme($sid, $fromTheme), formulize_screenTemplateDefaults(FORMULIZE_SCREEN_DEFAULTS_PATH, $fromTheme, $screen->getVar('type')));
         foreach($filesToTake as $path => $sourceFile) {
             $targetFile = $targetFolder."/".$path;
             if((!is_dir(dirname($targetFile)) AND !mkdir(dirname($targetFile), 0777, true)) OR !copy($sourceFile, $targetFile)) {
@@ -1172,8 +1173,8 @@ function getDefaultTemplatePaths($templateName, $type, $theme="") {
 	global $xoopsConfig;
 	$theme = $theme ? $theme : $xoopsConfig['theme_set'];
 	return array(
-		XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/default/".$type."/".$templateName.".php",
-		XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$type."/".$templateName.".php"
+		FORMULIZE_SCREEN_DEFAULTS_PATH."/".$theme."/default/".$type."/".$templateName.".php",
+		FORMULIZE_SCREEN_DEFAULTS_PATH."/default/".$type."/".$templateName.".php"
 	);
 }
 
@@ -1251,7 +1252,7 @@ function formulize_screenTemplateFilesIn($folder) {
  * has none of its own for. Each is the theme's default when the theme has one, and the system default otherwise, the
  * same choice getTemplatePath() makes when a screen is drawn. Variable templates are included, as 'variables/...'.
  *
- * @param string $screensFolder The templates/screens folder.
+ * @param string $screensFolder The folder of shipped screen templates, FORMULIZE_SCREEN_DEFAULTS_PATH.
  * @param string $theme The theme's folder name.
  * @param string $type The type of screen, such as 'listOfEntries'.
  * @return array path inside the type's folder, such as 'toptemplate.php' => full path of the default
@@ -1339,7 +1340,8 @@ function formulize_screenTemplateMatchesDefault($templatePath, $type) {
 	if (!ctype_digit(basename($sidFolder))) {
 		return false;
 	}
-	$defaultPath = dirname($sidFolder).'/default/'.$type.'/'.$subfolder.basename($templatePath);
+	// the shipped defaults are kept apart from a site's own templates, see include/sitepaths.php
+	$defaultPath = FORMULIZE_SCREEN_DEFAULTS_PATH.'/'.basename(dirname($sidFolder)).'/default/'.$type.'/'.$subfolder.basename($templatePath);
 	if (!is_file($defaultPath)) {
 		return false;
 	}
@@ -1390,7 +1392,7 @@ function formulize_deleteScreenTemplateFolders($sid) {
 		return array();
 	}
 	$removed = array();
-	foreach ((array) glob(XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/*/'.$sid, GLOB_ONLYDIR) as $folder) {
+	foreach ((array) glob(FORMULIZE_SCREEN_TEMPLATES_PATH.'/*/'.$sid, GLOB_ONLYDIR) as $folder) {
 		if (basename(dirname($folder)) === 'default') {
 			continue; // the system's defaults are in folders named for types, never for a screen, but be sure
 		}
@@ -1450,11 +1452,11 @@ function getTemplatePath($screenOrScreenType, $templateName, $subdir = '') {
 	$type  = $screenOrScreenType;
 	$file  = ($subdir ? $subdir . '/' : '') . $templateName . '.php';
 	if(is_object($screenOrScreenType) AND is_a($screenOrScreenType, 'formulizeScreen')) {
-		$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/".$screenOrScreenType->getVar('sid')."/".$file;
+		$paths[] = FORMULIZE_SCREEN_TEMPLATES_PATH."/".$xoopsConfig['theme_set']."/".$screenOrScreenType->getVar('sid')."/".$file;
 		$type = $screenOrScreenType->getVar('type');
 	}
-	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/default/".$type."/".$file;
-	$paths[] = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/".$type."/".$file;
+	$paths[] = FORMULIZE_SCREEN_DEFAULTS_PATH."/".$xoopsConfig['theme_set']."/default/".$type."/".$file;
+	$paths[] = FORMULIZE_SCREEN_DEFAULTS_PATH."/default/".$type."/".$file;
 	foreach($paths as $path) {
 		// a template that says nothing is no template, and the next one along is used
 		if(file_exists($path) AND filesize($path) AND !formulize_screenTemplateIsEmpty(file_get_contents($path))) {

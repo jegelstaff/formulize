@@ -58,7 +58,7 @@ class formulizeQueue extends FormulizeObject {
 #[AllowDynamicProperties]
 class formulizeQueueHandler {
 
-	var $queueDir = XOOPS_ROOT_PATH.'/modules/formulize/queue/';
+	var $queueDir = FORMULIZE_QUEUE_PATH . '/';
 	var $db;
 	function __construct(&$db) {
 		$this->db =& $db;

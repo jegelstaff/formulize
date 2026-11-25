@@ -253,7 +253,7 @@ class formulizeForm extends FormulizeObject {
 				$contents = '';
 				if(is_numeric($this->getVar('id_form'))) {
 					$form_handle = $this->getVar('form_handle');
-				  $filename=XOOPS_ROOT_PATH."/modules/formulize/code/".$key."_".$form_handle.".php";
+				  $filename=FORMULIZE_CODE_PATH . "/".$key."_".$form_handle.".php";
 				  if(file_exists($filename)) {
 						$contents = file_get_contents($filename);
 				  }
@@ -1252,7 +1252,7 @@ class formulizeFormsHandler {
 					}
 					$code = removeOpeningPHPTag(${$procedure}) != "" ? ${$procedure} : "";
 					$fileName = $procedure."_".formulizeForm::sanitize_handle_name($form_handle).'.php';
-					$filePath = XOOPS_ROOT_PATH . "/modules/formulize/code/" . $fileName;
+					$filePath = FORMULIZE_CODE_PATH . "/" . $fileName;
 					if($code) {
 						formulize_writeCodeToFile($fileName, $code);
 					} elseif(file_exists($filePath)) {
@@ -1860,8 +1860,8 @@ class formulizeFormsHandler {
 			// update code files with this form handle
 			$events = array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check');
 			foreach($events as $event) {
-				$oldFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$event.'_'.$originalFormNames['form_handle'].'.php';
-				$newFileName = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$event.'_'.$formObject->getVar( "form_handle" ).'.php';
+				$oldFileName = FORMULIZE_CODE_PATH . '/'.$event.'_'.$originalFormNames['form_handle'].'.php';
+				$newFileName = FORMULIZE_CODE_PATH . '/'.$event.'_'.$formObject->getVar( "form_handle" ).'.php';
 				if(file_exists($oldFileName)) {
 					rename($oldFileName, $newFileName);
 				}
@@ -2911,7 +2911,7 @@ class formulizeFormsHandler {
 
 		// the cloned elements need copies of the files their content and code are kept in, named for their new handles,
 		// since the database copy of what is in a file is blank - see clearEleValueFileKeysForInsert()
-		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		$codeDir = FORMULIZE_CODE_PATH . '/';
 		foreach($getelements as $ele) {
 			if(!isset($oldNewEleIdMap[$ele['ele_handle']])) {
 				continue;

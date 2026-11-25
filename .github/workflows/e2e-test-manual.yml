@@ -247,6 +247,10 @@ jobs:
       if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/blocked_extensions_sync_test.php
 
+    - name: PHP logic tests (site folders named only in include/sitepaths.php)
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
+      run: docker exec formulize-web-1 php /var/www/html/tests/site_paths_test.php
+
     - name: PHP logic tests (the text of Other options in element values)
       if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/other_text_values_test.php

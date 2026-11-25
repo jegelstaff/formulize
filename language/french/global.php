@@ -169,8 +169,8 @@ define('_MONTH', '1 mois');
 // Date/time display formats are editable in the Formulize admin UI (Site → Basic
 // Settings → Date & time formats). The chosen values are written to a generated
 // file that is included here; the defaults below apply until/unless it overrides them.
-if (defined('XOOPS_ROOT_PATH') AND file_exists(XOOPS_ROOT_PATH . '/modules/formulize/language/french/formulize_dateformats.php')) {
-	include XOOPS_ROOT_PATH . '/modules/formulize/language/french/formulize_dateformats.php';
+if (defined('FORMULIZE_SITE_LANGUAGE_PATH') AND file_exists(FORMULIZE_SITE_LANGUAGE_PATH . '/french/formulize_dateformats.php')) {
+	include FORMULIZE_SITE_LANGUAGE_PATH . '/french/formulize_dateformats.php';
 }
 if (!defined("_DATESTRING")) define("_DATESTRING","G:i, j F Y");
 if (!defined("_MEDIUMDATESTRING")) define("_MEDIUMDATESTRING", _DATESTRING);

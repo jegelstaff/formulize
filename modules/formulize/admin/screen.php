@@ -328,15 +328,15 @@ if ($screen_id != "new" && $settings['type'] == 'listOfEntries') {
         if (is_numeric($key)) { // effects have numeric keys
           if ($buttonData['applyto'] == 'custom_code') {
 						$filename = "custom_code_".$key."_".$buttonData['handle']."_".$screen_handle.".php";
-						$custom['custombuttons'][$buttonId]['content'][$key]['code'] = file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
+						$custom['custombuttons'][$buttonId]['content'][$key]['code'] = file_get_contents(FORMULIZE_CODE_PATH . '/'.$filename);
             $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_CODE_DESC;
 					} elseif($buttonData['applyto'] == 'custom_code_once') {
 						$filename = "custom_code_".$key."_".$buttonData['handle']."_".$screen_handle.".php";
-						$custom['custombuttons'][$buttonId]['content'][$key]['code'] = file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
+						$custom['custombuttons'][$buttonId]['content'][$key]['code'] = file_get_contents(FORMULIZE_CODE_PATH . '/'.$filename);
             $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_CODE_ONCE_DESC;
           } elseif ($buttonData['applyto'] == 'custom_html') {
 						$filename = "custom_html_".$key."_".$buttonData['handle']."_".$screen_handle.".php";
-						$custom['custombuttons'][$buttonId]['content'][$key]['html'] = file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
+						$custom['custombuttons'][$buttonId]['content'][$key]['html'] = file_get_contents(FORMULIZE_CODE_PATH . '/'.$filename);
             $custom['custombuttons'][$buttonId]['content'][$key]['description'] = _AM_FORMULIZE_SCREEN_LOE_CUSTOMBUTTON_EFFECT_CUSTOM_HTML_DESC;
           } else {
             if (strstr($buttonData['applyto'], "new_per_selected_")) {
@@ -660,7 +660,7 @@ if ($screen_id != "new" && $settings['type'] == 'map') {
 $templates['themes'] = formulize_selectableThemesList(); // embed themes carry no screen templates of their own
 global $xoopsConfig;
 $themeFolder = $screen ? $screen->getVar('theme') : $xoopsConfig['theme_set'];
-$themeDefaultPath = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$themeFolder."/default/".$settings['type']."/";
+$themeDefaultPath = FORMULIZE_SCREEN_DEFAULTS_PATH."/".$themeFolder."/default/".$settings['type']."/";
 $templates['seedtemplates'] = $themeDefaultPath;
 if(!file_exists($themeDefaultPath)) {
     $templates['seedtemplates'] = str_replace($themeFolder.'/default', 'default', $themeDefaultPath);
@@ -672,7 +672,7 @@ if ($screen_id != 'new' AND $screen) {
     // "Customize the Templates" is offered only while the screen has no folder of templates in the theme shown, so
     // seeding never copies over anything that's there. A folder with only variable templates in it still counts, and
     // the tab says to clear them on the Variables tab first (see formulize_removeScreenTemplateFoldersIfEmpty)
-    $templates['canSeed'] = (isset($templates['themes'][$screen->getVar('theme')]) AND !file_exists(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/".intval($screen->getVar('sid'))));
+    $templates['canSeed'] = (isset($templates['themes'][$screen->getVar('theme')]) AND !file_exists(FORMULIZE_SCREEN_TEMPLATES_PATH."/".$screen->getVar('theme')."/".intval($screen->getVar('sid'))));
     $templates['variablesOnlyNotice'] = (!$templates['canSeed'] AND empty($templates['usingTemplates']) AND $screen_handler->variableTemplateFiles($screen->getVar('sid'), $screen->getVar('theme')))
         ? _AM_FORMULIZE_SCREEN_TEMPLATES_ONLY_VARIABLES : '';
     $templates['copyFromThemes'] = array();

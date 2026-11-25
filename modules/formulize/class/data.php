@@ -145,7 +145,7 @@ class formulizeDataHandler {
 			}
 		}
 		// cache the maps of old/new fields and entry ids, so we can refer to them later if other forms are cloned with data and linked selectboxes need to have references updated
-		$cacheFile = fopen(XOOPS_ROOT_PATH . "/cache/formulize_clonedFormMaps_".$sourceFid."_to_".$this->fid,"w");
+		$cacheFile = fopen(ICMS_CACHE_PATH . "/formulize_clonedFormMaps_".$sourceFid."_to_".$this->fid,"w");
 		fwrite($cacheFile, serialize($map)."\r\n".serialize($oldNewEntryIdMap));
 		fclose($cacheFile);
 		// check of relinking of linked selectboxes was requested, and if so, grab the metadata from the new target form, and then reassign the element defintion to point there, and update all the recorded entry ids to match the corresponding entry ids in the new form
@@ -166,7 +166,7 @@ class formulizeDataHandler {
 				$elementObject = $element_handler->get($elementId); // gets the element from the old form, that the user just clicked on to make a copy of
 				$ele_value = $elementObject->getVar('ele_value');
 				$boxproperties = formulize_linkedSourceParts($ele_value[2]); // split the linked selectbox properties into target fid and target element handle
-				$lines = file_get_contents(XOOPS_ROOT_PATH."/cache/formulize_clonedFormMaps_".$boxproperties[0]."_to_".$targetForm); // read the cached info about the cloning of the target form that happened in the past
+				$lines = file_get_contents(ICMS_CACHE_PATH . "/formulize_clonedFormMaps_".$boxproperties[0]."_to_".$targetForm); // read the cached info about the cloning of the target form that happened in the past
         list($targetHandleMap, $targetEntryMap) = explode("\r\n", $lines); // get the mapping info about that cloning
 				$targetHandleMap = unserialize($targetHandleMap);
 				$targetEntryMap = unserialize($targetEntryMap);

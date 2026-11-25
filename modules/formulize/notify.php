@@ -43,22 +43,22 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
 
     include '../../mainfile.php';
     icms::$logger->disableLogger();
-    if(file_exists(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt")) {
+    if(file_exists(FORMULIZE_NOTIFICATION_QUEUE_PATH."/formulizeNotifications.txt")) {
 
         // check if there's a sending operation going on, but ignore if the lock is really old
-        if($lockTime = floatval(file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsSending.lock"))) {
+        if($lockTime = floatval(file_get_contents(FORMULIZE_NOTIFICATION_QUEUE_PATH."/formulizeNotificationsSending.lock"))) {
             if($startTime - $lockTime < $maxExec * 2) {
                 exit();
             }
         }
 
         // no lock, so away we go
-        file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsSending.lock", "$startTime");
+        file_put_contents(FORMULIZE_NOTIFICATION_QUEUE_PATH."/formulizeNotificationsSending.lock", "$startTime");
         include_once XOOPS_ROOT_PATH."/modules/formulize/include/functions.php";
 
         // if the queue is not fully sent, we'll truncate to the appropriate point, and start from there...
-        if($start = intval(file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt"))) {
-            $notFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt","a");
+        if($start = intval(file_get_contents(FORMULIZE_NOTIFICATION_QUEUE_PATH."/formulizeNotificationsIndex.txt"))) {
+            $notFile = fopen(FORMULIZE_NOTIFICATION_QUEUE_PATH."/formulizeNotifications.txt","a");
             formulize_getLock($notFile);
             $notData = formulize_readNotifications();
             ftruncate($notFile, 0); // erase the file contents, we're going to rewrite them now starting with the next record to send...
@@ -67,7 +67,7 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
                 fwrite($notFile, trim($notData[$i])."19690509\r\n");
                 $i++;
             }
-            file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt", "0"); // reset the counter since we've removed the lines that were already sent
+            file_put_contents(FORMULIZE_NOTIFICATION_QUEUE_PATH."/formulizeNotificationsIndex.txt", "0"); // reset the counter since we've removed the lines that were already sent
             $start=0;
             fclose($notFile);
         }
@@ -91,28 +91,28 @@ if(!defined("XOOPS_MAINFILE_INCLUDED")) {
             }
             $i++;
             // save the next row number so we know where to pickup next time if we timeout or stop or whatever.
-            file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt", "$i");
+            file_put_contents(FORMULIZE_NOTIFICATION_QUEUE_PATH."/formulizeNotificationsIndex.txt", "$i");
         }
 
         // check if in fact we've sent everything that is now in the cache file, and if so, unlink the file...
         // someone else could have added to the cache while we were doing this sending operation.
         if(!isset($notData[$i])) {
             if(count(formulize_readNotifications()) <= $i) {
-                rename(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt",
-									XOOPS_ROOT_PATH."/modules/formulize/cache/queue_history/".date('Y-m-d H:i:s e')." formulizeNotifications.txt");
-								formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/cache/queue_history/",".txt",604800); // remove .txt files older than one week
-                file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsIndex.txt", "0");
+                rename(FORMULIZE_NOTIFICATION_QUEUE_PATH."/formulizeNotifications.txt",
+									FORMULIZE_NOTIFICATION_QUEUE_PATH."/queue_history/".date('Y-m-d H:i:s e')." formulizeNotifications.txt");
+								formulize_scandirAndClean(FORMULIZE_NOTIFICATION_QUEUE_PATH."/queue_history/",".txt",604800); // remove .txt files older than one week
+                file_put_contents(FORMULIZE_NOTIFICATION_QUEUE_PATH."/formulizeNotificationsIndex.txt", "0");
             }
         }
 
         // remove the lock
-        unlink(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotificationsSending.lock");
+        unlink(FORMULIZE_NOTIFICATION_QUEUE_PATH."/formulizeNotificationsSending.lock");
     }
 }
 
 // read the notification file and return an array with all the items in the queue
 function formulize_readNotifications() {
-    $notData = trim(file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt"));
+    $notData = trim(file_get_contents(FORMULIZE_NOTIFICATION_QUEUE_PATH."/formulizeNotifications.txt"));
     if($notData) {
         return explode("19690509",$notData);
     } else {

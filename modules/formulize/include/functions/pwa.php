@@ -202,9 +202,9 @@ function formulize_getPWAIconUrl($size, $maskable = false) {
     } else {
         return '';
     }
-    $folder = file_exists(XOOPS_ROOT_PATH . '/uploads/pwa/icon-512.png') ? '/uploads/pwa' : '/modules/formulize/images/pwa';
+    $folder = file_exists(formulize_fileForUrlPath('/uploads/pwa/icon-512.png')) ? '/uploads/pwa' : '/modules/formulize/images/pwa';
     $path = $folder . '/' . $file;
-    if (!file_exists(XOOPS_ROOT_PATH . $path)) {
+    if (!file_exists(formulize_fileForUrlPath($path))) {
         if ($maskable) {
             return '';
         }

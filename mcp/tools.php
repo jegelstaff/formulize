@@ -5509,7 +5509,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 	 * @return bool
 	 */
 	private function applicationCustomCodePresent($applicationId) {
-		$fileName = XOOPS_ROOT_PATH."/modules/formulize/code/application_custom_code_".intval($applicationId).".php";
+		$fileName = FORMULIZE_CODE_PATH . "/application_custom_code_".intval($applicationId).".php";
 		return file_exists($fileName) AND strlen(trim((string) file_get_contents($fileName))) > 0;
 	}
 
@@ -6621,7 +6621,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 		}
 
 		$fileName = 'application_custom_code_'.$appId.'.php';
-		$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileName;
+		$filePath = FORMULIZE_CODE_PATH . '/'.$fileName;
 		// Deliberately stored exactly as sent. This file is include()d directly and whatever it outputs is
 		// captured, so content without an opening PHP tag is emitted as page output - which is a supported
 		// use of this box, for things like a style override. Adding a tag would turn that into a syntax

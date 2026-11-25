@@ -2601,7 +2601,7 @@ function gatherDerivedValueFieldMetadata($fid, $linkformids)
 			$multipleIndexer = array();
 			while ($row = $xoopsDB->fetchRow($res)) {
 				$ele_value = unserialize($row[0]); // derived fields have ele_value as an array with only one element (that was done to future proof the data model, so we could add other things to ele_value if necessary)
-				$filePath = XOOPS_ROOT_PATH . '/modules/formulize/code/derived_' . $row[2] . '.php';
+				$filePath = FORMULIZE_CODE_PATH . '/derived_' . $row[2] . '.php';
 				if (file_exists($filePath)) {
 					$ele_value[0] = file_get_contents($filePath);
 				}
@@ -4129,7 +4129,7 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
 // See ai-context/derived-values-and-custom-code.md.
 function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $fid)
 {
-	formulize_scandirAndClean(XOOPS_ROOT_PATH . '/modules/formulize/cache/', 'Derived_value_formula_for_', 3600);
+	formulize_scandirAndClean(FORMULIZE_CACHE_PATH . '/', 'Derived_value_formula_for_', 3600);
 	$functionsToWrite = "";
 	// loop through the formulas, process them, and write them to the file
 	foreach ($metadata as $formulaNumber => $thisMetaData) {
@@ -4212,16 +4212,29 @@ function formulize_includeDerivedValueFormulas($metadata, $formHandle, $frid, $f
 			$openingValue = "\$value = getValue(\$entry, '".$thisMetaData['handle']."');";
 		}
 		$fridForName = $frid == -1 ? 'primary' : $frid;
-		$fileName = XOOPS_ROOT_PATH . '/modules/formulize/cache/Derived_value_formula_for_' . trans($thisMetaData['handle'], 'en') . '_in_form_' . $thisMetaData['form_id'] . "_(fid_" . $fid . "_frid_" . $fridForName . "_fn_" . $formulaNumber . ").php";
 		$formula = removeOpeningPHPTag($formula);
-		file_put_contents($fileName, "<?php
-    function derivedValueFormula_" . str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", trans($formHandle, 'en')) . "_" . $fridForName . "_" . $fid . "_" . $formulaNumber . "(\$entry, \$form_id, \$entry_id, \$relationship_id) {
+		$functionName = "derivedValueFormula_" . str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "�", ",", ")", "(", "[", "]"), "_", trans($formHandle, 'en')) . "_" . $fridForName . "_" . $fid . "_" . $formulaNumber;
+		$fileContents = "<?php
+    function " . $functionName . "(\$entry, \$form_id, \$entry_id, \$relationship_id) {
 				$openingValue
         $variableAssignmentsCode
         $formula
         return \$value;
-    }\r\n");
-		include_once($fileName);
+    }\r\n";
+		// The file is named for what's in it, so a changed formula is a new file, and PHP's opcache can't run an old
+		// copy of it. It's written aside and moved into place, so another request never includes half of it.
+		// Form procedures are cached the same way, see formulizeForm::procedure_cache_filename().
+		$fileName = FORMULIZE_CACHE_PATH . '/Derived_value_formula_for_' . trans($thisMetaData['handle'], 'en') . '_in_form_' . $thisMetaData['form_id'] . "_(fid_" . $fid . "_frid_" . $fridForName . "_fn_" . $formulaNumber . ")_" . substr(sha1($fileContents), 0, 12) . ".php";
+		if (!file_exists($fileName)) {
+			$temporaryFileName = $fileName . '.' . getmypid() . '.tmp';
+			if (file_put_contents($temporaryFileName, $fileContents) !== false) {
+				rename($temporaryFileName, $fileName);
+			}
+		}
+		// every version of a formula defines the same function, so a request uses the first it includes
+		if (!function_exists($functionName)) {
+			include $fileName;
+		}
 	}
 }
 

@@ -239,7 +239,7 @@ function icms_module_update_content($module) {
 			icms_deleteFile(ICMS_ROOT_PATH . '/modules/system/templates/system_content_list.html');
 			echo '<code>File removed successfully.</code><br />';
 		}
-		icms_clean_folders(array ('templates_c' => ICMS_ROOT_PATH . "/templates_c/", 'cache' => ICMS_ROOT_PATH . "/cache/"), true);
+		icms_clean_folders(array ('templates_c' => ICMS_COMPILE_PATH . "/", 'cache' => ICMS_CACHE_PATH . "/"), true);
 		$sql = sprintf("DELETE FROM %s WHERE confcat_name= '_MD_AM_CONTMANAGER'", icms::$xoopsDB->prefix('configcategory'));
 		if (! $result = icms::$xoopsDB->queryF($sql)) {
 			echo 'Error while removing category.';

@@ -287,9 +287,9 @@ class SyncCompareCatalog {
     }
 
     public static function clearCachedChanges() {
-        unlink(XOOPS_ROOT_PATH.'/modules/formulize/cache/'."sync-changes-" .  session_id() . ".cache");
-        unlink(XOOPS_ROOT_PATH.'/modules/formulize/cache/'."sync-filepaths-" .  session_id() . ".cache");
-        unlink(XOOPS_ROOT_PATH.'/modules/formulize/cache/'."sync-changes-" .  session_id() . ".cache");
+        unlink(FORMULIZE_CACHE_PATH . '/'."sync-changes-" .  session_id() . ".cache");
+        unlink(FORMULIZE_CACHE_PATH . '/'."sync-filepaths-" .  session_id() . ".cache");
+        unlink(FORMULIZE_CACHE_PATH . '/'."sync-changes-" .  session_id() . ".cache");
     }
 
     public function commitChanges($onlyThisTableName = false) {
@@ -726,7 +726,7 @@ class SyncCompareCatalog {
         $sql = substr($sql, 0, -2); // remove the unnecessary trailing ', '
         $sql .= ');'; //close values brackets
 
-        //file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/importSQL.sql", $sql."\n\r", FILE_APPEND);
+        //file_put_contents(FORMULIZE_TEMP_PATH . "/importSQL.sql", $sql."\n\r", FILE_APPEND);
         //return true;
         $result = $this->db->query($sql);
 
@@ -791,7 +791,7 @@ class SyncCompareCatalog {
             $sql .= ' WHERE '.$primaryField.' = '.$recPrimaryValue.';';
         }
 
-        //file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/importSQL.sql", $sql."\n\r", FILE_APPEND);
+        //file_put_contents(FORMULIZE_TEMP_PATH . "/importSQL.sql", $sql."\n\r", FILE_APPEND);
         //return true;
         $result = $this->db->query($sql);
         // returns success/failure of query based on number of affected rows
@@ -806,7 +806,7 @@ class SyncCompareCatalog {
         // get the fid for the data table based on the table name
             $formHandler = xoops_getmodulehandler('forms', 'formulize');
         // create the data table and return the boolean success result
-            //file_put_contents(XOOPS_ROOT_PATH."/modules/formulize/temp/importSQL.sql", "Create table $fid\n\r", FILE_APPEND);
+            //file_put_contents(FORMULIZE_TEMP_PATH . "/importSQL.sql", "Create table $fid\n\r", FILE_APPEND);
             $createdTables[$fid] = $formHandler->createDataTable($fid);
         }
         return $createdTables[$fid];
@@ -870,20 +870,20 @@ function prefixTable($tableName) {
 
 function cacheVar($var, $varname) {
     // cleanup any old files from this cached variable
-    formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/cache/", ".cache");
+    formulize_scandirAndClean(FORMULIZE_CACHE_PATH . "/", ".cache");
 
     // serialize variable and write to file in cache
-    $filepath = XOOPS_ROOT_PATH . "/modules/formulize/cache/" . $varname;
+    $filepath = FORMULIZE_CACHE_PATH . "/" . $varname;
     file_put_contents($filepath, serialize($var));
 }
 
 function loadCachedVar($varname) {
     // cleanup any old files from this cached variable
-    formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/cache/", ".cache");
+    formulize_scandirAndClean(FORMULIZE_CACHE_PATH . "/", ".cache");
 
     // get cached variable and unserialize
     try {
-        $fileStr = file_get_contents(XOOPS_ROOT_PATH . "/modules/formulize/cache/".$varname);
+        $fileStr = file_get_contents(FORMULIZE_CACHE_PATH . "/".$varname);
     }
     catch (Exception $e) {
         throw $e;

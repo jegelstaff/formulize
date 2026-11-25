@@ -293,7 +293,7 @@ function formulize_themeeditor_getRoots($theme) {
             // which holds the default layouts for each screen type (form, listOfEntries, map,
             // multiPage, ...). The sibling screen-id folders (e.g. .../screens/<theme>/43) are
             // per-screen overrides and deliberately left out.
-            'dir' => XOOPS_ROOT_PATH . '/modules/formulize/templates/screens/' . $theme . '/default',
+            'dir' => FORMULIZE_SCREEN_DEFAULTS_PATH . '/' . $theme . '/default',
             // Formulize screen templates are PHP files (they hold eval'd template code),
             // so PHP must be editable here for the layouts to be reachable at all.
             'extensions' => array('html', 'htm', 'css', 'js', 'php'),

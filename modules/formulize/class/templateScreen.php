@@ -445,7 +445,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             global $xoopsConfig;
             $theme = $xoopsConfig['theme_set'];
         }
-        return XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/".$screen->getVar('sid')."/";
+        return FORMULIZE_SCREEN_TEMPLATES_PATH."/".$theme."/".$screen->getVar('sid')."/";
     }
 
     // Returns a custom code filename of shape "{ROOT_PATH}/modules/formulize/templates/screens/default/{$sid}/code.php"
@@ -576,6 +576,7 @@ class formulizeTemplateScreenHandler extends formulizeScreenHandler {
             error_log("ERROR: Could not write to template screen cache file: $filename");
             return false;
         }
+        formulize_phpFileChanged($filename);
         return true;
     }
 

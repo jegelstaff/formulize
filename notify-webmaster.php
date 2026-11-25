@@ -40,7 +40,7 @@ if(isset($_POST['errorToken']) AND $xoopsSecurity->validateToken($_POST['errorTo
 	include_once XOOPS_ROOT_PATH."/modules/formulize/include/common.php";
 	$member_handler = xoops_gethandler('member');
 	$reportFileName = "error_report_".$_POST['errorToken'].".tpl";
-	$mailTemplateFolder = XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template";
+	$mailTemplateFolder = rtrim(formulize_siteMailTemplateFolder($xoopsConfig['language']), "/");
 	$userName = $xoopsUser ? $xoopsUser->getVar('uname') : 'An anonymous user';
 
 	file_put_contents($mailTemplateFolder."/".$reportFileName, $_POST['details']."\n--$userName", FILE_APPEND);

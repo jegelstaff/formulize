@@ -289,7 +289,7 @@ class formulizeApplication extends XoopsObject {
 
 		function getVar($key, $format = 's') {
 			if($key == 'custom_code' AND $appid = $this->getVar('appid')) {
-				$filename=XOOPS_ROOT_PATH."/modules/formulize/code/application_custom_code_".$appid.".php";
+				$filename=FORMULIZE_CODE_PATH . "/application_custom_code_".$appid.".php";
 				$contents = '';
 				if(file_exists($filename)) {
 					$contents = file_get_contents($filename);

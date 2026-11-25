@@ -167,6 +167,8 @@ Core events fire through `icms::$preload->triggerEvent()`, and the handlers are 
 └── trust/                    # Secure config (outside webroot in production)
 ```
 
+The folders a site writes to, such as `uploads/`, `cache/`, `templates_c/` and the module's `code/`, `cache/` and `temp/`, are named once, in `include/sitepaths.php`, and can be kept outside the code. Use its constants rather than building those paths from `XOOPS_ROOT_PATH`. See [site-directory](site-directory.md).
+
 ### Inside libraries/icms
 
 `libraries/icms/` is the core system. When you trace a call into the core, this is usually where it ends up, because the XOOPS-era names in `kernel/` and `class/` mostly wrap these classes. See [icms-core-is-ours-to-edit](icms-core-is-ours-to-edit.md) for how to treat this code.
@@ -250,7 +252,7 @@ This folder holds most of the logic of the module. It's a mix of function librar
 **Startup**
 - `common.php`: the module bootstrap, loaded on every page. It includes most of the libraries below and defines a `{FORM_HANDLE}_FORM_ID` constant for each form.
 - `constants.php`: shared constants.
-- `customCodeForApplications.php`: loads each application's custom code from `modules/formulize/code/`.
+- `customCodeForApplications.php`: loads each application's custom code from the code folder, `FORMULIZE_CODE_PATH`.
 
 **Reading and saving data**
 - `readelements.php`: reads form submissions and saves them to the database, on every page load, before anything is rendered. See [Data Saving](formulize-module-overview.md#data-saving-readelementsphp).
@@ -363,6 +365,8 @@ For each template, Formulize uses the first of these that has content:
 1. `<theme>/<screen id>/`: the screen's own template
 2. `<theme>/default/<screen type>/`: the active theme's default
 3. `default/<screen type>/`: the system default
+
+A screen's own folder is in `FORMULIZE_SCREEN_TEMPLATES_PATH`, with the site's files, and the defaults are in `FORMULIZE_SCREEN_DEFAULTS_PATH`, with the code. Both are `modules/formulize/templates/screens/` unless the site's files are kept elsewhere. See [site-directory](site-directory.md).
 
 ```
 modules/formulize/templates/screens/

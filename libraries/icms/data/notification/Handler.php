@@ -520,6 +520,11 @@ class icms_data_notification_Handler extends icms_core_ObjectHandler {
 
 		$template_dir = $event_info['mail_template_dir'];
 		$template = isset($GLOBALS['formulize_notificationTemplateOverride']) ? $GLOBALS['formulize_notificationTemplateOverride'] . '.tpl' : $event_info['mail_template'] . '.tpl';
+		if ($module->getVar('dirname') == 'formulize') {
+			// a template the site has of its own takes the place of the one shipped, see include/sitepaths.php
+			global $icmsConfig;
+			$template_dir = formulize_mailTemplateFolder($icmsConfig['language'], $template, $template_dir);
+		}
 		$subject = isset($GLOBALS['formulize_notificationSubjectOverride']) ? $GLOBALS['formulize_notificationSubjectOverride'] : $event_info['mail_subject'];
 
 		foreach ($notifications as $notification) {

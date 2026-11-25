@@ -93,7 +93,7 @@ foreach($_POST as $k=>$v) {
 				$filename = "custom_code_".$effectId."_".$buttonData[$buttonId]['handle']."_".$screen->getVar('screen_handle').".php";
 				if(formulize_writeCodeToFile($filename, $code)) {
 					if(isset($currentCustomActionData[$buttonId]['handle']) AND $buttonData[$buttonId]['handle'] != $currentCustomActionData[$buttonId]['handle']) {
-						unlink(XOOPS_ROOT_PATH."/modules/formulize/code/custom_code_".$effectId."_".$currentCustomActionData[$buttonId]['handle']."_".$screen->getVar('screen_handle').".php");
+						unlink(FORMULIZE_CODE_PATH . "/custom_code_".$effectId."_".$currentCustomActionData[$buttonId]['handle']."_".$screen->getVar('screen_handle').".php");
 					}
 				}
       }
@@ -105,7 +105,7 @@ foreach($_POST as $k=>$v) {
 				$filename = "custom_html_".$effectId."_".$buttonData[$buttonId]['handle']."_".$screen->getVar('screen_handle').".php";
 				if(formulize_writeCodeToFile($filename, $html)) {
 					if(isset($currentCustomActionData[$buttonId]['handle']) AND $buttonData[$buttonId]['handle'] != $currentCustomActionData[$buttonId]['handle']) {
-						unlink(XOOPS_ROOT_PATH."/modules/formulize/code/custom_html_".$effectId."_".$currentCustomActionData[$buttonId]['handle']."_".$screen->getVar('screen_handle').".php");
+						unlink(FORMULIZE_CODE_PATH . "/custom_html_".$effectId."_".$currentCustomActionData[$buttonId]['handle']."_".$screen->getVar('screen_handle').".php");
 					}
 				}
       }

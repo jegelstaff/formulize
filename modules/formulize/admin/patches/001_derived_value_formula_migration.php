@@ -42,7 +42,7 @@ function formulize_patch_001_derived_value_formula_migration($prev_dbversion, $r
     }
     global $xoopsDB;
 
-    $derivedCodeDir = XOOPS_ROOT_PATH . '/modules/formulize/code';
+    $derivedCodeDir = FORMULIZE_CODE_PATH;
     $derivedFiles = glob($derivedCodeDir . '/derived_*.php'); // sorted alphabetically by default
     if ($startFrom !== '') {
         $startFromName = basename($startFrom, '.php');

@@ -32,7 +32,7 @@ function formulize_patch_018_text_to_code_files($prev_dbversion, $required_dbver
     }
 
     xoops_getmodulehandler('multiPageScreen', 'formulize'); // for formulizeMultiPageScreen::codeFileName()
-    $codeDir = XOOPS_ROOT_PATH . '/modules/formulize/code/';
+    $codeDir = FORMULIZE_CODE_PATH . '/';
 
     // Write the text to its file, unless the file already has something in it, which is then what is kept. True if the
     // file is there afterwards, and when it was written here, if it reads back as exactly this text.

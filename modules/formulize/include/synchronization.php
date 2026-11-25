@@ -56,7 +56,7 @@
         $paths = Array();
         $date = date_create();
         // create directory in the "export" directory that is unique to the time created. will store export CSVs
-        $exportDir = XOOPS_ROOT_PATH . "/modules/formulize/export/" . date_format($date, 'Y-m-d (U)') . "/";
+        $exportDir = FORMULIZE_EXPORT_PATH . "/" . date_format($date, 'Y-m-d (U)') . "/";
         if (!file_exists($exportDir) and !mkdir($exportDir)){
             $successfulExport = 0;
             error_log("Export folder could not be created.");
@@ -178,8 +178,8 @@
      * return paths     string array containing paths for all template files
      */
     function getTemplateFilePaths(){
-        $screensPath = XOOPS_ROOT_PATH . "/modules/formulize/templates/screens";
-        $customCodePath = XOOPS_ROOT_PATH . "/modules/formulize/code";
+        $screensPath = FORMULIZE_SCREEN_TEMPLATES_PATH;
+        $customCodePath = FORMULIZE_CODE_PATH;
         $paths = Array();
 
         if (file_exists($screensPath)){
@@ -209,13 +209,13 @@
      * return archivePath       path to archive file
      */
     function createExportArchive($archiveName, $listOfFiles){
-        $archivePath = XOOPS_ROOT_PATH . "/modules/formulize/export/".$archiveName; // path where archive is created
+        $archivePath = FORMULIZE_EXPORT_PATH . "/".$archiveName; // path where archive is created
 
         // zip screens files
-        zipFolder("screens", XOOPS_ROOT_PATH . "/modules/formulize/templates/screens", $archivePath, true);
+        zipFolder("screens", FORMULIZE_SCREEN_TEMPLATES_PATH, $archivePath, true);
 
         // zip custom_code files
-        zipFolder("code", XOOPS_ROOT_PATH . "/modules/formulize/code", $archivePath, false);
+        zipFolder("code", FORMULIZE_CODE_PATH, $archivePath, false);
 
         // zip csv files
         zipFileList("tables", $listOfFiles, $archivePath, false);
@@ -449,7 +449,7 @@
      * param  archivePath       String path to archive file
      */
     function cacheExportFile($archivePath){
-        formulize_scandirAndClean(XOOPS_ROOT_PATH . "/modules/formulize/cache/", ".zip");
+        formulize_scandirAndClean(FORMULIZE_CACHE_PATH . "/", ".zip");
         // copies the archive file to the cache folder and renames the copied file to the session id
         $filepath = getCachedExportFilepath();
         rename($archivePath, $filepath);
@@ -461,7 +461,7 @@
      *  with the current session id in the filename
      */
     function getCachedExportFilepath() {
-        return XOOPS_ROOT_PATH . "/modules/formulize/cache/sync-export-".session_id().".zip";
+        return FORMULIZE_CACHE_PATH . "/sync-export-".session_id().".zip";
     }
 
     /*
@@ -510,7 +510,7 @@
     function extractCSVs($archivePath){
         global $successfulImport;
         // create temporary folder to extract CSV files to. will be deleted later
-        $tempFolderPath = XOOPS_ROOT_PATH . "/modules/formulize/temp/" . date_format(date_create(), '(U)');
+        $tempFolderPath = FORMULIZE_TEMP_PATH . "/" . date_format(date_create(), '(U)');
          if (!file_exists($tempFolderPath) and !mkdir($tempFolderPath)){
             $successfulImport = 0;
             error_log("Extraction folder for CSV's could not be created.");
@@ -529,8 +529,8 @@
      */
     function extractTemplateFiles($archivePath){
         global $successfulImport;
-        extractFolder($archivePath, "screens", XOOPS_ROOT_PATH . "/modules/formulize/templates/");
-        extractFolder($archivePath, "code", XOOPS_ROOT_PATH . "/modules/formulize/");
+        extractFolder($archivePath, "screens", FORMULIZE_SCREEN_TEMPLATES_PATH);
+        extractFolder($archivePath, "code", FORMULIZE_CODE_PATH);
 
         return array( "success" => $successfulImport);
     }
@@ -543,21 +543,35 @@
      * param folderToExtract    String name of folder within archive the is to be extracted
      * param extractToPath      String path to location to be extracted to
      */
-    function extractFolder($archivePath, $folderToExtract, $extractToPath){
+    function extractFolder($archivePath, $folderToExtract, $targetFolder){
+        global $successfulImport;
         $zip = new ZipArchive;
         if ($zip->open($archivePath) !== TRUE) {
             $successfulImport = 0;
             error_log("Could not open archive file at path: '" . $archivePath . "'extraction.");
+            return;
         }
 
         $files = array();
         for($i = 0; $i < $zip->numFiles; $i++) {
             $entry = $zip->getNameIndex($i);
-             // strpos() to check if the entry name contains the directory we want to extract
-            if (strpos($entry, $folderToExtract."/") !== false) {
+            // the archive holds the folder at its top level, such as screens/... or code/...
+            if (strpos($entry, $folderToExtract."/") === 0) {
               $files[] = $entry;
             }
         }
+        if (empty($files)) {
+            return;
+        }
 
-        $zip->extractTo($extractToPath, $files); // extract all files/dirs in $files array to the $extractToPath
+        // The target folder can have any name, and needn't be inside the code (see include/sitepaths.php), so the
+        // archive's folder is extracted aside, and what's in it is copied into the target.
+        $extractToPath = FORMULIZE_TEMP_PATH . "/sync-extract-" . uniqid();
+        if (!$zip->extractTo($extractToPath, $files)) {
+            $successfulImport = 0;
+            error_log("Could not extract the $folderToExtract folder of archive file at path: '" . $archivePath . "'");
+            return;
+        }
+        recurse_copy($extractToPath . "/" . $folderToExtract, $targetFolder);
+        formulize_removeScreenTemplatePath($extractToPath);
     }

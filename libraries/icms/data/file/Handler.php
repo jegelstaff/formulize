@@ -34,7 +34,11 @@ class icms_data_file_Handler extends icms_ipf_Handler {
 	 */
 	protected function afterDelete(&$obj) {
 		$imgUrl = $obj->getVar("url");
-		if (strstr($imgUrl, ICMS_URL) !== FALSE) {
+		if (strpos($imgUrl, ICMS_UPLOAD_URL . '/') === 0) {
+			// uploaded files can be kept outside the code, see include/sitepaths.php
+			$imgPath = ICMS_UPLOAD_PATH . substr($imgUrl, strlen(ICMS_UPLOAD_URL));
+			if (is_file($imgPath)) unlink($imgPath);
+		} elseif (strstr($imgUrl, ICMS_URL) !== FALSE) {
 			$imgPath = str_replace(ICMS_URL, ICMS_ROOT_PATH, $imgUrl);
 			if (is_file($imgPath)) unlink($imgPath);
 		}

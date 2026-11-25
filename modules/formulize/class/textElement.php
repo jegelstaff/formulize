@@ -127,8 +127,8 @@ class formulizeTextElement extends formulizeElement {
 				if(strstr((string)$valueToWrite[$this->defaultValueKey], "\$default")) {
 					formulize_writeCodeToFile($filename, $valueToWrite[$this->defaultValueKey]);
 				// delete the code file if it exists but the default is no longer code (these elements can have code or plain text defaults)
-				} elseif(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
-					unlink(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename);
+				} elseif(file_exists(FORMULIZE_CODE_PATH . '/'.$filename)) {
+					unlink(FORMULIZE_CODE_PATH . '/'.$filename);
 				}
 			}
 		}
@@ -142,7 +142,7 @@ class formulizeTextElement extends formulizeElement {
 		if($key == 'ele_value' AND is_array($value)) {
 			$elementTypeName = strtolower(str_ireplace(['formulize', 'element'], "", static::class));
 			$filename = $elementTypeName.'_'.$this->getVar('ele_handle').'.php';
-			$filePath = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename;
+			$filePath = FORMULIZE_CODE_PATH . '/'.$filename;
 			$fileValue = "";
 			if(file_exists($filePath)) {
 				$fileValue = strval(file_get_contents($filePath));

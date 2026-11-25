@@ -2,13 +2,15 @@
 
 Formulize keeps some working state in files on purpose. It runs on an ordinary LAMP stack with no extra services, and at the scale it's used, tens to hundreds of people on a form at once, races on these files are not a practical problem. Don't propose Redis, a locks table or similar unless the user asks.
 
-| Where | What |
-|---|---|
-| `modules/formulize/temp/` | Entry lock files and lock token files |
-| `modules/formulize/cache/` | Cached data, such as compiled derived value formulas |
-| `cache/` | Cached data, such as linked element option lists |
-| `modules/formulize/code/` | Custom code, and the text and HTML admins write for static content and form screens. Its `.htaccess` refuses every web request, because a file run on its own would run outside Formulize. See [derived-values-and-custom-code](derived-values-and-custom-code.md). |
-| `modules/formulize/templates/screens/<theme>/<sid>/` | A screen's own templates |
+| Where, by default | Constant | What |
+|---|---|---|
+| `modules/formulize/temp/` | `FORMULIZE_TEMP_PATH` | Entry lock files and lock token files |
+| `modules/formulize/cache/` | `FORMULIZE_CACHE_PATH` | Cached data, such as compiled derived value formulas |
+| `cache/` | `ICMS_CACHE_PATH` | Cached data, such as linked element option lists |
+| `modules/formulize/code/` | `FORMULIZE_CODE_PATH` | Custom code, and the text and HTML admins write for static content and form screens. Its `.htaccess` refuses every web request, because a file run on its own would run outside Formulize. See [derived-values-and-custom-code](derived-values-and-custom-code.md). |
+| `modules/formulize/templates/screens/<theme>/<sid>/` | `FORMULIZE_SCREEN_TEMPLATES_PATH` | A screen's own templates |
+
+Each of these is named once, in `include/sitepaths.php`, and a site can keep them somewhere other than the code. Use the constant, never a path built from `XOOPS_ROOT_PATH`. See [site-directory](site-directory.md) for all of them.
 
 The web server must be able to write to these. `writableFilesAndFolders.json` at the repo root is the full list of what must be writable. See [Writable files and folders](../docs/writable_folders.md).
 
