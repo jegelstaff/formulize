@@ -13,6 +13,7 @@ define('_MD_FORMULIZE_AI_PROVIDER_LABEL',         'Provider');
 define('_MD_FORMULIZE_AI_PROVIDER_CLAUDE',        'Claude (Anthropic)');
 define('_MD_FORMULIZE_AI_PROVIDER_GEMINI',        'Gemini (Google)');
 define('_MD_FORMULIZE_AI_PROVIDER_OPENAI',        'GPT (OpenAI)');
+define('_MD_FORMULIZE_AI_PROVIDER_OPENROUTER',    'OpenRouter');
 define('_MD_FORMULIZE_AI_PROVIDER_OLLAMA',        'Ollama (Local)');
 define('_MD_FORMULIZE_AI_MODEL_LABEL',            'Model');
 define('_MD_FORMULIZE_AI_API_KEY_LABEL',          'API key');
@@ -118,8 +119,11 @@ define('_MD_FORMULIZE_AI_EVENT_ADMIN_PAGE',       'Admin page: ');
 define('_MD_FORMULIZE_AI_EVENT_SUBMITTED',        'Submitted: ');
 define('_MD_FORMULIZE_AI_CONTEXT_HEADER',         '[Recent Formulize activity across all open tabs (last 30 min):');
 
-// OpenAI-compatible provider timeout messages
-define('_MD_FORMULIZE_AI_OLLAMA_TIMEOUT',         'Ollama request timed out — is Ollama running? If your page is served over HTTPS, browsers block requests to localhost (Private Network Access policy).');
+// OpenAI-compatible providers. {provider} is the provider's name, as it is in the settings
+define('_MD_FORMULIZE_AI_PROVIDER_TIMEOUT',       '{provider} took too long to answer.');
+define('_MD_FORMULIZE_AI_PROVIDER_ERROR',         '{provider} sent back an error: {message}');
+define('_MD_FORMULIZE_AI_PROVIDER_EMPTY',         '{provider} sent back an answer with nothing in it.');
+define('_MD_FORMULIZE_AI_PDF_NOT_SENT',           '"{name}" was not sent, because the assistant cannot send PDFs to {provider}. Use Claude for PDF support.');
 define('_MD_FORMULIZE_AI_OPENAI_TIMEOUT',         'OpenAI request timed out.');
 
 // A response that came back from the web server instead of the AI provider

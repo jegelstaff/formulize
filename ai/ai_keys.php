@@ -48,8 +48,8 @@ if (!is_array($body)) {
 $provider = isset($body['provider']) ? preg_replace('/[^a-z]/', '', (string)$body['provider']) : '';
 $key      = isset($body['key']) ? trim((string)$body['key']) : '';
 
-// Ollama takes no key, so it is not accepted here.
-if (!in_array($provider, array('claude', 'gemini', 'openai'))) {
+// A provider that takes no key is not accepted here.
+if (!formulizeAI_providerNeedsKey($provider)) {
     formulizeAI_keysFail(400, 'Invalid provider');
 }
 

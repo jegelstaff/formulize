@@ -50,7 +50,7 @@ There are two ways to use AI with Formulize:
 
 ### [Embedded AI Assistant](../ai/setup-embedded)
 
-Use AI right inside your Formulize system — no extra software needed. You can use a commercial AI provider, or a local language model through <a href="https://ollama.com" target="_blank">Ollama</a>. Enable the embedded AI assistant in the _Formulize Preferences_ and then click the __Use AI__ link in the menu. [Read the setup steps...](../ai/setup-embedded)
+Use AI right inside your Formulize system — no extra software needed. You can use a commercial AI provider, a service like <a href="https://openrouter.ai" target="_blank">OpenRouter</a> that gives you a choice of hundreds of models, or a local language model through <a href="https://ollama.com" target="_blank">Ollama</a>. Enable the embedded AI assistant in the _Formulize Preferences_ and then click the __Use AI__ link in the menu. [Read the setup steps...](../ai/setup-embedded)
 
 ### [External AI Assistant via MCP](../ai/setup-mcp)
 

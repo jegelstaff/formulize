@@ -13,6 +13,9 @@
  *   normalizeModels() how to turn that answer into a uniform array of {id, name}
  *   chatRequest()     where to send a chat turn, and how to authenticate
  *
+ * What else differs between providers, such as whether they need a key and how long to
+ * wait for them, is in formulizeAI_providerDetails() in aiadminconfig.php.
+ *
  * Chat request bodies stay in each provider's own native shape and are passed through
  * untouched, apart from forcing the model when an administrator has pinned it and
  * expanding uploaded file references. The proxy is a courier, not a translator.
@@ -46,7 +49,6 @@ function formulizeAI_providerAdapter($provider) {
             'normalize' => 'formulizeAI_normalizeClaudeModels',
             // Claude carries files as a content block's "source" object
             'expandFileRef' => 'formulizeAI_expandFileRefClaude',
-            'timeout' => 600,
         ),
 
         'gemini' => array(
@@ -62,7 +64,6 @@ function formulizeAI_providerAdapter($provider) {
             ),
             'normalize' => 'formulizeAI_normalizeGeminiModels',
             'expandFileRef' => 'formulizeAI_expandFileRefGemini',
-            'timeout' => 600,
         ),
 
         'openai' => array(
@@ -78,26 +79,35 @@ function formulizeAI_providerAdapter($provider) {
             // OpenAI takes images as data URLs and PDFs through its Files API
             // (see ai_upload.php), so there is no multipart file-ref shape for it.
             'expandFileRef' => '',
-            'timeout' => 600,
+        ),
+
+        // The rest are OpenAI-compatible, and differ only in their addresses and keys.
+
+        'openrouter' => array(
+            'models' => array(
+                // Anyone can read the list of models, so the key is not sent for it
+                'url' => 'https://openrouter.ai/api/v1/models',
+                'headers' => array(),
+            ),
+            'chat' => array(
+                'url' => 'https://openrouter.ai/api/v1/chat/completions',
+                'headers' => array('Authorization: Bearer {KEY}'),
+            ),
+            'normalize' => 'formulizeAI_normalizeCompatibleModels',
+            'expandFileRef' => '',
         ),
 
         'ollama' => array(
             'models' => array(
-                'url' => '{BASE}/api/tags',
+                'url' => '{BASE}/v1/models',
                 'headers' => array(),
             ),
             'chat' => array(
                 'url' => '{BASE}/v1/chat/completions',
                 'headers' => array(),
             ),
-            'normalize' => 'formulizeAI_normalizeOllamaModels',
+            'normalize' => 'formulizeAI_normalizeCompatibleModels',
             'expandFileRef' => '',
-            // Ollama is the one provider with no ceiling of its own - it is somebody's own
-            // machine, and a large model on CPU can take a very long time. There is no way
-            // to tell that apart from a dead connection, so this is set high enough that it
-            // should never interrupt real work, and exists only so a hung socket is
-            // eventually let go rather than held until TCP keepalive notices, two hours on.
-            'timeout' => 1800,
         ),
     );
 
@@ -203,14 +213,33 @@ function formulizeAI_normalizeOpenAIModels($data) {
     return $models;
 }
 
-function formulizeAI_normalizeOllamaModels($data) {
+/**
+ * The models of an OpenAI-compatible provider. Only the id can be counted on. What else a
+ * provider says about a model is used when it is there.
+ */
+function formulizeAI_normalizeCompatibleModels($data) {
     $models = array();
-    foreach ((isset($data['models']) ? $data['models'] : array()) as $m) {
-        if (!isset($m['name'])) {
+    // some providers have null here, and not an empty list, when there are no models
+    foreach ((isset($data['data']) && is_array($data['data']) ? $data['data'] : array()) as $m) {
+        if (!isset($m['id'])) {
             continue;
         }
-        $models[] = array('id' => $m['name'], 'name' => $m['name']);
+        // Everything the assistant does in Formulize, it does with tools
+        if (isset($m['supported_parameters']) && is_array($m['supported_parameters'])
+            && !in_array('tools', $m['supported_parameters'])) {
+            continue;
+        }
+        $model = array('id' => $m['id'], 'name' => !empty($m['name']) ? $m['name'] : $m['id']);
+        // In tokens. See the same conversion for Gemini, above.
+        if (isset($m['context_length']) && is_numeric($m['context_length'])) {
+            $model['contextWindow'] = (int) $m['context_length'] * 3;
+        }
+        $models[] = $model;
     }
+    // There can be hundreds
+    usort($models, function($a, $b) {
+        return strcasecmp($a['name'], $b['name']);
+    });
     return $models;
 }
 

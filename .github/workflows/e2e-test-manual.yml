@@ -267,6 +267,10 @@ jobs:
       if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
       run: docker exec formulize-web-1 php /var/www/html/tests/ai_site_key_test.php
 
+    - name: PHP logic tests (the AI assistant's providers)
+      if: ${{ matrix.php && !cancelled() && (success() || steps.containers.outcome == 'success') }}
+      run: docker exec formulize-web-1 php /var/www/html/tests/ai_providers_test.php
+
     - name: Install dependencies
       id: dependencies
       if: ${{ !cancelled() && (success() || steps.containers.outcome == 'success') }}

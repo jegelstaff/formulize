@@ -363,7 +363,7 @@ return array(
                             'showWhen' => array(
                                 array('name' => 'formulizeAIAssistantEnabled', 'value' => 1),
                                 // Ollama needs no key
-                                array('name' => 'formulizeAIProvider', 'value' => array('claude', 'gemini', 'openai')),
+                                array('name' => 'formulizeAIProvider', 'value' => array('claude', 'gemini', 'openai', 'openrouter')),
                             ),
                         ),
 												array(

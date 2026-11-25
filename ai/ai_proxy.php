@@ -2,7 +2,7 @@
 /**
  * Server-side proxy for every AI provider the assistant supports.
  *
- * ai_proxy.php?provider=<claude|gemini|openai|ollama>&op=<models|chat|upload>
+ * ai_proxy.php?provider=<one of formulizeAI_providers()>&op=<models|chat>
  *
  * All provider traffic goes through here so that an API key never reaches the browser.
  * That is essential once an administrator can supply one key for the whole site - the
@@ -97,17 +97,19 @@ if (!$adapter) {
 // system scope the settings page may be previewing a not-yet-saved address, so a
 // same-origin query param can override the stored one (never trusted for anything beyond
 // this GET-only, admin-gated model listing).
-$ollamaBaseUrl = ($systemScope && isset($_GET['baseUrl']) && $_GET['baseUrl'] !== '')
-    ? trim($_GET['baseUrl'])
-    : $adminConfig['ollamaBaseUrl'];
+$ollamaBaseUrl = $adminConfig['ollamaBaseUrl'];
+if ($systemScope && isset($_GET['baseUrl']) && is_string($_GET['baseUrl'])
+    && formulizeAI_cleanBaseUrl($_GET['baseUrl']) !== '') {
+    $ollamaBaseUrl = formulizeAI_cleanBaseUrl($_GET['baseUrl']);
+}
 
 // --- the API key ---
 //
-// Ollama has none. Otherwise, in system scope it is always the site-wide key (that is the
+// Some providers have none. Otherwise, in system scope it is always the site-wide key (that is the
 // key being configured); elsewhere it is the site-wide key when an administrator chose
 // the provider, and the person's own key when they did.
 $apiKey = '';
-if ($provider !== 'ollama') {
+if (formulizeAI_providerNeedsKey($provider)) {
     if ($systemScope) {
         $apiKey = formulizeAI_loadKey(FORMULIZE_AI_SYSTEM_UID, $provider);
     } else {
@@ -229,11 +231,12 @@ if ($provider === 'gemini') {
 }
 
 $endpoint = formulizeAI_resolveEndpoint($adapter['chat'], $apiKey, $model, $ollamaBaseUrl);
+$providerDetails = formulizeAI_providerDetails();
 list($response, $httpCode, $curlError) = formulizeAI_proxyCurl(
     $endpoint['url'],
     array_merge(array('Content-Type: application/json'), $endpoint['headers']),
     json_encode($payload),
-    isset($adapter['timeout']) ? $adapter['timeout'] : 600
+    $providerDetails[$provider]['timeout']
 );
 
 if ($curlError) {

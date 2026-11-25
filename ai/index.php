@@ -2,7 +2,7 @@
 /**
  * Formulize AI Assistant
  *
- * This page provides a chat interface that integrates with Claude or Gemini AI or Ollama
+ * This page provides a chat interface that integrates with any of formulizeAI_providers()
  * and uses Formulize MCP tools to interact with the system.
  */
 
@@ -149,6 +149,7 @@ if (!$aiDrawerMode) {
                         <option value="claude"><?php echo _MD_FORMULIZE_AI_PROVIDER_CLAUDE; ?></option>
                         <option value="gemini"><?php echo _MD_FORMULIZE_AI_PROVIDER_GEMINI; ?></option>
                         <option value="openai"><?php echo _MD_FORMULIZE_AI_PROVIDER_OPENAI; ?></option>
+                        <option value="openrouter"><?php echo _MD_FORMULIZE_AI_PROVIDER_OPENROUTER; ?></option>
                         <option value="ollama"><?php echo _MD_FORMULIZE_AI_PROVIDER_OLLAMA; ?></option>
                     </select>
                 </div>
@@ -305,7 +306,10 @@ window.formulizeAI.strings = {
     toolsReadData:     <?php echo json_encode(_MD_FORMULIZE_AI_TOOLS_READ_DATA); ?>,
     toolsWriteData:    <?php echo json_encode(_MD_FORMULIZE_AI_TOOLS_WRITE_DATA); ?>,
     toolsManageForms:  <?php echo json_encode(_MD_FORMULIZE_AI_TOOLS_MANAGE_FORMS); ?>,
-    ollamaTimeout:     <?php echo json_encode(_MD_FORMULIZE_AI_OLLAMA_TIMEOUT); ?>,
+    providerTimeout:   <?php echo json_encode(_MD_FORMULIZE_AI_PROVIDER_TIMEOUT); ?>,
+    providerError:     <?php echo json_encode(_MD_FORMULIZE_AI_PROVIDER_ERROR); ?>,
+    providerEmpty:     <?php echo json_encode(_MD_FORMULIZE_AI_PROVIDER_EMPTY); ?>,
+    pdfNotSent:        <?php echo json_encode(_MD_FORMULIZE_AI_PDF_NOT_SENT); ?>,
     openaiTimeout:     <?php echo json_encode(_MD_FORMULIZE_AI_OPENAI_TIMEOUT); ?>,
     newConversationBtn: <?php echo json_encode(_MD_FORMULIZE_AI_NEW_CONVERSATION_BTN); ?>,
     newConversationMsg: <?php echo json_encode(_MD_FORMULIZE_AI_NEW_CONVERSATION_MSG); ?>,
@@ -371,8 +375,15 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     // reaches this page. Updated in place when one is saved, so the UI reflects it
     // without a reload.
     const keyPresent = Object.assign({}, adminConfig.keyPresent || {});
+
+    // What is different about each provider - see formulizeAI_providerDetails()
+    const PROVIDERS = adminConfig.providers || {};
+    const COMPATIBLE_PROVIDERS = Object.keys(PROVIDERS).filter(p => PROVIDERS[p].compatible);
+    function needsKey(provider) {
+        return !PROVIDERS[provider] || PROVIDERS[provider].needsKey;
+    }
     function hasStoredKey(provider) {
-        return provider === 'ollama' || !!keyPresent[provider];
+        return !needsKey(provider) || !!keyPresent[provider];
     }
 
     // Replace {token} placeholders in a string with values from a vars object
@@ -516,13 +527,13 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         const provider = providerSelect.value;
         const model = modelNameInput.value.trim();
         // When an administrator configured the assistant, the only question is whether
-        // they finished the job by saving a key. Otherwise: for Ollama (keyless), gate on
+        // they finished the job by saving a key. Otherwise: for a keyless provider, gate on
         // ai_settings_saved to confirm setup was done; for the rest, a stored key or one
         // just typed is enough.
         let credentialsReady;
         if (adminConfig.providerLocked) {
             credentialsReady = hasStoredKey(provider);
-        } else if (provider === 'ollama') {
+        } else if (!needsKey(provider)) {
             credentialsReady = !!localStorage.getItem('ai_settings_saved');
         } else {
             credentialsReady = hasStoredKey(provider) || !!apiKeyInput.value.trim();
@@ -584,7 +595,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     function refreshSettingsUI() {
         const provider = providerSelect.value;
         const returning = adminConfig.providerLocked
-            || !!(keyPresent[provider] || (provider === 'ollama' && localStorage.getItem('ai_settings_saved')));
+            || !!(keyPresent[provider] || (!needsKey(provider) && localStorage.getItem('ai_settings_saved')));
 
         const saveBtn = document.getElementById('save-settings');
         const closeBtn = document.getElementById('close-settings');
@@ -883,7 +894,12 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     let lastGeminiActivityCount = 0; // How many deduplicated activity events Gemini has already seen
     let claudeHistory = [];  // Claude explicit conversation history
     let openaiHistory = [];  // OpenAI explicit conversation history
-    let ollamaHistory = [];  // Ollama explicit conversation history
+    let compatibleHistories = {}; // the same, by provider, for the OpenAI-compatible providers
+
+    function compatibleHistory(provider) {
+        if (!compatibleHistories[provider]) compatibleHistories[provider] = [];
+        return compatibleHistories[provider];
+    }
 
     // ---- Conversation persistence ------------------------------------------------
     // The conversation has to survive a page reload. Plenty of ordinary Formulize
@@ -935,12 +951,14 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
                 histories: {
                     claude: stripBinaryPayloads(claudeHistory),
                     openai: stripBinaryPayloads(openaiHistory),
-                    ollama: stripBinaryPayloads(ollamaHistory),
                     gemini: stripBinaryPayloads(geminiHistory)
                 },
                 lastGeminiActivityCount: lastGeminiActivityCount,
                 ts: Date.now()
             };
+            COMPATIBLE_PROVIDERS.forEach(p => {
+                record.histories[p] = stripBinaryPayloads(compatibleHistory(p));
+            });
             let json = JSON.stringify(record);
             if (json.length > CONVERSATION_MAX_CHARS) {
                 // Trim with the same rules a send would apply, so what comes back is
@@ -949,7 +967,9 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
                 const budget = Math.floor(CONVERSATION_MAX_CHARS / 8);
                 record.histories.claude = trimHistoryToLimit(record.histories.claude, budget);
                 record.histories.openai = trimHistoryToLimit(record.histories.openai, budget);
-                record.histories.ollama = trimHistoryToLimit(record.histories.ollama, budget);
+                COMPATIBLE_PROVIDERS.forEach(p => {
+                    record.histories[p] = trimHistoryToLimit(record.histories[p], budget);
+                });
                 record.histories.gemini = trimHistoryToLimit(record.histories.gemini, budget, geminiTurnSize);
                 record.transcript = transcript.slice(-100);
                 json = JSON.stringify(record);
@@ -976,7 +996,10 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         const h = record.histories || {};
         claudeHistory = Array.isArray(h.claude) ? h.claude : [];
         openaiHistory = Array.isArray(h.openai) ? h.openai : [];
-        ollamaHistory = Array.isArray(h.ollama) ? h.ollama : [];
+        compatibleHistories = {};
+        COMPATIBLE_PROVIDERS.forEach(p => {
+            if (Array.isArray(h[p])) compatibleHistories[p] = h[p];
+        });
         geminiHistory = Array.isArray(h.gemini) ? h.gemini : [];
         lastGeminiActivityCount = record.lastGeminiActivityCount || 0;
         transcript = Array.isArray(record.transcript) ? record.transcript : [];
@@ -1011,7 +1034,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         // Nothing here applies when an administrator has configured the assistant: their
         // key is the one in use, and the panel offers no way to change any of this.
         if (adminConfig.providerLocked) return;
-        if (key && p !== 'ollama') {
+        if (key && needsKey(p)) {
             keyPresent[p] = true; // reflect it immediately; the key itself stays server-side
             fetch(AI_URL('ai_keys.php'), {  // persist to server in background — no need to await
                 method: 'POST',
@@ -1102,11 +1125,11 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
 
     function updateProviderHints() {
         const p = providerSelect.value;
-        const isOllama = p === 'ollama';
+        const keyless = !needsKey(p);
         const hasSavedKey = !!keyPresent[p];
-        apiKeyInput.placeholder = isOllama ? S.apiKeyOllama : (hasSavedKey ? S.apiKeySaved : S.apiKeyPlaceholder);
+        apiKeyInput.placeholder = keyless ? S.apiKeyOllama : (hasSavedKey ? S.apiKeySaved : S.apiKeyPlaceholder);
         apiKeyInput.value = ''; // actual key lives server-side only, never in the field
-        apiKeyInput.disabled = isOllama; // fz-input greys out a disabled field
+        apiKeyInput.disabled = keyless; // fz-input greys out a disabled field
         updateContextLimitDisplay();
         discoverModels();
     }
@@ -1153,8 +1176,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
 
     // When an administrator has set the assistant up there is nothing for the person to
     // configure, so there is no first-visit setup step either — go straight to ready.
-    const ollamaReady = savedProvider === 'ollama' && !!localStorage.getItem('ai_settings_saved');
-    if (adminConfig.providerLocked || hasStoredKey(savedProvider) || ollamaReady) {
+    if (adminConfig.providerLocked || hasStoredKey(savedProvider)) {
         initializeMCP();
     } else {
         // First visit: open settings panel and show welcome, but still pre-fetch tools in background
@@ -1171,7 +1193,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         const key = apiKeyInput.value.trim();
         const modelName = modelNameInput.value.trim();
         const provider = providerSelect.value;
-        // Allow saving when: a new key is typed, or a key already exists server-side, or Ollama (no key needed)
+        // Allow saving when: a new key is typed, or a key already exists server-side, or the provider needs no key
         const hasKey = key || hasStoredKey(provider);
         if (modelName && hasKey) {
             saveSettingsForProvider(provider, key, modelName);  // fire-and-forget server save; in-memory update is synchronous
@@ -1403,7 +1425,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
     function startNewConversation() {
         claudeHistory = [];
         openaiHistory = [];
-        ollamaHistory = [];
+        compatibleHistories = {};
         geminiHistory = [];
         lastGeminiActivityCount = 0;
         clearStoredConversation(); // otherwise the next reload brings the old thread back
@@ -1523,8 +1545,8 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
                 await sendGeminiMessage(text, loadingMsg, attachments);
             } else if (provider === 'openai') {
                 await sendOpenAIMessage(text, loadingMsg, attachments);
-            } else if (provider === 'ollama') {
-                await sendOllamaMessage(text, loadingMsg, attachments);
+            } else if (COMPATIBLE_PROVIDERS.includes(provider)) {
+                await sendCompatibleMessage(provider, text, loadingMsg, attachments);
             } else {
                 await sendClaudeMessage(text, loadingMsg, attachments);
             }
@@ -2024,11 +2046,11 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         return data;
     }
 
-    // --- OpenAI-compatible providers (Ollama, OpenAI) ---
+    // --- OpenAI, and the OpenAI-compatible providers ---
 
     // Shared HTTP call for any OpenAI-compatible /v1/chat/completions endpoint.
     // Both go through the proxy, so no key is involved here: OpenAI's is loaded
-    // server-side, and Ollama's address is the server's, not the browser's.
+    // server-side, and a provider's address is the server's, not the browser's.
     async function callOpenAICompat(messages, { provider, defaultModel, timeoutMs, timeoutMsg }) {
         const modelName = modelNameInput.value.trim() || defaultModel;
 
@@ -2050,7 +2072,7 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         const maxTokensOverride = debugMaxTokensOverride();
         if (maxTokensOverride) {
             // OpenAI's current models take max_completion_tokens and reject max_tokens;
-            // Ollama's OpenAI-compatible endpoint takes max_tokens.
+            // the OpenAI-compatible providers take max_tokens.
             body[provider === 'openai' ? 'max_completion_tokens' : 'max_tokens'] = maxTokensOverride;
         }
         const requestBody = JSON.stringify(body);
@@ -2095,6 +2117,15 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
             });
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${data.error?.message || responseText}`);
+            }
+            // Something can go wrong once a provider has started to answer, when it is too late
+            // to say so with the status. OpenRouter, for one, puts an error in the body instead.
+            const failure = data.error || choice?.error;
+            if (failure) {
+                throw new Error(t(S.providerError, { provider: providerName(provider), message: failure.message || JSON.stringify(failure) }));
+            }
+            if (!choice?.message) {
+                throw new Error(t(S.providerEmpty, { provider: providerName(provider) }));
             }
             return data;
         } catch (error) {
@@ -2161,7 +2192,9 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
                 // 'length' is a reply cut off at the output limit
                 const cutOff = choice.finish_reason === 'length';
 
-                if ((choice.finish_reason === 'tool_calls' || cutOff) && message.tool_calls?.length) {
+                // Whether there are tool calls is what matters, and not a finish_reason of
+                // 'tool_calls', because some providers say 'stop' all the same
+                if (message.tool_calls?.length) {
                     // See cutOffToolCallIndex() for which calls of a cut-off reply are run.
                     // Every call still gets a response.
                     const cutOffIndex = cutOff ? cutOffToolCallIndex(message.tool_calls) : -1;
@@ -2223,24 +2256,29 @@ window.formulizeAI.uid = <?php echo (int)$xoopsUser->getVar('uid'); ?>;
         }
     }
 
-    // Ollama
+    // The OpenAI-compatible providers
 
-    function callOllama(messages) {
-        return callOpenAICompat(messages, {
-            provider: 'ollama',
-            defaultModel: 'llama3.2',
-            timeoutMs: 300000,
-            timeoutMsg: S.ollamaTimeout
-        });
+    // A provider's name, as it is in the settings
+    function providerName(provider) {
+        const option = Array.from(providerSelect.options).find(o => o.value === provider);
+        return option ? option.textContent : provider;
     }
 
-    function sendOllamaMessage(text, loadingMsg, attachments = []) {
+    function sendCompatibleMessage(provider, text, loadingMsg, attachments = []) {
         const pdfs = attachments.filter(a => a.type === 'application/pdf');
         if (pdfs.length > 0) {
-            pdfs.forEach(a => addMessage(S.senderSystem, '"' + a.name + '" was not sent — Ollama has no file upload API. Use Claude for PDF support.', 'system'));
+            pdfs.forEach(a => addMessage(S.senderSystem, t(S.pdfNotSent, { name: a.name, provider: providerName(provider) }), 'system'));
             attachments = attachments.filter(a => a.type !== 'application/pdf');
         }
-        return sendOpenAICompatMessage(text, loadingMsg, ollamaHistory, callOllama, attachments);
+        const callProvider = messages => callOpenAICompat(messages, {
+            provider,
+            defaultModel: MODEL_DEFAULTS[provider],
+            // Matches the proxy's own wait, so a long reply is not abandoned here while the
+            // server is still waiting for it
+            timeoutMs: PROVIDERS[provider].timeout * 1000,
+            timeoutMsg: t(S.providerTimeout, { provider: providerName(provider) })
+        });
+        return sendOpenAICompatMessage(text, loadingMsg, compatibleHistory(provider), callProvider, attachments);
     }
 
     // OpenAI

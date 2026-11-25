@@ -43,7 +43,7 @@ Click the line to expand it. These are the parts to look at:
 * __round__ - one message from you can take several rounds. The AI asks for a tool, gets the result, and then continues. The rounds are numbered from 1 for each message you send.
 * __elapsedMs__ - how long the AI took to answer, in milliseconds. 60000 is one minute.
 * __status__ - 200 means the request worked. A status of 502, 503 or 504 means your web server stopped waiting for the AI before it answered.
-* __stop_reason__ (Claude), __finish_reason__ (OpenAI and Ollama), or __finishReason__ (Gemini) - why the AI stopped:
+* __stop_reason__ (Claude), __finish_reason__ (OpenAI, OpenRouter and Ollama), or __finishReason__ (Gemini) - why the AI stopped:
     * _end_turn_, _stop_ or _STOP_ - it finished normally
     * _tool_use_ or _tool_calls_ - it wants to use a tool, and another round will follow
     * _max_tokens_, _length_ or _MAX_TOKENS_ - its answer reached the maximum length for a single response and was cut off. On a big job, this can happen while the AI is still planning, before it has done anything. When the AI is cut off before it finishes what it was doing, the assistant tells it to work in smaller steps, and it tries again. If it keeps getting cut off without getting anything done, the assistant stops and asks you to ask for less at once.
