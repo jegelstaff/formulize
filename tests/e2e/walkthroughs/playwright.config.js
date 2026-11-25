@@ -3,12 +3,15 @@
 //
 // WALKTHROUGHS_DIR    where to look for *.walkthrough.js files, if not here. Use an absolute path.
 // WALKTHROUGH_OUTPUT  where the videos go, if not walkthroughs/videos/.
-// WALKTHROUGH_SLOWMO  milliseconds added before each browser action, 120 unless set.
+// WALKTHROUGH_SPEED   1.5 is half again as fast, 0.8 slower. Scales every pause and movement in walkthrough.js too.
+// WALKTHROUGH_SLOWMO  milliseconds added before each browser action, 84 at speed 1 unless set.
 const path = require('path');
 const { defineConfig, devices } = require('@playwright/test');
 const { resolveBaseUrl } = require('../base-url');
 
 const size = { width: 1280, height: 800 };
+// 0.7 of the 120ms the first walkthroughs used, as for the pauses in walkthrough.js
+const slowMo = Math.round(84 / (Number(process.env.WALKTHROUGH_SPEED) || 1));
 
 module.exports = defineConfig({
 	testDir: process.env.WALKTHROUGHS_DIR ? path.resolve(process.env.WALKTHROUGHS_DIR) : __dirname,
@@ -26,7 +29,7 @@ module.exports = defineConfig({
 		baseURL: resolveBaseUrl(),
 		viewport: size,
 		video: { mode: 'on', size },
-		launchOptions: { slowMo: Number(process.env.WALKTHROUGH_SLOWMO ?? 120) },
+		launchOptions: { slowMo: Number(process.env.WALKTHROUGH_SLOWMO ?? slowMo) },
 		navigationTimeout: 60000,
 		actionTimeout: 30000,
 		trace: 'retain-on-failure',

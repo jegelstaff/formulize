@@ -6,7 +6,7 @@ title: Recording walkthrough videos
 
 # Recording walkthrough videos
 
-A walkthrough is a video of someone using a Formulize application, recorded by a script. It is slowed down so a viewer can follow, with a caption explaining each step, a badge saying who is signed in, and a red dot showing where the mouse goes. Use one to show a client how a workflow you built is meant to be used, or to show a new feature.
+A walkthrough is a video of someone using a Formulize application, recorded by a script. It is paced so a viewer can follow, with a caption explaining each step in a lower third along the bottom, a badge saying who is signed in, and a red dot showing where the mouse goes. The page scrolls smoothly, so the viewer can see where things are. Use one to show a client how a workflow you built is meant to be used, or to show a new feature.
 
 Walkthroughs are written with [Playwright](https://playwright.dev/), the same tool as the [end to end tests](../), and use the same helpers. They aren't tests: they don't run in CI, and each one is recorded when you ask for it.
 
@@ -45,24 +45,25 @@ test('Each department sees its own artifacts', async ({ walk, page }) => {
 });
 ```
 
-The test's title is the heading above the captions, and the name of the video.
+The test's title is the heading above the captions, and the name of the video. Keep each caption to two lines. A longer one is cut off.
 
 | Helper | What it does |
 |---|---|
-| `say(html, ms)` | Shows a caption, and waits long enough to read it, unless you give `ms`. It stays up until the next caption |
-| `quiet()` | Takes the caption down |
+| `say(html, ms)` | Fades in a caption, and waits long enough to read it, unless you give `ms`. It stays up until the next caption |
+| `quiet()` | Fades the caption out |
 | `finish(html)` | A last caption, then a moment without it |
 | `signIn(login, { label, password })` | Signs in on the login page, typing slowly, and puts the login and label in the badge. The password is `12345`, or the tests' admin password for the admin |
 | `menu(label)` | Goes to a main menu link by its exact text |
 | `go(url)` | Goes to an address. Use it rather than `page.goto()` whenever a form could be open |
 | `click(locator)`, `type(locator, text)`, `pick(select, text)`, `setDate(locator, '2027-02-01')` | Moves the mouse to the target first, so the viewer sees where it goes. `pick` chooses the option whose text contains `text` |
-| `highlight(locator, ms)` | Puts a yellow outline around something for a while |
+| `highlight(locator, ms)` | Scrolls to something and puts a yellow outline around it for a while |
+| `scrollTo(locator)` | Scrolls smoothly until something is in view, in the drawer or the page. The other helpers do this themselves |
 | `openEntry(rowText)` | Opens the entry in a list row. With Lyris it opens in the drawer |
 | `rowButton(rowText, label)` | Clicks a custom button in a list row |
 | `save(label)` | Clicks a save button and waits for the save, on a page or in the drawer |
 | `subform(caption, scope)`, `addSubformEntry(caption, fid, elementId, scope)` | A subform by its caption, and its Add One button |
 | `calendarItem(label, monthsAhead)` | Opens an item on a calendar screen |
-| `drawer()`, `row(text)`, `pause(ms)` | The drawer, a list row, and a plain wait |
+| `drawer()`, `row(text)`, `pause(ms)` | The drawer, a list row, and a pause for the viewer, which `WALKTHROUGH_SPEED` shortens or lengthens |
 
 Check the result of each step with `expect`, as a test would. If the workflow breaks, the recording stops and its video is named with `-failed`, so you don't share a video of something that didn't work.
 
@@ -85,7 +86,8 @@ WALKTHROUGHS_DIR=/path/to/site-walkthroughs WALKTHROUGH_OUTPUT=/path/to/site-wal
 |---|---|
 | `WALKTHROUGHS_DIR` | The folder to find walkthroughs in. Give the full path |
 | `WALKTHROUGH_OUTPUT` | The folder the videos go in |
-| `WALKTHROUGH_SLOWMO` | Milliseconds added before every click and keystroke. It's 120 unless you set it |
+| `WALKTHROUGH_SPEED` | How fast the whole walkthrough goes. 1.5 is half as fast again, and 0.8 is slower. It's 1 unless you set it |
+| `WALKTHROUGH_SLOWMO` | Milliseconds added before every click and keystroke. It's 84 at speed 1 unless you set it |
 | `WALKTHROUGH_TIMEOUT` | How long one walkthrough may take, in milliseconds. It's 15 minutes unless you set it |
 
 The site's address comes from `FORMULIZE_WEB_PORT` in the repository's `.env`, as it does for the tests.
@@ -109,4 +111,5 @@ Most workflows can't be done twice: once attendance is taken or an entry is appr
 - **The video ends early, named `-failed`.** A step didn't work. The trace is in `tests/e2e/walkthroughs/results/`. Open it with `npx playwright show-trace <file>`.
 - **A form in the drawer won't save.** The drawer only saves once something in its form has been clicked or focused. Choose dropdown options with `pick()`, which focuses the list first.
 - **A form opens read-only.** An earlier step left it without releasing the entry. Leave forms with `menu()` or `go()`, never `page.goto()`.
-- **Captions are cut off at the right.** They leave room for the drawer, so keep each caption to a sentence or two.
+- **A caption ends in an ellipsis.** It's longer than two lines. Shorten it, or split it into two captions.
+- **The walkthrough is too fast or too slow to follow.** Set `WALKTHROUGH_SPEED`, rather than changing the waits in the script.

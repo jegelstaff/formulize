@@ -25,7 +25,10 @@ A walkthrough is a Playwright script that records a person's view of a workflow,
 - **The ending of a workflow can take its row off a list,** such as an entry that no longer needs attention. Assert that it's gone, not that it's there.
 - **Captions aren't Formulize's words.** They belong to the video, like a script, so they don't go in the language files. The overlay draws no fixed text of its own.
 - **Subtitle times are measured from when the fixture starts,** a fraction of a second after Playwright starts recording, so the `.srt` can be a little early.
-- **The overlay is drawn by `addInitScript()`, and its state is kept in `sessionStorage`,** so it survives page loads. It sits above everything, and captions leave 440px on the right for the drawer.
+- **The overlay is drawn by `addInitScript()`, and its state is kept in `sessionStorage`,** so it survives page loads. A new page shows the caption at once, without fading, so a navigation doesn't make it blink.
+- **The lower third has a fixed height and stops 440px from the right, clear of the drawer.** Its text starts at the same place whatever its length, and is cut to two lines, so it never shifts. `scrollTo()` keeps what it scrolls to clear of the lower third.
+- **Scroll with `scrollTo()`, never `scrollIntoViewIfNeeded()`,** which jumps, so the viewer loses their place. `scrollTo()` animates every box that scrolls around the target, inner first, such as the drawer and then the page, and turns off a smooth `scroll-behavior` while it animates.
+- **`pause()` is scaled by `WALKTHROUGH_SPEED`, and is for the viewer.** A wait the page needs, like the drawer moving on after Save and Close, uses `page.waitForTimeout()`, so a faster walkthrough doesn't break. The default timings are 0.7 of the first recordings', which were too slow to watch.
 
 ## Why
 
