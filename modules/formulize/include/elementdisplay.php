@@ -158,7 +158,7 @@ function displayElement($formframe="", $ele=0, $entry="new", $noSave = false, $s
            AND !strstr(getCurrentURL(),"printview.php")
            AND file_exists(formulize_entryLockFileName($entry, $form_id))
            AND !$userHasPermissionToIgnoreEntryLock) {
-			formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", "_is_locked_for_editing", ini_get("session.gc_maxlifetime")); // clean up expired locks
+			formulize_scandirAndClean(FORMULIZE_TEMP_PATH . "/", "_is_locked_for_editing", ini_get("session.gc_maxlifetime")); // clean up expired locks
             if($lock = formulize_readEntryLock($entry, $form_id)) {
 				if($lock['uid'] != $user_id) {
                     // first time here, make the warning label
@@ -238,7 +238,7 @@ EOF;
             AND !strstr(getCurrentURL(),"printview.php")
             AND !($redrawnOnItsOwn AND ($lock = formulize_readEntryLock($entry, $form_id)) AND $lock['uid'] == $user_id)) {
 
-            if (is_writable(XOOPS_ROOT_PATH."/modules/formulize/temp/")) {
+            if (is_writable(FORMULIZE_TEMP_PATH . "/")) {
                 if (formulize_writeEntryLock($entry, $form_id, $user_id, $username, $redrawnOnItsOwn ? '' : getEntryLockSecurityToken())) {
                     $entriesThatHaveBeenLockedThisPageLoad[$form_id][$entry] = true;
                 }
@@ -248,7 +248,7 @@ EOF;
                     static $lock_file_warning_issued = false;
                     if (!$lock_file_warning_issued) {
                         error_log("Notice: Formulize temp folder does not exist or is not writeable, so lock file cannot be created in ".
-                            XOOPS_ROOT_PATH."/modules/formulize/temp/");
+                            FORMULIZE_TEMP_PATH . "/");
                         $lock_file_warning_issued = true;
                     }
                 }

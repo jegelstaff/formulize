@@ -69,7 +69,7 @@ if(security_check($fid, $entry_id, $uid)) {
         $data_handler = new formulizeDataHandler($fid);
         $fileInfo = $data_handler->getElementValueInEntry($entry_id, $elementObject);
         $fileInfo = unserialize($fileInfo);
-        $filePath = XOOPS_ROOT_PATH."/uploads/formulize_".$fid."_".$entry_id."_".$element_id."/".$fileInfo['name'];
+        $filePath = ICMS_UPLOAD_PATH . "/formulize_".$fid."_".$entry_id."_".$element_id."/".$fileInfo['name'];
         if(isset($_GET['size']) AND $_GET['size'] == 'thumb') {
             $dotPos = strrpos($filePath, '.');
             $fileExtension = strtolower(substr($filePath, $dotPos+1));

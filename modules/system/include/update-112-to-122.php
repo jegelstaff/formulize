@@ -593,7 +593,7 @@
 		icms::$xoopsDB->queryF('UPDATE `' . icms::$xoopsDB->prefix('config') . '`' . ' SET `conf_value`="' . addslashes(serialize($start_pages)) . '"' . ' WHERE `conf_name`="startpage"');
 
 		/* Check for HTMLPurifier cache path and create, if needed */
-		$purifier_path = icms_core_Filesystem::mkdir(ICMS_TRUST_PATH . '/cache/htmlpurifier');
+		$purifier_path = icms_core_Filesystem::mkdir(ICMS_PURIFIER_CACHE);
 		/* Removing the option for multilogin text, as we're using a constant for it */
 		icms::$xoopsDB->queryF("DELETE FROM `" . icms::$xoopsDB->prefix('config') . "` WHERE conf_name='multi_login_msg'");
 		icms::$xoopsDB->queryF("DELETE FROM `" . icms::$xoopsDB->prefix('config') . "` WHERE conf_name='use_hidden'");

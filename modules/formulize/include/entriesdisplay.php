@@ -1916,11 +1916,11 @@ function drawEntries($fid, $cols, $frid, $currentURL, $uid, $settings, $member_h
 	$downloadCalculationsText = "";
 	if(!$settings['hcalc']) {
 		// garbage collection. delete files older than 6 hours
-		formulize_scandirAndClean(XOOPS_ROOT_PATH . SPREADSHEET_EXPORT_FOLDER, _formulize_EXPORT_FILENAME_TEXT."_");
+		formulize_scandirAndClean(FORMULIZE_DOWNLOADS_PATH . '/', _formulize_EXPORT_FILENAME_TEXT."_");
 		$exportTitle = $screen ? $screen->getVar('title') : $settings['title'];
 		$exportTitle = "&#039;".str_replace(array(" ", "-", "/", "'", "`", "\\", ".", "?", ",", ")", "(", "[", "]"), "_", trans($exportTitle))."&#039;";
 		$export_filename = _formulize_EXPORT_FILENAME_TEXT."_".$exportTitle."_".date("M_j_Y_Hi").".html";
-        $downloadCalculationsURL = XOOPS_URL . SPREADSHEET_EXPORT_FOLDER . $export_filename;
+        $downloadCalculationsURL = FORMULIZE_DOWNLOADS_URL . '/' . $export_filename;
 		$downloadCalculationsText = _formulize_DE_CLICKSAVE;
 	}
 
@@ -3985,7 +3985,7 @@ $output
 </body>
 </html>";
 		// output the file
-		$wpath = XOOPS_ROOT_PATH . SPREADSHEET_EXPORT_FOLDER . undoAllHTMLChars($filename);
+		$wpath = FORMULIZE_DOWNLOADS_PATH . '/' . undoAllHTMLChars($filename);
 		$exportfile = fopen($wpath, "w");
 		fwrite ($exportfile, $outputfile);
 		fclose ($exportfile);
@@ -5147,13 +5147,13 @@ function processCustomButton($caid, $thisCustomAction, $sid, $entry_id="", $entr
 		$caValues[] = isset($effectProperties['value']) ? $effectProperties['value'] : null;
 		if(isset($effectProperties['code'])) {
 			$filename = "custom_code_".$effectid."_".$thisCustomAction['handle']."_".$screenObject->getVar('screen_handle').".php";
-			$caPHP[] = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
+			$caPHP[] = strval(file_get_contents(FORMULIZE_CODE_PATH . '/'.$filename));
 		} else {
 			$caPHP[] = "";
 		}
 		if(isset($effectProperties['html'])) {
 			$filename = "custom_html_".$effectid."_".$thisCustomAction['handle']."_".$screenObject->getVar('screen_handle').".php";
-			$caHTML[$caid.'...'.$effectid.'...'.$entry_id] = strval(file_get_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename));
+			$caHTML[$caid.'...'.$effectid.'...'.$entry_id] = strval(file_get_contents(FORMULIZE_CODE_PATH . '/'.$filename));
 			$isHTML = true;
 		} else {
 			$caHTML[$caid.'...'.$effectid.'...'.$entry_id] = "";

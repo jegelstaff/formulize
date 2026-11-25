@@ -148,7 +148,7 @@ class icms_core_HTMLFilter extends icms_core_DataFilter {
             'Core.RemoveInvalidImg' => $icmsConfigPurifier['purifier_Core_RemoveInvalidImg'],
             'Core.Encoding' => _CHARSET,
             'Cache.DefinitionImpl' => 'Serializer',
-            'Cache.SerializerPath' => ICMS_TRUST_PATH . '/cache/htmlpurifier',
+            'Cache.SerializerPath' => ICMS_PURIFIER_CACHE,
             'URI.Host' => $icmsConfigPurifier['purifier_URI_Host'],
             'URI.Base' => $icmsConfigPurifier['purifier_URI_Base'],
             'URI.Disable' => $icmsConfigPurifier['purifier_URI_Disable'],

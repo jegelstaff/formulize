@@ -186,7 +186,7 @@ class formulizeMultiPageScreen extends formulizeScreen {
 			$this->textReadFromFile[$key] = true;
 			$contents = '';
 			if($fileName = self::codeFileName($key, $this->loadedScreenHandle)) {
-				$path = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$fileName;
+				$path = FORMULIZE_CODE_PATH . '/'.$fileName;
 				if(file_exists($path)) {
 					$contents = strval(file_get_contents($path));
 				}
@@ -329,7 +329,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	 * @return bool False if a file could not be written or removed
 	 */
 	function writeTextFiles($screen) {
-		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		$codeDir = FORMULIZE_CODE_PATH . '/';
 		foreach(formulizeMultiPageScreen::TEXT_VARS as $textVar) {
 			if($screen->isVarClean($textVar)) {
 				continue;
@@ -363,7 +363,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 		if($fromHandle === $toHandle) {
 			return;
 		}
-		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		$codeDir = FORMULIZE_CODE_PATH . '/';
 		foreach(formulizeMultiPageScreen::TEXT_VARS as $textVar) {
 			$from = formulizeMultiPageScreen::codeFileName($textVar, $fromHandle);
 			$to = formulizeMultiPageScreen::codeFileName($textVar, $toHandle);
@@ -381,7 +381,7 @@ class formulizeMultiPageScreenHandler extends formulizeScreenHandler {
 	 * @return void
 	 */
 	function deleteTextFiles($screenHandle) {
-		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		$codeDir = FORMULIZE_CODE_PATH . '/';
 		foreach(formulizeMultiPageScreen::TEXT_VARS as $textVar) {
 			if($fileName = formulizeMultiPageScreen::codeFileName($textVar, $screenHandle)) {
 				if(file_exists($codeDir.$fileName) AND !unlink($codeDir.$fileName)) {

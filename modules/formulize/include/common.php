@@ -128,7 +128,7 @@ function formulize_exception_handler($exception) {
 		$assistance = "<p>You can contact <a href='mailto:help@formulize.net?subject=Formulize error: ".str_replace("'", "&#039;", $errorMessage)."'>help@formulize.net</a> for assistance.</p>";
 	} else {
 		$token = $GLOBALS['xoopsSecurity']->createToken(0, 'formulize_error_token');
-		$mailTemplateFolder = XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template";
+		$mailTemplateFolder = rtrim(formulize_siteMailTemplateFolder($xoopsConfig['language']), "/");
 		$reportFileName = "error_report_$token.tpl";
 		formulize_scandirAndClean($mailTemplateFolder, "error_report_");
 		$errorReportContents = sprintf(_formulize_ERRORREPORT, $exception->getMessage(), $exception->getLine(), str_replace(XOOPS_ROOT_PATH, "", $exception->getFile()), str_replace(XOOPS_ROOT_PATH, "", $exception->getTraceAsString()));

@@ -140,7 +140,7 @@ if($originalScreenHandle !== $screen->getVar('screen_handle')) {
 				$effectId = $key;
 				$buttonHandle = $buttonData['handle'];
         $codeType = isset($value['code']) ? 'custom_code' : 'custom_html';
-				rename(XOOPS_ROOT_PATH."/modules/formulize/code/".$codeType."_".$effectId."_".$buttonHandle."_".$originalScreenHandle.".php", XOOPS_ROOT_PATH."/modules/formulize/code/".$codeType."_".$effectId."_".$buttonHandle."_".$screen->getVar('screen_handle').".php");
+				rename(FORMULIZE_CODE_PATH . "/".$codeType."_".$effectId."_".$buttonHandle."_".$originalScreenHandle.".php", FORMULIZE_CODE_PATH . "/".$codeType."_".$effectId."_".$buttonHandle."_".$screen->getVar('screen_handle').".php");
 			}
 		}
 	}

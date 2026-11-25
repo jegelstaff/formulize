@@ -2447,7 +2447,7 @@ function formulize_getAppearanceUrl($theme = null) {
  * @return string filesystem path of the legacy appearance folder, no trailing slash
  */
 function formulize_getLegacyAppearanceDir() {
-    return XOOPS_ROOT_PATH . '/uploads/appearance';
+    return ICMS_UPLOAD_PATH . '/appearance';
 }
 
 /**
@@ -2456,7 +2456,7 @@ function formulize_getLegacyAppearanceDir() {
  * @return string URL of the legacy appearance folder, no trailing slash
  */
 function formulize_getLegacyAppearanceUrl() {
-    return XOOPS_URL . '/uploads/appearance';
+    return ICMS_UPLOAD_URL . '/appearance';
 }
 
 /**

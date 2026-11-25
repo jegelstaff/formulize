@@ -23,7 +23,7 @@
 class icms_core_Security {
 
 	public $errors = array();
-	private $tokenDir = XOOPS_ROOT_PATH . '/tokens'; // directory where token files are stored
+	private $tokenDir = ICMS_TOKEN_PATH; // directory where token files are stored
 
 	/**
 	 * Initialize the icms::$security service

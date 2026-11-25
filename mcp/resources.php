@@ -1101,7 +1101,7 @@ One arrangement you will see is a series of groups related to a single entity, s
 	private function customCodePresent($formHandle) {
 		$present = [];
 		foreach(array('on_before_save', 'on_after_save', 'on_delete', 'custom_edit_check') as $procedure) {
-			$fileName = XOOPS_ROOT_PATH."/modules/formulize/code/".$procedure."_".$formHandle.".php";
+			$fileName = FORMULIZE_CODE_PATH . "/".$procedure."_".$formHandle.".php";
 			$present[$procedure] = file_exists($fileName);
 		}
 		return $present;

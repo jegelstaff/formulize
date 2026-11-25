@@ -350,7 +350,7 @@ switch($op) {
     $data_handler = new formulizeDataHandler($fid);
     $fileInfo = $data_handler->getElementValueInEntry($entry_id, $elementObject);
     $fileInfo = unserialize($fileInfo);
-    $filePath = XOOPS_ROOT_PATH."/uploads/$folderName/".basename((string) $fileInfo['name']);
+    $filePath = ICMS_UPLOAD_PATH . "/$folderName/".basename((string) $fileInfo['name']);
     if (!file_exists($filePath) or unlink($filePath)) {
 				// erase any thumbnail associated with the file
 				$dotPos = strrpos($filePath, '.');

@@ -1,14 +1,21 @@
 <?php
 
+// Loaded first so the cache folder is known: it can be outside the code tree. See include/sitepaths.php.
+include_once "../../../mainfile.php";
+icms::$logger->disableLogger();
+while(ob_get_level()) {
+    ob_end_clean();
+}
+
 $cache = strstr($_GET['cache'], ".") ? "" : $_GET['cache']; // don't allow inclusion of badly formed cache filenames, could be hacking attempt
 $term = $_GET['term'];
 $currentlySelectedIds = explode(',', $_GET['current']);
 $found = array();
 
-if(file_exists("../../../cache/".$cache)) {
-    include "../../../cache/".$cache;
+if(file_exists(ICMS_CACHE_PATH."/".$cache)) {
+    include ICMS_CACHE_PATH."/".$cache;
 } else {
-    include "../../../".$cache; // if the file doesn't exist in the cache folder, then look in the root of the system
+    include XOOPS_ROOT_PATH."/".$cache; // if the file doesn't exist in the cache folder, then look in the root of the system
 }
 
 if (isset($$cache)) {
@@ -29,11 +36,6 @@ if (isset($$cache)) {
         // allow adding new values, so allow this as a new value, except if it matches an existing value
         if (!$match_existing_value AND trim($term)) {
             // write the $term and newterm:$term as the key/value
-            include_once "../../../mainfile.php";
-            icms::$logger->disableLogger();
-            while(ob_get_level()) {
-                ob_end_clean();
-            }
             global $xoopsConfig;
             if (file_exists("../language/".$xoopsConfig['language']."/main.php")) {
                 include_once "../language/".$xoopsConfig['language']."/main.php";
@@ -46,11 +48,6 @@ if (isset($$cache)) {
 }
 
 if (0 == count((array) $found)) {
-    include_once "../../../mainfile.php";
-    icms::$logger->disableLogger();
-    while(ob_get_level()) {
-        ob_end_clean();
-    }
     global $xoopsConfig;
     if (file_exists("../language/".$xoopsConfig['language']."/main.php")) {
         include_once "../language/".$xoopsConfig['language']."/main.php";

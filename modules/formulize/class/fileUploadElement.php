@@ -329,7 +329,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 	 * @return string The full path to the folder
 	 */
 	function entryFolderPath($element, $entryId) {
-		return XOOPS_ROOT_PATH."/uploads/formulize_".$element->getVar('id_form')."_".intval($entryId)."_".$element->getVar('ele_id');
+		return ICMS_UPLOAD_PATH . "/formulize_".$element->getVar('id_form')."_".intval($entryId)."_".$element->getVar('ele_id');
 	}
 
 	/**
@@ -613,7 +613,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
                 } else {
                     $replacementString = "de_";
                 }
-                $folderLocation = XOOPS_ROOT_PATH."/uploads/".str_replace($replacementString,"formulize_",$value);
+                $folderLocation = ICMS_UPLOAD_PATH . "/".str_replace($replacementString,"formulize_",$value);
                 $storedName = $this->storedFileName($element, $_FILES[$fileKey]['name']);
                 $placeResult = $this->placeFile($folderLocation, $_FILES[$fileKey]['tmp_name'], $storedName, isHttpUpload: true);
                 if($placeResult === true) {
@@ -680,7 +680,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
         // we need to update the folder path so that "_new_" is replaced with the _entryid_ and the file can then be accessible.
         $element_handler = xoops_getmodulehandler('elements','formulize');
         $elementObject = $element_handler->get($element_id);
-        rename(XOOPS_ROOT_PATH."/uploads/formulize_".$elementObject->getVar('id_form')."_new_".$element_id,XOOPS_ROOT_PATH."/uploads/formulize_".$elementObject->getVar('id_form')."_".$entry_id."_".$element_id);
+        rename(ICMS_UPLOAD_PATH . "/formulize_".$elementObject->getVar('id_form')."_new_".$element_id,ICMS_UPLOAD_PATH . "/formulize_".$elementObject->getVar('id_form')."_".$entry_id."_".$element_id);
     }
 
     // this method will prepare a raw data value from the database, to be included in a dataset when formulize generates a list of entries or the getData API call is made
@@ -746,7 +746,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 				}
 				// if $scope is 'all', delete all folders in the /uploads folder off the root of the XOOPS installation that match the elementId
 				$regex = "/^formulize_".$element->getVar('id_form')."_\d+_".$element->getVar('ele_id')."$/";
-				$uploadDir = XOOPS_ROOT_PATH."/uploads/";
+				$uploadDir = ICMS_UPLOAD_PATH . "/";
 				foreach(scandir($uploadDir) as $folder) {
 					if(preg_match($regex, $folder)) {
 						$deletedFilePaths = array_merge($deletedFilePaths, $this->deleteFilesInFolder($uploadDir.$folder));
@@ -770,7 +770,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 				if($ele_value[2]) { // users can connect directly to file or not?
 					return XOOPS_URL.$basePath.rawurlencode($fileName);
 				} else {
-					$fileModTime = fileatime(XOOPS_ROOT_PATH.$basePath.$fileName); // add mod time to change the URL so we don't serve an old file because of browser caching
+					$fileModTime = fileatime(formulize_fileForUrlPath($basePath.$fileName)); // add mod time to change the URL so we don't serve an old file because of browser caching
 					return XOOPS_URL."/modules/formulize/download.php?element=".$element->getVar('ele_id')."&entry_id=$entry_id&m=$fileModTime";
 				}
 			} else {
@@ -813,10 +813,10 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
     // this method will write the extension and mimeType to a list for later review
     function logMissingMimeType($extension, $mimeType, $map) {
         if(!isset($map[$extension]) OR !in_array($mimeType, $map[$extension])) {
-            $missingList = file(XOOPS_ROOT_PATH.'/uploads/missingMimeTypes.txt');
+            $missingList = file(ICMS_UPLOAD_PATH . '/missingMimeTypes.txt');
             $line = "$extension,$mimeType\n";
             if(!is_array($missingList) OR !in_array($line,$missingList)) {
-                $missingMimeTypes = fopen(XOOPS_ROOT_PATH.'/uploads/missingMimeTypes.txt', 'a');
+                $missingMimeTypes = fopen(ICMS_UPLOAD_PATH . '/missingMimeTypes.txt', 'a');
                 fwrite($missingMimeTypes, $line);
                 fclose($missingMimeTypes);
             }
@@ -858,8 +858,8 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 					$dotPos = strrpos($fileInfo['name'], '.');
 					$fileExtension = strtolower(substr($fileInfo['name'], $dotPos+1));
 					$thumbFileName = substr_replace($fileInfo['name'], ".thumb.$fileExtension", $dotPos);
-					$path = XOOPS_ROOT_PATH."/uploads/formulize_".$fid."_".$entry_id."_".$element_id."/".$fileInfo['name'];
-					$thumbPath = XOOPS_ROOT_PATH."/uploads/formulize_".$fid."_".$entry_id."_".$element_id."/".$thumbFileName;
+					$path = ICMS_UPLOAD_PATH . "/formulize_".$fid."_".$entry_id."_".$element_id."/".$fileInfo['name'];
+					$thumbPath = ICMS_UPLOAD_PATH . "/formulize_".$fid."_".$entry_id."_".$element_id."/".$thumbFileName;
 					if(strstr($url, XOOPS_URL."/modules/formulize/download.php?element=")) {
 						$thumbUrl = $url . "&size=thumb";
 					} else {
@@ -968,7 +968,7 @@ class formulizeFileUploadElementHandler extends formulizeElementsHandler {
 				$elementId = $elementIdParamParts[1];
 				$entryId = $entryIdParamParts[1];
 			} else {
-				$metaData = str_replace(XOOPS_URL."/uploads/formulize_", "", $url);
+				$metaData = str_replace(ICMS_UPLOAD_URL . "/formulize_", "", $url);
 				$metaData = explode('/', $metaData);
 				$metaDataParts = explode('_',$metaData[0]);
 				$elementId = $metaDataParts[2];

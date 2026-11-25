@@ -213,7 +213,7 @@ function writeToFormulizeLog($data) {
 	// initialize the configuration settings
 	static $formulizeConfig = false;
 	static $formulizeLoggingOnOff = false;
-	static $formulizeLogFileLocation = XOOPS_ROOT_PATH.'/logs';
+	static $formulizeLogFileLocation = FORMULIZE_LOG_PATH;
 	static $formulizeLogFileStorageDurationHours = 168;
 	if(!$formulizeConfig) {
 		global $xoopsDB;

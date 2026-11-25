@@ -99,7 +99,7 @@ class XoopsFormFckeditor extends icms_form_elements_Textarea
 				$oFCKeditor->Config['FontNames'] = _XOOPS_EDITOR_FCKEDITOR_FONTLIST;
 			}
 			if (is_object($GLOBALS['icmsModule'])) {
-			if (!file_exists($config_file = ICMS_CACHE_PATH . "/fckconfig.".$GLOBALS["icmsModule"]->getVar("dirname", "n").".js")) {
+			if (!file_exists($config_file = FORMULIZE_DOWNLOADS_PATH . "/fckconfig.".$GLOBALS["icmsModule"]->getVar("dirname", "n").".js")) {
 				if ($fp = fopen( $config_file , "wt" )) {
 					$fp_content = "/* FCKconfig module configuration */\n";
 					if (is_readable($config_mod = ICMS_ROOT_PATH."/modules/".$GLOBALS["icmsModule"]->getVar("dirname")."/fckeditor.config.js")) {
@@ -130,8 +130,8 @@ class XoopsFormFckeditor extends icms_form_elements_Textarea
 				}
 			}
 
-			if (is_readable($config_file = ICMS_CACHE_PATH . "/fckconfig.".$GLOBALS["icmsModule"]->getVar("dirname").".js")) {
-				$oFCKeditor->Config['CustomConfigurationsPath'] = ICMS_URL . "/cache/fckconfig.".$GLOBALS["icmsModule"]->getVar("dirname", "n").".js";
+			if (is_readable($config_file = FORMULIZE_DOWNLOADS_PATH . "/fckconfig.".$GLOBALS["icmsModule"]->getVar("dirname").".js")) {
+				$oFCKeditor->Config['CustomConfigurationsPath'] = FORMULIZE_DOWNLOADS_URL . "/fckconfig.".$GLOBALS["icmsModule"]->getVar("dirname", "n").".js";
 			}
 			}
 

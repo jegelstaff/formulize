@@ -35,7 +35,6 @@ define("EV_MULTIPLE_LIST_COLUMNS",          10);    // display multiple columns 
 define("EV_MULTIPLE_FORM_COLUMNS",          17);    // display multiple columns from linked lists for display in form elements
 define("EV_MULTIPLE_SPREADSHEET_COLUMNS",   11);    // display multiple columns from linked lists for export to spreadsheets
 
-define("SPREADSHEET_EXPORT_FOLDER",         "/cache/");   // used to be /modules/formulize/export/
 
 $codeToIncludejQueryWhenNecessary = "
 if (typeof jQuery == 'undefined') {
@@ -1249,7 +1248,7 @@ function formulize_signupThrottleFile() {
     if ($ip === '') {
         return ''; // nothing to key on (e.g. CLI) — cannot throttle
     }
-    return XOOPS_ROOT_PATH . '/cache/formulize_signup_throttle_' . hash('sha256', $ip) . '.txt';
+    return ICMS_CACHE_PATH . '/formulize_signup_throttle_' . hash('sha256', $ip) . '.txt';
 }
 
 /**
@@ -3237,16 +3236,16 @@ function prepExport($headers, $cols, $data, $fdchoice, $custdel, $template, $fid
     $exfilename = _formulize_EXPORT_FILENAME_TEXT."_".$formTitle."_".date("M_j_Y_Hi").".csv";
 
     // open the output file for writing
-    $wpath = XOOPS_ROOT_PATH. SPREADSHEET_EXPORT_FOLDER . "$exfilename";
+    $wpath = FORMULIZE_DOWNLOADS_PATH . "/$exfilename";
     $csvfile = html_entity_decode($csvfile, ENT_QUOTES);
     $exportfile = fopen($wpath, "w");
     fwrite($exportfile, $csvfile);
     fclose($exportfile);
 
     // garbage collection. delete files older than 6 hours
-    formulize_scandirAndClean(XOOPS_ROOT_PATH . SPREADSHEET_EXPORT_FOLDER, _formulize_EXPORT_FILENAME_TEXT);
+    formulize_scandirAndClean(FORMULIZE_DOWNLOADS_PATH . "/", _formulize_EXPORT_FILENAME_TEXT);
 
-    return XOOPS_URL . SPREADSHEET_EXPORT_FOLDER . "$exfilename";
+    return FORMULIZE_DOWNLOADS_URL . "/$exfilename";
 }
 
 /**
@@ -5366,10 +5365,11 @@ function sendNotifications($fid, $event, $entries) {
         foreach ($saved_conditions as $thiscon) {
             if ($thiscon['not_cons_template']) {
                 $templateFileName = substr($thiscon['not_cons_template'], -4) == ".tpl" ? $thiscon['not_cons_template'] : $thiscon['not_cons_template'] . ".tpl";
-                if (!file_exists(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/".$templateFileName)) {
+                $templateFilePath = formulize_mailTemplateFolder($xoopsConfig['language'], $templateFileName) . $templateFileName;
+                if (!file_exists($templateFilePath)) {
                     continue;
                 } else {
-                    $templateFileContents = file_get_contents(XOOPS_ROOT_PATH."/modules/formulize/language/".$xoopsConfig['language']."/mail_template/".$templateFileName);
+                    $templateFileContents = file_get_contents($templateFilePath);
                 }
             }
             if (($templateFileContents AND strstr($templateFileContents, "{ELEMENT")) OR strstr($thiscon['not_cons_subject'], "{ELEMENT")) {
@@ -5499,10 +5499,11 @@ function sendNotificationToEmail($email, $event, $tags, $overrideSubject="", $ov
         }
     }
     // Set up the mailer
-    $xoopsMailer->setTemplateDir($templateDir);
     if (substr($template, -4)!=".tpl") {
         $template .= '.tpl';
     }
+    // a template the site has of its own takes the place of the one shipped
+    $xoopsMailer->setTemplateDir(formulize_mailTemplateFolder($xoopsConfig['language'], $template, $templateDir));
     $xoopsMailer->setTemplate($template);
     $xoopsMailer->setToEmails($email);
     $xoopsMailer->setSubject($subject);
@@ -5710,7 +5711,7 @@ function formulize_processNotification($event, $extra_tags, $fid, $uids_to_notif
     $template = str_replace('.tpl', '', $template);
 
     if($notifyByCron) {
-        $notFile = fopen(XOOPS_ROOT_PATH."/modules/formulize/cache/formulizeNotifications.txt","a");
+        $notFile = fopen(FORMULIZE_NOTIFICATION_QUEUE_PATH . "/formulizeNotifications.txt","a");
         formulize_getLock($notFile);
         foreach($uids_to_notify as $uid_to_notify) {
             if($uid_to_notify>0) {
@@ -6752,7 +6753,7 @@ function formulize_listEntriesTokenForColumn($handle, $columnFid, $entryIdsSQL) 
     if(empty($context['entriesToken'])) {
         static $cleanedUp = false;
         if(!$cleanedUp) {
-            formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "listEntries_");
+            formulize_scandirAndClean(ICMS_CACHE_PATH . "/", "listEntries_");
             $cleanedUp = true;
         }
         $context['entriesToken'] = bin2hex(random_bytes(16));
@@ -6800,7 +6801,7 @@ function formulize_listEntriesSQLFromToken($token, $handle, $fid) {
  * @return string The file's path
  */
 function formulize_listEntriesTokenFile($token) {
-    return XOOPS_ROOT_PATH."/cache/listEntries_".$token.".formulize_cached_query";
+    return ICMS_CACHE_PATH . "/listEntries_".$token.".formulize_cached_query";
 }
 
 /**
@@ -8569,7 +8570,7 @@ function formulize_includeEval($code, $execute=false, $globals=array(), $filterN
         foreach ($filterNames as $thisFilterName) {
             ${$thisFilterName} = $GLOBALS[$thisFilterName];
         }
-        $fileName = XOOPS_ROOT_PATH."/cache/formulize_includeEval_".microtime(true);
+        $fileName = ICMS_CACHE_PATH . "/formulize_includeEval_".microtime(true);
         $fileHandle = fopen($fileName,"w");
         fwrite($fileHandle,"<?php \n global $".implode(", $",$globals).";\n");
         foreach ($codeParts as $thisCode) {
@@ -10046,7 +10047,7 @@ function formulize_javascriptForRemovingEntryLocks($unload=false) {
         global $entriesThatHaveBeenLockedThisPageLoad, $xoopsUser;
         $token = getEntryLockSecurityToken();
         $uid = $xoopsUser ? $xoopsUser->getVar('uid') : 0;
-        formulize_scandirAndClean(XOOPS_ROOT_PATH."/modules/formulize/temp/", ".token");
+        formulize_scandirAndClean(FORMULIZE_TEMP_PATH . "/", ".token");
         formulize_recordEntryLocksForPageLoad($token, $uid, (array) $entriesThatHaveBeenLockedThisPageLoad);
         // write a value that we can check later as an antiCSRF token. Cannot validate through the built in token system since it relies on session which will be borked if the user logs out. So we write a file instead.
         // must be raw js since this is sent through the beacon after page is torn down
@@ -11207,7 +11208,7 @@ function formulize_catchAndWriteExportQuery($fid) {
     // cleanup old export files
     if(!$importExportCleanupDone) {
         formulize_benchmark("before scandir during export/import button creation");
-        formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "exportQuery");
+        formulize_scandirAndClean(ICMS_CACHE_PATH . "/", "exportQuery");
         formulize_benchmark("after scandir during export/import button creation.");
         $importExportCleanupDone = true;
     }
@@ -11223,7 +11224,7 @@ function formulize_exportQueryFile($exportQueryId) {
     if(!is_string($exportQueryId) OR !preg_match('/^[0-9]+_[a-f0-9]{32}$/', $exportQueryId)) {
         return false;
     }
-    return XOOPS_ROOT_PATH."/cache/exportQuery_".$exportQueryId.".formulize_cached_query_for_export";
+    return ICMS_CACHE_PATH . "/exportQuery_".$exportQueryId.".formulize_cached_query_for_export";
 }
 
 /**
@@ -11393,7 +11394,7 @@ function isEnabled($func) {
  */
 function formulize_validatePHPCode($theCode) {
     if (isEnabled('shell_exec') AND $theCode = trim($theCode)) {
-        $tmpfname = tempnam(XOOPS_ROOT_PATH.'/cache', 'FZ');
+        $tmpfname = tempnam(ICMS_CACHE_PATH, 'FZ');
         file_put_contents($tmpfname, trim($theCode));
         $output = shell_exec('php -l "'.$tmpfname.'" 2>&1');
        	unlink($tmpfname);
@@ -12833,10 +12834,10 @@ function do_update_export($queryData, $frid, $fid) {
 
     $filename = prepExport($headers, $cols, $data, $fdchoice, "", false, $fid);
 
-    $pathToFile = str_replace(XOOPS_URL,XOOPS_ROOT_PATH, $filename);
+    $pathToFile = str_replace(FORMULIZE_DOWNLOADS_URL, FORMULIZE_DOWNLOADS_PATH, $filename);
 
     if ($_GET['type'] == "update") {
-        $fileForUser = str_replace(XOOPS_URL. SPREADSHEET_EXPORT_FOLDER, "", $filename);
+        $fileForUser = str_replace(FORMULIZE_DOWNLOADS_URL . "/", "", $filename);
     } else {
         $form_handler = xoops_getmodulehandler('forms','formulize');
         $formObject = $form_handler->get($fid);
@@ -12923,7 +12924,7 @@ function export_data($queryData, $frid, $fid, $groups, $columns, $include_metada
     list($columns, $headers, $explodedColumns, $superHeaders, $handles) = export_prepColumns($columns,$include_metadata);
 
     // output export header
-    $destination = $output_filename ? XOOPS_ROOT_PATH.'/modules/formulize/export/'.$output_filename : 'php://output'; // open a file handle to stdout if we're not making an actual file, because fputcsv() needs something to attach to
+    $destination = $output_filename ? FORMULIZE_EXPORT_PATH . '/'.$output_filename : 'php://output'; // open a file handle to stdout if we're not making an actual file, because fputcsv() needs something to attach to
     $output_handle = fopen($destination, 'w');
 
     if (strstr(strtolower(_CHARSET),'utf') AND $_POST['excel'] == 1) {
@@ -13492,7 +13493,7 @@ function recurse_copy($src,$dst) {
  * @return void
  */
 function updateMultipageTemplates($screen) {
-    $path = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$screen->getVar('theme')."/".$screen->getVar('sid')."/";
+    $path = FORMULIZE_SCREEN_TEMPLATES_PATH."/".$screen->getVar('theme')."/".$screen->getVar('sid')."/";
     $fileMappings = array(
         'elementtemplate'=>array(
             'elementtemplate1',
@@ -13778,9 +13779,24 @@ function formulize_writeCodeToFile($filename, $code) {
 	}
 	$result = true;
 	if($code) {
-		$result = file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
+		$result = file_put_contents(FORMULIZE_CODE_PATH . '/'.$filename, $code);
+		formulize_phpFileChanged(FORMULIZE_CODE_PATH . '/'.$filename);
 	}
 	return $result;
+}
+
+/**
+ * Tell PHP's opcache that a PHP file a site wrote has changed, so the next request runs the new code. Without this,
+ * a server that doesn't check file dates (opcache.validate_timestamps=0), or checks them only every few seconds,
+ * keeps running the old code. Call it after writing custom code or a screen template.
+ *
+ * @param string $path The full path of the file
+ * @return void
+ */
+function formulize_phpFileChanged($path) {
+	if (function_exists('opcache_invalidate')) {
+		@opcache_invalidate($path, true);
+	}
 }
 
 /**
@@ -14863,13 +14879,63 @@ function setTitleOfPageInTemplate($entryId = null, $renderedFormulizeScreen = nu
 }
 
 /**
+ * The file on disk for a path in the site's URL. A site's own files keep their URLs wherever the files are kept,
+ * so /uploads/... is in the uploads folder, which needn't be inside the code. Everything else is in the code.
+ * See include/sitepaths.php.
+ *
+ * @param string $urlPath Path relative to XOOPS_URL, starting with a slash (e.g., '/uploads/pwa/icon-512.png')
+ * @return string The full path of the file
+ */
+function formulize_fileForUrlPath($urlPath) {
+	if (strpos($urlPath, '/uploads/') === 0) {
+		return ICMS_UPLOAD_PATH . substr($urlPath, strlen('/uploads'));
+	}
+	return XOOPS_ROOT_PATH . $urlPath;
+}
+
+/**
+ * The folder a site keeps its own mail templates in, for a language: the templates people write for notifications,
+ * and the ones Formulize writes while sending, such as a digest or an error report. It's made if it doesn't exist.
+ * See include/sitepaths.php.
+ *
+ * @param string $language The language, such as 'english'
+ * @return string The folder, with a trailing slash
+ */
+function formulize_siteMailTemplateFolder($language) {
+	$folder = FORMULIZE_SITE_LANGUAGE_PATH . '/' . basename((string) $language) . '/mail_template';
+	if (!is_dir($folder)) {
+		@mkdir($folder, 0777, true);
+	}
+	return $folder . '/';
+}
+
+/**
+ * The folder holding a mail template: the site's own, if it has a template by that name, or the one shipped
+ * with Formulize. The mailer is given a folder and a file name, so it can only find a template in one place.
+ *
+ * @param string $language The language, such as 'english'
+ * @param string $templateFileName The template's file name, such as 'form_newentry.tpl'
+ * @param string $shippedFolder The folder to use when the site has no template by that name. Defaults to the
+ *   module's folder for the language.
+ * @return string The folder, with a trailing slash
+ */
+function formulize_mailTemplateFolder($language, $templateFileName, $shippedFolder = '') {
+	$language = basename((string) $language);
+	$siteFolder = FORMULIZE_SITE_LANGUAGE_PATH . '/' . $language . '/mail_template/';
+	if (is_file($siteFolder . basename((string) $templateFileName))) {
+		return $siteFolder;
+	}
+	return $shippedFolder ? $shippedFolder : XOOPS_ROOT_PATH . '/modules/formulize/language/' . $language . '/mail_template/';
+}
+
+/**
  * Get file modification time for cache-busting CSS and JS resources
  *
- * @param string $relativeFilePath Path relative to XOOPS_ROOT_PATH (e.g., '/themes/Anari/css/style.css')
+ * @param string $relativeFilePath Path relative to XOOPS_URL (e.g., '/themes/Anari/css/style.css'). See formulize_fileForUrlPath()
  * @return int File modification timestamp, or 0 if file doesn't exist
  */
 function formulize_get_file_version($relativeFilePath) {
-	$fullPath = XOOPS_ROOT_PATH . $relativeFilePath;
+	$fullPath = formulize_fileForUrlPath($relativeFilePath);
 	if (file_exists($fullPath)) {
 		return filemtime($fullPath);
 	}

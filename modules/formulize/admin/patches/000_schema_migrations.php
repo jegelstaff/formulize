@@ -864,11 +864,11 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
                     // copy the contents of custom_code to code
                     // then renmove custom_code
                     $files = scandir(XOOPS_ROOT_PATH.'/modules/formulize/custom_code');
-										mkdir(XOOPS_ROOT_PATH.'/modules/formulize/code');
+										mkdir(FORMULIZE_CODE_PATH);
                     foreach ($files as $file) {
                         if ($file !== '.' && $file !== '..') {
                             $sourceFile = XOOPS_ROOT_PATH.'/modules/formulize/custom_code/'.$file;
-                            $destinationFile = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file;
+                            $destinationFile = FORMULIZE_CODE_PATH . '/'.$file;
                             $moveResult = rename($sourceFile, $destinationFile);
                             if(!$moveResult) {
                                 exit("Error: could not move $file from the custom_code folder to the code folder. Is the code folder writable?<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
@@ -914,7 +914,7 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 								$ele_value = unserialize($record['ele_value']);
 								$code = $ele_value[$eleValueKey];
 								$filename = $record['ele_type'].'_'.$record['ele_handle'].'.php';
-								file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
+								file_put_contents(FORMULIZE_CODE_PATH . '/'.$filename, $code);
 						}
 					} else {
 						exit("Error detecting code snippets in elements for converting to files. SQL dump:<br>".$elementsWithCodeSQL."<br>".$xoopsDB->error()."<br>Please contact <a href=mailto:info@formulize.org>info@formulize.org</a> for assistance.");
@@ -936,7 +936,7 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 								if($record[$event]) {
 									$code = $record[$event];
 									$filename = $event.'_'.$record['form_handle'].'.php';
-									file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
+									file_put_contents(FORMULIZE_CODE_PATH . '/'.$filename, $code);
 								}
 							}
 						}
@@ -971,7 +971,7 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 									}
 									if($code) {
 										$filename = $applyTo.'_'.$effectId.'_'.$actionSettings['handle'].'_'.$record['screen_handle'].'.php';
-										file_put_contents(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename, $code);
+										file_put_contents(FORMULIZE_CODE_PATH . '/'.$filename, $code);
 									}
 								}
 							}
@@ -984,7 +984,7 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 
         // convert any code files to use handles instead of id numbers (which was the original implementation in the patch code above, since updated to use handles instead of ids)
 				// will almost certainly never run, because only required in the tiny window between the original implementation, and the switch to using handles
-        $codeFiles = scandir(XOOPS_ROOT_PATH.'/modules/formulize/code');
+        $codeFiles = scandir(FORMULIZE_CODE_PATH);
         foreach($codeFiles as $file) {
 					if($file !== '.' AND $file !== '..' AND $file !== 'index.html') {
 						/**
@@ -1020,8 +1020,8 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 								if(is_numeric($element_id) AND $elementObject = $element_handler->get($element_id)) {
 									$elementHandle = $elementObject->getVar('ele_handle');
 									$newFile = $firstPart.'_'.$elementHandle.'.php';
-									if($file != $newFile AND !file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$newFile)) {
-										rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$newFile);
+									if($file != $newFile AND !file_exists(FORMULIZE_CODE_PATH . '/'.$newFile)) {
+										rename(FORMULIZE_CODE_PATH . '/'.$file, FORMULIZE_CODE_PATH . '/'.$newFile);
 									}
 								}
 						} elseif($firstPart.'_'.$secondPart.'_'.$thirdPart == "on_before_save"
@@ -1035,8 +1035,8 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 								if(is_numeric($form_id) AND $formObject = $form_handler->get($form_id)) {
 										$formHandle = $formObject->getVar('form_handle');
 										$newFile = $fileType.'_'.$formHandle.'.php';
-										if($file != $newFile AND !file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$newFile)) {
-											rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$newFile);
+										if($file != $newFile AND !file_exists(FORMULIZE_CODE_PATH . '/'.$newFile)) {
+											rename(FORMULIZE_CODE_PATH . '/'.$file, FORMULIZE_CODE_PATH . '/'.$newFile);
 										}
 								}
 						} elseif($firstPart.'_'.$secondPart == "custom_html" OR $firstPart.'_'.$secondPart == "custom_code") {
@@ -1052,7 +1052,7 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
 										$customActions = $screenObject->getVar('customactions');
 										$buttonHandle = $customActions[$button_id]['handle'];
 										if($file != $firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$buttonHandle.'_'.$screen_handle.'.php') {
-											rename(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$file, XOOPS_ROOT_PATH.'/modules/formulize/code/'.$firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$buttonHandle.'_'.$screen_handle.'.php');
+											rename(FORMULIZE_CODE_PATH . '/'.$file, FORMULIZE_CODE_PATH . '/'.$firstPart.'_'.$secondPart.'_'.$effect_id.'_'.$buttonHandle.'_'.$screen_handle.'.php');
 										}
 									}
 								}
@@ -1421,11 +1421,11 @@ function formulize_run_schema_migrations($prev_dbversion, $required_dbversion) {
             }
         }
 
-        $screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/";
+        $screenpathname = FORMULIZE_SCREEN_DEFAULTS_PATH."/".$xoopsConfig['theme_set']."/";
 
         // If current theme folder does not exists for templates, then create it and copy the default folder contents over to it.
         if(!file_exists($screenpathname)) {
-            recurse_copy(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/",$screenpathname);
+            recurse_copy(FORMULIZE_SCREEN_DEFAULTS_PATH."/default/",$screenpathname);
         }
 
         // CONVERTING EXISTING TEMPLATES IN DB TO TEMPLATE FILES
@@ -1722,7 +1722,7 @@ function emptyTemplateFixer($dir) {
 function saveTemplate($template, $sid, $name, $theme="") {
     global $xoopsConfig;
     $theme = $theme ? preg_replace("/[^a-zA-Z0-9_-]+/", "", $theme) : $xoopsConfig['theme_set'];
-    $filename = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$theme."/{$sid}/{$name}.php";
+    $filename = FORMULIZE_SCREEN_TEMPLATES_PATH."/".$theme."/{$sid}/{$name}.php";
 
     $text = trim(html_entity_decode($template));
     if($text) {
@@ -1909,7 +1909,7 @@ function pre81ProvinceListElementTypeInDB() {
 function codeInNeedOfConversion() {
 	global $xoopsDB;
 	$codeConvertedAlready = 0;
-	foreach (scandir(XOOPS_ROOT_PATH.'/modules/formulize/code') as $fileName) {
+	foreach (scandir(FORMULIZE_CODE_PATH) as $fileName) {
 		$fileName = trim($fileName);
 		if (substr($fileName, -4) ==  ".php" AND (
 			substr($fileName, 0, 11) == 'custom_code'

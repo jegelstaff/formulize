@@ -289,7 +289,7 @@ class formulizeAdvancedCalculationHandler {
     }
 
     $key = md5( serialize( $newPost ) . serialize( $userGroups ) );
-    $fileName = XOOPS_ROOT_PATH."/modules/formulize/cache/formulize_advancedCalculation_procid_".intval($acid)."_groupids_".implode("_",$userGroups)."_".$key.".php";
+    $fileName = FORMULIZE_CACHE_PATH . "/formulize_advancedCalculation_procid_".intval($acid)."_groupids_".implode("_",$userGroups)."_".$key.".php";
     return $fileName;
   }
 
@@ -298,7 +298,7 @@ class formulizeAdvancedCalculationHandler {
 	return false;
     }
     // check that the filename is valid
-    $namePart = str_replace(XOOPS_ROOT_PATH."/modules/formulize/cache/formulize_advancedCalculation_procid_","",$fileName);
+    $namePart = str_replace(FORMULIZE_CACHE_PATH . "/formulize_advancedCalculation_procid_","",$fileName);
     if(strstr($namePart,"/") OR strstr($namePart, "\\")) {
 	return false;
     }

@@ -533,7 +533,7 @@ class formulizeElementsHandler {
 		if(!$ele_type OR !$ele_handle) {
 			return false;
 		}
-		$path = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$ele_type.'_'.$ele_handle.'.php';
+		$path = FORMULIZE_CODE_PATH . '/'.$ele_type.'_'.$ele_handle.'.php';
 		clearstatcache(true, $path); // setVar wrote this file moments ago, in this same request
 		return (is_file($path) AND filesize($path) > 0);
 	}
@@ -559,9 +559,9 @@ class formulizeElementsHandler {
 			// we need to delete saved code files if any for this element
 			$ele_type = $element->getVar('ele_type');
 			$filename = $ele_type.'_'.$element->getVar('ele_handle').'.php';
-			if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
-				if(unlink(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename)) {
-					$deletedFilePaths[] = XOOPS_ROOT_PATH.'/modules/formulize/code/'.$filename;
+			if(file_exists(FORMULIZE_CODE_PATH . '/'.$filename)) {
+				if(unlink(FORMULIZE_CODE_PATH . '/'.$filename)) {
+					$deletedFilePaths[] = FORMULIZE_CODE_PATH . '/'.$filename;
 				}
 			}
 		}
@@ -1345,7 +1345,7 @@ class formulizeElementsHandler {
 	protected function renameElementCodeFiles($elementObject, $originalHandle, $eleValueWasSavedWithThisChange) {
 		$newHandle = $elementObject->getVar('ele_handle');
 		$currentType = $elementObject->getVar('ele_type');
-		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		$codeDir = FORMULIZE_CODE_PATH . '/';
 		$codeFilesOnDisk = (array) scandir($codeDir);
 		foreach(self::elementCodeFileTypes() as $type) {
 			$oldName = $type.'_'.$originalHandle.'.php';
@@ -1374,7 +1374,7 @@ class formulizeElementsHandler {
 				rename($codeDir.$oldName, $codeDir.$newName);
 			}
 		}
-		$cacheDir = XOOPS_ROOT_PATH . '/modules/formulize/cache/';
+		$cacheDir = FORMULIZE_CACHE_PATH . '/';
 		if(is_dir($cacheDir)) {
 			foreach((array)glob($cacheDir . 'Derived_value_formula_for_' . $originalHandle . '*.php') as $cacheFile) {
 				@unlink($cacheFile);
@@ -1415,7 +1415,7 @@ class formulizeElementsHandler {
 		$handles = array();
 		if($res = $this->db->query($sql)) {
 			while($row = $this->db->fetchArray($res)) {
-				if(file_exists(XOOPS_ROOT_PATH.'/modules/formulize/code/'.$row['ele_type'].'_'.$row['ele_handle'].'.php')) {
+				if(file_exists(FORMULIZE_CODE_PATH . '/'.$row['ele_type'].'_'.$row['ele_handle'].'.php')) {
 					return array();
 				}
 				$handles[] = $row['ele_handle'];
@@ -1575,7 +1575,7 @@ class formulizeElementsHandler {
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
 		$formObject = $form_handler->get($formId);
 		$formHandle = $formObject ? $formObject->getVar('form_handle') : '';
-		$codeDir = XOOPS_ROOT_PATH.'/modules/formulize/code/';
+		$codeDir = FORMULIZE_CODE_PATH . '/';
 		foreach((array) glob($codeDir.'*.php') as $path) {
 			$syntax = self::codeFileSyntax(basename($path), $formHandle);
 			$files[$path] = array(
@@ -1586,7 +1586,7 @@ class formulizeElementsHandler {
 				'isCode' => true,
 			);
 		}
-		$templatesDir = XOOPS_ROOT_PATH.'/modules/formulize/templates/screens/';
+		$templatesDir = FORMULIZE_SCREEN_TEMPLATES_PATH.'/';
 		$screensSeeingForm = self::screensSeeingForm($formId);
 		$screen_handler = xoops_getmodulehandler('screen', 'formulize');
 		foreach((array) glob($templatesDir.'*/*', GLOB_ONLYDIR) as $screenDir) {
@@ -1686,7 +1686,7 @@ class formulizeElementsHandler {
 			if($rewrite['rewritten'] !== $rewrite['original']) {
 				// a file the web server cannot write - one deployed by someone else, say - keeps all of the old handle,
 				// and the person is told that, rather than that it only has what a rename leaves
-				$isCodeFile = strpos($path, XOOPS_ROOT_PATH.'/modules/formulize/code/') === 0;
+				$isCodeFile = strpos($path, FORMULIZE_CODE_PATH . '/') === 0;
 				if(!is_writable($path) OR ($isCodeFile
 					? formulize_writeCodeToFile(basename($path), $rewrite['rewritten'])
 					: file_put_contents($path, $rewrite['rewritten'])) === false) {
@@ -1711,7 +1711,7 @@ class formulizeElementsHandler {
 	 * @return array The paths.
 	 */
 	private static function mailTemplateFiles() {
-		return array_filter((array) glob(XOOPS_ROOT_PATH.'/modules/formulize/language/*/mail_template/*.tpl'), 'is_file');
+		return array_filter((array) glob(FORMULIZE_SITE_LANGUAGE_PATH.'/*/mail_template/*.tpl'), 'is_file');
 	}
 
 	/**

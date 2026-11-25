@@ -117,17 +117,17 @@ function smarty_function_resized_image($params, &$smarty)
 	// Preparing paths
 	if (substr($file,0,1) == '/') {
 		$original['path'] = $basedir . $file;
-		$resized['path'] = ICMS_ROOT_PATH.'/cache'.$clean_file;
-		$resized['url'] = ICMS_URL.'/cache'.$clean_file;
+		$resized['path'] = FORMULIZE_DOWNLOADS_PATH.$clean_file;
+		$resized['url'] = FORMULIZE_DOWNLOADS_URL.$clean_file;
 	} elseif (strpos($file, ICMS_URL) === 0) {	// In case of full URL
 		$original['path'] = ICMS_ROOT_PATH. str_replace(ICMS_URL, '', $file);
 		$clean_file = str_replace(ICMS_URL, '', urldecode($clean_file)); // Clean file shouuld not have Full URL
-		$resized['path'] = ICMS_ROOT_PATH.'/cache'.$clean_file;
-		$resized['url'] = ICMS_URL.'/cache'.$clean_file;
+		$resized['path'] = FORMULIZE_DOWNLOADS_PATH.$clean_file;
+		$resized['url'] = FORMULIZE_DOWNLOADS_URL.$clean_file;
 	} else {
 		$original['path'] = $file;
-		$resized['path'] = ICMS_ROOT_PATH.'/cache/'.$clean_file;
-		$resized['url'] = ICMS_URL.'/cache/'.$clean_file;
+		$resized['path'] = FORMULIZE_DOWNLOADS_PATH.'/'.$clean_file;
+		$resized['url'] = FORMULIZE_DOWNLOADS_URL.'/'.$clean_file;
 	}
     // Check if original image exists
 	if(!$_image_data = @getimagesize($original['path'])) {

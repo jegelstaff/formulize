@@ -29,13 +29,15 @@ if (!defined('ICMS_GROUP_ANONYMOUS')) {
 	define('ICMS_GROUP_ANONYMOUS', XOOPS_GROUP_ANONYMOUS);
 }
 
+// The folders a site writes to, such as uploads, cache and templates_c
+require_once ICMS_ROOT_PATH . '/include/sitepaths.php';
+
 /**#@+
  * Creating ICMS specific constants
  */
 define('ICMS_PLUGINS_PATH', ICMS_ROOT_PATH . '/plugins');
 define('ICMS_PLUGINS_URL', ICMS_URL . '/plugins');
 define('ICMS_PRELOAD_PATH', ICMS_PLUGINS_PATH . '/preloads');
-define('ICMS_PURIFIER_CACHE', ICMS_TRUST_PATH . '/cache/htmlpurifier');
 // ImpressCMS Modules path & url
 define('ICMS_MODULES_PATH', ICMS_ROOT_PATH . '/modules');
 define('ICMS_MODULES_URL', ICMS_URL . '/modules');
@@ -74,13 +76,9 @@ define('XOOPS_MATCH_CONTAIN', 3);
 
 define('ICMS_KERNEL_PATH', ICMS_ROOT_PATH . '/kernel/');
 define('ICMS_INCLUDE_PATH', ICMS_ROOT_PATH . '/include');
-define('ICMS_INCLUDE_URL', ICMS_ROOT_PATH . '/include');
-define('ICMS_UPLOAD_PATH', ICMS_ROOT_PATH . '/uploads');
-define('ICMS_UPLOAD_URL', ICMS_URL . '/uploads');
+define('ICMS_INCLUDE_URL', ICMS_URL . '/include');
 define('ICMS_THEME_PATH', ICMS_ROOT_PATH . '/themes');
 define('ICMS_THEME_URL', ICMS_URL . '/themes');
-define('ICMS_COMPILE_PATH', ICMS_ROOT_PATH . '/templates_c');
-define('ICMS_CACHE_PATH', ICMS_ROOT_PATH . '/cache');
 define('ICMS_IMAGES_URL', ICMS_URL . '/images');
 define('ICMS_EDITOR_PATH', ICMS_ROOT_PATH . '/editors');
 define('ICMS_EDITOR_URL', ICMS_URL . '/editors');

@@ -8,9 +8,9 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 
 	// Clear the compiled Smarty templates. Not everything in here belongs to Formulize, and updating
 	// the module is not enough on its own to refresh those, so they are swept away on every update.
-	foreach((array) scandir(XOOPS_ROOT_PATH.'/templates_c') as $templateFile) {
+	foreach((array) scandir(ICMS_COMPILE_PATH) as $templateFile) {
 		if($templateFile !== '.' AND $templateFile !== '..' AND $templateFile !== 'index.html') {
-			unlink(XOOPS_ROOT_PATH.'/templates_c/'.$templateFile);
+			unlink(ICMS_COMPILE_PATH . '/'.$templateFile);
 		}
 	}
 
@@ -18,7 +18,7 @@ function formulize_patch_002_always_run($prev_dbversion, $required_dbversion) {
 	$adminMenuLangs = [ 'english', $xoopsConfig['language'] ];
 	$adminMenuLangs = array_unique($adminMenuLangs);
 	foreach($adminMenuLangs as $lang) {
-		$adminMenuFile = XOOPS_ROOT_PATH.'/cache/adminmenu_'.$lang.'.php';
+		$adminMenuFile = ICMS_CACHE_PATH . '/adminmenu_'.$lang.'.php';
 		if (file_exists($adminMenuFile)) {
 			unlink($adminMenuFile);
 		}
@@ -157,9 +157,9 @@ function formulize_remove_stray_registered_user_edit_form_permissions() {
  */
 function formulize_ensure_screen_template_folder_for_theme() {
 	global $xoopsConfig;
-	$screenpathname = XOOPS_ROOT_PATH."/modules/formulize/templates/screens/".$xoopsConfig['theme_set']."/";
+	$screenpathname = FORMULIZE_SCREEN_DEFAULTS_PATH."/".$xoopsConfig['theme_set']."/";
 	if(!file_exists($screenpathname)) {
-		recurse_copy(XOOPS_ROOT_PATH."/modules/formulize/templates/screens/default/", $screenpathname);
+		recurse_copy(FORMULIZE_SCREEN_DEFAULTS_PATH."/default/", $screenpathname);
 	}
 }
 
@@ -200,7 +200,7 @@ function formulize_ensure_screen_template_folder_for_theme() {
  * @return void
  */
 function formulize_remove_empty_screen_templates($screens) {
-	$screensFolder = XOOPS_ROOT_PATH.'/modules/formulize/templates/screens';
+	$screensFolder = FORMULIZE_SCREEN_TEMPLATES_PATH;
 	$shortenFrom = rtrim(str_replace('\\', '/', XOOPS_ROOT_PATH), '/').'/'; // for paths in the report
 
 	// 1. the folders of screens that don't exist
@@ -291,7 +291,7 @@ function formulize_remove_empty_screen_templates($screens) {
  */
 function formulize_warn_about_element_containers_missing_element_class() {
 	$missingElementClass = [];
-	$baseElementContainerDir = XOOPS_ROOT_PATH . '/modules/formulize/templates/screens';
+	$baseElementContainerDir = FORMULIZE_SCREEN_TEMPLATES_PATH;
 	if (!is_dir($baseElementContainerDir)) {
 		return;
 	}
@@ -363,8 +363,8 @@ function formulize_warn_about_missing_tokenizer() {
  */
 function formulize_warn_about_executable_uploads_folder() {
 	include_once XOOPS_ROOT_PATH.'/modules/formulize/include/uploads_execution_probe.php';
-	$uploadsDir = XOOPS_ROOT_PATH.'/uploads';
-	if(formulize_probeUploadsExecution($uploadsDir, XOOPS_URL.'/uploads') !== 'executable') {
+	$uploadsDir = ICMS_UPLOAD_PATH;
+	if(formulize_probeUploadsExecution($uploadsDir, ICMS_UPLOAD_URL) !== 'executable') {
 		return; // 'safe', or could not be confirmed - say nothing rather than raise a false alarm
 	}
 	$htaccessPath = $uploadsDir.'/.htaccess';
@@ -407,7 +407,7 @@ function formulize_warn_about_executable_uploads_folder() {
  * @return void
  */
 function formulize_repair_custom_openlisttemplate_functions() {
-	if (!is_dir(XOOPS_ROOT_PATH . '/modules/formulize/templates/screens')) {
+	if (!is_dir(FORMULIZE_SCREEN_TEMPLATES_PATH)) {
 		return;
 	}
 	// Scan custom per-screen openlisttemplate.php files for getAriaSort() definition.
@@ -435,7 +435,7 @@ function getAriaSort($elementHandle) {
 }
 CANONICAL;
 	$ariaCanonical = preg_replace('/\s+/', '', $ariaCanonicalRaw);
-	$ariaScreensDir = XOOPS_ROOT_PATH . '/modules/formulize/templates/screens';
+	$ariaScreensDir = FORMULIZE_SCREEN_TEMPLATES_PATH;
 	$ariaDirectory = new RecursiveDirectoryIterator($ariaScreensDir, RecursiveDirectoryIterator::SKIP_DOTS);
 	$ariaIter = new RecursiveIteratorIterator($ariaDirectory);
 	$ariaRegex = new RegexIterator($ariaIter, '/^.+\/openlisttemplate\.php$/i', RecursiveRegexIterator::GET_MATCH);
@@ -1111,7 +1111,7 @@ function formulize_find_misspelled_element_handles() {
     usort($types, fn($a, $b) => strlen($b) - strlen($a));
     $codeFilePattern = '/^(' . implode('|', array_map(fn($type) => preg_quote($type, '/'), $types)) . ')_(.+)\.php$/';
     $wrongFiles = array(); // sanitized name => names
-    foreach ((array) scandir(XOOPS_ROOT_PATH . '/modules/formulize/code/') as $file) {
+    foreach ((array) scandir(FORMULIZE_CODE_PATH . '/') as $file) {
         if (preg_match($codeFilePattern, $file, $match) AND formulizeElement::sanitize_handle_name($match[2]) !== $match[2]) {
             $wrongFiles[formulizeElement::sanitize_handle_name($match[2])][$match[2]] = $file;
         }

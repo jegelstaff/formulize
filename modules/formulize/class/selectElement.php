@@ -990,13 +990,13 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				if(!$isDisabled AND $ele_value[ELE_VALUE_SELECT_AUTOCOMPLETE] == 1) {
 					// write the possible values to a cached file so we can look them up easily when we need them, don't want to actually send them to the browser, since it could be huge, but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
 					$cachedLinkedOptionsFileName = "formulize_linkedOptions_".str_replace(".","",microtime(true));
-					formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_linkedOptions_");
+					formulize_scandirAndClean(ICMS_CACHE_PATH . "/", "formulize_linkedOptions_");
 					$the_values = array();
 					asort($linkedElementOptions);
 					foreach($linkedElementOptions as $id=>$text) {
 						$the_values[$id] = undoAllHTMLChars(trans($text));
 					}
-					file_put_contents(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName",
+					file_put_contents(ICMS_CACHE_PATH . "/$cachedLinkedOptionsFileName",
 						"<?php\n\$$cachedLinkedOptionsFileName = ".var_export($the_values, true).";\n");
 					$cachedSourceValuesAutocompleteFile[intval($ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT])][$sourceValuesQ] = $cachedLinkedOptionsFileName;
 				}
@@ -1194,12 +1194,12 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				//don't want to actually send them to the browser, since it could be huge,
 				//but don't want to replicate all the logic that has already gathered the values for us, each time there's an ajax request
 				$cachedLinkedOptionsFileName = "formulize_Options_".str_replace(".","",microtime(true));
-				formulize_scandirAndClean(XOOPS_ROOT_PATH."/cache/", "formulize_Options_");
+				formulize_scandirAndClean(ICMS_CACHE_PATH . "/", "formulize_Options_");
 				$the_values = array();
 				foreach($options as $id => $text) {
 					$the_values[$id] = undoAllHTMLChars(trans($text));
 				}
-				file_put_contents(XOOPS_ROOT_PATH."/cache/$cachedLinkedOptionsFileName",
+				file_put_contents(ICMS_CACHE_PATH . "/$cachedLinkedOptionsFileName",
 					"<?php\n\$$cachedLinkedOptionsFileName = ".var_export($the_values, true).";\n");
 				$defaultSelected = is_array($selected) ? $selected[0] : $selected;
 				$defaultSelectedUser = $options[$defaultSelected];
