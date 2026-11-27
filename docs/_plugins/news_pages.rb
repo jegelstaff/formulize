@@ -96,9 +96,9 @@ module Jekyll
       stories  = entries.reject { |entry| entry["type"] == "Release" }
       releases = entries.select { |entry| entry["type"] == "Release" }
 
-      # A pinned story (news_pin in the News form, kept to at most one by the
-      # form's on_after_save hook) always leads the list, regardless of its
-      # publish date - everything else stays in normal newest-first order.
+      # Pinned stories (news_pin in the News form, kept to at most two by the
+      # form's on_after_save hook) always lead the list, regardless of their
+      # publish dates - newest first among themselves, as everything else is.
       # Only stories are affected; the release feed and the combined RSS feed
       # (built from `entries`, not `stories`) are unaffected by pinning.
       pinned_stories, stories = stories.partition { |entry| entry["pinned"] }

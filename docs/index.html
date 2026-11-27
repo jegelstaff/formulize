@@ -26,10 +26,11 @@ description: Formulize is open source software for collecting and organizing you
   News moved up from the bottom of the page to right after the hero, on the
   theory that "is this project alive right now" is worth answering early for
   a returning visitor, not just at the very end for someone who read
-  everything else first. It also now leads with any pinned story - see
-  news_pin on the News form, and the pinned-story sort in
-  _plugins/news_pages.rb - so an announcement that matters can sit above its
-  publish date without needing a fake future-dated entry to get there.
+  everything else first. It shows four stories, two by two, and leads with
+  the pinned ones - up to two, see news_pin on the News form, and the
+  pinned-story sort in _plugins/news_pages.rb - so an announcement that
+  matters can sit above its publish date without needing a fake future-dated
+  entry to get there.
 
   News is Liquid rather than a runtime fetch - _plugins/news_pages.rb puts
   the stories in site.data at build time.
@@ -71,7 +72,7 @@ description: Formulize is open source software for collecting and organizing you
     each card is about 110px wide and the headlines stop wrapping.
   {%- endcomment -%}
   <div class="news-row news-row-pair">
-    {%- for entry in latest_stories limit: 2 %}
+    {%- for entry in latest_stories limit: 4 %}
     <div class="news-card">
       <div class="news-card-body">
         {% if entry.image %}<img class="news-card-thumb" src="{{ entry.image }}" alt="">{% endif %}

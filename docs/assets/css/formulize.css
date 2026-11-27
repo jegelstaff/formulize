@@ -2841,7 +2841,8 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-6);
 }
-/* Two up instead of three, for the homepage, which shows two stories. Kept to
+/* Two up instead of three, for the homepage, which shows four stories two by
+   two. Kept to
    a single class so the responsive rules further down - which are also single
    class selectors and come later in the file - can override it. Written as
    .news-row.news-row-pair it would outrank them and never collapse. */
