@@ -2151,14 +2151,14 @@ h1 + .band {
    sized on purpose. The videos page is full_width so this row is the whole
    1160px column. Steps down to two and then one below - see the responsive
    block at the end of this file. */
-#video-flex-list {
+.video-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-6);
   margin: 0;
   padding: 0;
 }
-#video-flex-list > div {
+.video-list > div {
   background: var(--color-neutral-100);
   border: 1px solid var(--color-divider);
   border-radius: calc(var(--radius-lg) * 1.15);
@@ -2171,25 +2171,39 @@ h1 + .band {
    different shape. Sized by ratio rather than the fixed 180px this had while
    the cards were narrow - a fixed height letterboxes harder the wider the
    card gets. */
-#video-flex-list img { width: 100%; aspect-ratio: 5 / 3; height: auto; object-fit: cover; border: 0; }
-#video-flex-list p {
+.video-list img { width: 100%; aspect-ratio: 5 / 3; height: auto; object-fit: cover; border: 0; }
+.video-list p {
   padding: var(--space-4) var(--space-6) var(--space-6);
   margin: 0;
   font-size: 16.5px;
   line-height: 1.5;
 }
-#video-flex-list a { text-decoration: none; }
+.video-list a { text-decoration: none; }
 .video-title {
   font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
   font-size: 20px;
   color: var(--color-text);
 }
-#video-flex-list a:hover .video-title { color: var(--color-accent-700); }
+.video-list a:hover .video-title { color: var(--color-accent-700); }
+/* A Human vs AI challenge is two builds of two videos each: the builds side
+   by side, each a two-card .video-list under its own heading, so the whole
+   challenge is one row of four. The builds stack below 900px (see the
+   responsive block), and the 560px rule for .video-list, later in the file
+   at the same specificity, still takes each pair down to one column. */
+.video-challenge {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.video-list-two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.video-list-two p { padding: var(--space-4); }
+.video-group-head { margin-bottom: var(--space-4); }
+.video-challenge + .video-group-head { margin-top: var(--space-12); }
 
 /* A single video dropped into the middle of a prose page (see AI.md): the
    thumbnail beside its caption, inside the reading measure, rather than a
-   card in the videos grid. It used to borrow #video-flex-list for this and
+   card in the videos grid. It used to borrow .video-list for this and
    got the two-column shape only because the reading measure happened to be
    narrow enough to fit two auto-fill tracks - the moment the grid became a
    deliberate three-up, that coincidence stopped holding. */
@@ -3330,10 +3344,11 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   .hero-thumbnail { max-width: 100%; }
   .triad, .duo, .onramp, .video-row, .download-grid, .addon-grid { grid-template-columns: minmax(0, 1fr); }
   .feature-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  /* Two rather than straight to one: the videos page is a gallery of seven
+  /* Two rather than straight to one: the videos page is a gallery of cards
      and it keeps reading as a grid at tablet width, where the three-up rows
      elsewhere on the site are trios of equals that don't. */
-  #video-flex-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .video-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .video-challenge { grid-template-columns: minmax(0, 1fr); }
   .hero-media { max-width: 100%; }
   .hero-lead .hero-text h1 { font-size: 27px; }
   .hero-text p.hero-sub { font-size: 18px; max-width: none; }
@@ -3398,7 +3413,7 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
   .duo,
   .onramp,
   .video-row,
-  #video-flex-list,
+  .video-list,
   .download-grid,
   .addon-grid,
   .quad,
