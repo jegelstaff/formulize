@@ -635,6 +635,13 @@ h1 + .band {
    clear that plus a bit of breathing room, or the target still lands partly
    behind the header instead of below it. */
 [id] { scroll-margin-top: 128px; }
+/* A bare heading as a jump target, such as a category on the videos page.
+   It has no box or padding of its own to give it air, so the scroll margin
+   does it all: 176px puts the heading where a jump into a Features card puts
+   that card's heading, about 43px under the 133px header. It has to come
+   after the [id] rule above, which it ties with on specificity. Phones get
+   their own value in the 560px block. */
+.heading-anchor { scroll-margin-top: 176px; }
 
 /* The row is just layout: the page-width column the header's contents sit
    in. Vertical spacing belongs to .site-header's padding, not here. */
@@ -3500,6 +3507,9 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
      82px header. The narrowest bucket, under 360px, shrinks the logo again to
      an even shorter header, so the clearance there is larger still. */
   .inpage-anchor { scroll-margin-top: 92px; padding-top: var(--space-6); }
+  /* Where the same Features jump puts its heading here, about 37px under
+     the 82px header. */
+  .heading-anchor { scroll-margin-top: 120px; }
   /* Get Formulize comes out of the header entirely at phone width. Every
      page's hero carries the same call to action a screen further down, so in
      the header it is a duplicate - and it is the duplicate that was making
