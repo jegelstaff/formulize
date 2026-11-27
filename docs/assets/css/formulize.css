@@ -3037,6 +3037,77 @@ nav.breadcrumbs .breadcrumb-item + .breadcrumb-item::before {
 .subhead-list li:last-child { margin-bottom: 0; }
 .subhead-list > :last-child { margin-bottom: 0; }
 
+/* ── facts page ─────────────────────────────────────────────────────────── */
+
+/* The five postcards, on /sweet/. Each is a .card with the fact on the left
+   and its trivia question on the right. */
+.facts { display: grid; gap: var(--space-6); }
+.fact {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--space-8);
+  align-items: start;
+  scroll-margin-top: 148px;
+}
+.fact-main h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.fact-main p { margin: 0; font-size: 19px; line-height: 1.5; }
+
+/* The number on the postcard: knocked out of a green box, in the colour of the
+   card behind it. Black type is the rule on this green everywhere else. */
+.fact-num {
+  flex: none;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-accent-2);
+  color: var(--color-surface);
+  border-radius: var(--radius-md);
+  line-height: 1;
+}
+
+.fact-trivia {
+  padding: var(--space-4);
+  background: var(--color-accent-100);
+  border-radius: var(--radius-md);
+}
+.fact-trivia h3 { margin-bottom: var(--space-2); font-size: 19px; color: var(--color-accent-700); }
+.fact-trivia p { margin: 0; font-size: 16.5px; }
+.fact-trivia > p { font-weight: 600; }
+.fact-trivia ul { margin: var(--space-2) 0 var(--space-3); font-size: 16.5px; }
+
+.fact-trivia summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 16.5px;
+  font-weight: 600;
+  color: var(--color-accent-700);
+  cursor: pointer;
+  list-style: none;
+}
+.fact-trivia summary::-webkit-details-marker { display: none; }
+.fact-trivia summary::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-right: 2.5px solid currentColor;
+  border-bottom: 2.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+}
+.fact-trivia details[open] summary::after { transform: translateY(2px) rotate(-135deg); }
+.fact-trivia summary:focus-visible { outline: 2px solid var(--color-accent-500); outline-offset: 3px; }
+.fact-trivia details p { margin-top: var(--space-2); }
+
+@media (max-width: 900px) {
+  .fact { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+}
+@media (max-width: 560px) {
+  .fact { padding: var(--space-4); scroll-margin-top: 92px; }
+}
+
 /* ── embedded Formulize screens ─────────────────────────────────────────── */
 
 /* The frame on /contact/ and /signup/. The embedded screen brings its own

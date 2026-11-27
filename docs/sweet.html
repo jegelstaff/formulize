@@ -1,0 +1,125 @@
+---
+layout: default
+permalink: sweet/
+title: Short and Sweet Formulize Facts
+full_width: true
+description: Five short facts about Formulize, each with a trivia question to go with it.
+---
+
+{% comment %}
+  The same content as the five printed postcards: a fact and a trivia question
+  on the front, and the answer on the back. The wording here should match the
+  cards.
+
+  The answers are <details>, so people can guess before they look, and they
+  work without JavaScript. Each fact has an id, so /sweet/#fact-3 goes straight
+  to the third one.
+{% endcomment %}
+
+<div class="band-head" style="max-width: none;">
+  <h1>Short and Sweet Formulize Facts</h1>
+</div>
+
+<section class="band facts">
+
+  <article class="card fact" id="fact-1">
+    <div class="fact-main">
+      <h2><span class="fact-num">#1</span> Did you know?</h2>
+      <p>Each form element has its own class. You can extend any of them yourself and Formulize will make yours available automatically, everywhere from the form builder to the MCP server.</p>
+    </div>
+    <div class="fact-trivia">
+      <h3>Trivia</h3>
+      <p>How many types of form elements come with Formulize?</p>
+      <ul>
+        <li>12</li>
+        <li>24</li>
+        <li>35</li>
+      </ul>
+      <details>
+        <summary>Answer</summary>
+        <p><strong>35!</strong> There are text boxes, dropdowns, checkboxes, autocompletes, dates, sliders, file uploads, address lookups, embedded subforms, calculated fields and more.</p>
+      </details>
+    </div>
+  </article>
+
+  <article class="card fact" id="fact-2">
+    <div class="fact-main">
+      <h2><span class="fact-num">#2</span> Did you know?</h2>
+      <p>Formulize is open source software designed to empower you. There&rsquo;s no &ldquo;community edition&rdquo; and no paid add-ons. Every copy of Formulize has every feature, whether you host it yourself or we host it for you.</p>
+    </div>
+    <div class="fact-trivia">
+      <h3>Trivia</h3>
+      <p>How many users can a Formulize site have?</p>
+      <ul>
+        <li>Always unlimited</li>
+        <li>10 per app</li>
+        <li>10 per app, unless you self-host</li>
+      </ul>
+      <details>
+        <summary>Answer</summary>
+        <p><strong>Always unlimited!</strong> Formulize has no limit on users, forms, records, or anything else. The whole idea is to give you control over your own data, whatever size and shape that data is.</p>
+      </details>
+    </div>
+  </article>
+
+  <article class="card fact" id="fact-3">
+    <div class="fact-main">
+      <h2><span class="fact-num">#3</span> Did you know?</h2>
+      <p>You can tailor the data each user sees in Formulize based on what kind of user they are, who the data belongs to, or any other property. So if your staff should only see expenses after they&rsquo;re approved, it&rsquo;s no problem.</p>
+    </div>
+    <div class="fact-trivia">
+      <h3>Trivia</h3>
+      <p>How many different permission settings are there for users in Formulize?</p>
+      <ul>
+        <li>5</li>
+        <li>16</li>
+        <li>22</li>
+      </ul>
+      <details>
+        <summary>Answer</summary>
+        <p><strong>22!</strong> In every form, you control whether users see only their own entries, their group&rsquo;s entries, or all entries. There are separate controls for creating, updating, or deleting data, making reports, uploading spreadsheets, and more.</p>
+      </details>
+    </div>
+  </article>
+
+  <article class="card fact" id="fact-4">
+    <div class="fact-main">
+      <h2><span class="fact-num">#4</span> Did you know?</h2>
+      <p>When using AI to build Formulize apps, everything the AI touches is an ordinary Formulize setting that you can see and adjust yourself. You&rsquo;re never stuck with a black box. Plus, you can use any AI provider you like.</p>
+    </div>
+    <div class="fact-trivia">
+      <h3>Trivia</h3>
+      <p>When using AI with Formulize, what data can the AI see?</p>
+      <ul>
+        <li>Your entire database</li>
+        <li>Only data associated with the active user</li>
+        <li>Only data you&rsquo;ve selected in advance</li>
+      </ul>
+      <details>
+        <summary>Answer</summary>
+        <p><strong>Only data associated with the active user!</strong> The AI works as the user, with their permissions and nothing more. No separate governance layer is required because the AI is restricted to only the data the user can access.</p>
+      </details>
+    </div>
+  </article>
+
+  <article class="card fact" id="fact-5">
+    <div class="fact-main">
+      <h2><span class="fact-num">#5</span> Did you know?</h2>
+      <p>When requirements change, your screens can change with them. Add a column, a calculation, a button, or a whole new screen whenever you need to. As your needs grow, Formulize grows with you.</p>
+    </div>
+    <div class="fact-trivia">
+      <h3>Trivia</h3>
+      <p>How can a list of entries be used in Formulize?</p>
+      <ul>
+        <li>As a report</li>
+        <li>As a dashboard</li>
+        <li>As a data entry screen</li>
+      </ul>
+      <details>
+        <summary>Answer</summary>
+        <p><strong>All of the above!</strong> Lists are highly configurable to suit whatever your workflow requires. Add totals and averages, let people edit entries right in the list, or give it a unique layout that&rsquo;s all your own.</p>
+      </details>
+    </div>
+  </article>
+
+</section>
