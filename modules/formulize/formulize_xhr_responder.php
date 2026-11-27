@@ -500,18 +500,7 @@ switch($op) {
       $GLOBALS['formulize_asynchronousFormDataInAPIFormat'][$passedEntryId][$handle] = $apiFormatValue;
     }
 
-		$screenObject = null;
-		$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
-		$gperm_handler = xoops_gethandler('groupperm');
-		if($sid AND $viewFormPermission = $gperm_handler->checkRight("view_form", $fid, $groups, getFormulizeModId())) {
-			$screen_handler = xoops_getmodulehandler('screen', 'formulize');
-			if($candidateScreenObject = $screen_handler->get($sid)) {
-				if($candidateScreenObject->getVar('fid') == $fid) {
-					$screen_handler = xoops_getmodulehandler($candidateScreenObject->getVar('type').'Screen', 'formulize');
-					$screenObject = $screen_handler->get($sid);
-				}
-			}
-		}
+		$screenObject = formulize_xhrScreen($sid ?? 0, $fid);
 
 		// render the elements and package them in JSON
     $jsonSep = '';
@@ -563,11 +552,29 @@ switch($op) {
     break;
 
   case "update_derived_value":
-    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
-    $formID = $_GET['fid'];
-    $formRelationID = $_GET['frid'];
+		// With an entry id, this refreshes that one entry, as the form does after a sub entry is saved in the drawer, so
+		// the user only has to be able to see the entry. Without one, it recomputes the form's entries in batches, as the
+		// derived element's admin page does, so the user has to be logged in with edit_form on the form.
+		// Anyone else gets nothing back, and nothing is recomputed.
+    $formID = intval($_GET['fid']);
+    $formRelationID = intval($_GET['frid']);
     $entryID = isset($_GET['entryId']) ? intval($_GET['entryId']) : "";
-    $limitStart = $_GET['limitstart'];
+    if(!$formID) {
+      break;
+    }
+    if($entryID) {
+      if(!security_check($formID, $entryID)) {
+        break;
+      }
+    } else {
+      $gperm_handler = xoops_gethandler('groupperm');
+      if(!$xoopsUser OR !$gperm_handler->checkRight("edit_form", $formID, $xoopsUser->getGroups(), getFormulizeModId())) {
+        break;
+      }
+    }
+
+    include_once XOOPS_ROOT_PATH . "/modules/formulize/include/extract.php";
+    $limitStart = intval($_GET['limitstart']);
     $limitSize = $_GET['limitsize'] ? intval($_GET['limitsize']) : 50;
     $GLOBALS['formulize_forceDerivedValueUpdate'] = true;
     ob_start();
@@ -583,6 +590,7 @@ switch($op) {
     if(isset($_GET['returnElements'])) {
         // instead of returning the count of data that we found, generate the derived value elements of the main form and return those
         $derivedValueMarkup = array();
+        $screenObject = formulize_xhrScreen(isset($_GET['sid']) ? $_GET['sid'] : 0);
         $form_handler = xoops_getModuleHandler('forms', 'formulize');
         $element_handler = xoops_getModuleHandler('elements', 'formulize');
         $formObject = $form_handler->get($formID);
@@ -594,7 +602,7 @@ switch($op) {
             // The element type decides whether its content is dynamic, via requiresDynamicRerendering().
             $elementTypeHandler = xoops_getmodulehandler($elementType.'Element', 'formulize');
             if($elementType == 'derived' OR (method_exists($elementTypeHandler, 'requiresDynamicRerendering') AND $elementTypeHandler->requiresDynamicRerendering($ele_value))) {
-                if($html = renderElement($elementObject, $entryID, $frid, $screenObject)) {
+                if($html = renderElement($elementObject, $entryID, $formRelationID, $screenObject)) {
                     $derivedValueMarkup[$elementId] = $html;
                 }
             }
@@ -743,6 +751,32 @@ switch($op) {
 		print json_encode($egsResults);
 		break;
 
+}
+
+/**
+ * The screen a request names, so elements can be drawn the way that screen draws them.
+ * The screen's own form decides access, because the form in the request can be another one, such as a form shown through the screen's relationship.
+ * @param int $sid The screen id sent with the request
+ * @param int $fid Optional. A form the screen must belong to
+ * @return object|null The screen, as an object of its type's class, or null if there is no such screen, it isn't in $fid, or the user can't see its form
+ */
+function formulize_xhrScreen($sid, $fid = 0) {
+	global $xoopsUser;
+	$sid = intval($sid);
+	if(!$sid) {
+		return null;
+	}
+	$screen_handler = xoops_getmodulehandler('screen', 'formulize');
+	$screenObject = $screen_handler->get($sid); // comes back as its type's class
+	if(!$screenObject OR ($fid AND $screenObject->getVar('fid') != $fid)) {
+		return null;
+	}
+	$groups = $xoopsUser ? $xoopsUser->getGroups() : array(0=>XOOPS_GROUP_ANONYMOUS);
+	$gperm_handler = xoops_gethandler('groupperm');
+	if(!$gperm_handler->checkRight("view_form", intval($screenObject->getVar('fid')), $groups, getFormulizeModId())) {
+		return null;
+	}
+	return $screenObject;
 }
 
 // CONDITIONAL SUBFORMS DON'T WORK WHEN SUBFORM IS SET TO ACCORDIONS! JS won't kick in if element is not visible at initial pageload (because of document ready around the instantiation of the accordion section?)

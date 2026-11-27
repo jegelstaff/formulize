@@ -3327,7 +3327,7 @@ function goSubModal(ent, fid, frid, mainformFid, mainformEntryId, subformElement
 // parent entry that changed as a result. Same two updates the modal's own save did.
 function formulize_subEntrySavedInDrawer(ent, frid, mainformFid, mainformEntryId, subformElementId) {
     redrawSubRow(ent, subformElementId);
-    jQuery.post('<?php print XOOPS_URL; ?>/modules/formulize/formulize_xhr_responder.php?op=update_derived_value&uid=<?php global $xoopsUser; print $xoopsUser ? $xoopsUser->getVar('uid') : 0; ?>&fid='+mainformFid+'&frid='+frid+'&entryId='+mainformEntryId+'&returnElements=1', function(data) {
+    jQuery.post('<?php print XOOPS_URL; ?>/modules/formulize/formulize_xhr_responder.php?op=update_derived_value&uid=<?php global $xoopsUser; print $xoopsUser ? $xoopsUser->getVar('uid') : 0; ?>&fid='+mainformFid+'&frid='+frid+'&entryId='+mainformEntryId+'&sid='+FORMULIZE.SCREEN_ID+'&returnElements=1', function(data) {
         var elements = JSON.parse(data);
         for(var elementId in elements) {
             var rowSelector = 'formulize-de_'+mainformFid+'_'+mainformEntryId+'_'+elementId;
