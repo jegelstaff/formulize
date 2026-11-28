@@ -1403,20 +1403,10 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 					$sortIsOnMain = false;
 				}
 
-				$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
-				if ($sortFieldMetaData['ele_encrypt']) {
-					$sortFieldFullValue = "AES_DECRYPT($sortFidAlias.`$sortField`, " . formulize_aesKeySQL() . ")"; // sorts as text, which will screw up number fields
-				} elseif (formulize_isLinkedElement($sortField)) {
-					$ele_value = unserialize($sortFieldMetaData['ele_value']);
-					$boxproperties = formulize_linkedSourceParts($ele_value[2]);
-					$target_fid = $boxproperties[0];
-					$target_element_handle = $boxproperties[1];
-					$form_handler = xoops_getmodulehandler('forms', 'formulize');
-					$targetFormObject = $form_handler->get($target_fid);
-					// note you cannot sort by multi select boxes!
-					$sortFieldFullValue = "(SELECT sourceSortForm.`" . $target_element_handle . "` FROM " . DBPRE . "formulize_" . $targetFormObject->getVar('form_handle') . " as sourceSortForm WHERE sourceSortForm.`entry_id` = " . $sortFidAlias . ".`" . $sortField . "`)";
+				if ($sortField == "owner_groups_subquery" OR $sortField == "usertable.email" OR strpos($sortField, 'profile_sort_') === 0) {
+					$sortFieldFullValue = $sortField; // selected under this name, see above
 				} else {
-					$sortFieldFullValue = ($sortField == "owner_groups_subquery" OR $sortField == "usertable.email" OR strpos($sortField, 'profile_sort_') === 0) ? $sortField : "$sortFidAlias.`$sortField`";
+					$sortFieldFullValue = formulize_sortValueSQL($sortField, $sortFidAlias);
 				}
 
 				$orderByParts[] = "$sortFieldFullValue $sortOrder";
@@ -1572,14 +1562,9 @@ function dataExtraction($frame, $form, $filter, $andor, $scope, $limitStart, $li
 			$limitByEntryId = " AND (";
 			$entryIdQuery = str_replace("COUNT(main.$mainIdColumn)", "main.$mainIdColumn as main_entry_id $ownerGroupsSortSelect $profileSortSelect", $countMasterResults); // don't count the entries, select their id numbers
 			if (!$sortIsOnMain) {
-				$sortFieldMetaData = formulize_getElementMetaData($sortField, true);
 				$sortFormObject = $form_handler->get($sortFid);
-
-				if ($sortFieldMetaData['ele_encrypt']) {
-					$useAsSortSubQuery = "(SELECT max(AES_DECRYPT(`$sortField`, " . formulize_aesKeySQL() . ")) as subsort FROM " . DBPRE . "formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE " . $joinTextIndex[$sortFidAlias] . " ORDER BY subsort $sortOrder) as usethissort";
-				} else {
-					$useAsSortSubQuery = "(SELECT max(`$sortField`) as subsort FROM " . DBPRE . "formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE " . $joinTextIndex[$sortFidAlias] . " ORDER BY subsort $sortOrder) as usethissort";
-				}
+				// the same value the sort uses in the query that gathers the entries, so a linked element sorts by what it shows, not by the ids it stores
+				$useAsSortSubQuery = "(SELECT max(" . formulize_sortValueSQL($sortField, $sortFidAlias) . ") as subsort FROM " . DBPRE . "formulize_" . $sortFormObject->getVar('form_handle') . " as $sortFidAlias WHERE " . $joinTextIndex[$sortFidAlias] . " ORDER BY subsort $sortOrder) as usethissort";
 				$entryIdQuery = str_replace("SELECT main.entry_id as main_entry_id ", "SELECT $useAsSortSubQuery, main.entry_id as main_entry_id ", $entryIdQuery); // sorts as text which will screw up number fields
 				$thisOrderByClause = " ORDER BY usethissort $sortOrder ";
 			} else {
@@ -3954,6 +3939,43 @@ function formulize_isLinkedElement($elementIdOrHandle) {
 		}
 	}
 	return false;
+}
+
+/**
+ * The SQL for the value that entries are sorted by, when they're sorted by an element.
+ *
+ * A linked element stores entry ids in the source form, so it's sorted by what those entries hold in the source
+ * element, which is what people see. When that is a linked element too, the link is followed again, a few times at
+ * most, so links that lead round in a circle still end. When several entries are chosen, the first one counts.
+ * Encrypted values are decrypted, and sort as text, which puts numbers in the wrong order.
+ *
+ * Used for every sort on an element in dataExtraction(), including the subquery that orders the main form's
+ * entries by a value in a connected form.
+ *
+ * @param string $handle The element's handle, or another column of the table, such as entry_id. Already escaped.
+ * @param string $tableAlias The alias of the table that holds the column, in the query the SQL goes into
+ * @param int $linksFollowed How many links have been followed to get here
+ * @return string The SQL
+ */
+function formulize_sortValueSQL($handle, $tableAlias, $linksFollowed = 0) {
+	$column = "$tableAlias.`$handle`";
+	$metaData = formulize_getElementMetaData($handle, true);
+	if (!empty($metaData['ele_encrypt'])) {
+		return "AES_DECRYPT($column, " . formulize_aesKeySQL() . ")";
+	}
+	if ($linksFollowed < 5 AND $ele_value = formulize_isLinkedElement($handle)) {
+		list($sourceFid, $sourceHandle) = array_pad(formulize_linkedSourceParts($ele_value[2]), 2, '');
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		if ($sourceHandle AND $sourceFormObject = $form_handler->get($sourceFid)) {
+			$sourceAlias = "sortsource$linksFollowed";
+			// one entry is stored as its id, and several as ,12,34, so only the elements that allow several need the first id picked out
+			$firstEntryId = formulize_elementAllowsMultipleSelections($handle, true) ? "SUBSTRING_INDEX(TRIM(',' FROM $column), ',', 1)" : $column;
+			return "(SELECT " . formulize_sortValueSQL($sourceHandle, $sourceAlias, $linksFollowed + 1)
+				. " FROM " . DBPRE . "formulize_" . $sourceFormObject->getVar('form_handle') . " AS $sourceAlias"
+				. " WHERE $sourceAlias.`entry_id` = $firstEntryId)";
+		}
+	}
+	return $column;
 }
 
 // This function returns true or false depending on whether an element is a multiselect selectbox or checkboxes
