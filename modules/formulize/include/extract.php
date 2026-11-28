@@ -4089,8 +4089,9 @@ function formulize_calcDerivedColumns($entry, $metadata, $relationship_id, $form
 		include_once XOOPS_ROOT_PATH . "/modules/formulize/class/data.php";
 		foreach ($entry as $formHandle => $record) {
 			$formHandle = htmlspecialchars_decode($formHandle, ENT_QUOTES);
-			$data_handler = new formulizeDataHandler($metadata[$formHandle][0]['form_id']); // all items in the metadata[formHandle] array will have the same form id, because the form handle is the same
+			// only forms with derived values are in the metadata, so the dataset's other forms are skipped
 			if (isset($metadata[$formHandle])) {
+				$data_handler = new formulizeDataHandler($metadata[$formHandle][0]['form_id']); // all items in the metadata[formHandle] array will have the same form id, because the form handle is the same
 				// if there are derived value formulas for this form
 				if (!isset($parsedFormulas[$formHandle][$relationship_id][$form_id])) {
 					formulize_includeDerivedValueFormulas($metadata[$formHandle], $formHandle, $relationship_id, $form_id);
