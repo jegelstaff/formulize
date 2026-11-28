@@ -44,13 +44,15 @@ function artifactCells(page) {
 }
 
 // The heading's link sorts the list. In Anari the heading can also have links to freeze the column and to more
-// information, so the heading is found by the link, and the heading says how the list is sorted.
+// information, so the heading is found by the link, and the heading says how the list is sorted. The list shows
+// columns from more than one form, so each heading starts with its form's title.
 function donorSortLink(page) {
-	return page.locator('th[scope="col"]').getByRole('link', { name: 'Donor', exact: true });
+	return page.locator('th[scope="col"]').getByRole('link', { name: 'Artifacts: Donor', exact: true });
 }
 
+// A filter's locator is looked for inside each heading, so it's the bare link, not donorSortLink()
 function donorHeading(page) {
-	return page.locator('th[scope="col"]').filter({ has: donorSortLink(page) });
+	return page.locator('th[scope="col"]').filter({ has: page.getByRole('link', { name: 'Artifacts: Donor', exact: true }) });
 }
 
 async function sortByDonor(page, direction) {
@@ -60,7 +62,6 @@ async function sortByDonor(page, direction) {
 }
 
 async function expectSortedByDonorName(page) {
-	await login(page, 'admin');
 	await page.goto(listUrl());
 	await expect(artifactCells(page)).toHaveCount(3);
 
@@ -127,6 +128,7 @@ test.describe.serial('Sorting a list by a linked element on a connected form', (
 	});
 
 	test('with one connected form, the pages go by the donors\' names', async ({ page }) => {
+		await login(page, 'admin');
 		await expectSortedByDonorName(page);
 		await leavePage(page);
 	});

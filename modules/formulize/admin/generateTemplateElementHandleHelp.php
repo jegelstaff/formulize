@@ -21,9 +21,14 @@
   $elementOptionsById = array();
   $listTemplateHelp = array();
   $class = "odd";
-  foreach($allFids as $thisFid) {
+  foreach($allFids as $allFidsKey => $thisFid) {
 		unset($thisFidObj);
 		$thisFidObj = $form_handler->get($thisFid, true); // true causes all elements to be included, even if they're not visible
+		// leave out a form that someone has deleted since the ids were read, here and in the pages that use $allFids afterwards
+		if(!$thisFidObj) {
+			unset($allFids[$allFidsKey]);
+			continue;
+		}
 		$allFidObjs[$thisFid] = $thisFidObj; // for use later on
 		$thisFidElements = $thisFidObj->getVar('elementsWithData');
 		$thisFidCaptions = $thisFidObj->getVar('elementCaptions');

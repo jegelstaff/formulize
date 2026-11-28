@@ -711,6 +711,31 @@ export async function showPermissionsFor(page, groups) {
 }
 
 /**
+ * Show one user's permissions on a form's Permissions tab. "Show permissions for the user" saves the page first, and
+ * the reload only comes once the save is done, so until then the page being left is still there, with the panels of
+ * whatever groups it showed. This waits for the reload, and for the user's panel.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} name - The user's name, as the autocomplete and the panel show it
+ * @param {string} searchText - What to type in the autocomplete to find them
+ * @returns {Promise<import('@playwright/test').Locator>} The user's panel
+ */
+export async function showPermissionsForUser(page, name, searchText) {
+	await waitForAdminPageReady(page);
+	await selectAutocompleteOption(page, page.locator('#submitted_user_user'), name, { searchText });
+	// The autocomplete's dropdown and the fixed #admin_toolbar can both be over the button, so wait for the dropdown
+	// to close, then force past the toolbar
+	await expect(page.locator('ul.ui-autocomplete:visible')).toHaveCount(0);
+	await Promise.all([
+		page.waitForEvent('load', { timeout: 60000 }),
+		page.getByRole('button', { name: 'Show permissions for the user' }).click({ force: true }),
+	]);
+	await waitForAdminPageReady(page);
+	const panel = page.locator('#user_perms_accordion_box');
+	await expect(panel.locator('legend')).toHaveText(`User Permissions for ${name}`);
+	return panel;
+}
+
+/**
  * Waits for a conditional element to appear or be updated after a trigger action
  * Does not work for conditional elements that disappear on a trigger action - will need a different function for that
  * @param {Page} page - Playwright page object
