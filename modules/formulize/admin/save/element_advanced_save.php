@@ -137,6 +137,8 @@ if($_POST['original_handle']) {
     $dataTypeInfo = false;
     $dataTypeCompleteString = false;
 }
+// does the field differ from the type the element's class says its settings need?
+$classDataTypeDiffers = (!$ele_encrypt AND $dataTypeCompleteString AND method_exists($element, 'getDefaultDataType') AND !formulizeElement::sameDataType($element->getDefaultDataType(), $dataTypeCompleteString));
 
 if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFieldMissing($ele_id, $_POST['original_handle']))) {
 
@@ -170,12 +172,12 @@ if($databaseElement AND (!$_POST['original_handle'] OR $form_handler->elementFie
     ($_POST['original_handle'] != $element->getVar('ele_handle') OR
     (isset($_POST['element_default_datatype']) AND $_POST['element_datatype'] != $_POST['element_default_datatype']) OR
     ($ele_value['snapshot'] AND $dataTypeInfo != 'text') OR
-    (!$ele_encrypt AND $dataTypeCompleteString AND method_exists($element, 'getDefaultDataType') AND $element->getDefaultDataType() != $dataTypeCompleteString)
+    $classDataTypeDiffers
     ) AND $databaseElement) {
   // figure out if the datatype needs changing...
 	if($ele_encrypt) {
 		$dataType = false;
-	} elseif(!$ele_encrypt AND $dataTypeCompleteString AND method_exists($element, 'getDefaultDataType') AND $element->getDefaultDataType() != $dataTypeCompleteString) {
+	} elseif($classDataTypeDiffers) {
 		$dataType = $element->getDefaultDataType();
 	} elseif(isset($_POST['element_default_datatype']) AND $_POST['element_datatype'] != $_POST['element_default_datatype']) {
 		$dataType = getRequestedDataType();

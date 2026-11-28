@@ -543,8 +543,6 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		if(is_object($element) AND is_subclass_of($element, 'formulizeElement')) {
 
 			$form_handler = xoops_getmodulehandler('forms', 'formulize');
-			$fid = (is_object($element) AND is_a($element, 'formulizeElement')) ? $element->getVar('fid') : 0;
-			$formObject = $fid ? $form_handler->get($fid) : false;
 			$currentEleValue = $element->getVar('ele_value');
 
 			global $xoopsDB;
@@ -613,19 +611,8 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 				$ele_value[ELE_VALUE_SELECT_LINK_SOURCEMAPPINGS] = null;
 			}
 
-			// if there is a change to the multiple selection status, need to adjust the database!!
-			if (isset($currentEleValue[ELE_VALUE_SELECT_MULTIPLE])
-					AND $currentEleValue[ELE_VALUE_SELECT_MULTIPLE] != $postedMultipleValue
-					AND !$ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT]) {
-				if ($currentEleValue[ELE_VALUE_SELECT_MULTIPLE] == 0) {
-					$result = convertSelectBoxToMulti($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $element->getVar('ele_handle'));
-				} else {
-					$result = convertSelectBoxToSingle($xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle')), $element->getVar('ele_handle'));
-				}
-				if (!$result) {
-					print "Could not convert select boxes from multiple options to single option or vice-versa.";
-				}
-			}
+			// a change to the multiple selection setting is carried to the saved values when the element is saved,
+			// by convertFieldForMultipleSelections(), so that it happens however the setting was changed
 			$ele_value[ELE_VALUE_SELECT_LINK_LIMITGROUPS] = isset($_POST['element_formlink_scope']) ? implode(",", $_POST['element_formlink_scope']) : '';
 
 			list($ele_value[ELE_VALUE_SELECT_LINK_FILTERS], $formLinkFilterChanged) = parseSubmittedConditions('formlinkfilter', 'optionsconditionsdelete');
@@ -652,6 +639,91 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 			$element->setVar('ele_uitext', $ele_uitext);
 		}
 		return $changed;
+	}
+
+	/**
+	 * A list that saves entry ids or user ids holds one id in a bigint field, and several in a text field: ,5,7, for a
+	 * linked list, and *=+*:5*=+*:7 for a list of users. When the field does not suit the element's multiple selection
+	 * setting, the values already saved are converted and the field's type changed, in the data table and the revisions
+	 * table. Going from several to one keeps the first value in each entry, and the rest are lost.
+	 * Snapshots and the other lists save text either way, and encrypted fields cannot be read, so they are left alone.
+	 * Called by formulizeHandler::upsertElementSchemaAndResources() each time an existing element is saved, so the field
+	 * follows the setting however it was changed: the admin UI, the MCP server or configuration as code. It goes by the
+	 * field rather than the setting's old value, because the element cache hands every caller the same object, so
+	 * the old value has often been overwritten before the save.
+	 * @param object $element The element, as it has just been saved
+	 * @return void
+	 * @throws Exception if the values or the field could not be converted
+	 * @formulizeElement $element one
+	 */
+	function convertFieldForMultipleSelections($element) {
+		if(!$conversion = $this->fieldConversionForMultipleSelections($element, $element->getVar('ele_value'))) {
+			return;
+		}
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($element->getVar('id_form'));
+		foreach($form_handler->entryTables($formObject) as $table) {
+			$converted = $conversion == 'multi'
+				? convertSelectBoxToMulti($table, $element->getVar('ele_handle'), $element->isUserList)
+				: convertSelectBoxToSingle($table, $element->getVar('ele_handle'), $element->isUserList);
+			if(!$converted) {
+				throw new Exception("Could not convert the saved values of ".$element->getVar('ele_handle')." in $table to suit the multiple selection setting. ".$xoopsDB->error());
+			}
+		}
+	}
+
+	/**
+	 * How many entries would lose values if the element were saved with these settings? Those that hold more than one
+	 * value now, when the settings turn multiple selections off for a list that saves ids, since only the first is kept.
+	 * See convertFieldForMultipleSelections(). Ask this before saving, to warn whoever is making the change.
+	 * @param object $element The element, as it is saved now
+	 * @param array $ele_value The settings it would be saved with
+	 * @return int The number of entries, in the data table
+	 * @formulizeElement $element one
+	 */
+	function countEntriesThatWouldLoseSelections($element, $ele_value) {
+		if($this->fieldConversionForMultipleSelections($element, $ele_value) != 'single') {
+			return 0;
+		}
+		global $xoopsDB;
+		$form_handler = xoops_getmodulehandler('forms', 'formulize');
+		$formObject = $form_handler->get($element->getVar('id_form'));
+		$field = $element->getVar('ele_handle');
+		// several entry ids are ,5,7, and several user ids are *=+*:5*=+*:7, so these patterns match two or more
+		$severalValues = $element->isUserList ? "'*=+*:%*=+*:%'" : "',%,%,'";
+		$sql = "SELECT COUNT(*) FROM ".$xoopsDB->prefix('formulize_'.$formObject->getVar('form_handle'))." WHERE `$field` LIKE $severalValues";
+		if(!$res = $xoopsDB->query($sql)) {
+			throw new Exception("Could not count the entries with more than one value in ".$element->getVar('ele_handle').". ".$xoopsDB->error());
+		}
+		list($count) = $xoopsDB->fetchRow($res);
+		return intval($count);
+	}
+
+	/**
+	 * Would saving a list with these settings convert its field? Only lists that save entry ids or user ids are converted,
+	 * and not snapshots, which save text either way, or encrypted fields, which cannot be read.
+	 * @param object $element The element, as it is saved now
+	 * @param array $ele_value The settings to check the field against
+	 * @return string 'multi' if the field holds one id and the settings need several, 'single' if the field holds
+	 * several and the settings need one, or '' if the field suits the settings or is not converted
+	 */
+	private function fieldConversionForMultipleSelections($element, $ele_value) {
+		if((!$element->isLinked AND !$element->isUserList)
+			OR !empty($ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT])
+			OR $element->getVar('ele_encrypt')) {
+			return '';
+		}
+		$dataTypeInfo = $element->getDataTypeInformation();
+		if(empty($dataTypeInfo['dataTypeCompleteString'])) {
+			return ''; // no field to convert
+		}
+		$multiple = !empty($ele_value[ELE_VALUE_SELECT_MULTIPLE]);
+		$fieldHoldsOne = formulizeElement::isNumericDataType($dataTypeInfo['dataTypeCompleteString']);
+		if($multiple != $fieldHoldsOne) {
+			return ''; // the field already suits the settings
+		}
+		return $multiple ? 'multi' : 'single';
 	}
 
 	/**

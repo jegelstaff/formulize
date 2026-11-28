@@ -318,6 +318,23 @@ class formulizeElement extends FormulizeObject {
 	}
 
 	/**
+	 * Are two database types the same type? An integer type's display width is ignored, since it changes nothing about
+	 * what the field holds: MariaDB reports bigint(20) for a field made as bigint, and MySQL 8 reports int for int(11).
+	 * Compare a type with the field's type this way before changing the field, or the field is changed on every save.
+	 * @param string $dataType A type as the database reports it, or as an element type declares it
+	 * @param string $otherDataType Another type
+	 * @return bool
+	 */
+	static function sameDataType($dataType, $otherDataType) {
+		$normalize = function($type) {
+			$type = preg_replace('/\s+/', ' ', strtolower(trim((string) $type)));
+			$type = preg_replace('/^integer\b/', 'int', $type);
+			return preg_replace('/^(tinyint|smallint|mediumint|int|bigint)\(\d+\)/', '$1', $type);
+		};
+		return $normalize($dataType) === $normalize($otherDataType);
+	}
+
+	/**
 	 * The search interfaces this element can have in a list: the date oriented ones only for an element that holds
 	 * dates, the time range only for one that holds times, and the rest for every element.
 	 * @return array Stored values, as in formulizeHandler::listScreenSearchTypes()

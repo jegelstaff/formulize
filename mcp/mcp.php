@@ -48,6 +48,7 @@ class FormulizeMCP
 	public $userGroups = array();
 	public $baseUrl;
 	private $mcpRequest = array();
+	private $toolBeingCalled = ''; // set by handleToolCall(), so a confirmation token can be bound to the tool it was issued by
 
 	public function __construct($config = null, bool $registryOnly = false, array $userGroupsOverride = [])
 	{

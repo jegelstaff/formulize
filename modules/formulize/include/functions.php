@@ -10328,24 +10328,30 @@ function htmlForElement($elementHandle, $nameForHTML="orphaned_formulize_element
 }
 
 /**
- * Converts linked select boxes from single option only (big int)
- * to a multi-option allowed select box with preceding and trailing commas
+ * Converts a field that holds one entry id or user id, as a bigint, to text holding several:
+ * ,5,7, for a linked list, and *=+*:5*=+*:7 for a list of users.
+ * Use formulizeSelectElementHandler::convertFieldForMultipleSelections(), which decides when this is needed
+ * and converts every table that holds the form's entries.
  *
  * @param string $table - The table name in the database where we should convert values
  * @param string $column - The element handle (field name) in the table where we should convert values
+ * @param bool $userList - True if the values are user ids, false if they are entry ids from a linked list
  * @return bool - indicating if the operation succeeded or not
  */
-function convertSelectBoxToMulti($table, $column) {
+function convertSelectBoxToMulti($table, $column, $userList = false) {
     global $xoopsDB;
 
+    $before = $userList ? '*=+*:' : ',';
+    $after = $userList ? '' : ',';
     $sql1 = "ALTER TABLE `$table` CHANGE `$column` `$column` TEXT";
-    $sql2 = "UPDATE `$table` SET `$column`=CONCAT(',', `$column`, ',') WHERE `$column` NOT LIKE '%[^0-9]%'";
+    // 0 and blank are no selection, so they are left as they are
+    $sql2 = "UPDATE `$table` SET `$column` = CONCAT('$before', `$column`, '$after') WHERE `$column` REGEXP '^[1-9][0-9]*" . '$' . "'";
 
-    if (!$result1 = $xoopsDB->query($sql1)) {
+    if (!$result1 = $xoopsDB->queryF($sql1)) {
         return false;
     }
 
-    if (!$result2 = $xoopsDB->query($sql2)) {
+    if (!$result2 = $xoopsDB->queryF($sql2)) {
         return false;
     }
 
@@ -10354,27 +10360,32 @@ function convertSelectBoxToMulti($table, $column) {
 
 
 /**
- * Converts a linked select box from multi-option allowed (with preceding and
- * trailing commas) to a single option allowed select box with data type bigint.
+ * Converts a field that holds several entry ids or user ids, as text, to a bigint holding one:
+ * the first, for each entry. The others are lost.
+ * Use formulizeSelectElementHandler::convertFieldForMultipleSelections(), which decides when this is needed
+ * and converts every table that holds the form's entries.
  *
  * @param string $table - The table name in the database where we should convert values
  * @param string $column - The element handle (field name) in the table where we should convert values
+ * @param bool $userList - True if the values are user ids (*=+*:5*=+*:7), false if they are entry ids from a linked list (,5,7,)
  * @return bool - indicating if the operation succeeded or not
  */
-function convertSelectBoxToSingle($table, $column) {
+function convertSelectBoxToSingle($table, $column, $userList = false) {
     global $xoopsDB;
 
-    $sql1 = "UPDATE `$table` SET `$column`=SUBSTRING_INDEX (TRIM(BOTH ',' FROM `$column`), ',', 1) WHERE `$column` LIKE ',%,'";
-    $sql2 = "ALTER TABLE `$table` CHANGE `$column` `$column` BIGINT NULL DEFAULT NULL";
-
-    if (!$result1 = $xoopsDB->queryF($sql1)) {
-        print "<br>$sql1<br>";
-        return false;
+    if ($userList) {
+        $sql1 = "UPDATE `$table` SET `$column` = SUBSTRING_INDEX(SUBSTRING(`$column`, 6), '*=+*:', 1) WHERE `$column` LIKE '*=+*:%'";
+    } else {
+        $sql1 = "UPDATE `$table` SET `$column` = SUBSTRING_INDEX(TRIM(BOTH ',' FROM `$column`), ',', 1) WHERE `$column` LIKE ',%,'";
     }
+    // a blank is no selection, and cannot become a number
+    $sql2 = "UPDATE `$table` SET `$column` = NULL WHERE `$column` = ''";
+    $sql3 = "ALTER TABLE `$table` CHANGE `$column` `$column` BIGINT NULL DEFAULT NULL";
 
-    if (!$result2 = $xoopsDB->queryF($sql2)) {
-        print "<br>$sql2<br>";
-        return false;
+    foreach (array($sql1, $sql2, $sql3) as $sql) {
+        if (!$xoopsDB->queryF($sql)) {
+            return false;
+        }
     }
 
     return true;

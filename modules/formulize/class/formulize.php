@@ -2725,24 +2725,31 @@ class formulizeHandler {
 	    $currentDataTypeInfo = $elementObject->getDataTypeInformation();
 	 	  $currentDataType = $currentDataTypeInfo['dataTypeCompleteString'];
 			$ele_value = $elementObject->getVar('ele_value');
+			$dataTypeRequested = (is_string($dataType) AND $dataType !== '' AND !formulizeElement::sameDataType($dataType, $currentDataType));
+			$snapshotNeedsText = (isset($ele_value['snapshot']) AND $ele_value['snapshot'] AND !formulizeElement::sameDataType($currentDataType, 'text'));
 
 			if($elementObject->hasData AND
 				($originalElementNames['ele_handle'] != $elementObject->getVar('ele_handle')
-    			OR $dataType != $currentDataType
-			  	OR (isset($ele_value['snapshot']) AND $ele_value['snapshot'] AND $currentDataTypeInfo != 'text'))
+    			OR $dataTypeRequested
+			  	OR $snapshotNeedsText)
 				) {
 					// figure out if the datatype needs changing...
 					if($elementObject->getVar('ele_encrypt')) {
 						$dataType = false;
-					} elseif(isset($ele_value['snapshot']) AND $ele_value['snapshot'] AND $currentDataType != 'text') {
+					} elseif($snapshotNeedsText) {
 						$dataType = 'text';
-					} elseif($dataType === $currentDataType) {
+					} elseif(!$dataTypeRequested) {
 						$dataType = false; // does not need changing in the data table
 					}
 					// need to update the name of the field in the data table, and possibly update the type too
 					if(!$updateResult = $form_handler->updateField($elementObject, $originalElementNames['ele_handle'], $dataType)) {
 						throw new Exception("Could not update the data table field to match the new settings");
 					}
+			}
+
+			// lists that save ids keep their field in step with their multiple selection setting
+			if($elementObject->hasData AND method_exists($element_handler, 'convertFieldForMultipleSelections')) {
+				$element_handler->convertFieldForMultipleSelections($elementObject);
 			}
 
 		}

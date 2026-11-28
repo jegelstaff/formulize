@@ -1608,40 +1608,43 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 	}
 
 	/**
-	 * The key used to sign element deletion confirmation tokens.
+	 * The key used to sign confirmation tokens of one kind.
 	 *
-	 * Deleting an element destroys data, so it takes two calls: the first returns an impact report and a
-	 * token, the second presents the token back to actually delete. Signing the token means that guarantee
-	 * needs no server side state to store, expire or clean up - a delete simply cannot happen unless the
-	 * matching preview happened first, recently, for that element, by that user.
-	 * Domain separated from the anonymous entry tokens so the two keys are not interchangeable.
+	 * A change that destroys data takes two calls: the first changes nothing and returns a report of what would be
+	 * lost and a token, and the second presents the token back to go ahead. Signing the token means that guarantee
+	 * needs no server side state to store, expire or clean up - the change simply cannot happen unless the matching
+	 * first call happened, recently, by that user. Each kind has its own key, so a token of one kind cannot stand in
+	 * for another, and none can stand in for the anonymous entry tokens.
+	 * @param string $purpose The kind of change, ie: element_deletion
 	 * @return string A binary HMAC key
 	 */
-	private function elementDeletionToken_secret() {
-		$base = defined('XOOPS_DB_SALT') ? XOOPS_DB_SALT : (defined('XOOPS_DB_PASS') ? XOOPS_DB_PASS : 'formulize_mcp_element_deletion_fallback');
-		return hash_hmac('sha256', 'formulize_mcp_element_deletion_token_v1', $base, true);
+	private function confirmationTokenSecret($purpose) {
+		$base = defined('XOOPS_DB_SALT') ? XOOPS_DB_SALT : (defined('XOOPS_DB_PASS') ? XOOPS_DB_PASS : 'formulize_mcp_confirmation_fallback');
+		return hash_hmac('sha256', 'formulize_mcp_'.$purpose.'_token_v1', $base, true);
 	}
 
 	/**
-	 * Build the signed confirmation token for deleting an element: "<expires>.<signature>".
-	 * The user id and element id are part of the signed payload, so a token issued to one user for one
-	 * element cannot be replayed by another user or against another element.
-	 * @param int $elementId The element the token authorises deletion of
+	 * Build a signed confirmation token: "<expires>.<signature>".
+	 * The user id and the subject are part of the signed payload, so a token issued to one user for one change cannot
+	 * be replayed by another user, or for a different change.
+	 * @param string $purpose The kind of change, ie: element_deletion
+	 * @param string $subject What exactly the token allows, ie: the id of the element to delete
 	 * @param int $expires Unix timestamp after which the token stops working
 	 * @return string
 	 */
-	private function signElementDeletionToken($elementId, $expires) {
-		$payload = intval($this->authenticatedUid).':'.intval($elementId).':'.intval($expires);
-		return $expires.'.'.hash_hmac('sha256', $payload, $this->elementDeletionToken_secret());
+	private function signConfirmationToken($purpose, $subject, $expires) {
+		$payload = intval($this->authenticatedUid).':'.$subject.':'.intval($expires);
+		return $expires.'.'.hash_hmac('sha256', $payload, $this->confirmationTokenSecret($purpose));
 	}
 
 	/**
-	 * Verify a confirmation token presented for deleting an element.
+	 * Verify a confirmation token that a caller sent back.
 	 * @param string $token The token the caller sent back
-	 * @param int $elementId The element being deleted
-	 * @return bool True only if the token is well formed, unexpired, and validly signed for this user and element
+	 * @param string $purpose The kind of change being made
+	 * @param string $subject What exactly is being changed, worked out in the same way as when the token was issued
+	 * @return bool True only if the token is well formed, unexpired, and validly signed for this user and this subject
 	 */
-	private function verifyElementDeletionToken($token, $elementId) {
+	private function verifyConfirmationToken($token, $purpose, $subject) {
 		$parts = explode('.', (string) $token);
 		if(count($parts) !== 2) {
 			return false;
@@ -1650,8 +1653,30 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 		if(!is_numeric($expires) OR time() > intval($expires)) {
 			return false; // the lifetime is enforced here, server side
 		}
-		$expected = $this->signElementDeletionToken($elementId, intval($expires));
+		$expected = $this->signConfirmationToken($purpose, $subject, intval($expires));
 		return hash_equals($expected, $expires.'.'.$signature);
+	}
+
+	/**
+	 * What a confirmation token for a whole tool call is bound to: the tool, and every argument but the token itself,
+	 * in a form that does not depend on the order the keys were sent in. A token bound to this can only be used to
+	 * repeat exactly the call that it was issued for, so nothing asked for in the first call can be dropped, added or
+	 * changed in the second.
+	 * @param array $arguments The arguments of the call
+	 * @return string
+	 */
+	private function confirmationSubjectForThisCall($arguments) {
+		unset($arguments['confirmation_token']);
+		$sortKeys = function($value) use (&$sortKeys) {
+			if(!is_array($value)) {
+				return $value;
+			}
+			if(!array_is_list($value)) {
+				ksort($value, SORT_STRING);
+			}
+			return array_map($sortKeys, $value);
+		};
+		return $this->toolBeingCalled.':'.hash('sha256', json_encode($sortKeys($arguments), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION));
 	}
 
 	/**
@@ -2284,6 +2309,7 @@ Call with no arguments to get the list of topics, each with a one-line summary. 
 	{
 		$toolName = $params['name'] ?? '';
 		$arguments = $params['arguments'] ?? [];
+		$this->toolBeingCalled = $toolName;
 
 		if (!isset($this->tools[$toolName])) {
 			throw new FormulizeMCPException(
@@ -3862,11 +3888,6 @@ Do not use foreign key values with linked elements; use the readable value inste
 		}
 		// for updates without an order argument, $resolvedOrderArg stays null and ele_order is left unchanged
 
-		$oldOrderForFigureOutOrder = $elementObject ? $elementObject->getVar('ele_order') : 0;
-		$eleOrder = $resolvedOrderArg !== null
-			? figureOutOrder($resolvedOrderArg, $oldOrderForFigureOutOrder, $fid)
-			: $oldOrderForFigureOutOrder;
-
 		$elementObjectProperties = [
 			'fid' => $fid,
 			'ele_id' => $elementObject ? $elementObject->getVar('ele_id') : 0,
@@ -3876,7 +3897,6 @@ Do not use foreign key values with linked elements; use the readable value inste
 			'ele_colhead' => $column_heading !== null ? $column_heading : ($elementObject ? $elementObject->getVar('ele_colhead') : ''),
 			'ele_desc' => $help_text_for_users !== null ? $help_text_for_users : ($elementObject ? $elementObject->getVar('ele_desc') : ''),
 			'ele_required' => $required !== null ? $required : ($elementObject ? $elementObject->getVar('ele_required') : 0),
-			'ele_order' => $eleOrder,
 			'ele_display' => $display !== null ? $display : ($elementObject ? $elementObject->getVar('ele_display') : 1),
 			// when display_conditions was provided (even as an empty array, to clear), use the validated set;
 			// otherwise round-trip the existing value so it is left untouched
@@ -3921,6 +3941,33 @@ Do not use foreign key values with linked elements; use the readable value inste
 		if($listSearchInterface !== null) {
 			$elementObjectProperties['ele_searchtype'] = $this->validateListSearchInterface($listSearchInterface, $elementObject, $type, $data_type);
 		}
+
+		// Turning multiple selections off for a list that saves ids keeps only the first value in each entry. So when
+		// entries would lose values, nothing at all in this call is done until it is repeated, exactly, with a token
+		// that shows the person agreed to the loss. Nothing above this point may change anything.
+		if(!$isCreate AND method_exists($elementTypeHandler, 'countEntriesThatWouldLoseSelections')
+			AND $entriesLosingValues = $elementTypeHandler->countEntriesThatWouldLoseSelections($elementObject, $elementObjectProperties['ele_value'] ?? $elementObject->getVar('ele_value'))) {
+			$subject = $this->confirmationSubjectForThisCall($arguments);
+			$tokenSent = !empty($arguments['confirmation_token']);
+			if(!$tokenSent OR !$this->verifyConfirmationToken($arguments['confirmation_token'], 'selection_loss', $subject)) {
+				$expires = time() + 300; // five minutes is long enough to show a person the notice and get an answer
+				$elementHandle = $elementObject->getVar('ele_handle');
+				return [
+					'updated' => false,
+					'message' => ($tokenSent ? 'That confirmation_token does not match this call, or it has expired. A token only works for a call whose arguments are all exactly the same as the call it was issued for. ' : '')
+						."Nothing has been changed, including any of the other changes in this call. These settings turn off multiple selections for $elementHandle, and $entriesLosingValues ".($entriesLosingValues == 1 ? 'entry holds' : 'entries hold')." more than one value in it. Only the first value in each of those entries would be kept, and the others would be lost for good. Tell the person you are working with, and if they agree, call {$this->toolBeingCalled} again with exactly the same arguments as this call, and the confirmation_token below. The whole call is then carried out, as it was asked for. If anything in the call needs to change, change it, and you will get a new notice and token for the new call.",
+					'element_handle' => $elementHandle,
+					'entries_that_would_lose_values' => $entriesLosingValues,
+					'confirmation_token' => $this->signConfirmationToken('selection_loss', $subject, $expires),
+					'confirmation_token_expires' => date('c', $expires)
+				];
+			}
+		}
+
+		$oldOrderForFigureOutOrder = $elementObject ? $elementObject->getVar('ele_order') : 0;
+		$elementObjectProperties['ele_order'] = $resolvedOrderArg !== null
+			? figureOutOrder($resolvedOrderArg, $oldOrderForFigureOutOrder, $fid)
+			: $oldOrderForFigureOutOrder;
 
 		$element_handler = xoops_getmodulehandler('elements', 'formulize');
 		$element_handler->renameWarnings = array(); // only this save's rename, if it makes one
@@ -6697,18 +6744,18 @@ Do not use foreign key values with linked elements; use the readable value inste
 				'deleted' => false,
 				'message' => 'Nothing has been deleted. This is a preview of what deleting this element would do. Show this to the person you are working with, and if they agree, call delete_element again with the same element and the confirmation_token below.',
 				'impact' => xoops_getmodulehandler('elements', 'formulize')->elementUsageReport($elementObject),
-				'confirmation_token' => $this->signElementDeletionToken($elementId, $expires),
+				'confirmation_token' => $this->signConfirmationToken('element_deletion', $elementId, $expires),
 				'confirmation_token_expires' => date('c', $expires)
 			];
 		}
 
 		// a token was sent, so it has to be valid for this user and this element, and still be in date
-		if(!$this->verifyElementDeletionToken($arguments['confirmation_token'], $elementId)) {
+		if(!$this->verifyConfirmationToken($arguments['confirmation_token'], 'element_deletion', $elementId)) {
 			return [
 				'deleted' => false,
 				'message' => 'That confirmation token is not valid for this element, or it has expired. Nothing has been deleted. Here is a fresh impact report and a new token.',
 				'impact' => xoops_getmodulehandler('elements', 'formulize')->elementUsageReport($elementObject),
-				'confirmation_token' => $this->signElementDeletionToken($elementId, time() + 300),
+				'confirmation_token' => $this->signConfirmationToken('element_deletion', $elementId, time() + 300),
 				'confirmation_token_expires' => date('c', time() + 300)
 			];
 		}
@@ -7704,6 +7751,17 @@ Do not use foreign key values with linked elements; use the readable value inste
 			}
 			$creationDescription = "**Create a new $singularCategoryName in a Formulize form.**\n\nNewly created elements appear on the pages of form screens where all other elements in the form already appear. To add a newly created element to a form screen page which only has some existing elements, use the update_form_screen tool.\n\n$categoryCreationBaseDescriptions".implode("\n\n", $creationElementDescriptions[$category]);
 			$updateDescription = "**Update an existing $singularCategoryName in a Formulize form.**\n\n$categoryUpdateBaseDescriptions".implode("\n\n", $updateElementDescriptions[$category]);
+			// lists that save ids lose values when multiple selections are turned off, so updating one can take two calls
+			$selectionLossConfirmation = [];
+			if($category == 'linked' OR $category == 'userlists') {
+				$updateDescription .= "\n\n**Turning off multiple selections can lose data.** Each entry keeps only its first value. If any entries hold more than one value, the call changes nothing and returns a notice saying how many entries would lose values, with a confirmation_token. Tell the person you are working with. If they agree, repeat the call with exactly the same arguments, plus the confirmation_token, and the whole call is carried out. The token only works for an identical call, by you, for a few minutes.";
+				$selectionLossConfirmation = [
+					'confirmation_token' => [
+						'type' => 'string',
+						'description' => 'Optional. Leave this out, unless a previous call returned a notice that entries would lose values, and the person you are working with agreed. Then send the token from that notice, with all the other arguments exactly as they were in that call.'
+					]
+				];
+			}
 			$commonDataElementPropertiesForThisCategory = [];
 			$dataTypePropertyForThisCategory = [];
 			$creationDataElementPropertiesForThisCategory = [];
@@ -7806,7 +7864,7 @@ Do not use foreign key values with linked elements; use the readable value inste
 							'type' => 'boolean',
 							'description' => "Optional. Whether the $singularCategoryName is displayed in the form or hidden. Default: true."
 						]
-					] + $displayConditionsUpdate + $orderProperty + $dataTypePropertyForThisCategory,
+					] + $displayConditionsUpdate + $orderProperty + $dataTypePropertyForThisCategory + $selectionLossConfirmation,
 				'required' => ['element_identifier']
 				]
 			];
