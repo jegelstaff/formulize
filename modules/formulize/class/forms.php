@@ -2858,6 +2858,7 @@ class formulizeFormsHandler {
 
 		$getelements = q("SELECT * FROM " . $this->db->prefix("formulize") . " WHERE id_form = $fid");
 		$oldNewEleIdMap = array();
+		$newEleIds = array(); // old ele_id => new ele_id
 		foreach($getelements as $ele) { // for each element in the form....
 			$insert_sql = "INSERT INTO " . $this->db->prefix("formulize") . " (";
 			$start = 1;
@@ -2898,8 +2899,25 @@ class formulizeFormsHandler {
 			if(!$result = $this->db->query($insert_sql)) {
 				throw new Exception("Could not duplicate elements in form '$oldTitle'. SQL: $insert_sql. ".$this->db->error());
 			}
+			$newEleIds[$ele['ele_id']] = $this->db->getInsertId();
 			if($oldNewEleIdMap[$ele['ele_handle']] == "replace_with_ele_id") {
-				$oldNewEleIdMap[$ele['ele_handle']] = $oldFormHandle.'_'.$this->db->getInsertId();
+				$oldNewEleIdMap[$ele['ele_handle']] = $oldFormHandle.'_'.$newEleIds[$ele['ele_id']];
+			}
+		}
+
+		// a grid names its starting element by id, so the cloned grids have to name the cloned elements
+		include_once XOOPS_ROOT_PATH.'/modules/formulize/class/elements.php';
+		foreach($getelements as $ele) {
+			if(!elementTypeIsOrExtends($ele['ele_type'], 'grid')) {
+				continue;
+			}
+			$ele_value = unserialize((string) $ele['ele_value']);
+			if(!is_array($ele_value) OR !isset($ele_value[4]) OR !is_numeric($ele_value[4]) OR !isset($newEleIds[intval($ele_value[4])])) {
+				continue;
+			}
+			$ele_value[4] = $newEleIds[intval($ele_value[4])];
+			if(!$this->db->queryF("UPDATE ".$this->db->prefix("formulize")." SET ele_value = ".$this->db->quoteString(serialize($ele_value))." WHERE ele_id = ".intval($newEleIds[$ele['ele_id']]))) {
+				throw new Exception("Could not set the starting element of a grid in the new form. ".$this->db->error());
 			}
 		}
 

@@ -250,7 +250,8 @@ class formulizeGridElementHandler extends formulizeElementsHandler {
 		$oldOrder = $element->getVar('ele_order');
 		$ele_value = $element->getVar('ele_value');
 		$fid = $element->getVar('fid');
-		if(is_array($ele_value) AND isset($ele_value[4]) AND $ele_value[4] AND $firstGridElement = _getElementObject($ele_value[4])) {
+		if(is_array($ele_value) AND isset($ele_value[4]) AND $ele_value[4] AND $firstGridElement = _getElementObject($ele_value[4])
+			AND intval($firstGridElement->getVar('id_form')) == intval($fid)) {
 			$sql = "SELECT ele_id, ele_order FROM ".$this->db->prefix("formulize")." WHERE id_form = ".intval($fid)." AND ele_order < ".intval($firstGridElement->getVar('ele_order'))." ORDER BY ele_order DESC LIMIT 0,1";
 			if($res = $this->db->query($sql)) {
 				if($this->db->getRowsNum($res) == 1) {

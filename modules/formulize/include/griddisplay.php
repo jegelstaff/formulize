@@ -58,7 +58,7 @@
 //$colcaps -- array of the column captions
 //$orientation -- "horizontal" or "vertical" which controls whether the grid background colours emphasize rows or columns.  Default is horizontal.
 //$title -- Optional.  Text to use as title instead of title of form.
-//$startID -- Optional. ele_id of the first element in the form that you want to include in the grid, or the caption of that element.    This is the element that will be used in the q1 position and all subsequent elements will be drawn in their respective places after that.
+//$startID -- Optional. ele_id of the first element in the form that you want to include in the grid.    This is the element that will be used in the q1 position and all subsequent elements will be drawn in their respective places after that.
 //$finalCell -- Optional. Array containing HTML to use as the last cell in each row (for totalling, etc).  Each key is for each row in order.  Expectation is the developer would have calculated some values and prepared this HTML in advance.  Must have numeric keys! Should NOT include <td> and </td>
 //$finalRow -- Optional. HTML to use as a last row in the table, to show totals, etc.  Expectation is the developer would have calculated some values and prepared this HTML in advance.  Should NOT include <tr> and </tr>
 // $calledInternal -- boolean used to indicate whether we need the xoops security token or not.  When called from inside a form using the grid element collection, there will already be a security token associated with the form.
@@ -239,6 +239,12 @@ function displayGrid($fid, $entry_id, $rowcaps, $colcaps, $title="", $orientatio
 				$class = "even";
 			}
 			print "<div class=\"formulize-grid__cell $class\" role=\"cell\">\n";
+			// a grid with no starting element, or with more cells than the form has elements after its start, has cells with nothing in them
+			if(!isset($element_ids_query[$ele_index])) {
+				print "</div>\n";
+				$ele_index++;
+				continue;
+			}
 			$elementInGridId = $element_ids_query[$ele_index];
 			$deReturnValue = displayElement("", $elementInGridId, $entry_id, false, $screen, $prevEntry, false);
 			if(is_array($deReturnValue)) {
@@ -413,7 +419,10 @@ function renderGrid($elementObject, $entry_id = 'new', $prevEntry = null, $scree
 
 /**
  * This function gets the elements that are included in a grid
- * @param int $startID The starting element ID (could be some other legacy format too, yuck)
+ * A grid's starting element is stored by its id. Before dbversion 40 it could also be a caption, a handle, or the id of
+ * an element in another form after cloning, and patch 023 converted those.
+ * A start that isn't an element in the form, such as 'none' after the starting element was deleted, gives no elements.
+ * @param int|string $startID The starting element id, or 'first' to start at the first element in the form
  * @param int $fid The form id number
  * @param int $gridCount Optional. Recommended! The number of elements that will be included in the grid. If left out, returns a list of all possible elements after the start element.
  * @param boolean $requiredOnly Optional. A boolean to indicate whether we should limit the search to required elements (elements marked as required for users)
@@ -422,17 +431,22 @@ function renderGrid($elementObject, $entry_id = 'new', $prevEntry = null, $scree
 function elementsInGrid($startID, $fid, $gridCount = 0, $requiredOnly = false) {
 	static $cachedGridElements = array();
 	$requiredOnly = $requiredOnly ? 1 : 0; // make a number, nicer for the array
+	$fid = intval($fid);
 	if(!isset($cachedGridElements[$fid][$startID][$gridCount][$requiredOnly])) {
 		global $xoopsDB;
 		// figure out where we are supposed to start in the form
-		if(!is_numeric($startID) AND $startID !== "first") {
-			$order_query = q("SELECT ele_order FROM " . $xoopsDB->prefix("formulize") . " WHERE ele_caption = \"$startID\" AND id_form=\"$fid\"");
-		} elseif($startID === "first") { // get the ele_id of the element with the lowest weight
-			$order_query = q("SELECT ele_order FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=\"$fid\" ORDER BY ele_order LIMIT 0,1");
-		} else {
-			$order_query = q("SELECT ele_order FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=\"$fid\" AND ele_id =\"$startID\"");
+		$order_query = array();
+		if($startID === "first") { // the element with the lowest weight
+			$order_query = q("SELECT ele_order FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$fid ORDER BY ele_order LIMIT 0,1");
+		} elseif(is_numeric($startID) AND intval($startID) > 0) {
+			$order_query = q("SELECT ele_order FROM " . $xoopsDB->prefix("formulize") . " WHERE id_form=$fid AND ele_id=".intval($startID));
 		}
-		$starting_order = $order_query[0]['ele_order'];
+		$starting_order = isset($order_query[0]['ele_order']) ? $order_query[0]['ele_order'] : null;
+		if($starting_order === null) {
+			$cachedGridElements[$fid][$startID][$gridCount][$requiredOnly] = array();
+			return array();
+		}
+		$starting_order = intval($starting_order);
 		$required = $requiredOnly ? "ele_required = 1 AND" : "";
 		$limitCondition = $gridCount ? " LIMIT 0, ".intval($gridCount) : "";
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
