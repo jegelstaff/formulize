@@ -263,8 +263,7 @@ function formulize_renderEntriesAsRows(&$result, $raw = false) {
 	$mainFormHandle = $result['formHandle'];
 	$fieldsByForm = $result['fieldsByForm'];
 
-	$dataHandler = new formulizeDataHandler(false);
-	$metadataFields = $dataHandler->metadataFields;
+	$metadataFields = formulizeDataHandler::getMetadataFields();
 
 	// form id => form handle, for the connected forms
 	$formHandles = array();
@@ -770,8 +769,7 @@ function formulize_apiReadFilterCondition($condition, $form_ids, $allowedFields 
 	formulize_apiCheckFieldPermissions(array($element), $allowedFields);
 
 	$elementFormId = 0;
-	$dataHandler = new formulizeDataHandler(false);
-	if (!in_array($element, $dataHandler->metadataFields)) {
+	if (!formulizeDataHandler::isMetadataField($element)) {
 		if (!$elementObject = _getElementObject($element)) {
 			throw new FormulizeApiException('Unknown element in filter: '.$element, 'unknown_element');
 		} elseif (!in_array($elementObject->getVar('fid'), $form_ids)) {
@@ -794,7 +792,6 @@ function formulize_apiValidateElementHandles($elementHandles, $form_id) {
 	if (!is_array($elementHandles)) {
 		return array();
 	}
-	$dataHandler = new formulizeDataHandler(false);
 	$validatedHandles = array();
 	$element_handler = xoops_getmodulehandler('elements', 'formulize');
 	foreach ($elementHandles as $handle) {
@@ -805,7 +802,7 @@ function formulize_apiValidateElementHandles($elementHandles, $form_id) {
 			continue;
 		}
 		$validatedFormId = $form_id;
-		if(!in_array($handle, $dataHandler->metadataFields)) {
+		if(!formulizeDataHandler::isMetadataField($handle)) {
 			if(!$elementObject = $element_handler->get($handle)) {
 				throw new FormulizeApiException('Invalid element handle: '.$handle, 'unknown_element');
 			}

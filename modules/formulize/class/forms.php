@@ -1698,7 +1698,7 @@ class formulizeFormsHandler {
 			return false;
 		}
 		// validate the element, either a metadata field, or get the element handle from the object
-		if(in_array($elementIdentifier, $dataHandler->metadataFields)) {
+		if(formulizeDataHandler::isMetadataField($elementIdentifier)) {
 			$elementHandle = $elementIdentifier;
 		} elseif($elementObject = _getElementObject($elementIdentifier)) {
 			$elementHandle = $elementObject->getVar('ele_handle');

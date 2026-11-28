@@ -38,11 +38,47 @@ include_once XOOPS_ROOT_PATH.'/modules/formulize/include/functions.php';
 #[AllowDynamicProperties]
 class formulizeDataHandler {
 
+	// the metadata fields every form's entries have, and their types. Use the static methods below to read them,
+	// so you don't need a data handler, or a form, to find out what they are.
+	const METADATA_FIELD_TYPES = array(
+		"entry_id" => "text",
+		"creation_datetime" => "date",
+		"creation_uid" => "text",
+		"creator_email" => "text",
+		"mod_datetime" => "date",
+		"mod_uid" => "text",
+		"owner_groups" => "text");
+
 	var $fid; // the form this Data Handler object is attached to
-	var $metadataFields; //
-    var $metadataFieldTypes;
-    var $dataTypeMap; // an array of field, data type pairs, generated when data is written to the DB
+	var $metadataFields; // the same as getMetadataFields(), kept for code that reads it from an instance
+	var $metadataFieldTypes; // the same as getMetadataFieldTypes(), kept for code that reads it from an instance
+	var $dataTypeMap; // an array of field, data type pairs, generated when data is written to the DB
 	static $dataChangeCounts = array(); // how many times each form's data has been written to during this request, keyed by form id
+
+	/**
+	 * The names of the metadata fields every form's entries have
+	 * @return array The field names, such as entry_id and creation_uid
+	 */
+	static function getMetadataFields() {
+		return array_keys(self::METADATA_FIELD_TYPES);
+	}
+
+	/**
+	 * The metadata fields every form's entries have, and their types
+	 * @return array Keys are the field names, values are 'text' or 'date'
+	 */
+	static function getMetadataFieldTypes() {
+		return self::METADATA_FIELD_TYPES;
+	}
+
+	/**
+	 * Whether a field name is one of the metadata fields
+	 * @param mixed $field The field name to check
+	 * @return bool True if it is a metadata field
+	 */
+	static function isMetadataField($field) {
+		return is_string($field) AND isset(self::METADATA_FIELD_TYPES[$field]);
+	}
 
 	// record that a form's data has changed, so caches built from that form's entries can tell they are stale
 	static function recordDataChange($fid) {
@@ -66,32 +102,19 @@ class formulizeDataHandler {
 		return !empty(self::$dataChangeCounts);
 	}
 
-	// $fid must be an id
-	function __construct($fid=null){
+	/**
+	 * @param int|string $fid The id or handle of the form whose entries this handler works with
+	 * @throws Exception If there is no form with that id or handle. To read the metadata fields without a form, use the static methods.
+	 */
+	function __construct($fid){
 		$form_handler = xoops_getmodulehandler('forms', 'formulize');
-		if(is_object($formObject = $form_handler->get($fid))) {
-			$this->fid = intval($fid);
-		} else {
-			$this->fid = false;
+		if(!$fid OR !is_scalar($fid) OR !is_object($formObject = $form_handler->get($fid))) {
+			throw new Exception("Cannot create a data handler, because there is no form with this id or handle: ".(is_scalar($fid) ? var_export($fid, true) : gettype($fid)));
 		}
-        $this->dataTypeMap = array();
-
-		//set the available metadata fields to a global
-		$this->metadataFields = array("entry_id",
-		  						"creation_datetime",
-		   						"creation_uid",
-		   						"creator_email",
-		  						"mod_datetime",
-		   						"mod_uid",
-									"owner_groups");
-
-        $this->metadataFieldTypes = array("entry_id" => "text",
-                                    "mod_uid" => "text",
-                                    "creation_uid" => "text",
-                                    "creator_email" => "text",
-                                    "mod_datetime" => "date",
-                                    "creation_datetime" => "date",
-																		"owner_groups" => "text");
+		$this->fid = intval($formObject->getVar('id_form'));
+		$this->dataTypeMap = array();
+		$this->metadataFields = self::getMetadataFields();
+		$this->metadataFieldTypes = self::getMetadataFieldTypes();
 	}
 
 	/**

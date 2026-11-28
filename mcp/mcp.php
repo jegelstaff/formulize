@@ -688,9 +688,8 @@ class FormulizeMCP
 	 * @return array The array of metadata fields found in the database (creator_email and owner_groups are removed)
 	 */
 	private function metadataFields() {
-		$dataHandler = new formulizeDataHandler();
 		$metadataFields = array();
-		foreach($dataHandler->metadataFields as $metadataField) {
+		foreach(formulizeDataHandler::getMetadataFields() as $metadataField) {
 			if($metadataField != 'creator_email' AND $metadataField != 'owner_groups') {
 				$metadataFields[] = array(
 					'ele_handle' => $metadataField,

@@ -3743,8 +3743,7 @@ function getAllAllowedColHandles($fid, $frid = 0, $userIdOrObject = null) {
 
 	$allowed = array();
 
-	$dataHandler = new formulizeDataHandler(false);
-	foreach ($dataHandler->metadataFields as $metadataField) {
+	foreach (formulizeDataHandler::getMetadataFields() as $metadataField) {
 		$allowed[$metadataField] = true;
 	}
 
@@ -10926,18 +10925,12 @@ function formulize_findCommonValue($form1, $form2, $key1, $key2) {
 /**
  * Determines whether a given string is a metadata field name
  *
+ * @deprecated This function is deprecated and will be removed in a future version. Use formulizeDataHandler::isMetadataField() instead.
  * @param mixed $field The field to check
  * @return bool True if the field is a metadata field, false otherwise
  */
 function isMetaDataField($field){
-		static $dataHandler;
-		if(!$dataHandler) {
-    	$dataHandler = new formulizeDataHandler(false);
-		}
-		if(in_array($field, $dataHandler->metadataFields)) {
-      return true;
-    }
-    return false;
+	return formulizeDataHandler::isMetadataField($field);
 }
 
 /**
@@ -12590,8 +12583,7 @@ function formulize_parseSearchesIntoFilter($searches) {
 			$addToItsOwnORFilter = false;
 			$ownORFilterKey = "";
 
-			$dataHandler = new formulizeDataHandler(false);
-			$metadataFieldTypes = $dataHandler->metadataFieldTypes;
+			$metadataFieldTypes = formulizeDataHandler::getMetadataFieldTypes();
 
 			if (isset($metadataFieldTypes[$key])) {
 				$ele_type = $metadataFieldTypes[$key];

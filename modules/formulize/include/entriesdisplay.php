@@ -2969,8 +2969,7 @@ function getCalcHandleAndFidAlias($id, $fid) {
   if($id == "proxyid") { $id = "mod_uid"; }
   if($id == "creation_date") { $id = "mod_datetime"; }
   if($id == "mod_date") { $id = "mod_datetime"; }
-	$dataHandler = new formulizeDataHandler($fid);
-	if(in_array($id, $dataHandler->metadataFields)) {
+	if(formulizeDataHandler::isMetadataField($id)) {
 		return array(0=>$id, 1=>"main", 2=>$fid);
   }
   if($id == "creator_email") {
@@ -3111,8 +3110,7 @@ function performCalcs($cols, $calcs, $blanks, $grouping, $frid, $fid)  {
     if($calcElementObject) {
 			$numericDataType = $calcElementObject->hasNumericDataType();
     } else {
-			$dataHandler = new formulizeDataHandler($fid);
-			if(isset($dataHandler->metadataFieldTypes[$handle])) {
+			if(formulizeDataHandler::isMetadataField($handle)) {
 					$numericDataType = false;
 			} else {
 					print "Error: could not determine datatype for element '$handle'<br>";
@@ -3716,8 +3714,7 @@ function calcValuePlusText($value, $handle, $col, $calc, $groupingValue) {
   if(calcHandleHoldsUserIds($handle)) {
 	return calcUserName($value);
   }
-	$dataHandler = new formulizeDataHandler();
-	if(in_array($handle, $dataHandler->metadataFields)) {
+	if(formulizeDataHandler::isMetadataField($handle)) {
   	return $value;
   }
   if($handle == "email" AND strstr($value, "@")) { // creator e-mail metadata field will be treated as having handle "email" in the calculation SQL, so we need this special condition

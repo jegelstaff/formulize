@@ -148,8 +148,7 @@ if($fid AND $uid) {
         $exportTime = formulize_catchAndWriteExportQuery($fid);
         $_GET['cols'] = "";
         if(isset($_GET['includeMetadata'])) {
-					$dataHandler = new formulizeDataHandler($fid);
-					foreach($dataHandler->metadataFields as $metadataField) {
+					foreach(formulizeDataHandler::getMetadataFields() as $metadataField) {
 							if(in_array($metadataField,$excludeFields)) {continue;}
 							$_GET['cols'] .= $metadataField.',';
 					}
