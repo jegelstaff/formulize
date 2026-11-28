@@ -484,9 +484,16 @@ switch($op) {
       $passedElementId = trim($keyParts[3], "[]"); // in case it's an array element, strip the brackets
       $passedElementObject = $element_handler->get($passedElementId);
       $handle = $passedElementObject->getVar('ele_handle');
-      if(is_string($v) && substr($v, 0, 9)=="newvalue:") {
+      // A new value typed into an autocomplete is only written when the entry is saved, because prepDataForWrite()
+      // writes it straight away. Writing it here as well made a second entry in the linked form when the form's
+      // before save code changed the first one, so it no longer matched what was typed. See issue #734.
+      if(formulize_hasNewValueToken($v)) {
         $databaseReadyValue = 'new';
       } else {
+        if(is_array($v)) {
+          // a multi-select autocomplete, where new values are among the selected ones
+          $v = array_values(array_filter($v, function($selectedValue) { return !formulize_hasNewValueToken($selectedValue); }));
+        }
         $databaseReadyValue = prepDataForWrite($passedElementObject, $v, $entryId);
         $databaseReadyValue = $databaseReadyValue === "{WRITEASNULL}" ? null : $databaseReadyValue;
       }

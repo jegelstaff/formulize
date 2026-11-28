@@ -3918,6 +3918,19 @@ function trans($string, $lang = null) {
 }
 
 /**
+ * Says whether a submitted value has the newvalue: token in front of it, which marks what someone typed into
+ * an autocomplete that allows new values. formulize_quickselect.php puts it there. prepDataForWrite() turns
+ * such a value into an entry in the linked form, or a new option in the element, so it must only see one
+ * when the entry is being saved.
+ *
+ * @param mixed $value One value submitted for an element. Only a string can have the token.
+ * @return bool True if the value has the token
+ */
+function formulize_hasNewValueToken($value) {
+	return is_string($value) AND substr($value, 0, 9) === 'newvalue:';
+}
+
+/**
  * Takes values from a form submission, and prepares them for insertion into the database.
  * Relies on the prepareDataForSaving method of each element type handler class.
  *

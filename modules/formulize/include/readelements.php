@@ -255,7 +255,7 @@ foreach($formulize_elementData as $elementFid=>$entryData) { // for every form w
 							$lookupElementId = $linkData['keyself'];
 							$keyselfElementObject = $element_handler->get($lookupElementId);
 							// if the keyself element is a linked element and it wrote a new value into the target form
-							if($keyselfElementObject->isLinked AND substr($_POST["de_{$lookupFid}_{$lookupEntryId}_{$lookupElementId}"], 0, 9) === 'newvalue:') {
+							if($keyselfElementObject->isLinked AND formulize_hasNewValueToken($_POST["de_{$lookupFid}_{$lookupEntryId}_{$lookupElementId}"] ?? '')) {
 								if($linkData['common']) {
 									// write the value from the key element in the other form, as the value for the key element in this form
 									$values[$linkData['keyother']] = $formulize_elementData[$lookupFid][$lookupEntryId][$lookupElementId];

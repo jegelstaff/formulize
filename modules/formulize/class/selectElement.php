@@ -1498,10 +1498,10 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		$checkForNewValues = !is_array($value) ? array($value) : $value;
 		$newWrittenValues = array();
 		foreach($checkForNewValues as $candidateNewValue) {
-			if (!$ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT] AND is_string($candidateNewValue) AND substr($candidateNewValue, 0, 9) == "newvalue:") {
+			if (!$ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT] AND formulize_hasNewValueToken($candidateNewValue)) {
 				// need to add a new entry to the underlying source form if this is a link
 				// need to add an option to the option list for the element list, if this is not a link.
-				// check for the value first, in case we are handling a series of quick ajax requests for new elements, in which a new value is being sent with all of them. We don't want to write the new value once per request!
+				// This writes straight away, so it must only happen when the entry is saved. The conditional element requests take new values out before they get here.
 				$newValue = substr($candidateNewValue, 9);
 
 				// if the element is linked...
@@ -1528,7 +1528,8 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 								if(isset($GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$mappingThisFormElement->getVar('ele_handle')])) {
 									$newValue = $GLOBALS['formulize_asynchronousFormDataInDatabaseReadyFormat'][$entry_id][$mappingThisFormElement->getVar('ele_handle')];
 								} else {
-									$valueToPrep = isset($_POST['de_'.$element->getVar('id_form').'_'.$entry_id.'_'.$thisMapping['thisForm']]) ? $_POST['de_'.$element->getVar('id_form').'_'.$entry_id.'_'.$thisMapping['thisForm']] : $_GET['de_'.$element->getVar('id_form').'_'.$entry_id.'_'.$thisMapping['thisForm']]; // GET is used in asynch conditional element evaluation...note this means mapped fields ALSO MUST HAVE A DISPLAY CONDITION!
+									$mappedFieldName = 'de_'.$element->getVar('id_form').'_'.$entry_id.'_'.$thisMapping['thisForm'];
+									$valueToPrep = isset($_POST[$mappedFieldName]) ? $_POST[$mappedFieldName] : '';
 									if($valueToPrep OR $valueToPrep === 0) {
 										$newValue = prepDataForWrite($otherElementToWrite, $valueToPrep, $entry_id);
 									} else {
@@ -1642,7 +1643,7 @@ class formulizeSelectElementHandler extends formulizeBaseClassForListsElementHan
 		if($ele_value[ELE_VALUE_SELECT_LINK_SNAPSHOT]) {
 			$valuesToWrite = is_array($value) ? $value : array($value);
 			foreach($valuesToWrite as $i=>$thisValueToWrite) {
-				if(substr($thisValueToWrite, 0, 9)=='newvalue:') {
+				if(formulize_hasNewValueToken($thisValueToWrite)) {
 					$valuesToWrite[$i] = substr($thisValueToWrite, 9);
 				}
 			}
